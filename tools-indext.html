@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLEAR Learning Tools Dashboard</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
+  :root{--burgundy:#64092c;--burgundy-light:#8a1e4a;--gold:#dda838;--gold-light:#f0c96a;--blue:#084d78;--blue-light:#0a6ba8;--gray:#484848;--gray-light:#f4f4f5;--gray-mid:#e0e0e0;--white:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Open Sans',sans-serif;color:var(--gray);background:var(--gray-light);min-height:100vh;}
+
+  /* Hero */
+  .hero{background:var(--burgundy);position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;top:-50%;right:-20%;width:80%;height:200%;background:radial-gradient(ellipse,rgba(221,168,56,0.08) 0%,transparent 70%);pointer-events:none;}
+  .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--gold);}
+  .hero-inner{max-width:1100px;margin:0 auto;padding:48px 40px 52px;position:relative;z-index:1;display:flex;align-items:center;gap:28px;}
+  .hero-logo{width:64px;height:64px;flex-shrink:0;}
+  .hero-logo img{width:100%;height:100%;object-fit:contain;}
+  .hero h1{font-family:'Playfair Display','Trebuchet MS',Georgia,serif;font-size:32px;font-weight:700;color:var(--white);letter-spacing:-0.5px;line-height:1.2;}
+  .hero p{font-size:14px;color:rgba(255,255,255,0.65);margin-top:6px;letter-spacing:0.2px;}
+  .hero-accent{font-family:'Open Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:4px;display:block;}
+
+  /* Grid */
+  .grid-section{max-width:1100px;margin:0 auto;padding:40px 40px 60px;}
+  .section-label{font-family:'Open Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--burgundy);margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--gold);}
+  .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-bottom:40px;}
+
+  /* Card */
+  .card{background:var(--white);border-radius:8px;border:1px solid var(--gray-mid);overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;text-decoration:none;color:inherit;position:relative;}
+  .card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.1);border-color:#ccc;}
+  .card-stripe{height:4px;flex-shrink:0;}
+  .card-stripe.burgundy{background:var(--burgundy);}
+  .card-stripe.blue{background:var(--blue);}
+  .card-stripe.gold{background:var(--gold);}
+  .card-body{padding:24px 28px 20px;flex:1;display:flex;flex-direction:column;}
+  .card-icon{font-size:28px;margin-bottom:12px;}
+  .card-title{font-family:'Playfair Display','Trebuchet MS',Georgia,serif;font-size:18px;font-weight:700;color:var(--gray);line-height:1.3;margin-bottom:8px;}
+  .card-desc{font-size:13px;color:#777;line-height:1.6;flex:1;}
+  .card-footer{padding:14px 28px;background:var(--gray-light);border-top:1px solid var(--gray-mid);display:flex;align-items:center;justify-content:space-between;}
+  .card-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding:3px 10px;border-radius:10px;background:rgba(100,9,44,0.08);color:var(--burgundy);}
+  .card-arrow{font-size:14px;font-weight:700;color:var(--blue);transition:transform 0.2s;}
+  .card:hover .card-arrow{transform:translateX(4px);}
+
+  /* Footer */
+  .footer{text-align:center;padding:24px 40px;font-size:12px;color:#aaa;border-top:1px solid var(--gray-mid);}
+  .footer a{color:var(--blue);text-decoration:none;}
+  .footer a:hover{text-decoration:underline;}
+
+  @media(max-width:768px){
+    .hero-inner{padding:32px 24px 36px;flex-direction:column;text-align:center;}
+    .hero h1{font-size:26px;}
+    .grid-section{padding:28px 20px 40px;}
+    .tools-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-logo"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR Logo"></div>
+    <div>
+      <span class="hero-accent">CLEAR Learning</span>
+      <h1>Administrative Tools Dashboard</h1>
+      <p>Internal tools for managing CLEAR Learning programs, learner data, and reporting</p>
+    </div>
+  </div>
+</div>
+
+<div class="grid-section">
+
+  <div class="section-label">Program Management</div>
+  <div class="tools-grid">
+
+    <a href="https://clearlearning.github.io/about/LMS-User-Import.html" class="card">
+      <div class="card-stripe burgundy"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128100;</div>
+        <div class="card-title">User Import Tool</div>
+        <div class="card-desc">Upload attendee data into TalentLMS from a Novi export file.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Cohort Import</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+    <a href="https://clearlearning.github.io/about/ncit-status-tool.html" class="card">
+      <div class="card-stripe gold"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128231;</div>
+        <div class="card-title">Status Report Generator</div>
+        <div class="card-desc">Pull student progress from TalentLMS, generate branded status report emails, and export Mail merge files for distribution.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Cohort Management</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+    <a href="https://clearlearning.github.io/about/ncit-exam-report.html" class="card">
+      <div class="card-stripe blue"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128202;</div>
+        <div class="card-title">Exam Report Generator</div>
+        <div class="card-desc">Pull exam results from TalentLMS, analyze question performance, import payment data, and generate Credly badge export files.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Badge Distribution</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+    <a href="https://clearlearning.github.io/about/LMS-user-lookup.html" class="card">
+      <div class="card-stripe burgundy"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128269;</div>
+        <div class="card-title">User Lookup Tool</div>
+        <div class="card-desc">Search users in TalentLMS, review course progress with module-level status markers, view exam scores, manage course completions, and assign certificates.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Certificates</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+  </div>
+
+  <div class="section-label">Evaluation Reporting</div>
+  <div class="tools-grid">
+
+    <a href="https://clearlearning.github.io/about/ModEvalReportGen.html" class="card">
+      <div class="card-stripe burgundy"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128203;</div>
+        <div class="card-title">Evaluation Report Generator</div>
+        <div class="card-desc">Process SurveyMonkey evaluation data and generate PDF and Excel formatted module/Instructor evaluation reports.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Evaluations</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+    <a href="https://clearlearning.github.io/about/EvalDataUpdater.html" class="card">
+      <div class="card-stripe gold"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128260;</div>
+        <div class="card-title">Evaluation Data Updater</div>
+        <div class="card-desc">Update the instructor master workbook with new SurveyMonkey evaluation exports, syncing response data across evaluation cycles.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Data Sync</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>CLEAR Learning &middot; Council on Licensure, Enforcement and Regulation &middot; <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a></p>
+</div>
+
+</body>
+</html>
