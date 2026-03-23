@@ -6,6 +6,7 @@
 <title>NCIT Exam Report Generator</title>
 <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Trebuchet+MS&display=swap');
   :root { --burgundy:#64092c; --burgundy-light:#8a1e4a; --gold:#dda838; --gold-light:#f0c96a; --blue:#084d78; --blue-light:#0a6ba8; --gray:#484848; --gray-light:#f4f4f5; --gray-mid:#e0e0e0; --pass-green:#2e7d32; --pass-bg:#e8f5e9; --fail-red:#c62828; --fail-bg:#ffebee; --warn-amber:#f57f17; --warn-bg:#fff8e1; --white:#ffffff; --radius:6px; --shadow:0 2px 8px rgba(0,0,0,0.08); --shadow-lg:0 4px 16px rgba(0,0,0,0.12); }
@@ -20,8 +21,9 @@
   .form-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;}
   .form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px;}
   .form-group label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;}
-  .form-group input,.form-group select{padding:10px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:14px;font-family:'Open Sans',sans-serif;transition:border-color 0.2s;}
-  .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1);}
+  .form-group input,.form-group select,.form-group textarea{padding:10px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:14px;font-family:'Open Sans',sans-serif;transition:border-color 0.2s;}
+  .form-group textarea{resize:vertical;min-height:70px;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1);}
   .form-group select:disabled,.form-group input:disabled{background:#f0f0f0;color:#aaa;}
   .inline-note{font-size:12px;color:#888;margin-top:2px;line-height:1.4;}
   .search-select{position:relative;} .search-select input{width:100%;padding:10px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:14px;font-family:'Open Sans',sans-serif;background:var(--white);}
@@ -52,10 +54,15 @@
   .summary-card{flex:1;min-width:140px;background:var(--gray-light);border-radius:var(--radius);padding:16px;text-align:center;}
   .summary-card .label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:6px;} .summary-card .value{font-size:28px;font-weight:700;color:var(--burgundy);}
   .summary-card .value.pass{color:var(--pass-green);} .summary-card .value.fail{color:var(--fail-red);}
-  .table-wrap{overflow-x:auto;border:1px solid var(--gray-mid);border-radius:var(--radius);}
+  .filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius);}
+  .filter-bar input[type="text"]{flex:1;max-width:350px;padding:8px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:13px;font-family:'Open Sans',sans-serif;}
+  .filter-bar input[type="text"]:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1);}
+  .filter-bar .filter-count{font-size:12px;color:#888;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--gray-mid);border-radius:var(--radius);max-height:500px;overflow-y:auto;}
   table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;}
   thead th{background:var(--burgundy);color:var(--white);padding:10px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;position:sticky;top:0;z-index:2;}
   tbody td{padding:8px 12px;border-bottom:1px solid var(--gray-mid);} tbody tr:hover{background:rgba(8,77,120,0.03);} tbody tr:nth-child(even){background:#fafafa;} tbody tr:nth-child(even):hover{background:rgba(8,77,120,0.05);}
+  tbody tr.filtered-out{display:none;}
   .cell-pass{background:var(--pass-bg)!important;color:var(--pass-green);font-weight:700;} .cell-fail{background:var(--fail-bg)!important;color:var(--fail-red);font-weight:700;}
   .cell-adjusted{background:#fff9c4!important;border-left:3px solid #f9a825;font-weight:700;} .cell-adjusted.cell-pass{background:#fff9c4!important;color:var(--pass-green);} .cell-adjusted.cell-fail{background:#fff9c4!important;color:var(--fail-red);}
   td.editable{cursor:text;position:relative;} td.editable:hover{outline:2px solid var(--blue-light);outline-offset:-2px;} td[contenteditable="true"]:focus{outline:2px solid var(--blue);outline-offset:-2px;background:#fff!important;}
@@ -69,6 +76,17 @@
   .actions-bar{display:flex;gap:10px;flex-wrap:wrap;padding:16px 24px;background:var(--gray-light);border-top:1px solid var(--gray-mid);}
   .hidden{display:none!important;}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;} @keyframes spin{to{transform:rotate(360deg);}}
+  .email-preview-frame{border:1px solid var(--gray-mid);border-radius:var(--radius);padding:0;background:var(--white);max-height:500px;overflow-y:auto;font-size:14px;line-height:1.6;}
+  .email-preview-frame table{white-space:normal;}
+  .preview-nav{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius);}
+  .preview-nav .nav-left{display:flex;align-items:center;gap:8px;flex-shrink:0;} .preview-nav .nav-info{flex:1;font-size:13px;font-weight:600;color:var(--gray);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .preview-nav .nav-right{flex-shrink:0;}
+  .reminder-list{margin:16px 0;padding:16px;background:var(--gray-light);border-radius:var(--radius);max-height:200px;overflow-y:auto;font-size:13px;}
+  .reminder-list-item{padding:6px 0;border-bottom:1px solid var(--gray-mid);display:flex;justify-content:space-between;}
+  .reminder-list-item:last-child{border-bottom:none;}
+  .date-prompt-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
+  .date-prompt-box{background:var(--white);padding:32px;border-radius:var(--radius);box-shadow:var(--shadow-lg);max-width:400px;width:90%;}
+  .date-prompt-box h3{margin-bottom:16px;color:var(--burgundy);}
+  .date-prompt-box .btn-row{display:flex;gap:10px;margin-top:20px;}
   @media(max-width:768px){.header{padding:16px;}.main{padding:16px;}.panel{padding:16px;}.form-row{flex-direction:column;}.summary-cards{flex-direction:column;}}
   @media print{.header{background:var(--burgundy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.panel{display:none;}.tab-bar{display:none;}.actions-bar{display:none;}.results-panel{box-shadow:none;border:1px solid #ddd;}.cell-pass,.cell-fail{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 </style>
@@ -116,12 +134,13 @@
     <div id="statusBar" class="status-bar"></div>
   </div>
 
-  <!-- Results Panel (same as original) -->
+  <!-- Results Panel -->
   <div class="results-panel" id="resultsPanel">
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="report">Exam Report</button>
       <button class="tab-btn" data-tab="questions">Question Analysis</button>
       <button class="tab-btn" data-tab="payment">Payment Import</button>
+      <button class="tab-btn" data-tab="reminders">Email Reminders</button>
     </div>
     <div class="tab-content active" id="tab-report">
       <div class="summary-cards" id="summaryCards"></div>
@@ -130,6 +149,11 @@
         <div class="legend-item"><div class="legend-dot" style="background:var(--fail-bg);border-color:#ef9a9a;"></div> Fail (&lt;70%)</div>
         <div class="legend-item"><div class="legend-dot" style="background:#fff9c4;border-color:#f9a825;"></div> Adjusted (questions excluded)</div>
         <div class="legend-item"><div class="legend-dot" style="background:#fff;border-color:#ccc;"></div> Editable placeholder</div>
+      </div>
+      <div class="filter-bar">
+        <label style="font-size:12px;font-weight:600;">Search:</label>
+        <input type="text" id="reportSearchInput" placeholder="Filter by name, email, or cohort...">
+        <span class="filter-count" id="filterCount"></span>
       </div>
       <div class="table-wrap" id="reportTableWrap"></div>
     </div>
@@ -163,6 +187,71 @@
       </div>
     </div>
 
+    <!-- Email Reminders Tab -->
+    <div class="tab-content" id="tab-reminders">
+      <div style="max-width:800px;">
+        <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">&#128231; Exam Reminder Emails</h3>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">Generate reminder emails for students who have been assigned to the exam but have not yet completed it. These emails can be sent via Power Automate.</p>
+        
+        <div class="panel-section">
+          <h3>Eligible Students</h3>
+          <p style="font-size:12px;color:#888;margin-bottom:12px;">Students who are assigned to the exam but have not yet taken it:</p>
+          <div class="reminder-list" id="reminderList">
+            <p style="color:#999;font-style:italic;">Pull exam data first to see eligible students.</p>
+          </div>
+          <div id="reminderSummary" style="margin-top:12px;font-size:13px;color:var(--gray);"></div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Email Template Settings</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Program Name</label>
+              <input type="text" id="reminderProgramName" placeholder="e.g., NCIT Basic US Program" readonly style="background:#f0f0f0;">
+              <span class="inline-note">Auto-populated from course selection.</span>
+            </div>
+            <div class="form-group">
+              <label>Exam Deadline</label>
+              <input type="text" id="reminderDeadline" placeholder="e.g., April 15, 2026">
+              <span class="inline-note">Date by which students must complete the exam.</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2;">
+              <label>Email Body</label>
+              <textarea id="reminderBody" style="min-height:140px;">Our records show that you have not yet taken the {programName}. Your exam window ends on {deadline}. If you are unable to complete the exam by this date please contact us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.
+
+Please log in to the CLEAR Learning Portal at <a href="https://www.portal.clearhq.org">https://www.portal.clearhq.org</a> to access and complete your exam.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+          <button class="btn btn-primary" id="generateRemindersBtn" disabled>&#9993; Generate Reminder Emails</button>
+        </div>
+        <div id="reminderStatus" class="status-bar" style="margin-top:16px;"></div>
+
+        <!-- Email Preview Section (hidden until generated) -->
+        <div id="reminderPreviewSection" class="hidden" style="margin-top:24px;">
+          <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">Email Preview</h3>
+          <div class="preview-nav">
+            <div class="nav-left">
+              <button class="btn btn-sm btn-secondary" id="reminderPrevBtn">&#8592;</button>
+              <button class="btn btn-sm btn-secondary" id="reminderNextBtn">&#8594;</button>
+            </div>
+            <span class="nav-info" id="reminderPreviewCount">1 of 1</span>
+            <div class="nav-right">
+              <button class="btn btn-sm btn-secondary" id="reminderCopyBtn">Copy This Email</button>
+            </div>
+          </div>
+          <div class="email-preview-frame" id="reminderPreviewFrame"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+            <button class="btn btn-primary" id="exportReminderPABtn" style="background:var(--burgundy);">&#9993; Export Emails for Power Automate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="actions-bar">
       <button class="btn btn-primary" id="exportCsvBtn">Export Report CSV</button>
       <button class="btn btn-gold" id="exportXlsxBtn">Export Report XLSX</button>
@@ -172,23 +261,37 @@
   </div>
 </div>
 
+<!-- Date Prompt Modal -->
+<div id="datePromptOverlay" class="date-prompt-overlay hidden">
+  <div class="date-prompt-box">
+    <h3>Enter Exam Deadline</h3>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">Please enter the deadline by which students must complete the exam. This date will appear in the reminder emails.</p>
+    <div class="form-group">
+      <label>Deadline Date</label>
+      <input type="text" id="datePromptInput" placeholder="e.g., April 15, 2026">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="datePromptConfirm">Continue</button>
+      <button class="btn btn-secondary" id="datePromptCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
-// STATE & CONFIG (preserved from original)
+// STATE & CONFIG
 // ============================================================
-const STATE = { workerUrl:'', authToken:'', connected:false, courses:[], groups:[], selectedCourse:null, selectedGroup:null, examType:'', cohort:'', mergedData:null, excludedQuestions:new Set(), reportData:null };
+const STATE = { workerUrl:'', authToken:'', connected:false, courses:[], groups:[], selectedCourse:null, selectedGroup:null, examType:'', cohort:'', mergedData:null, excludedQuestions:new Set(), reportData:null, reminderStudents:[], currentReminderPreview:0 };
 
 // ============================================================
 // CREDLY BADGE TEMPLATE IDS
-// Replace each placeholder with the actual Credly template ID.
-// Leave blank ('') to skip that badge in the export.
 // ============================================================
 const BADGE_TEMPLATE_IDS = {
-  NCIT_BASIC:              'e711e87d-24a9-4309-af54-b0a98484fed9',           // Covers both US and Canadian
-  NCIT_SPECIALIZED_OVERALL:'d17bebd1-1850-4a60-be1b-55b5e92340bd',      // Specialized overall pass
-  NCIT_SPECIALIZED_AIS:    '798db787-f804-462d-906c-5a55bcb1ce5a',          // Advanced Interviewing Skills
-  NCIT_SPECIALIZED_AIA:    '60466608-4af1-43f9-b1aa-97e358e22c15',          // Advanced Investigative Analysis
-  NCIT_SPECIALIZED_IRD:    '0bd3fed4-8e27-4afb-ad9e-061d7b25f8ab'           // Investigative Report Development
+  NCIT_BASIC:              'e711e87d-24a9-4309-af54-b0a98484fed9',
+  NCIT_SPECIALIZED_OVERALL:'d17bebd1-1850-4a60-be1b-55b5e92340bd',
+  NCIT_SPECIALIZED_AIS:    '798db787-f804-462d-906c-5a55bcb1ce5a',
+  NCIT_SPECIALIZED_AIA:    '60466608-4af1-43f9-b1aa-97e358e22c15',
+  NCIT_SPECIALIZED_IRD:    '0bd3fed4-8e27-4afb-ad9e-061d7b25f8ab'
 };
 
 const EXAM_CONFIG = {
@@ -200,7 +303,7 @@ const EXAM_CONFIG = {
 const COURSE_PATTERNS = { 'canadian':'canadian', 'ncitbcan':'canadian', 'ncit basic can':'canadian', 'us':'us', 'ncitbus':'us', 'ncit basic us':'us', 'basic online':'us', 'specialized':'specialized', 'ncits':'specialized', 'ncit specialized':'specialized' };
 
 // ============================================================
-// API Connection (same pattern as status report tool)
+// API Connection
 // ============================================================
 async function apiCall(path){const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+path,{headers:{'X-Auth-Token':STATE.authToken}});if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t);}return r.json();}
 
@@ -227,7 +330,7 @@ document.getElementById('connectBtn').addEventListener('click',doConnect);
 (function(){const u=localStorage.getItem('clear_worker_url')||'https://clear-lms-proxy.avance.workers.dev';const t=localStorage.getItem('clear_auth_token');if(u)document.getElementById('workerUrl').value=u;if(t){document.getElementById('authToken').value=t;setTimeout(doConnect,200);}})();
 
 // ============================================================
-// Searchable Dropdowns (same as status tool)
+// Searchable Dropdowns
 // ============================================================
 function setupSearchSelect(inputId,dropdownId,hiddenId,items,onSelect){
   const input=document.getElementById(inputId);const dropdown=document.getElementById(dropdownId);const hidden=document.getElementById(hiddenId);
@@ -261,7 +364,8 @@ async function onCourseSelect(courseId,courseName){
       if(lower.includes(pattern)){document.getElementById('examType').value=type;break;}
     }
   }
-  // Auto-detect exam type from course name is handled above
+  // Update reminder program name
+  if(courseName) document.getElementById('reminderProgramName').value=courseName;
   try{
     const allGroups=await apiCall('/v1/groups');
     STATE.groups=allGroups;
@@ -319,10 +423,12 @@ async function pullExamData(){
         let testDate='';
         let testScore='';
         let testStatus='';
+        let hasTestAttempt=false;
 
         for(const tu of testUnits){
           try{
             const ta=await apiCall('/v1/gettestanswers/test_id:'+tu.id+',user_id:'+userId);
+            hasTestAttempt=true;
             if(!testDate && ta.completed_on) testDate=ta.completed_on;
             if(!testScore && ta.score) testScore=ta.score;
             if(!testStatus && ta.completion_status) testStatus=ta.completion_status;
@@ -334,7 +440,7 @@ async function pullExamData(){
               });
             }
           }catch(te){
-            // Student may not have taken this test unit yet
+            // Student may not have taken this test unit yet - that's okay
             console.warn('No test answers for user '+userId+' on test '+tu.id+': '+te.message);
           }
         }
@@ -346,6 +452,7 @@ async function pullExamData(){
           'date':testDate,
           'score':testScore,
           'status':testStatus,
+          'hasTestAttempt':hasTestAttempt,
           answers:studentAnswers,
           _questionTexts:questionTexts
         });
@@ -359,7 +466,7 @@ async function pullExamData(){
     const questionLabels=[];
     for(let i=0;i<maxQs;i++) questionLabels.push('Q'+(i+1));
 
-    // Pad short answer arrays (students who didn't take all test parts)
+    // Pad short answer arrays
     students.forEach(s=>{while(s.answers.length<maxQs) s.answers.push(0);});
 
     // Store question texts from first student who has them
@@ -369,7 +476,7 @@ async function pullExamData(){
 
     const merged={students,questions:questionLabels,examType,questionTexts:questionTextMap};
 
-    // Apply exam-specific removals (US: Q22, Q25)
+    // Apply exam-specific removals
     if(config.removeQuestions.length>0) removeQuestions(merged,config.removeQuestions);
 
     STATE.mergedData=merged;
@@ -377,6 +484,9 @@ async function pullExamData(){
     // Calculate scores
     calculateScores(merged,config);
     STATE.reportData=buildReport(merged,config,cohort);
+
+    // Identify students who need reminders (assigned but haven't completed)
+    updateReminderStudents();
 
     // Render
     renderSummary(STATE.reportData,config);
@@ -403,13 +513,12 @@ function setStatus(msg,type){const s=document.getElementById('statusBar');s.clas
 document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+btn.dataset.tab).classList.add('active');});});
 
 // ============================================================
-// Remove Questions (US exam: Q22, Q25)
+// Remove Questions
 // ============================================================
 function removeQuestions(merged,removeQNums){
   const removeIndices=removeQNums.map(q=>q-1).sort((a,b)=>b-a);
   for(const student of merged.students){for(const idx of removeIndices){if(idx<student.answers.length)student.answers.splice(idx,1);}}
   for(const idx of removeIndices){if(idx<merged.questions.length)merged.questions.splice(idx,1);}
-  // Update question text map
   if(merged.questionTexts){
     const newMap={};
     let shift=0;
@@ -423,7 +532,7 @@ function removeQuestions(merged,removeQNums){
 }
 
 // ============================================================
-// Score Calculation (preserved from original)
+// Score Calculation
 // ============================================================
 function calculateScores(merged,config){
   for(const student of merged.students){
@@ -463,7 +572,7 @@ function calculateAdjustedGrades(merged,config){
 }
 
 // ============================================================
-// Build Report (preserved from original)
+// Build Report
 // ============================================================
 function buildReport(merged,config,cohort){
   calculateAdjustedGrades(merged,config);
@@ -485,7 +594,8 @@ function buildReport(merged,config,cohort){
       aiaDisplayGrade:config.hasTopics?(s.aiaAdjusted?s.aiaAdjGrade:s.aiaGrade):'',
       irdDisplayGrade:config.hasTopics?(s.irdAdjusted?s.irdAdjGrade:s.irdGrade):'',
       rawGrade:s.rawGrade,adjustedGrade:s.adjustedGrade,adjustedScore:s.adjustedScore.toFixed(1)+'%',adjustedScoreNum:s.adjustedScore,
-      isAdjusted:hasExclusions,note:'',paid:'',digitalBadgeIssued:'',certificateAssigned:''
+      isAdjusted:hasExclusions,note:'',paid:'',digitalBadgeIssued:'',certificateAssigned:'',
+      hasTestAttempt:s.hasTestAttempt,hasCompletedExam:!!s['date']
     };
   });
 }
@@ -493,7 +603,7 @@ function buildReport(merged,config,cohort){
 function formatDate(val){if(!val)return '';if(val instanceof Date)return val.toLocaleDateString('en-US');if(typeof val==='number'){const d=new Date((val-25569)*86400*1000);return d.toLocaleDateString('en-US');}return String(val);}
 
 // ============================================================
-// Render Summary (preserved)
+// Render Summary
 // ============================================================
 function renderSummary(reportData,config){
   const c=document.getElementById('summaryCards');const total=reportData.length;
@@ -517,7 +627,7 @@ function renderSummary(reportData,config){
 }
 
 // ============================================================
-// Render Report Table (preserved)
+// Render Report Table with Search Filter
 // ============================================================
 function renderReportTable(reportData,config){
   const wrap=document.getElementById('reportTableWrap');
@@ -534,14 +644,42 @@ function renderReportTable(reportData,config){
       topicCells+='<td class="'+(aiaD>=70?'cell-pass':'cell-fail')+(r.aiaAdjusted?' cell-adjusted':'')+'">'+r.aiaDisplayGrade+' ('+r.aiaScore+')</td>';
       topicCells+='<td class="'+(irdD>=70?'cell-pass':'cell-fail')+(r.irdAdjusted?' cell-adjusted':'')+'">'+r.irdDisplayGrade+' ('+r.irdScore+')</td>';
     }else{topicCells='<td class="hidden"></td><td class="hidden"></td><td class="hidden"></td>';}
-    h+='<tr><td>'+(i+1)+'</td><td>'+esc(r.form)+'</td><td>'+esc(r.firstName)+'</td><td>'+esc(r.lastName)+'</td><td>'+esc(r.email)+'</td><td>'+r.siteCode+'</td><td>'+esc(r.cohort)+'</td><td>'+esc(r.dateOfExam)+'</td><td class="'+scoreClass+'">'+r.totalScore+'</td>'+topicCells+'<td class="'+scoreClass+'">'+r.rawGrade+'</td><td class="'+adjPfClass+adjYellow+'">'+r.adjustedGrade+' ('+r.adjustedScore+')</td><td class="editable" contenteditable="true" data-field="note" data-idx="'+i+'">'+esc(r.note)+'</td><td class="editable" contenteditable="true" data-field="paid" data-idx="'+i+'">'+esc(r.paid)+'</td><td class="editable" contenteditable="true" data-field="digitalBadgeIssued" data-idx="'+i+'">'+esc(r.digitalBadgeIssued)+'</td><td class="editable" contenteditable="true" data-field="certificateAssigned" data-idx="'+i+'">'+esc(r.certificateAssigned)+'</td></tr>';
+    const searchData=(r.firstName+' '+r.lastName+' '+r.email+' '+r.cohort).toLowerCase();
+    h+='<tr data-search="'+esc(searchData)+'"><td>'+(i+1)+'</td><td>'+esc(r.form)+'</td><td>'+esc(r.firstName)+'</td><td>'+esc(r.lastName)+'</td><td>'+esc(r.email)+'</td><td>'+r.siteCode+'</td><td>'+esc(r.cohort)+'</td><td>'+esc(r.dateOfExam)+'</td><td class="'+scoreClass+'">'+r.totalScore+'</td>'+topicCells+'<td class="'+scoreClass+'">'+r.rawGrade+'</td><td class="'+adjPfClass+adjYellow+'">'+r.adjustedGrade+' ('+r.adjustedScore+')</td><td class="editable" contenteditable="true" data-field="note" data-idx="'+i+'">'+esc(r.note)+'</td><td class="editable" contenteditable="true" data-field="paid" data-idx="'+i+'">'+esc(r.paid)+'</td><td class="editable" contenteditable="true" data-field="digitalBadgeIssued" data-idx="'+i+'">'+esc(r.digitalBadgeIssued)+'</td><td class="editable" contenteditable="true" data-field="certificateAssigned" data-idx="'+i+'">'+esc(r.certificateAssigned)+'</td></tr>';
   });
   h+='</tbody></table>';wrap.innerHTML=h;
   wrap.querySelectorAll('td.editable').forEach(td=>{td.addEventListener('blur',()=>{const idx=parseInt(td.dataset.idx);const field=td.dataset.field;if(STATE.reportData[idx])STATE.reportData[idx][field]=td.textContent.trim();});});
+  updateFilterCount();
+}
+
+// Search/Filter functionality
+document.getElementById('reportSearchInput').addEventListener('input',function(){
+  const searchTerm=this.value.toLowerCase().trim();
+  const rows=document.querySelectorAll('#reportTable tbody tr');
+  rows.forEach(row=>{
+    const searchData=row.dataset.search||'';
+    if(!searchTerm||searchData.includes(searchTerm)){
+      row.classList.remove('filtered-out');
+    }else{
+      row.classList.add('filtered-out');
+    }
+  });
+  updateFilterCount();
+});
+
+function updateFilterCount(){
+  const total=document.querySelectorAll('#reportTable tbody tr').length;
+  const visible=document.querySelectorAll('#reportTable tbody tr:not(.filtered-out)').length;
+  const el=document.getElementById('filterCount');
+  if(total>0){
+    el.textContent=visible===total?total+' records':'Showing '+visible+' of '+total;
+  }else{
+    el.textContent='';
+  }
 }
 
 // ============================================================
-// Question Analysis (preserved, with question text tooltips)
+// Question Analysis
 // ============================================================
 function renderQuestionAnalysis(merged,config){
   const container=document.getElementById('questionGrid');
@@ -609,7 +747,7 @@ document.getElementById('recalcBtn').addEventListener('click',()=>{
 });
 
 // ============================================================
-// Exports (preserved from original)
+// Exports
 // ============================================================
 document.getElementById('exportCsvBtn').addEventListener('click',exportCSV);
 document.getElementById('exportXlsxBtn').addEventListener('click',exportXLSX);
@@ -642,7 +780,7 @@ function exportXLSX(){
       qaData.push([label,qText,incorrect,total,(incorrect/total*100).toFixed(1)+'%',STATE.excludedQuestions.has(qIdx)?'Yes':'No']);
     });
     const ws2=XLSX.utils.aoa_to_sheet(qaData);ws2['!cols']=qaHeaders.map(h=>({wch:Math.max(h.length+2,12)}));
-    ws2['!cols'][1]={wch:60}; // wider column for question text
+    ws2['!cols'][1]={wch:60};
     XLSX.utils.book_append_sheet(wb,ws2,'Question Analysis');
   }
   XLSX.writeFile(wb,'NCIT_Exam_Report_'+STATE.cohort.replace(/\s+/g,'_')+'.xlsx');
@@ -663,14 +801,12 @@ function exportCredlyCSV(){
   const isSpecialized=config.hasTopics;
   const hasExclusions=STATE.excludedQuestions.size>0;
 
-  // Get badge template IDs from constants
   const badgeBasic=BADGE_TEMPLATE_IDS.NCIT_BASIC&&!BADGE_TEMPLATE_IDS.NCIT_BASIC.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_BASIC:'';
   const badgeSpecOverall=BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_OVERALL&&!BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_OVERALL.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_OVERALL:'';
   const badgeAIS=BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIS&&!BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIS.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIS:'';
   const badgeAIA=BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA&&!BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA:'';
   const badgeIRD=BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD&&!BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD:'';
 
-  // Validate at least one badge ID is configured
   if(!isSpecialized && !badgeBasic){
     alert('The NCIT Basic Badge Template ID has not been configured. Contact your administrator to update the tool.');
     return;
@@ -680,7 +816,6 @@ function exportCredlyCSV(){
     return;
   }
 
-  // Filter to passed + paid
   const eligible=STATE.reportData.filter(r=>{
     const score=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
     const passed=score>=70;
@@ -693,11 +828,9 @@ function exportCredlyCSV(){
     return;
   }
 
-  // Build Credly CSV rows
   const credlyHeaders=['Badge Template ID','Recipient Email','Issued To First Name','Issued To Middle Name','Issued To Last Name','Issued at','Expires at','Issuer Earner ID','Group Tag','Country or Territory','State or Province','Evidence Name','Evidence URL','URL Evidence Description','Text Evidence Title','Text Evidence Description','Id Evidence Title','Id Evidence Description','Locale'];
   const credlyRows=[];
 
-  // Format today's date as M/D/YYYY for the "Issued at" field
   const now=new Date();
   const issuedAt=(now.getMonth()+1)+'/'+now.getDate()+'/'+now.getFullYear();
 
@@ -705,7 +838,6 @@ function exportCredlyCSV(){
     let badgesIssued=false;
 
     if(!isSpecialized){
-      // Basic exam: one badge per candidate
       if(badgeBasic){
         const score=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
         const programName=r.form==='NCITBCAN'?'NCIT Basic Canadian Program':'NCIT Basic Program';
@@ -713,9 +845,6 @@ function exportCredlyCSV(){
         badgesIssued=true;
       }
     }else{
-      // Specialized exam: up to 4 badges per candidate
-
-      // Overall badge
       if(badgeSpecOverall){
         const overallScore=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
         if(overallScore>=70){
@@ -724,7 +853,6 @@ function exportCredlyCSV(){
         }
       }
 
-      // AIS badge
       if(badgeAIS){
         const aisScore=r.aisAdjusted?r.aisAdjScoreNum:r.aisScoreNum;
         if(aisScore!==null && aisScore>=70){
@@ -733,7 +861,6 @@ function exportCredlyCSV(){
         }
       }
 
-      // AIA badge
       if(badgeAIA){
         const aiaScore=r.aiaAdjusted?r.aiaAdjScoreNum:r.aiaScoreNum;
         if(aiaScore!==null && aiaScore>=70){
@@ -742,7 +869,6 @@ function exportCredlyCSV(){
         }
       }
 
-      // IRD badge
       if(badgeIRD){
         const irdScore=r.irdAdjusted?r.irdAdjScoreNum:r.irdScoreNum;
         if(irdScore!==null && irdScore>=70){
@@ -752,7 +878,6 @@ function exportCredlyCSV(){
       }
     }
 
-    // Update Digital Badge Issued column in the report
     if(badgesIssued) r.digitalBadgeIssued=issuedAt;
   });
 
@@ -761,7 +886,6 @@ function exportCredlyCSV(){
     return;
   }
 
-  // Generate CSV
   let csv='\uFEFF'+credlyHeaders.map(h=>'"'+h+'"').join(',')+'\n';
   credlyRows.forEach(row=>{
     csv+=row.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')+'\n';
@@ -769,11 +893,9 @@ function exportCredlyCSV(){
 
   downloadFile(csv,'Credly_Bulk_Issue_'+STATE.cohort.replace(/\s+/g,'_')+'.csv','text/csv');
 
-  // Re-render report table to show updated Digital Badge Issued dates
   const config2=EXAM_CONFIG[STATE.examType];
   renderReportTable(STATE.reportData,config2);
 
-  // Show summary
   const badgeCount=credlyRows.length;
   const candidateCount=eligible.length;
   setStatus('Credly export complete: '+badgeCount+' badge(s) for '+candidateCount+' candidate(s).','success');
@@ -812,7 +934,6 @@ function processPaymentFile(file){
 
       if(rows.length===0){setPaymentStatus('The uploaded file contains no data.','error');return;}
 
-      // Find the email and payment status columns (case-insensitive)
       const sampleRow=rows[0];
       const keys=Object.keys(sampleRow);
       const emailKey=keys.find(k=>k.toLowerCase().trim()==='email');
@@ -821,7 +942,6 @@ function processPaymentFile(file){
       if(!emailKey){setPaymentStatus('Could not find an "Email" column in the uploaded file. Found columns: '+keys.join(', '),'error');return;}
       if(!paymentKey){setPaymentStatus('Could not find a "Payment Status" column in the uploaded file. Found columns: '+keys.join(', '),'error');return;}
 
-      // Build email -> payment status map
       const paymentMap=new Map();
       rows.forEach(row=>{
         const email=String(row[emailKey]||'').toLowerCase().trim();
@@ -829,7 +949,6 @@ function processPaymentFile(file){
         if(email) paymentMap.set(email,status);
       });
 
-      // Match to report data
       let matched=0,unmatched=0,notInReport=0;
       const unmatchedNames=[];
 
@@ -837,7 +956,6 @@ function processPaymentFile(file){
         const email=String(r.email||'').toLowerCase().trim();
         if(paymentMap.has(email)){
           const status=paymentMap.get(email);
-          // Map common payment statuses to Yes/No
           const lower=status.toLowerCase();
           if(lower==='completed'||lower==='paid'||lower==='approved'||lower==='success'||lower==='yes'){
             r.paid='Yes';
@@ -846,7 +964,7 @@ function processPaymentFile(file){
           }else if(lower==='refunded'||lower==='cancelled'||lower==='canceled'||lower==='declined'||lower==='failed'||lower==='no'){
             r.paid='No';
           }else{
-            r.paid=status; // Keep the original value if we can't map it
+            r.paid=status;
           }
           matched++;
         }else{
@@ -857,17 +975,14 @@ function processPaymentFile(file){
 
       notInReport=paymentMap.size-matched;
 
-      // Re-render the table
       const config=EXAM_CONFIG[STATE.examType];
       renderReportTable(STATE.reportData,config);
 
-      // Show results
       let msg='<strong>'+matched+'</strong> of '+STATE.reportData.length+' student(s) matched by email.';
       if(unmatched>0) msg+=' <strong>'+unmatched+'</strong> student(s) had no matching payment record: '+unmatchedNames.join(', ')+'.';
       if(notInReport>0) msg+=' '+notInReport+' payment record(s) in the file did not match any student in the exam report.';
       setPaymentStatus(msg,matched>0?'success':'error');
 
-      // Switch to report tab to show the updated Paid column
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
       document.querySelector('.tab-btn[data-tab="report"]').classList.add('active');
@@ -880,6 +995,241 @@ function processPaymentFile(file){
   };
   reader.readAsArrayBuffer(file);
 }
+
+// ============================================================
+// Email Reminders
+// ============================================================
+function updateReminderStudents(){
+  if(!STATE.reportData||STATE.reportData.length===0){
+    STATE.reminderStudents=[];
+    document.getElementById('generateRemindersBtn').disabled=true;
+    document.getElementById('reminderList').innerHTML='<p style="color:#999;font-style:italic;">Pull exam data first to see eligible students.</p>';
+    document.getElementById('reminderSummary').innerHTML='';
+    return;
+  }
+
+  // Filter: no exam date (not completed) but has been assigned (is in the group and retrieved via API)
+  // We exclude those with a date of exam (they've taken it)
+  STATE.reminderStudents=STATE.reportData.filter(r=>!r.dateOfExam||r.dateOfExam.trim()==='');
+
+  const listEl=document.getElementById('reminderList');
+  const summaryEl=document.getElementById('reminderSummary');
+
+  if(STATE.reminderStudents.length===0){
+    listEl.innerHTML='<p style="color:var(--pass-green);font-style:italic;">&#10003; All students have completed the exam.</p>';
+    summaryEl.innerHTML='';
+    document.getElementById('generateRemindersBtn').disabled=true;
+  }else{
+    let h='';
+    STATE.reminderStudents.forEach(s=>{
+      h+='<div class="reminder-list-item"><span>'+esc(s.firstName)+' '+esc(s.lastName)+'</span><span style="color:#888;">'+esc(s.email)+'</span></div>';
+    });
+    listEl.innerHTML=h;
+    summaryEl.innerHTML='<strong>'+STATE.reminderStudents.length+'</strong> student(s) have not yet completed the exam.';
+    document.getElementById('generateRemindersBtn').disabled=false;
+  }
+}
+
+function setReminderStatus(msg,type){
+  const el=document.getElementById('reminderStatus');
+  el.className='status-bar'+(type?' '+type:'');
+  el.innerHTML=msg;
+}
+
+// Generate reminders button - shows date prompt first
+document.getElementById('generateRemindersBtn').addEventListener('click',()=>{
+  if(STATE.reminderStudents.length===0){
+    setReminderStatus('No students to send reminders to.','error');
+    return;
+  }
+  // Show date prompt modal
+  document.getElementById('datePromptOverlay').classList.remove('hidden');
+  document.getElementById('datePromptInput').value=document.getElementById('reminderDeadline').value||'';
+  document.getElementById('datePromptInput').focus();
+});
+
+document.getElementById('datePromptCancel').addEventListener('click',()=>{
+  document.getElementById('datePromptOverlay').classList.add('hidden');
+});
+
+document.getElementById('datePromptConfirm').addEventListener('click',()=>{
+  const deadline=document.getElementById('datePromptInput').value.trim();
+  if(!deadline){
+    alert('Please enter a deadline date.');
+    return;
+  }
+  document.getElementById('reminderDeadline').value=deadline;
+  document.getElementById('datePromptOverlay').classList.add('hidden');
+  generateReminderEmails();
+});
+
+// Allow Enter key in date prompt
+document.getElementById('datePromptInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    document.getElementById('datePromptConfirm').click();
+  }
+});
+
+function generateReminderEmails(){
+  if(STATE.reminderStudents.length===0){
+    setReminderStatus('No students to send reminders to.','error');
+    return;
+  }
+
+  const deadline=document.getElementById('reminderDeadline').value.trim();
+  if(!deadline){
+    setReminderStatus('Please enter an exam deadline date.','error');
+    return;
+  }
+
+  STATE.currentReminderPreview=0;
+  document.getElementById('reminderPreviewSection').classList.remove('hidden');
+  renderReminderPreview();
+  setReminderStatus('Generated '+STATE.reminderStudents.length+' reminder email(s). Preview them below and export when ready.','success');
+}
+
+function renderReminderPreview(){
+  const students=STATE.reminderStudents;
+  if(students.length===0)return;
+  const idx=STATE.currentReminderPreview;
+  const s=students[idx];
+  document.getElementById('reminderPreviewCount').innerHTML=(idx+1)+' of '+students.length+' — '+esc(s.firstName)+' '+esc(s.lastName);
+  document.getElementById('reminderPreviewFrame').innerHTML=buildReminderEmailHtml(s,false);
+}
+
+document.getElementById('reminderPrevBtn').addEventListener('click',()=>{
+  if(STATE.currentReminderPreview>0){
+    STATE.currentReminderPreview--;
+    renderReminderPreview();
+  }
+});
+
+document.getElementById('reminderNextBtn').addEventListener('click',()=>{
+  if(STATE.currentReminderPreview<STATE.reminderStudents.length-1){
+    STATE.currentReminderPreview++;
+    renderReminderPreview();
+  }
+});
+
+document.getElementById('reminderCopyBtn').addEventListener('click',()=>{
+  const frame=document.getElementById('reminderPreviewFrame');
+  const range=document.createRange();
+  range.selectNodeContents(frame);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('copy');
+  sel.removeAllRanges();
+  const btn=document.getElementById('reminderCopyBtn');
+  btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent='Copy This Email',1500);
+});
+
+function buildReminderEmailHtml(student,wrapDoc){
+  const programName=document.getElementById('reminderProgramName').value||'NCIT Program';
+  const deadline=document.getElementById('reminderDeadline').value||'[deadline not set]';
+  const bodyTemplate=document.getElementById('reminderBody').value;
+  
+  const bodyText=bodyTemplate.replace(/\{programName\}/g,programName).replace(/\{deadline\}/g,deadline);
+  const bodyLines=bodyText.split('\n').filter(l=>l.trim());
+
+  const F="font-family:'Open Sans',Arial,Helvetica,sans-serif;";
+  const FH="font-family:'Trebuchet MS',Arial,Helvetica,sans-serif;";
+  const SP='<tr><td style="height:24px;font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr>';
+
+  let h='';
+  if(wrapDoc){
+    h+='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><!--[if gte mso 9]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]--><style type="text/css">body,table,td,p,a{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;}table,td{mso-table-lspace:0pt;mso-table-rspace:0pt;}img{-ms-interpolation-mode:bicubic;border:0;outline:none;text-decoration:none;}body{margin:0;padding:0;width:100%!important;-webkit-font-smoothing:antialiased;}#outlook a{padding:0;}.ReadMsgBody{width:100%;}.ExternalClass{width:100%;}.ExternalClass,.ExternalClass p,.ExternalClass span,.ExternalClass font,.ExternalClass td,.ExternalClass div{line-height:100%;}</style></head><body style="margin:0;padding:0;background-color:#ffffff;">';
+  }
+
+  // Header
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#64092c;"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:24px 36px;"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td width="74" valign="middle" style="padding-right:18px;"><!--[if mso]><table cellpadding="0" cellspacing="0" border="0"><tr><td width="56" height="56"><![endif]--><img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR" width="56" height="56" style="display:block;width:56px;height:56px;border:0;"/><!--[if mso]></td></tr></table><![endif]--></td><td valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+FH+'font-size:20px;font-weight:700;color:#ffffff;line-height:24px;mso-line-height-rule:exactly;">Exam Reminder</td></tr><tr><td style="'+F+'font-size:12px;color:rgba(255,255,255,0.7);line-height:16px;mso-line-height-rule:exactly;padding-top:3px;">CLEAR Learning Portal</td></tr></table></td></tr></table></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table>';
+
+  // Gold stripe
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="height:4px;background-color:#dda838;font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>';
+
+  // Body content
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:32px 36px 0;">';
+
+  // Greeting
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:16px;color:#333333;line-height:24px;mso-line-height-rule:exactly;padding-bottom:20px;">Hello <strong>'+esc(student.firstName)+' '+esc(student.lastName)+'</strong>,</td></tr></table>';
+
+  // Body paragraphs - allow HTML (for links) but bold program name and deadline
+  bodyLines.forEach(line=>{
+    let lineHtml=line;
+    // Bold the program name and deadline (escape them for safe replacement, but allow other HTML through)
+    lineHtml=lineHtml.split(programName).join('<strong>'+esc(programName)+'</strong>');
+    lineHtml=lineHtml.split(deadline).join('<strong style="color:#64092c;">'+esc(deadline)+'</strong>');
+    // Style any links with the CLEAR blue color
+    lineHtml=lineHtml.replace(/<a /g,'<a style="color:#084d78;" ');
+    h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+lineHtml+'</td></tr></table>';
+  });
+
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">'+SP+'</table>';
+
+  // Sign-off
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:21px;mso-line-height-rule:exactly;padding-bottom:20px;">Thank you,</td></tr></table>';
+
+  // Signature block
+  h+='<table border="0" cellspacing="0" cellpadding="3" role="presentation" style="width:100%;max-width:620px;"><tbody>';
+  h+='<tr><td rowspan="4" valign="top" width="110" style="text-align:center;"><a href="https://www.portal.clearhq.org" target="_blank" rel="noopener noreferrer"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/TalentLMS/Email_CLEAR_Logo.png" alt="CLEAR Logo" width="100" style="display:block;width:100px;border:0;"/></a></td><td colspan="3" valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:12px;padding:3px;"><strong style="color:#64092c;font-weight:700;font-size:16px;">CLEAR Learning Staff</strong></td></tr></table></td></tr>';
+  h+='<tr><td colspan="3" valign="top"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:12px;padding:3px;line-height:18px;mso-line-height-rule:exactly;"><a href="https://www.clearhq.org" target="_blank" rel="noopener noreferrer" style="color:#084d78;">www.clearhq.org</a><br/>Council on Licensure, Enforcement and Regulation</td></tr><tr><td style="'+F+'font-size:12px;padding:3px;line-height:18px;mso-line-height-rule:exactly;"><strong style="color:#64092c;font-weight:700;">Phone</strong>: 859.269.1401<br/><strong style="color:#64092c;font-weight:700;">Email</strong>: <a href="mailto:clearlearning@clearhq.org" style="color:#084d78;">clearlearning@clearhq.org</a></td></tr><tr><td style="'+F+'font-size:12px;padding:3px;line-height:18px;mso-line-height-rule:exactly;">108 Wind Haven Dr., Ste. A, Nicholasville, KY 40356</td></tr></table></td></tr>';
+  h+='<tr><td valign="middle" width="75"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="padding:3px;"><a href="https://twitter.com/CLEARHQ" target="_blank" rel="noopener noreferrer"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/TalentLMS/email_x.png" alt="X" width="20" height="20" style="display:inline-block;width:20px;height:20px;vertical-align:middle;border:0;"/></a><a href="https://facebook.com/CLEARHQ/" target="_blank" rel="noopener noreferrer"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/TalentLMS/email_facebook.png" alt="Facebook" width="20" height="20" style="display:inline-block;width:20px;height:20px;vertical-align:middle;border:0;"/></a><a href="https://www.linkedin.com/company/council-on-licensure-enforcement-and-regulation-clear-/" target="_blank" rel="noopener noreferrer"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/TalentLMS/Email_linkedin.png" alt="LinkedIn" width="20" height="20" style="display:inline-block;width:20px;height:20px;vertical-align:middle;border:0;"/></a></td></tr></table></td><td colspan="2" valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:12px;padding:3px;"><i style="color:#64092c;">Promoting Regulatory Excellence</i></td></tr></table></td></tr></tbody></table>';
+  h+='</td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table>';
+
+  if(wrapDoc) h+='</body></html>';
+  return h;
+}
+
+// Export Reminder Emails for Power Automate (ZIP)
+document.getElementById('exportReminderPABtn').addEventListener('click',async()=>{
+  const students=STATE.reminderStudents;
+  if(students.length===0){alert('No reminder emails to export.');return;}
+
+  const deadline=document.getElementById('reminderDeadline').value.trim();
+  if(!deadline){alert('Please enter an exam deadline date first.');return;}
+
+  const btn=document.getElementById('exportReminderPABtn');
+  btn.disabled=true;btn.innerHTML='&#9993; Generating ZIP...';
+
+  try{
+    const zip=new JSZip();
+    const folder=zip.folder('ExamReminderEmails');
+
+    students.forEach(s=>{
+      const fullHtml=buildReminderEmailHtml(s,true);
+      const safeEmail=(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_');
+      folder.file('ExamReminder_'+safeEmail+'.html',fullHtml);
+    });
+
+    const manifest=students.map(s=>({
+      email:s.email,
+      firstName:s.firstName,
+      lastName:s.lastName,
+      file:'ExamReminder_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',
+      cohort:s.cohort
+    }));
+    folder.file('_manifest.json',JSON.stringify(manifest,null,2));
+
+    const blob=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='ExamReminderEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setReminderStatus('Exported '+students.length+' reminder email(s) to ZIP file.','success');
+  }catch(err){
+    alert('Error generating ZIP: '+err.message);
+    console.error(err);
+  }
+
+  btn.disabled=false;btn.innerHTML='&#9993; Export Emails for Power Automate';
+});
 </script>
 </body>
 </html>
