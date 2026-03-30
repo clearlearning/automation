@@ -64,42 +64,41 @@
   }
 
   /* INSTRUCTIONS */
-
   .instructions {
-  background: var(--white);
-  border-radius: 12px;
-  padding: 24px 32px;
-  box-shadow: var(--shadow);
-  margin-bottom: 28px;
-  border-left: 4px solid var(--gold);
-}
-.instructions h2 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--burgundy);
-  margin-bottom: 14px;
-}
-.instructions ol {
-  margin: 0 0 16px 20px;
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--text);
-}
-.instructions ol li {
-  padding-left: 4px;
-}
-.instructions a {
-  color: var(--blue);
-  text-decoration: underline;
-}
-.instructions a:hover {
-  color: var(--burgundy);
-}
-.instructions p {
-  font-size: 13px;
-  color: var(--text-light);
-  line-height: 1.6;
-}
+    background: var(--white);
+    border-radius: 12px;
+    padding: 24px 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+    border-left: 4px solid var(--gold);
+  }
+  .instructions h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--burgundy);
+    margin-bottom: 14px;
+  }
+  .instructions ol {
+    margin: 0 0 16px 20px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .instructions ol li {
+    padding-left: 4px;
+  }
+  .instructions a {
+    color: var(--blue);
+    text-decoration: underline;
+  }
+  .instructions a:hover {
+    color: var(--burgundy);
+  }
+  .instructions p {
+    font-size: 13px;
+    color: var(--text-light);
+    line-height: 1.6;
+  }
 
   /* UPLOAD ZONE */
   .upload-zone {
@@ -247,6 +246,7 @@
     border-top: 1px solid var(--border);
     background: #faf9f7;
     border-radius: 0 0 8px 8px;
+    position: sticky; bottom: 0;
   }
   .ms-actions button {
     background: none; border: none; font-size: 12px;
@@ -345,18 +345,18 @@
   }
 
   .comments-table .cb-col {
-  width: 40px;
-  text-align: center !important;
-}
+    width: 40px;
+    text-align: center !important;
+  }
   .comments-table input[type="checkbox"] {
-  accent-color: var(--burgundy);
-  width: 15px; height: 15px;
-  cursor: pointer;
-}
+    accent-color: var(--burgundy);
+    width: 15px; height: 15px;
+    cursor: pointer;
+  }
   .comment-excluded td:not(.cb-col) {
-  opacity: 0.4;
-  text-decoration: line-through;
-}
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
 
   .export-bar {
     display: none; gap: 12px; align-items: center;
@@ -378,9 +378,110 @@
   .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
   .empty-state h3 { font-size: 16px; color: var(--charcoal); margin-bottom: 6px; }
 
+  /* INSTRUCTOR ASSIGNMENT PANEL */
+  .assignment-panel {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+    display: none;
+    border-left: 4px solid var(--blue);
+  }
+  .assignment-panel.visible { display: block; }
+  .assignment-panel h2 {
+    font-size: 16px; font-weight: 700; color: var(--burgundy);
+    margin-bottom: 6px;
+  }
+  .assignment-panel .subtitle {
+    font-size: 13px; color: var(--text-light); margin-bottom: 20px; line-height: 1.5;
+  }
+  .assignment-table {
+    width: 100%; border-collapse: collapse;
+  }
+  .assignment-table th {
+    background: #f9f7f4; padding: 10px 14px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-light);
+    text-align: left; border-bottom: 2px solid var(--border);
+  }
+  .assignment-table td {
+    padding: 10px 14px; font-size: 14px;
+    border-bottom: 1px solid #f0ede8; vertical-align: middle;
+  }
+  .assignment-table td:first-child {
+    font-weight: 600; color: var(--burgundy);
+  }
+  .assignment-table tr:hover { background: #fdfcfa; }
+  .assignment-table select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; font-family: 'Open Sans', sans-serif;
+    color: var(--text); background: var(--white);
+  }
+  .assignment-table select:focus {
+    outline: none; border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(221, 168, 56, 0.15);
+  }
+  .assignment-table input[type="text"] {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; font-family: 'Open Sans', sans-serif;
+    color: var(--text); margin-top: 6px;
+  }
+  .assignment-table input[type="text"]:focus {
+    outline: none; border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(221, 168, 56, 0.15);
+  }
+
+  .instructor-summary {
+    margin-top: 20px; padding: 16px 20px;
+    background: #fdf6e3; border-radius: 8px;
+    border: 1px solid var(--gold);
+  }
+  .instructor-summary h3 {
+    font-size: 14px; font-weight: 700; color: var(--charcoal); margin-bottom: 10px;
+  }
+  .instructor-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 13px; font-weight: 600; color: var(--burgundy);
+    margin: 3px 4px;
+  }
+  .instructor-chip .module-count {
+    background: var(--burgundy); color: var(--white);
+    border-radius: 50%; width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* TAB-STYLE INSTRUCTOR REPORTS */
+  .instructor-tabs {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 0;
+    padding: 0 4px;
+  }
+  .instructor-tab {
+    padding: 10px 20px; border-radius: 8px 8px 0 0;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border);
+    border-bottom: none; background: #f0ede8;
+    color: var(--text-light); transition: all 0.2s;
+    font-family: 'Open Sans', sans-serif;
+  }
+  .instructor-tab:hover { background: #e8e4de; }
+  .instructor-tab.active {
+    background: var(--white); color: var(--burgundy);
+    border-color: var(--border);
+    position: relative;
+  }
+  .instructor-tab.active::after {
+    content: ''; position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 2px; background: var(--white);
+  }
+
   @media print {
     .header { padding: 16px 20px; }
-    .upload-zone, .filters-panel, .export-bar, .btn { display: none !important; }
+    .upload-zone, .filters-panel, .export-bar, .btn, .assignment-panel, .instructor-tabs { display: none !important; }
     .report-section { display: block !important; }
     .container { padding: 0 20px; }
     .report-card { box-shadow: none; border: 1px solid #ddd; }
@@ -389,7 +490,7 @@
 </head>
 <body>
 
-<div class="header"> 
+<div class="header">
   <div class="header-icon"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" style="width: 100px; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0, 0, 0, .3); padding: 10px; background: white;" alt="CLEAR Learning Logo"></div>
   <div>
     <h1>CLEAR Learning Module Evaluation Report Generator</h1>
@@ -419,7 +520,7 @@
 
   <div class="filters-panel" id="filtersPanel">
     <div class="filters-title"><h2>⚙ Report Filters</h2></div>
-    <div class="instructions" style="background: #FFFDF9;"><p style="line-height: 1.5; font-size: .9rem; color: #000;"><strong>Note:</strong> To create a report that will be used to update the Master Instructor Report you <strong>MUST</strong> provide the Instructor Name and Cohort Name. Populate as many of the filters below as possible; the more specific you are, the better data you will recieve.</p></div>
+    <div class="instructions" style="background: #FFFDF9;"><p style="line-height: 1.5; font-size: .9rem; color: #000;"><strong>Note:</strong> To create a report that will be used to update the Master Instructor Report you <strong>MUST</strong> provide the Instructor Name and Cohort Name. Populate as many of the filters below as possible; the more specific you are, the better data you will receive.</p></div>
     <div class="filters-grid">
       <div class="filter-group">
         <label>Course</label>
@@ -459,7 +560,8 @@
       <div class="filter-group">
         <label>Instructor Name</label>
         <select id="instructorSelect" onchange="handleInstructorChange()">
-          <option value="">— Select Instructor —</option>
+          <option value="">-- Select Instructor --</option>
+          <option value="_ASSIGN_MULTI_">Assign per Module (below)</option>
           <option value="Anderegg, Karen">Anderegg, Karen</option>
           <option value="Barton, Andrew">Barton, Andrew</option>
           <option value="Betteridge, Lise">Betteridge, Lise</option>
@@ -503,32 +605,41 @@
     </div>
   </div>
 
+  <!-- INSTRUCTOR ASSIGNMENT PANEL (visible only in multi-assign mode) -->
+  <div class="assignment-panel" id="assignmentPanel">
+    <h2>👩‍🏫 Assign Instructors to Modules</h2>
+    <p class="subtitle">Select an instructor for each module included in the report. Modules assigned to the same instructor will be combined into a single report. Only modules with data matching your filters above will appear.</p>
+    <div id="assignmentTableWrap"></div>
+    <div id="assignmentSummary"></div>
+  </div>
+
   <div class="export-bar" id="exportBar" style="flex-direction: column; align-items: flex-start;">
     <div style="width: 100%;">
       <h2 style="margin: 20px auto; text-align: left !important; color: #64092c;">Next Steps:</h2>
       <div class="instructions">
         <ol>
           <li>Review the report below and remove any comments you do not wish to include.</li>
-          <li>Click the <strong>Download the PDF</strong> button to generate the file you will send to the instructor.</li>
-          <li>Click the <strong>Download XLSX</strong> to generage the file you will use to update the master instructor file.</li>
+          <li>Click the <strong>Download PDF</strong> button to generate the file(s) you will send to the instructor(s).</li>
+          <li>Click the <strong>Download XLSX</strong> to generate the file(s) you will use to update the master instructor file.</li>
           <li>Click the <strong>Update Master Instructor file</strong> button to navigate to the next step.</li>
         </ol>
       </div>
-      <div style="display: flex; gap: 20px;">
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
         <button class="btn btn-export" onclick="exportPDF()">📄 Download PDF</button>
         <button class="btn btn-export" onclick="exportXLSX()">📗 Download XLSX</button>
-        <a href="https://clearlearning.github.io/about/EvalDataUpdater.html" rel="noopener noreferrer" target="_blank" style=" text-decoration: none;" class="btn btn-export">🔗 Update Master Instructor File</a> 
-      </div> 
+        <a href="https://clearlearning.github.io/about/EvalDataUpdater.html" rel="noopener noreferrer" target="_blank" style=" text-decoration: none;" class="btn btn-export">🔗 Update Master Instructor File</a>
+      </div>
     </div>
   </div>
 
   <div class="report-section" id="reportSection">
+    <div id="instructorTabsContainer"></div>
     <div id="reportContent"></div>
   </div>
 </div>
 
 <script>
-	let allData = [];
+  let allData = [];
   const ratingCols = [
     'The instructor was',
     'The style of delivery was',
@@ -540,6 +651,24 @@
   let lastReportData = null;
   let selectedModules = new Set();
   let allModuleValues = [];
+  // Multi-instructor mode
+  let isMultiInstructorMode = false;
+  // Keyed by instructor name -> { tableRows, grandAvgs, grandOverall, comments, totalResponses, cohortName, metadata, modules[] }
+  let allInstructorReports = {};
+  let activeInstructorTab = null;
+  // Persists excluded comment indices per instructor across tab switches
+  // Keyed by instructor name -> Set of excluded comment indices
+  let excludedByInstructor = {};
+
+  const instructorList = [
+    'Anderegg, Karen','Barton, Andrew','Betteridge, Lise','Chambers, Sarah',
+    'Cooley, Mandi','Crumley, John','Curley, Stephen','deFoy, Carmen',
+    'Deforest, Denise','DeLuca, Ryan','DeSousa, Lisa','Eichrodt, Sean',
+    'Erikson, Marcus','Jenkins, Robin','Kay, David','Keirstead, Graeme',
+    'Pfiefer, Judy','Robinson, Jan','Salvatori, Michael','Stansfield, Katherine',
+    'Thibert, Lena','Thompson, David (Eric)','Thompson-May, Brett',
+    'Verge, Vicki','Wade, Amigo','Wilkie, Kathy','Williams, Deanna'
+  ];
 
   // ---- INSTRUCTOR DROPDOWN ----
   function handleInstructorChange() {
@@ -548,10 +677,20 @@
     if (sel.value === '_OTHER_') {
       other.style.display = 'block';
       other.focus();
+      hideAssignmentPanel();
+    } else if (sel.value === '_ASSIGN_MULTI_') {
+      other.style.display = 'none';
+      other.value = '';
+      // Panel will populate when report is generated
     } else {
       other.style.display = 'none';
       other.value = '';
+      hideAssignmentPanel();
     }
+  }
+
+  function hideAssignmentPanel() {
+    document.getElementById('assignmentPanel').classList.remove('visible');
   }
 
   function getInstructorName() {
@@ -559,6 +698,7 @@
     if (sel.value === '_OTHER_') {
       return document.getElementById('instructorOther').value.trim();
     }
+    if (sel.value === '_ASSIGN_MULTI_') return '';
     return sel.value || '';
   }
 
@@ -660,6 +800,10 @@
   function resetAll() {
     allData = [];
     lastReportData = null;
+    allInstructorReports = {};
+    activeInstructorTab = null;
+    isMultiInstructorMode = false;
+    excludedByInstructor = {};
     selectedModules.clear();
     allModuleValues = [];
     uploadZone.classList.remove('loaded');
@@ -674,6 +818,7 @@
     document.getElementById('filtersPanel').classList.remove('visible');
     document.getElementById('reportSection').classList.remove('visible');
     document.getElementById('exportBar').classList.remove('visible');
+    hideAssignmentPanel();
   }
 
   // ---- MULTI-SELECT MODULE DROPDOWN ----
@@ -774,6 +919,12 @@
     document.getElementById('reportSection').classList.remove('visible');
     document.getElementById('exportBar').classList.remove('visible');
     document.getElementById('filterSummary').textContent = '';
+    hideAssignmentPanel();
+    allInstructorReports = {};
+    activeInstructorTab = null;
+    isMultiInstructorMode = false;
+    excludedByInstructor = {};
+    document.getElementById('instructorTabsContainer').innerHTML = '';
   }
 
   function getFilteredData() {
@@ -803,28 +954,87 @@
     });
   }
 
-  // ---- REPORT ----
-  function generateReport() {
-    const filtered = getFilteredData();
+  // ---- ASSIGNMENT TABLE ----
+  function buildAssignmentTable(filteredModuleNames) {
+    const panel = document.getElementById('assignmentPanel');
+    const wrap = document.getElementById('assignmentTableWrap');
 
-    document.getElementById('filterSummary').textContent =
-      `${filtered.length} response${filtered.length !== 1 ? 's' : ''} match your filters`;
+    let html = `<table class="assignment-table"><thead><tr>
+      <th style="width: 50%;">Module</th>
+      <th style="width: 50%;">Instructor</th>
+    </tr></thead><tbody>`;
 
-    if (!filtered.length) {
-      document.getElementById('reportContent').innerHTML = `
-        <div class="report-card"><div class="report-card-body">
-          <div class="empty-state">
-            <div class="icon">🔍</div>
-            <h3>No responses match these filters</h3>
-            <p>Try adjusting your criteria or date range.</p>
-          </div>
-        </div></div>`;
-      document.getElementById('reportSection').classList.add('visible');
-      document.getElementById('exportBar').classList.remove('visible');
+    filteredModuleNames.forEach((mod, i) => {
+      html += `<tr>
+        <td>${escapeHtml(mod)}</td>
+        <td>
+          <select id="assignInst_${i}" data-module="${escapeHtml(mod)}" class="assign-select" onchange="handleAssignChange(${i})">
+            <option value="">-- Select --</option>
+            ${instructorList.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}
+            <option value="_OTHER_">Other (type name)</option>
+          </select>
+          <input type="text" id="assignOther_${i}" class="assign-other" placeholder="Type instructor name" style="display:none;">
+        </td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    panel.classList.add('visible');
+    updateAssignmentSummary();
+  }
+
+  function handleAssignChange(idx) {
+    const sel = document.getElementById('assignInst_' + idx);
+    const other = document.getElementById('assignOther_' + idx);
+    if (sel.value === '_OTHER_') {
+      other.style.display = 'block';
+      other.focus();
+      other.addEventListener('input', updateAssignmentSummary);
+    } else {
+      other.style.display = 'none';
+      other.value = '';
+    }
+    updateAssignmentSummary();
+  }
+
+  function getModuleAssignments() {
+    const assignments = {};
+    document.querySelectorAll('.assign-select').forEach((sel, i) => {
+      const mod = sel.getAttribute('data-module');
+      let instructor = sel.value;
+      if (instructor === '_OTHER_') {
+        instructor = document.getElementById('assignOther_' + i).value.trim();
+      }
+      if (instructor && instructor !== '_OTHER_') {
+        if (!assignments[instructor]) assignments[instructor] = [];
+        assignments[instructor].push(mod);
+      }
+    });
+    return assignments;
+  }
+
+  function updateAssignmentSummary() {
+    const assignments = getModuleAssignments();
+    const div = document.getElementById('assignmentSummary');
+    const names = Object.keys(assignments);
+    if (!names.length) {
+      div.innerHTML = '';
       return;
     }
+    let html = '<div class="instructor-summary"><h3>Assignment Summary</h3>';
+    names.sort().forEach(name => {
+      html += `<span class="instructor-chip">
+        <span class="module-count">${assignments[name].length}</span>
+        ${escapeHtml(name)}
+      </span>`;
+    });
+    html += '</div>';
+    div.innerHTML = html;
+  }
 
-    // Group by module
+  // ---- BUILD REPORT DATA for a set of filtered rows ----
+  function buildReportDataForRows(filtered, instructorName, cohortName) {
     const modules = {};
     filtered.forEach(row => {
       const m = row._module;
@@ -833,7 +1043,6 @@
     });
     const moduleNames = Object.keys(modules).sort();
 
-    // Build table data
     const tableRows = [];
     let grandTotals = ratingCols.map(() => ({ sum: 0, count: 0 }));
 
@@ -858,11 +1067,10 @@
     const grandOverall = grandValidAvgs.length
       ? grandValidAvgs.reduce((a, b) => a + b, 0) / grandValidAvgs.length : null;
 
-    // Collect meaningful comments
     const comments = [];
     filtered.forEach(row => {
       const c = row._comment;
-      if (c && c !== '-' && c !== '.' && c !== '—' && c !== '–' && c.length > 1) {
+      if (c && c !== '-' && c !== '.' && c !== '\u2014' && c !== '\u2013' && c.length > 1) {
         comments.push({
           module: row._module,
           date: row._startDate
@@ -873,39 +1081,201 @@
       }
     });
 
-    // Store for export
-    const instructorName = getInstructorName();
-    const cohortName = getCohortName();
     const metadata = {
       instructor: instructorName,
       cohort: cohortName,
       course: document.getElementById('filterCourse').value || 'All',
       version: document.getElementById('filterVersion').value || 'All',
       method: document.getElementById('filterMethod').value || 'All',
-      modules: (selectedModules.size > 0 && selectedModules.size < allModuleValues.length)
-        ? [...selectedModules].sort().join(', ')
-        : 'All',
+      modules: moduleNames.join(', ') || 'All',
       dateFrom: document.getElementById('filterDateFrom').value || '',
       dateTo: document.getElementById('filterDateTo').value || '',
       generatedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
     };
-    lastReportData = {
+
+    return {
       tableRows, grandAvgs, grandOverall, comments,
       totalResponses: filtered.length,
       instructorName,
       cohortName,
-      metadata
+      metadata,
+      moduleNames
     };
+  }
 
-    // ---- RENDER SCORES TABLE ----
-    let html = '';
-    if (instructorName || cohortName) {
-      html += `<div style="background: var(--white); border-radius: 12px; padding: 16px 28px; margin-bottom: 16px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">`;
-      if (instructorName) {
-        html += `<div><span style="font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Instructor:</span> <span style="font-size: 16px; font-weight: 700; color: var(--burgundy);">${escapeHtml(instructorName)}</span></div>`;
+  // ---- REPORT ----
+  function generateReport() {
+    const sel = document.getElementById('instructorSelect');
+    isMultiInstructorMode = (sel.value === '_ASSIGN_MULTI_');
+
+    const filtered = getFilteredData();
+
+    document.getElementById('filterSummary').textContent =
+      `${filtered.length} response${filtered.length !== 1 ? 's' : ''} match your filters`;
+
+    if (!filtered.length) {
+      document.getElementById('reportContent').innerHTML = `
+        <div class="report-card"><div class="report-card-body">
+          <div class="empty-state">
+            <div class="icon">🔍</div>
+            <h3>No responses match these filters</h3>
+            <p>Try adjusting your criteria or date range.</p>
+          </div>
+        </div></div>`;
+      document.getElementById('reportSection').classList.add('visible');
+      document.getElementById('exportBar').classList.remove('visible');
+      hideAssignmentPanel();
+      document.getElementById('instructorTabsContainer').innerHTML = '';
+      return;
+    }
+
+    if (isMultiInstructorMode) {
+      // Show assignment panel with modules that have data
+      const modulesInData = [...new Set(filtered.map(r => r._module))].sort();
+      buildAssignmentTable(modulesInData);
+
+      // Build combined report for preview (no instructor yet)
+      const cohortName = getCohortName();
+      lastReportData = buildReportDataForRows(filtered, '', cohortName);
+
+      // Also build per-instructor reports
+      rebuildMultiInstructorReports(filtered);
+
+      return;
+    }
+
+    // Single instructor mode (original behavior)
+    hideAssignmentPanel();
+    const instructorName = getInstructorName();
+    const cohortName = getCohortName();
+    lastReportData = buildReportDataForRows(filtered, instructorName, cohortName);
+    allInstructorReports = {};
+
+    document.getElementById('instructorTabsContainer').innerHTML = '';
+    renderSingleReport(lastReportData);
+    document.getElementById('reportSection').classList.add('visible');
+    document.getElementById('exportBar').classList.add('visible');
+    wireCommentCheckboxes();
+  }
+
+  function rebuildMultiInstructorReports(filtered) {
+    const assignments = getModuleAssignments();
+    const instructorNames = Object.keys(assignments).sort();
+    const cohortName = getCohortName();
+
+    if (!instructorNames.length) {
+      document.getElementById('reportSection').classList.remove('visible');
+      document.getElementById('exportBar').classList.remove('visible');
+      document.getElementById('instructorTabsContainer').innerHTML = '';
+      return;
+    }
+
+    // Preserve exclusions for instructors that still exist; clear others
+    const oldExcluded = { ...excludedByInstructor };
+    excludedByInstructor = {};
+    instructorNames.forEach(name => {
+      if (oldExcluded[name]) excludedByInstructor[name] = oldExcluded[name];
+    });
+
+    allInstructorReports = {};
+    instructorNames.forEach(name => {
+      const mods = assignments[name];
+      const instFiltered = filtered.filter(r => mods.includes(r._module));
+      if (instFiltered.length) {
+        allInstructorReports[name] = buildReportDataForRows(instFiltered, name, cohortName);
       }
-      if (cohortName) {
-        html += `<div><span style="font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Cohort:</span> <span style="font-size: 16px; font-weight: 700; color: var(--blue);">${escapeHtml(cohortName)}</span></div>`;
+    });
+
+    // Set lastReportData to first instructor for single-export compat
+    const firstKey = Object.keys(allInstructorReports)[0];
+    if (firstKey) {
+      lastReportData = allInstructorReports[firstKey];
+      activeInstructorTab = firstKey;
+    }
+
+    renderInstructorTabs();
+    renderSingleReport(allInstructorReports[activeInstructorTab]);
+    document.getElementById('reportSection').classList.add('visible');
+    document.getElementById('exportBar').classList.add('visible');
+    restoreExcludedFromStore(activeInstructorTab);
+    wireCommentCheckboxes();
+  }
+
+  // Called when user clicks "Generate Report" while in multi mode with assignments filled
+  // We attach a second button or hook into the existing one
+  // Actually, let's add a "Generate Reports" button inside the assignment panel
+  // AND keep the main generate button working for both modes.
+
+  // Override: when in multi mode and generate is clicked, also rebuild
+  // We already handle this in generateReport() above.
+
+  // Add a dedicated button in assignment panel
+  function generateMultiReports() {
+    const filtered = getFilteredData();
+    rebuildMultiInstructorReports(filtered);
+  }
+
+  function renderInstructorTabs() {
+    const container = document.getElementById('instructorTabsContainer');
+    const names = Object.keys(allInstructorReports).sort();
+    if (names.length <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+    let html = '<div class="instructor-tabs">';
+    names.forEach(name => {
+      const isActive = name === activeInstructorTab;
+      html += `<button class="instructor-tab${isActive ? ' active' : ''}" onclick="switchInstructorTab('${escapeHtml(name).replace(/'/g, "\\'")}')">${escapeHtml(name)}</button>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function switchInstructorTab(name) {
+    // Save current tab's checkbox state before switching
+    if (activeInstructorTab) {
+      excludedByInstructor[activeInstructorTab] = getExcludedIndicesFromDOM();
+    }
+    activeInstructorTab = name;
+    lastReportData = allInstructorReports[name];
+    renderInstructorTabs();
+    renderSingleReport(allInstructorReports[name]);
+    // Restore saved checkbox state for this tab
+    restoreExcludedFromStore(name);
+    wireCommentCheckboxes();
+  }
+
+  function restoreExcludedFromStore(instructorName) {
+    const excluded = excludedByInstructor[instructorName];
+    if (!excluded || !excluded.size) return;
+    excluded.forEach(i => {
+      const cb = document.querySelector(`.comment-cb[data-index="${i}"]`);
+      if (cb) {
+        cb.checked = false;
+        const row = document.getElementById('commentRow' + i);
+        if (row) row.classList.add('comment-excluded');
+      }
+    });
+    // Update the toggle-all checkbox state
+    const toggleAll = document.getElementById('toggleAllComments');
+    if (toggleAll) {
+      const allCbs = document.querySelectorAll('.comment-cb');
+      const allChecked = [...allCbs].every(c => c.checked);
+      const noneChecked = [...allCbs].every(c => !c.checked);
+      toggleAll.checked = allChecked;
+      toggleAll.indeterminate = !allChecked && !noneChecked;
+    }
+  }
+
+  function renderSingleReport(reportData) {
+    let html = '';
+    if (reportData.instructorName || reportData.cohortName) {
+      html += `<div style="background: var(--white); border-radius: 12px; padding: 16px 28px; margin-bottom: 16px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">`;
+      if (reportData.instructorName) {
+        html += `<div><span style="font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Instructor:</span> <span style="font-size: 16px; font-weight: 700; color: var(--burgundy);">${escapeHtml(reportData.instructorName)}</span></div>`;
+      }
+      if (reportData.cohortName) {
+        html += `<div><span style="font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Cohort:</span> <span style="font-size: 16px; font-weight: 700; color: var(--blue);">${escapeHtml(reportData.cohortName)}</span></div>`;
       }
       html += `</div>`;
     }
@@ -922,7 +1292,7 @@
             </tr></thead>
             <tbody>`;
 
-    tableRows.forEach(row => {
+    reportData.tableRows.forEach(row => {
       html += `<tr>
         <td>${escapeHtml(row.module)}</td>
         <td>${row.count}</td>
@@ -933,17 +1303,17 @@
 
     html += `<tr class="overall-row">
       <td>All Modules</td>
-      <td>${filtered.length}</td>
-      ${grandAvgs.map(a => `<td>${scoreBadge(a)}</td>`).join('')}
-      <td>${scoreBadge(grandOverall)}</td>
+      <td>${reportData.totalResponses}</td>
+      ${reportData.grandAvgs.map(a => `<td>${scoreBadge(a)}</td>`).join('')}
+      <td>${scoreBadge(reportData.grandOverall)}</td>
     </tr>`;
     html += `</tbody></table></div></div>`;
 
-    // ---- RENDER COMMENTS TABLE WITH CHECKBOXES ----
-    if (comments.length) {
+    // Comments
+    if (reportData.comments.length) {
       html += `
         <div class="report-card">
-          <div class="report-card-header" style="flex-direction: column; align-items: flex-start;">💬 Open-Ended Comments (${comments.length})<div style="font-weight: 500; margin-top: 15px;"><strong>Note:</strong> To remove a comment from the report, de-select the checkbox to the left of the comment. Only checked comments will be included in the PDF or Excel download.</div></div>
+          <div class="report-card-header" style="flex-direction: column; align-items: flex-start;">💬 Open-Ended Comments (${reportData.comments.length})<div style="font-weight: 500; margin-top: 15px;"><strong>Note:</strong> To remove a comment from the report, de-select the checkbox to the left of the comment. Only checked comments will be included in the PDF or Excel download.</div></div>
           <div class="report-card-body">
             <table class="comments-table" id="commentsTable">
               <thead><tr>
@@ -953,7 +1323,7 @@
                 <th style="text-align:left">Comment</th>
               </tr></thead>
               <tbody>`;
-      comments.forEach((c, i) => {
+      reportData.comments.forEach((c, i) => {
         html += `<tr id="commentRow${i}">
           <td class="cb-col"><input type="checkbox" class="comment-cb" data-index="${i}" checked></td>
           <td>${escapeHtml(c.module)}</td>
@@ -975,10 +1345,9 @@
     }
 
     document.getElementById('reportContent').innerHTML = html;
-    document.getElementById('reportSection').classList.add('visible');
-    document.getElementById('exportBar').classList.add('visible');
+  }
 
-    // ---- WIRE UP COMMENT CHECKBOXES ----
+  function wireCommentCheckboxes() {
     const toggleAll = document.getElementById('toggleAllComments');
     if (toggleAll) {
       toggleAll.addEventListener('change', function() {
@@ -1016,42 +1385,44 @@
     return d.innerHTML;
   }
 
-  function getFilterText() {
+  function getFilterText(reportData) {
     const parts = [];
-    const fc = document.getElementById('filterCourse').value;
-    const fv = document.getElementById('filterVersion').value;
-    const fm = document.getElementById('filterMethod').value;
-    const fd1 = document.getElementById('filterDateFrom').value;
-    const fd2 = document.getElementById('filterDateTo').value;
-    if (fc) parts.push('Course: ' + fc);
-    if (fv) parts.push('Version: ' + fv);
-    if (fm) parts.push('Method: ' + fm);
-    if (selectedModules.size > 0 && selectedModules.size < allModuleValues.length) {
-      parts.push('Modules: ' + [...selectedModules].sort().join(', '));
+    const meta = reportData ? reportData.metadata : null;
+    if (meta) {
+      if (meta.course && meta.course !== 'All') parts.push('Course: ' + meta.course);
+      if (meta.version && meta.version !== 'All') parts.push('Version: ' + meta.version);
+      if (meta.method && meta.method !== 'All') parts.push('Method: ' + meta.method);
+      if (meta.modules && meta.modules !== 'All') parts.push('Modules: ' + meta.modules);
+      if (meta.dateFrom) parts.push('From: ' + meta.dateFrom);
+      if (meta.dateTo) parts.push('To: ' + meta.dateTo);
+      if (meta.instructor) parts.push('Instructor: ' + meta.instructor);
+      if (meta.cohort) parts.push('Cohort: ' + meta.cohort);
     }
-    if (fd1) parts.push('From: ' + fd1);
-    if (fd2) parts.push('To: ' + fd2);
-    const inst = getInstructorName();
-    if (inst) parts.push('Instructor: ' + inst);
-    const coh = getCohortName();
-    if (coh) parts.push('Cohort: ' + coh);
     return parts.length ? parts.join('  |  ') : 'None (all data)';
   }
 
-  // Helper: get only the checked comments for export
-  function getIncludedComments() {
-    if (!lastReportData || !lastReportData.comments.length) return [];
-    return lastReportData.comments.filter((c, i) => {
+  // Helper: get only the checked comments for the currently visible report
+  function getIncludedComments(reportData) {
+    if (!reportData || !reportData.comments.length) return [];
+    return reportData.comments.filter((c, i) => {
       const cb = document.querySelector(`.comment-cb[data-index="${i}"]`);
       return cb ? cb.checked : true;
     });
   }
 
+  // Store excluded comment indices per instructor when switching tabs
+  function getExcludedIndicesFromDOM() {
+    const excluded = new Set();
+    document.querySelectorAll('.comment-cb').forEach(cb => {
+      if (!cb.checked) excluded.add(parseInt(cb.dataset.index));
+    });
+    return excluded;
+  }
+
   // ==========================
   // EXPORT: PDF
   // ==========================
-  function exportPDF() {
-    if (!lastReportData) return;
+  function buildPDFForReport(reportData, includedComments) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
@@ -1061,8 +1432,8 @@
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(lastReportData.instructorName
-      ? 'Evaluation Report — ' + lastReportData.instructorName
+    doc.text(reportData.instructorName
+      ? 'Evaluation Report \u2014 ' + reportData.instructorName
       : 'Evaluation Report', 14, 14);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -1073,31 +1444,31 @@
     doc.setTextColor(72, 72, 72);
     doc.setFontSize(10);
     let pdfY = 30;
-    if (lastReportData.instructorName) {
+    if (reportData.instructorName) {
       doc.setFont('helvetica', 'bold');
-      doc.text('Instructor: ' + lastReportData.instructorName, 14, pdfY);
+      doc.text('Instructor: ' + reportData.instructorName, 14, pdfY);
       pdfY += 6;
       doc.setFont('helvetica', 'normal');
     }
-    if (lastReportData.cohortName) {
+    if (reportData.cohortName) {
       doc.setFont('helvetica', 'bold');
-      doc.text('Cohort: ' + lastReportData.cohortName, 14, pdfY);
+      doc.text('Cohort: ' + reportData.cohortName, 14, pdfY);
       pdfY += 6;
       doc.setFont('helvetica', 'normal');
     }
-    doc.text('Filters: ' + getFilterText(), 14, pdfY);
-    doc.text('Total Responses: ' + lastReportData.totalResponses, 14, pdfY + 6);
+    doc.text('Filters: ' + getFilterText(reportData), 14, pdfY);
+    doc.text('Total Responses: ' + reportData.totalResponses, 14, pdfY + 6);
 
     const head = [['Module', 'Responses', ...shortLabels, 'Overall Avg']];
-    const body = lastReportData.tableRows.map(r => [
+    const body = reportData.tableRows.map(r => [
       r.module, r.count,
       ...r.avgs.map(a => a !== null ? a.toFixed(2) : 'N/A'),
       r.overall !== null ? r.overall.toFixed(2) : 'N/A'
     ]);
     body.push([
-      'All Modules', lastReportData.totalResponses,
-      ...lastReportData.grandAvgs.map(a => a !== null ? a.toFixed(2) : 'N/A'),
-      lastReportData.grandOverall !== null ? lastReportData.grandOverall.toFixed(2) : 'N/A'
+      'All Modules', reportData.totalResponses,
+      ...reportData.grandAvgs.map(a => a !== null ? a.toFixed(2) : 'N/A'),
+      reportData.grandOverall !== null ? reportData.grandOverall.toFixed(2) : 'N/A'
     ]);
 
     doc.autoTable({
@@ -1114,8 +1485,14 @@
       }
     });
 
-    const includedComments = getIncludedComments();
     if (includedComments.length) {
+      // Group comments by module
+      const commentsByModule = {};
+      includedComments.forEach(c => {
+        if (!commentsByModule[c.module]) commentsByModule[c.module] = [];
+        commentsByModule[c.module].push(c);
+      });
+
       let y = doc.lastAutoTable.finalY + 12;
       if (y > doc.internal.pageSize.getHeight() - 30) {
         doc.addPage(); y = 20;
@@ -1125,37 +1502,89 @@
       doc.setTextColor(100, 9, 44);
       doc.text('Open-Ended Comments (' + includedComments.length + ')', 14, y);
 
-      doc.autoTable({
-        startY: y + 4,
-        head: [['Module', 'Date', 'Comment']],
-        body: includedComments.map(c => [c.module, c.date, c.text]),
-        styles: { fontSize: 8, cellPadding: 3 },
-        headStyles: { fillColor: [72, 72, 72], textColor: 255, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [249, 247, 244] },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 28 },
-          2: { cellWidth: 'auto', fontStyle: 'italic' }
-        }
-      });
+      const moduleOrder = Object.keys(commentsByModule).sort();
+      if (reportData.tableRows.length > 1) {
+        // Multiple modules: show comments grouped by module with sub-headers
+        let startY = y + 4;
+        moduleOrder.forEach(mod => {
+          const modComments = commentsByModule[mod];
+          if (startY > doc.internal.pageSize.getHeight() - 30) {
+            doc.addPage(); startY = 20;
+          }
+          doc.autoTable({
+            startY: startY,
+            head: [[{ content: mod, colSpan: 2, styles: { fillColor: [100, 9, 44], textColor: 255, fontStyle: 'bold', fontSize: 9 } }]],
+            body: modComments.map(c => [c.date, c.text]),
+            styles: { fontSize: 8, cellPadding: 3 },
+            headStyles: { fillColor: [100, 9, 44], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [249, 247, 244] },
+            columnStyles: {
+              0: { cellWidth: 28 },
+              1: { cellWidth: 'auto', fontStyle: 'italic' }
+            }
+          });
+          startY = doc.lastAutoTable.finalY + 6;
+        });
+      } else {
+        // Single module: flat list (original style)
+        doc.autoTable({
+          startY: y + 4,
+          head: [['Module', 'Date', 'Comment']],
+          body: includedComments.map(c => [c.module, c.date, c.text]),
+          styles: { fontSize: 8, cellPadding: 3 },
+          headStyles: { fillColor: [72, 72, 72], textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [249, 247, 244] },
+          columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 28 },
+            2: { cellWidth: 'auto', fontStyle: 'italic' }
+          }
+        });
+      }
     }
 
-    const pdfFilename = lastReportData.instructorName
-      ? 'Evaluation_Report_' + lastReportData.instructorName.replace(/\s+/g, '_') + '.pdf'
-      : 'Evaluation_Report.pdf';
-    doc.save(pdfFilename);
+    return doc;
   }
 
+function exportPDF() {
+    if (!lastReportData) return;
+    const prefix = (getCohortName() || 'Evaluation_Report').replace(/\s+/g, '_');
+
+    if (isMultiInstructorMode && Object.keys(allInstructorReports).length > 0) {
+      if (activeInstructorTab) {
+        excludedByInstructor[activeInstructorTab] = getExcludedIndicesFromDOM();
+      }
+      const names = Object.keys(allInstructorReports).sort();
+      let delay = 0;
+      names.forEach(name => {
+        const rd = allInstructorReports[name];
+        const excluded = excludedByInstructor[name] || new Set();
+        const comments = rd.comments.filter((c, i) => !excluded.has(i));
+        const doc = buildPDFForReport(rd, comments);
+        setTimeout(() => {
+          doc.save(prefix + '_' + rd.instructorName.replace(/,/g,'').replace(/\s+/g, '_') + '.pdf');
+        }, delay);
+        delay += 400;
+      });
+      return;
+    }
+
+    // Single instructor mode
+    const includedComments = getIncludedComments(lastReportData);
+    const doc = buildPDFForReport(lastReportData, includedComments);
+    const pdfFilename = lastReportData.instructorName
+      ? prefix + '_' + lastReportData.instructorName.replace(/,/g,'').replace(/\s+/g, '_') + '.pdf'
+      : prefix + '.pdf';
+    doc.save(pdfFilename);
+  }
   // ==========================
   // EXPORT: XLSX
   // ==========================
-  function exportXLSX() {
-    if (!lastReportData) return;
+  function buildXLSXForReport(reportData, includedComments) {
     const wb = XLSX.utils.book_new();
 
     const scoresData = [];
-    const meta = lastReportData.metadata;
-    // Structured metadata block — Tool 2 reads these key-value rows
+    const meta = reportData.metadata;
     scoresData.push(['_META_INSTRUCTOR', meta.instructor || '']);
     scoresData.push(['_META_COHORT', meta.cohort || '']);
     scoresData.push(['_META_COURSE', meta.course]);
@@ -1165,10 +1594,10 @@
     scoresData.push(['_META_DATE_FROM', meta.dateFrom]);
     scoresData.push(['_META_DATE_TO', meta.dateTo]);
     scoresData.push(['_META_GENERATED', meta.generatedDate]);
-    scoresData.push(['_META_RESPONSES', lastReportData.totalResponses]);
-    scoresData.push([]); // blank separator row
+    scoresData.push(['_META_RESPONSES', reportData.totalResponses]);
+    scoresData.push([]);
     scoresData.push(['Module', 'Responses', ...shortLabels, 'Overall Avg']);
-    lastReportData.tableRows.forEach(r => {
+    reportData.tableRows.forEach(r => {
       scoresData.push([
         r.module, r.count,
         ...r.avgs.map(a => a !== null ? Math.round(a * 100) / 100 : ''),
@@ -1176,9 +1605,9 @@
       ]);
     });
     scoresData.push([
-      'All Modules', lastReportData.totalResponses,
-      ...lastReportData.grandAvgs.map(a => a !== null ? Math.round(a * 100) / 100 : ''),
-      lastReportData.grandOverall !== null ? Math.round(lastReportData.grandOverall * 100) / 100 : ''
+      'All Modules', reportData.totalResponses,
+      ...reportData.grandAvgs.map(a => a !== null ? Math.round(a * 100) / 100 : ''),
+      reportData.grandOverall !== null ? Math.round(reportData.grandOverall * 100) / 100 : ''
     ]);
 
     const ws1 = XLSX.utils.aoa_to_sheet(scoresData);
@@ -1188,7 +1617,6 @@
     ];
     XLSX.utils.book_append_sheet(wb, ws1, 'Scores');
 
-    const includedComments = getIncludedComments();
     const commentsData = [['Module', 'Date', 'Comment']];
     includedComments.forEach(c => {
       commentsData.push([c.module, c.date, c.text]);
@@ -1197,11 +1625,61 @@
     ws2['!cols'] = [{ wch: 16 }, { wch: 14 }, { wch: 60 }];
     XLSX.utils.book_append_sheet(wb, ws2, 'Comments');
 
+    return wb;
+  }
+
+  function exportXLSX() {
+    if (!lastReportData) return;
+
+    if (isMultiInstructorMode && Object.keys(allInstructorReports).length > 0) {
+      // Save current tab's excluded comments into the store
+      if (activeInstructorTab) {
+        excludedByInstructor[activeInstructorTab] = getExcludedIndicesFromDOM();
+      }
+      const names = Object.keys(allInstructorReports).sort();
+
+      names.forEach(name => {
+        const rd = allInstructorReports[name];
+        const excluded = excludedByInstructor[name] || new Set();
+        const comments = rd.comments.filter((c, i) => !excluded.has(i));
+        const wb = buildXLSXForReport(rd, comments);
+        const filename = 'Evaluation_Report_' + rd.instructorName.replace(/\s+/g, '_') + '.xlsx';
+        setTimeout(() => XLSX.writeFile(wb, filename), names.indexOf(name) * 400);
+      });
+      return;
+    }
+
+    // Single instructor mode
+    const includedComments = getIncludedComments(lastReportData);
+    const wb = buildXLSXForReport(lastReportData, includedComments);
     const xlsxFilename = lastReportData.instructorName
       ? 'Evaluation_Report_' + lastReportData.instructorName.replace(/\s+/g, '_') + '.xlsx'
       : 'Evaluation_Report.xlsx';
     XLSX.writeFile(wb, xlsxFilename);
   }
+
+  // ---- Wire assignment panel "Generate Reports" into main flow ----
+  // Watch for changes in assignment selects to auto-regenerate
+  document.getElementById('assignmentPanel').addEventListener('change', function(e) {
+    if (e.target.classList.contains('assign-select') || e.target.classList.contains('assign-other')) {
+      updateAssignmentSummary();
+      const filtered = getFilteredData();
+      if (filtered.length) {
+        rebuildMultiInstructorReports(filtered);
+      }
+    }
+  });
+  document.getElementById('assignmentPanel').addEventListener('input', function(e) {
+    if (e.target.classList.contains('assign-other')) {
+      updateAssignmentSummary();
+      // Debounce the rebuild
+      clearTimeout(e.target._debounce);
+      e.target._debounce = setTimeout(() => {
+        const filtered = getFilteredData();
+        if (filtered.length) rebuildMultiInstructorReports(filtered);
+      }, 500);
+    }
+  });
 </script>
 
 </body>
