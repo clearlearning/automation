@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Survey Link Generator</title>
+  <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
@@ -29,6 +31,8 @@
       --color-primary-soft: #dcebea;
       --color-success: #2e6b3b;
       --color-success-soft: #deeddc;
+      --color-warning: #8b5a14;
+      --color-warning-soft: #f5ead7;
     }
     * { box-sizing: border-box; }
     body {
@@ -39,13 +43,13 @@
       color: var(--color-text);
       background: linear-gradient(180deg, #f7f6f2 0%, #efede7 100%);
     }
-    .wrap { max-width: 1040px; margin: 0 auto; padding: var(--space-8) var(--space-4); }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: var(--space-8) var(--space-4); }
     .hero { margin-bottom: var(--space-8); }
     h1 { margin: 0 0 var(--space-3); font-size: var(--text-xl); line-height: 1.1; }
-    .hero p { margin: 0; color: var(--color-muted); max-width: 68ch; }
-    .grid { display: grid; grid-template-columns: 1.08fr 1fr; gap: var(--space-6); align-items: start; }
+    .hero p { margin: 0; color: var(--color-muted); max-width: 72ch; }
+    .grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: var(--space-6); align-items: start; }
     .card {
-      background: rgba(251,251,249,.9);
+      background: rgba(251,251,249,.92);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: var(--space-6);
@@ -55,7 +59,7 @@
     .card h2 { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
     .field { display: grid; gap: 0.4rem; margin-bottom: var(--space-4); }
     label { font-size: var(--text-sm); font-weight: 700; }
-    input, select {
+    input {
       width: 100%;
       padding: 0.8rem 0.9rem;
       border: 1px solid var(--color-border);
@@ -63,7 +67,7 @@
       background: white;
       font: inherit;
     }
-    input:focus, select:focus {
+    input:focus {
       outline: 2px solid color-mix(in srgb, var(--color-primary) 45%, white);
       outline-offset: 1px;
       border-color: var(--color-primary);
@@ -86,9 +90,37 @@
       background: white;
       border-radius: var(--radius-md);
       padding: 1rem;
-      min-height: 180px;
+      min-height: 148px;
       word-break: break-word;
       line-height: 1.55;
+      margin-bottom: var(--space-4);
+    }
+    .qr-panel {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: var(--space-4);
+      align-items: start;
+    }
+    .qr-box {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 0.9rem;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #qrcode canvas, #qrcode img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    .qr-copy-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-top: var(--space-3);
     }
     .status {
       margin-top: var(--space-4);
@@ -103,10 +135,17 @@
       color: var(--color-success);
       border: 1px solid color-mix(in srgb, var(--color-success) 25%, white);
     }
+    .status.notice {
+      background: var(--color-warning-soft);
+      color: var(--color-warning);
+      border: 1px solid color-mix(in srgb, var(--color-warning) 25%, white);
+    }
     .meta { margin-top: var(--space-4); color: var(--color-muted); font-size: var(--text-sm); }
     code { background: #f0efea; padding: 0.1rem 0.35rem; border-radius: 0.35rem; }
-    @media (max-width: 840px) {
+    @media (max-width: 920px) {
       .grid { grid-template-columns: 1fr; }
+      .qr-panel { grid-template-columns: 1fr; }
+      .qr-box { min-height: 200px; }
     }
   </style>
 </head>
@@ -114,7 +153,7 @@
   <main class="wrap">
     <section class="hero">
       <h1>SurveyMonkey Link Generator</h1>
-      <p>All fields except Cohort use type-ahead suggestion lists. Users can pick an existing value or type a new one, and blank fields are removed from the final link.</p>
+      <p>Build a survey link, remove blank variables automatically, and generate a matching QR code that can be copied or downloaded.</p>
     </section>
 
     <section class="grid">
@@ -129,18 +168,30 @@
       </div>
 
       <div class="card">
-        <h2>Generated link</h2>
+        <h2>Generated output</h2>
         <div id="output" class="link-box" aria-live="polite"></div>
+        <div class="qr-panel">
+          <div>
+            <div class="qr-box"><div id="qrcode" aria-label="QR code output"></div></div>
+            <div class="qr-copy-group">
+              <button class="btn-primary" id="copyQrBtn" type="button">Copy QR</button>
+              <button class="btn-secondary" id="downloadQrBtn" type="button">Download QR</button>
+            </div>
+          </div>
+          <div>
+            <p class="hint">The QR code updates whenever the link changes. Use <strong>Copy QR</strong> to place the QR image on your clipboard in supported browsers.</p>
+          </div>
+        </div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
     </section>
   </main>
 
   <script>
-  const baseUrl = 'https://www.surveymonkey.com/r/PWGNPFP';
+    const baseUrl = 'https://www.surveymonkey.com/r/PWGNPFP';
 
-  const variables = [
-    {
+    const variables = [
+      {
       key: 'course',
       label: 'Course Code',
       type: 'datalist',
@@ -150,7 +201,7 @@
       key: 'version',
       label: 'Version',
       type: 'datalist',
-      suggestions: ['US', 'CAN']
+      suggestions: ['US', 'CAN', 'Communications', 'DDI', 'Ethics', 'IRSM']
     },
     {
       key: 'method',
@@ -162,135 +213,199 @@
       key: 'module_name',
       label: 'Module name',
       type: 'datalist',
-      suggestions: ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10']
+      suggestions: ['AIS-S1', 'AIA-S1', 'AIA-S2', 'IRD-S1', 'IRD-S2', 'M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'WS1', 'WS2']
     },
     {
       key: 'Instructor',
       label: 'Instructor',
       type: 'datalist',
       suggestions: ['Anderegg, Karen', 'Barton, Andrew', 'Betteridge, Lise', 'Chambers, Sarah', 'Cooley, Mandi', 'Crumley, John', 'Curley, Stephen', 'deFoy, Carmen', 'Deforest, Denise', 'DeLuca, Ryan', 'DeSousa, Lisa', 'Eichrodt, Sean', 'Erikson, Marcus', 'Jenkins, Robin', 'Kay, David', 'Keirstead, Graeme', 'Pfiefer, Judy', 'Robinson, Jan', 'Salvatori, Michael', 'Stansfield, Katherine', 'Thibert, Lena', 'Thompson, David (Eric)', 'Thompson-May, Brett', 'Verge, Vicki', 'Wade, Amigo', 'Wilkie, Kathy', 'Williams, Deanna']
-    },
-    {
-      key: 'Cohort',
-      label: 'Cohort',
-      type: 'text'
+      },
+      {
+        key: 'Cohort',
+        label: 'Cohort',
+        type: 'text'
+      }
+    ];
+
+    const fieldsEl = document.getElementById('fields');
+    const outputEl = document.getElementById('output');
+    const statusEl = document.getElementById('status');
+    const qrCodeContainer = document.getElementById('qrcode');
+    let qrCodeInstance = null;
+
+    function showStatus(message, type = '') {
+      statusEl.textContent = message;
+      statusEl.className = `status show ${type}`.trim();
     }
-  ];
 
-  const fieldsEl = document.getElementById('fields');
-  const outputEl = document.getElementById('output');
-  const statusEl = document.getElementById('status');
+    function clearStatus() {
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+    }
 
-  function createDatalistField(config) {
-    const field = document.createElement('div');
-    field.className = 'field';
+    function createDatalistField(config) {
+      const field = document.createElement('div');
+      field.className = 'field';
 
-    const label = document.createElement('label');
-    label.htmlFor = config.key;
-    label.textContent = config.label;
+      const label = document.createElement('label');
+      label.htmlFor = config.key;
+      label.textContent = config.label;
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = config.key;
-    input.name = config.key;
-    input.setAttribute('list', `${config.key}_list`);
-    input.placeholder = `Type or choose ${config.label.toLowerCase()}`;
-    input.addEventListener('input', updateLink);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = config.key;
+      input.name = config.key;
+      input.setAttribute('list', `${config.key}_list`);
+      input.placeholder = `Type or choose ${config.label.toLowerCase()}`;
+      input.addEventListener('input', updateOutput);
 
-    const datalist = document.createElement('datalist');
-    datalist.id = `${config.key}_list`;
-    config.suggestions.forEach(value => {
-      const option = document.createElement('option');
-      option.value = value;
-      datalist.appendChild(option);
-    });
+      const datalist = document.createElement('datalist');
+      datalist.id = `${config.key}_list`;
+      config.suggestions.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        datalist.appendChild(option);
+      });
 
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = 'You can choose a suggestion or type a new value.';
+      const hint = document.createElement('div');
+      hint.className = 'hint';
+      hint.textContent = 'You can choose a suggestion or type a new value.';
 
-    field.append(label, input, datalist, hint);
-    return field;
-  }
+      field.append(label, input, datalist, hint);
+      return field;
+    }
 
-  function createTextField(config) {
-    const field = document.createElement('div');
-    field.className = 'field';
+    function createTextField(config) {
+      const field = document.createElement('div');
+      field.className = 'field';
 
-    const label = document.createElement('label');
-    label.htmlFor = config.key;
-    label.textContent = config.label;
+      const label = document.createElement('label');
+      label.htmlFor = config.key;
+      label.textContent = config.label;
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = config.key;
-    input.name = config.key;
-    input.placeholder = `Enter cohort code without spaces`;
-    input.addEventListener('input', updateLink);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = config.key;
+      input.name = config.key;
+      input.placeholder = `Enter ${config.label.toLowerCase()}`;
+      input.addEventListener('input', updateOutput);
 
-    field.append(label, input);
-    return field;
-  }
+      field.append(label, input);
+      return field;
+    }
 
-  function buildFields() {
-    variables.forEach(config => {
-      let field;
+    function buildFields() {
+      variables.forEach(config => {
+        const field = config.type === 'datalist' ? createDatalistField(config) : createTextField(config);
+        fieldsEl.appendChild(field);
+      });
+    }
 
-      if (config.type === 'datalist') {
-        field = createDatalistField(config);
-      } else {
-        field = createTextField(config);
+    function getFieldValue(key) {
+      return document.getElementById(key).value.trim();
+    }
+
+    function getLink() {
+      const params = new URLSearchParams();
+      variables.forEach(({ key }) => {
+        const value = getFieldValue(key);
+        if (value) params.append(key, value);
+      });
+      const query = params.toString();
+      return query ? `${baseUrl}?${query}` : baseUrl;
+    }
+
+    function renderQrCode(link) {
+      qrCodeContainer.innerHTML = '';
+      qrCodeInstance = new QRCode(qrCodeContainer, {
+        text: link,
+        width: 200,
+        height: 200,
+        colorDark: '#111111',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    function updateOutput() {
+      const link = getLink();
+      outputEl.textContent = link;
+      renderQrCode(link);
+      clearStatus();
+    }
+
+    async function copyLink() {
+      try {
+        await navigator.clipboard.writeText(getLink());
+        showStatus('Link copied to clipboard.', 'success');
+      } catch (e) {
+        showStatus('Copy failed. You can still copy the link manually.');
+      }
+    }
+
+    function getQrImageElement() {
+      return qrCodeContainer.querySelector('img') || qrCodeContainer.querySelector('canvas');
+    }
+
+    function downloadQr() {
+      const qrEl = getQrImageElement();
+      if (!qrEl) {
+        showStatus('QR code is not ready yet.');
+        return;
       }
 
-      fieldsEl.appendChild(field);
-    });
-  }
-
-  function getFieldValue(key) {
-    return document.getElementById(key).value.trim();
-  }
-
-  function getLink() {
-    const params = new URLSearchParams();
-
-    variables.forEach(({ key }) => {
-      const value = getFieldValue(key);
-      if (value) params.append(key, value);
-    });
-
-    const query = params.toString();
-    return query ? `${baseUrl}?${query}` : baseUrl;
-  }
-
-  function updateLink() {
-    outputEl.textContent = getLink();
-    statusEl.className = 'status';
-    statusEl.textContent = '';
-  }
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(getLink());
-      statusEl.textContent = 'Link copied to clipboard.';
-      statusEl.className = 'status success show';
-    } catch (e) {
-      statusEl.textContent = 'Copy failed. You can still copy the link manually.';
-      statusEl.className = 'status show';
+      const link = document.createElement('a');
+      link.download = 'survey-link-qr.png';
+      link.href = qrEl.tagName.toLowerCase() === 'canvas' ? qrEl.toDataURL('image/png') : qrEl.src;
+      link.click();
+      showStatus('QR code download started.', 'success');
     }
-  }
 
-  function clearAll() {
-    variables.forEach(({ key }) => {
-      document.getElementById(key).value = '';
-    });
-    updateLink();
-  }
+    async function copyQr() {
+      const qrEl = getQrImageElement();
+      if (!qrEl) {
+        showStatus('QR code is not ready yet.');
+        return;
+      }
 
-  document.getElementById('copyBtn').addEventListener('click', copyLink);
-  document.getElementById('clearBtn').addEventListener('click', clearAll);
+      if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+        showStatus('Image copy is not supported in this browser. Use Download QR instead.', 'notice');
+        return;
+      }
 
-  buildFields();
-  updateLink();
-</script>
+      try {
+        let blob;
+        if (qrEl.tagName.toLowerCase() === 'canvas') {
+          blob = await new Promise(resolve => qrEl.toBlob(resolve, 'image/png'));
+        } else {
+          const response = await fetch(qrEl.src);
+          blob = await response.blob();
+        }
+
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ]);
+        showStatus('QR code copied to clipboard.', 'success');
+      } catch (e) {
+        showStatus('QR copy failed in this browser. Try Download QR instead.', 'notice');
+      }
+    }
+
+    function clearAll() {
+      variables.forEach(({ key }) => {
+        document.getElementById(key).value = '';
+      });
+      updateOutput();
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', copyLink);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+    document.getElementById('copyQrBtn').addEventListener('click', copyQr);
+    document.getElementById('downloadQrBtn').addEventListener('click', downloadQr);
+
+    buildFields();
+    updateOutput();
+  </script>
 </body>
 </html>
