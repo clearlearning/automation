@@ -59,7 +59,7 @@
     .card h2 { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
     .field { display: grid; gap: 0.4rem; margin-bottom: var(--space-4); }
     label { font-size: var(--text-sm); font-weight: 700; }
-    input {
+    input, select {
       width: 100%;
       padding: 0.8rem 0.9rem;
       border: 1px solid var(--color-border);
@@ -67,7 +67,7 @@
       background: white;
       font: inherit;
     }
-    input:focus {
+    input:focus, select:focus {
       outline: 2px solid color-mix(in srgb, var(--color-primary) 45%, white);
       outline-offset: 1px;
       border-color: var(--color-primary);
@@ -153,18 +153,29 @@
   <main class="wrap">
     <section class="hero">
       <h1>SurveyMonkey Link Generator</h1>
-      <p>Build a survey link, remove blank variables automatically, and generate a matching QR code that can be copied or downloaded.</p>
+      <p style="margin-bottom: 10px;">Select a survey type, enter any values you want to include, and the tool will generate a matching survey link and QR code while removing blank variables automatically.</p>
+      <p><strong>REMINDER:</strong> Make sure you select the correct survey type. <strong>Instructor Evaluations</strong> are for any ILT program (both virtual and in-person), <strong>Asynchronous Modules</strong> are any self-study module in the CLEAR Learning portal.</p>
     </section>
 
     <section class="grid">
       <div class="card">
         <h2>Variables</h2>
+
+        <div class="field">
+          <label for="surveyType">Survey type</label>
+          <select id="surveyType">
+            <option value="instructor">Instructor Evaluations</option>
+            <option value="async">Asynchronous Modules</option>
+          </select>
+        </div>
+
         <div id="fields"></div>
+
         <div class="actions">
           <button class="btn-primary" id="copyBtn" type="button">Copy link</button>
           <button class="btn-secondary" id="clearBtn" type="button">Clear all</button>
         </div>
-        <p class="meta">Base link: <code>https://www.surveymonkey.com/r/PWGNPFP</code></p>
+        <p class="meta">The selected base link changes automatically based on the survey type.</p>
       </div>
 
       <div class="card">
@@ -179,7 +190,8 @@
             </div>
           </div>
           <div>
-            <p class="hint">The QR code updates whenever the link changes. Use <strong>Copy QR</strong> to place the QR image on your clipboard in supported browsers.</p>
+            <p class="hint">The QR code updates whenever the link changes. Use Copy QR in supported browsers, or Download QR as a fallback.</p>
+            <p class="meta" id="baseLinkDisplay"></p>
           </div>
         </div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -188,38 +200,47 @@
   </main>
 
   <script>
-    const baseUrl = 'https://www.surveymonkey.com/r/PWGNPFP';
+    const surveyConfigs = {
+      instructor: {
+        label: 'Instructor Evaluations',
+        baseUrl: 'https://www.surveymonkey.com/r/PWGNPFP'
+      },
+      async: {
+        label: 'Asynchronous Modules',
+        baseUrl: 'https://www.surveymonkey.com/r/HDBBWGG'
+      }
+    };
 
     const variables = [
       {
-      key: 'course',
-      label: 'Course Code',
-      type: 'datalist',
-      suggestions: ['NCITB', 'NCITS', 'NCITAIT', 'NCITW', 'IRG', 'ACRG', 'BCT', 'SYTYWTBABCM', 'ELPR', 'REG101', 'SRASAB']
-    },
-    {
-      key: 'version',
-      label: 'Version',
-      type: 'datalist',
-      suggestions: ['US', 'CAN', 'Communications', 'DDI', 'Ethics', 'IRSM']
-    },
-    {
-      key: 'method',
-      label: 'Method',
-      type: 'datalist',
-      suggestions: ['V-ILT', 'IPT-ILT', 'Async']
-    },
-    {
-      key: 'module_name',
-      label: 'Module name',
-      type: 'datalist',
-      suggestions: ['AIS-S1', 'AIA-S1', 'AIA-S2', 'IRD-S1', 'IRD-S2', 'M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'WS1', 'WS2']
-    },
-    {
-      key: 'Instructor',
-      label: 'Instructor',
-      type: 'datalist',
-      suggestions: ['Anderegg, Karen', 'Barton, Andrew', 'Betteridge, Lise', 'Chambers, Sarah', 'Cooley, Mandi', 'Crumley, John', 'Curley, Stephen', 'deFoy, Carmen', 'Deforest, Denise', 'DeLuca, Ryan', 'DeSousa, Lisa', 'Eichrodt, Sean', 'Erikson, Marcus', 'Jenkins, Robin', 'Kay, David', 'Keirstead, Graeme', 'Pfiefer, Judy', 'Robinson, Jan', 'Salvatori, Michael', 'Stansfield, Katherine', 'Thibert, Lena', 'Thompson, David (Eric)', 'Thompson-May, Brett', 'Verge, Vicki', 'Wade, Amigo', 'Wilkie, Kathy', 'Williams, Deanna']
+        key: 'course',
+        label: 'Course',
+        type: 'datalist',
+        suggestions: ['NCITB', 'NCITS', 'NCITAIT', 'NCITW', 'IRG', 'ACRG', 'BCT', 'SYTYWTBABCM', 'ELPR', 'REG101', 'SRASAB']
+      },
+      {
+        key: 'version',
+        label: 'Version',
+        type: 'datalist',
+        suggestions: ['US', 'CAN', 'Communications', 'DDI', 'Ethics', 'IRSM']
+      },
+      {
+        key: 'method',
+        label: 'Method',
+        type: 'datalist',
+        suggestions: ['V-ILT', 'IPT-ILT', 'Async']
+      },
+      {
+        key: 'module_name',
+        label: 'Module name',
+        type: 'datalist',
+        suggestions: ['AIS-S1', 'AIA-S1', 'AIA-S2', 'IRD-S1', 'IRD-S2', 'M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'WS1', 'WS2']
+      },
+      {
+        key: 'Instructor',
+        label: 'Instructor',
+        type: 'datalist',
+        suggestions: ['Anderegg, Karen', 'Barton, Andrew', 'Betteridge, Lise', 'Chambers, Sarah', 'Cooley, Mandi', 'Crumley, John', 'Curley, Stephen', 'deFoy, Carmen', 'Deforest, Denise', 'DeLuca, Ryan', 'DeSousa, Lisa', 'Eichrodt, Sean', 'Erikson, Marcus', 'Jenkins, Robin', 'Kay, David', 'Keirstead, Graeme', 'Pfiefer, Judy', 'Robinson, Jan', 'Salvatori, Michael', 'Stansfield, Katherine', 'Thibert, Lena', 'Thompson, David (Eric)', 'Thompson-May, Brett', 'Verge, Vicki', 'Wade, Amigo', 'Wilkie, Kathy', 'Williams, Deanna']
       },
       {
         key: 'Cohort',
@@ -228,11 +249,16 @@
       }
     ];
 
+    const surveyTypeEl = document.getElementById('surveyType');
     const fieldsEl = document.getElementById('fields');
     const outputEl = document.getElementById('output');
     const statusEl = document.getElementById('status');
     const qrCodeContainer = document.getElementById('qrcode');
-    let qrCodeInstance = null;
+    const baseLinkDisplayEl = document.getElementById('baseLinkDisplay');
+
+    function getActiveSurvey() {
+      return surveyConfigs[surveyTypeEl.value];
+    }
 
     function showStatus(message, type = '') {
       statusEl.textContent = message;
@@ -296,29 +322,45 @@
     }
 
     function buildFields() {
+      const currentValues = {};
+      variables.forEach(({ key }) => {
+        const existing = document.getElementById(key);
+        currentValues[key] = existing ? existing.value : '';
+      });
+
+      fieldsEl.innerHTML = '';
       variables.forEach(config => {
         const field = config.type === 'datalist' ? createDatalistField(config) : createTextField(config);
         fieldsEl.appendChild(field);
+        if (currentValues[config.key]) {
+          document.getElementById(config.key).value = currentValues[config.key];
+        }
       });
+
+      updateOutput();
     }
 
     function getFieldValue(key) {
-      return document.getElementById(key).value.trim();
+      const el = document.getElementById(key);
+      return el ? el.value.trim() : '';
     }
 
     function getLink() {
+      const activeSurvey = getActiveSurvey();
       const params = new URLSearchParams();
+
       variables.forEach(({ key }) => {
         const value = getFieldValue(key);
         if (value) params.append(key, value);
       });
+
       const query = params.toString();
-      return query ? `${baseUrl}?${query}` : baseUrl;
+      return query ? `${activeSurvey.baseUrl}?${query}` : activeSurvey.baseUrl;
     }
 
     function renderQrCode(link) {
       qrCodeContainer.innerHTML = '';
-      qrCodeInstance = new QRCode(qrCodeContainer, {
+      new QRCode(qrCodeContainer, {
         text: link,
         width: 200,
         height: 200,
@@ -329,8 +371,10 @@
     }
 
     function updateOutput() {
+      const activeSurvey = getActiveSurvey();
       const link = getLink();
       outputEl.textContent = link;
+      baseLinkDisplayEl.textContent = `Base link: ${activeSurvey.baseUrl}`;
       renderQrCode(link);
       clearStatus();
     }
@@ -394,18 +438,19 @@
 
     function clearAll() {
       variables.forEach(({ key }) => {
-        document.getElementById(key).value = '';
+        const el = document.getElementById(key);
+        if (el) el.value = '';
       });
       updateOutput();
     }
 
+    surveyTypeEl.addEventListener('change', buildFields);
     document.getElementById('copyBtn').addEventListener('click', copyLink);
     document.getElementById('clearBtn').addEventListener('click', clearAll);
     document.getElementById('copyQrBtn').addEventListener('click', copyQr);
     document.getElementById('downloadQrBtn').addEventListener('click', downloadQr);
 
     buildFields();
-    updateOutput();
   </script>
 </body>
 </html>
