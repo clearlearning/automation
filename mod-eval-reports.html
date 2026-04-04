@@ -3,1684 +3,528 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLEAR Learning Module Evaluation Report Generator</title>
-	<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<title>CLEAR Learning Evaluation Dashboard</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
-
-  :root {
-    --burgundy: #64092c;
-    --burgundy-light: #8a1e4a;
-    --gold: #dda838;
-    --gold-light: #f0c95c;
-    --blue: #084d78;
-    --charcoal: #484848;
-    --light-bg: #f7f5f2;
-    --white: #ffffff;
-    --border: #e0dcd6;
-    --text: #333333;
-    --text-light: #6b6b6b;
-    --success: #2e7d4f;
-    --shadow: 0 2px 12px rgba(100, 9, 44, 0.08);
-    --shadow-lg: 0 8px 32px rgba(100, 9, 44, 0.12);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Open Sans', sans-serif;
-    background: var(--light-bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  .header {
-    background: linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-light) 100%);
-    color: var(--white);
-    padding: 28px 40px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    box-shadow: 0 4px 20px rgba(100, 9, 44, 0.25);
-  }
-  .header-icon {
-    width: 100px; height: 48px;
-    background: transparent;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; font-weight: 700; color: var(--burgundy);
-    flex-shrink: 0;
-  }
-  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
-  .header p { font-size: 13px; opacity: 0.85; margin-top: 2px; }
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 40px 60px;
-  }
-
-  /* INSTRUCTIONS */
-  .instructions {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 24px 32px;
-    box-shadow: var(--shadow);
-    margin-bottom: 28px;
-    border-left: 4px solid var(--gold);
-  }
-  .instructions h2 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--burgundy);
-    margin-bottom: 14px;
-  }
-  .instructions ol {
-    margin: 0 0 16px 20px;
-    font-size: 14px;
-    line-height: 1.8;
-    color: var(--text);
-  }
-  .instructions ol li {
-    padding-left: 4px;
-  }
-  .instructions a {
-    color: var(--blue);
-    text-decoration: underline;
-  }
-  .instructions a:hover {
-    color: var(--burgundy);
-  }
-  .instructions p {
-    font-size: 13px;
-    color: var(--text-light);
-    line-height: 1.6;
-  }
-
-  /* UPLOAD ZONE */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 48px 32px;
-    text-align: center;
-    background: var(--white);
-    cursor: pointer;
-    transition: all 0.25s ease;
-    margin-bottom: 28px;
-    position: relative;
-  }
-  .upload-zone:hover, .upload-zone.dragover {
-    border-color: var(--gold);
-    background: #fffdf5;
-    box-shadow: var(--shadow);
-  }
-  .upload-zone.loaded {
-    border-color: var(--success);
-    border-style: solid;
-    background: #f4faf6;
-    padding: 20px 32px;
-    cursor: default;
-  }
-  .upload-icon { font-size: 40px; margin-bottom: 12px; }
-  .upload-zone h3 { font-size: 16px; color: var(--charcoal); margin-bottom: 6px; }
-  .upload-zone p { font-size: 13px; color: var(--text-light); }
-  .upload-zone input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer;
-  }
-  .upload-zone.loaded input[type="file"] { display: none; }
-  .loaded-info {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-  }
-  .loaded-info .check { color: var(--success); font-size: 20px; font-weight: 700; }
-  .loaded-info .filename { font-weight: 600; color: var(--charcoal); }
-  .loaded-info .rowcount { color: var(--text-light); font-size: 13px; }
-  .reload-btn {
-    background: none; border: 1px solid var(--border); border-radius: 6px;
-    padding: 6px 14px; font-size: 12px; color: var(--text-light);
-    cursor: pointer; margin-left: 8px; transition: all 0.2s;
-  }
-  .reload-btn:hover { border-color: var(--burgundy); color: var(--burgundy); }
-
-  /* FILTERS */
-  .filters-panel {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 28px 32px;
-    box-shadow: var(--shadow);
-    margin-bottom: 28px;
-    display: none;
-  }
-  .filters-panel.visible { display: block; }
-  .filters-title {
-    font-size: 16px; font-weight: 700; color: var(--burgundy);
-    margin-bottom: 20px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-  .filter-group label {
-    display: block; font-size: 12px; font-weight: 600;
-    color: var(--text-light); text-transform: uppercase;
-    letter-spacing: 0.5px; margin-bottom: 6px;
-  }
-  .filter-group select, .filter-group input[type="date"], .filter-group input[type="text"] {
-    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-    border-radius: 8px; font-size: 14px; font-family: 'Open Sans', sans-serif;
-    color: var(--text); background: var(--white);
-    transition: border-color 0.2s;
-  }
-  .filter-group select:focus, .filter-group input:focus {
-    outline: none; border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(221, 168, 56, 0.15);
-  }
-
-  /* MULTI-SELECT DROPDOWN */
-  .multi-select {
-    position: relative;
-    width: 100%;
-  }
-  .multi-select-toggle {
-    width: 100%; padding: 10px 32px 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px; font-size: 14px;
-    font-family: 'Open Sans', sans-serif;
-    color: var(--text); background: var(--white);
-    cursor: pointer; text-align: left;
-    transition: border-color 0.2s;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    position: relative;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  .multi-select-toggle::after {
-    content: '';
-    position: absolute; right: 12px; top: 50%;
-    transform: translateY(-50%);
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid var(--text-light);
-    pointer-events: none;
-  }
-  .multi-select-toggle:hover,
-  .multi-select-toggle.open {
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(221, 168, 56, 0.15);
-  }
-  .multi-select-toggle .placeholder { color: var(--text-light); }
-  .multi-select-dropdown {
-    display: none;
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: var(--shadow-lg);
-    z-index: 100;
-    max-height: 240px;
-    overflow-y: auto;
-  }
-  .multi-select-dropdown.open { display: block; }
-  .ms-option {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 14px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.15s;
-  }
-  .ms-option:hover { background: #fdf6e3; }
-  .ms-option input[type="checkbox"] {
-    accent-color: var(--burgundy);
-    width: 16px; height: 16px;
-    cursor: pointer; flex-shrink: 0;
-  }
-  .ms-option label { cursor: pointer; flex: 1; }
-  .ms-actions {
-    display: flex; gap: 8px;
-    padding: 8px 14px;
-    border-top: 1px solid var(--border);
-    background: #faf9f7;
-    border-radius: 0 0 8px 8px;
-    position: sticky; bottom: 0;
-  }
-  .ms-actions button {
-    background: none; border: none; font-size: 12px;
-    font-family: 'Open Sans', sans-serif;
-    color: var(--blue); cursor: pointer; font-weight: 600;
-    padding: 2px 4px;
-  }
-  .ms-actions button:hover { text-decoration: underline; }
-
-  .btn-row {
-    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-    padding-top: 8px; border-top: 1px solid var(--border);
-  }
-  .btn {
-    padding: 11px 28px; border-radius: 8px; font-size: 14px;
-    font-weight: 600; font-family: 'Open Sans', sans-serif;
-    cursor: pointer; border: none; transition: all 0.2s;
-  }
-  .btn-primary { background: var(--burgundy); color: var(--white); }
-  .btn-primary:hover { background: var(--burgundy-light); box-shadow: var(--shadow); }
-  .btn-secondary { background: var(--white); color: var(--charcoal); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--charcoal); }
-  .btn-export { background: var(--blue); color: var(--white); }
-  .btn-export:hover { background: #0a6191; box-shadow: var(--shadow); }
-  .filter-summary {
-    font-size: 13px; color: var(--text-light); margin-left: auto;
-  }
-
-  /* REPORT */
-  .report-section { display: none; }
-  .report-section.visible { display: block; }
-
-  .report-card {
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    margin-bottom: 24px;
-    overflow: hidden;
-  }
-  .report-card-header {
-    background: linear-gradient(135deg, var(--charcoal) 0%, #5a5a5a 100%);
-    color: var(--white);
-    padding: 16px 28px;
-    font-size: 15px; font-weight: 700;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .report-card-body { padding: 0; }
-
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    background: #f9f7f4;
-    padding: 12px 16px;
-    font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    color: var(--text-light);
-    text-align: center;
-    border-bottom: 2px solid var(--border);
-  }
-  thead th:first-child { text-align: left; }
-  tbody td {
-    padding: 12px 16px;
-    font-size: 14px;
-    text-align: center;
-    border-bottom: 1px solid #f0ede8;
-  }
-  tbody td:first-child {
-    text-align: left; font-weight: 600; color: var(--burgundy);
-  }
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: #fdfcfa; }
-
-  .overall-row td {
-    background: #fdf6e3 !important;
-    font-weight: 700 !important;
-    color: var(--charcoal) !important;
-    border-top: 2px solid var(--gold);
-  }
-
-  .score-badge {
-    display: inline-block; padding: 3px 10px; border-radius: 12px;
-    font-weight: 600; font-size: 13px;
-  }
-  .score-high { background: #e8f5e9; color: #2e7d32; }
-  .score-mid { background: #fff8e1; color: #b8860b; }
-  .score-low { background: #fce1ec; color: #c62828; }
-  .score-na { background: #f0f0f0; color: #757575; }
-
-  .comments-table td { text-align: left; font-size: 13px; }
-  .comments-table td:first-child { white-space: nowrap; width: 120px; }
-  .comments-table td:nth-child(2) {
-    white-space: nowrap; width: 80px; text-align: center;
-    font-weight: 400; color: var(--text-light);
-  }
-  .comments-table td:last-child {
-    color: var(--text); font-weight: 400; font-style: italic;
-  }
-
-  .comments-table .cb-col {
-    width: 40px;
-    text-align: center !important;
-  }
-  .comments-table input[type="checkbox"] {
-    accent-color: var(--burgundy);
-    width: 15px; height: 15px;
-    cursor: pointer;
-  }
-  .comment-excluded td:not(.cb-col) {
-    opacity: 0.4;
-    text-decoration: line-through;
-  }
-
-  .export-bar {
-    display: none; gap: 12px; align-items: center;
-    margin-bottom: 24px;
-    padding: 16px 24px;
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-  }
-  .export-bar.visible { display: flex; }
-  .export-bar span {
-    font-size: 13px; font-weight: 600; color: var(--charcoal);
-    margin-right: auto;
-  }
-
-  .empty-state {
-    text-align: center; padding: 60px 20px; color: var(--text-light);
-  }
-  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
-  .empty-state h3 { font-size: 16px; color: var(--charcoal); margin-bottom: 6px; }
-
-  /* INSTRUCTOR ASSIGNMENT PANEL */
-  .assignment-panel {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 28px 32px;
-    box-shadow: var(--shadow);
-    margin-bottom: 28px;
-    display: none;
-    border-left: 4px solid var(--blue);
-  }
-  .assignment-panel.visible { display: block; }
-  .assignment-panel h2 {
-    font-size: 16px; font-weight: 700; color: var(--burgundy);
-    margin-bottom: 6px;
-  }
-  .assignment-panel .subtitle {
-    font-size: 13px; color: var(--text-light); margin-bottom: 20px; line-height: 1.5;
-  }
-  .assignment-table {
-    width: 100%; border-collapse: collapse;
-  }
-  .assignment-table th {
-    background: #f9f7f4; padding: 10px 14px;
-    font-size: 12px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.5px; color: var(--text-light);
-    text-align: left; border-bottom: 2px solid var(--border);
-  }
-  .assignment-table td {
-    padding: 10px 14px; font-size: 14px;
-    border-bottom: 1px solid #f0ede8; vertical-align: middle;
-  }
-  .assignment-table td:first-child {
-    font-weight: 600; color: var(--burgundy);
-  }
-  .assignment-table tr:hover { background: #fdfcfa; }
-  .assignment-table select {
-    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
-    border-radius: 6px; font-size: 13px; font-family: 'Open Sans', sans-serif;
-    color: var(--text); background: var(--white);
-  }
-  .assignment-table select:focus {
-    outline: none; border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(221, 168, 56, 0.15);
-  }
-  .assignment-table input[type="text"] {
-    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
-    border-radius: 6px; font-size: 13px; font-family: 'Open Sans', sans-serif;
-    color: var(--text); margin-top: 6px;
-  }
-  .assignment-table input[type="text"]:focus {
-    outline: none; border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(221, 168, 56, 0.15);
-  }
-
-  .instructor-summary {
-    margin-top: 20px; padding: 16px 20px;
-    background: #fdf6e3; border-radius: 8px;
-    border: 1px solid var(--gold);
-  }
-  .instructor-summary h3 {
-    font-size: 14px; font-weight: 700; color: var(--charcoal); margin-bottom: 10px;
-  }
-  .instructor-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: 20px; padding: 5px 14px;
-    font-size: 13px; font-weight: 600; color: var(--burgundy);
-    margin: 3px 4px;
-  }
-  .instructor-chip .module-count {
-    background: var(--burgundy); color: var(--white);
-    border-radius: 50%; width: 22px; height: 22px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
-  }
-
-  /* TAB-STYLE INSTRUCTOR REPORTS */
-  .instructor-tabs {
-    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 0;
-    padding: 0 4px;
-  }
-  .instructor-tab {
-    padding: 10px 20px; border-radius: 8px 8px 0 0;
-    font-size: 13px; font-weight: 600;
-    cursor: pointer; border: 1px solid var(--border);
-    border-bottom: none; background: #f0ede8;
-    color: var(--text-light); transition: all 0.2s;
-    font-family: 'Open Sans', sans-serif;
-  }
-  .instructor-tab:hover { background: #e8e4de; }
-  .instructor-tab.active {
-    background: var(--white); color: var(--burgundy);
-    border-color: var(--border);
-    position: relative;
-  }
-  .instructor-tab.active::after {
-    content: ''; position: absolute;
-    bottom: -1px; left: 0; right: 0;
-    height: 2px; background: var(--white);
-  }
-
-  @media print {
-    .header { padding: 16px 20px; }
-    .upload-zone, .filters-panel, .export-bar, .btn, .assignment-panel, .instructor-tabs { display: none !important; }
-    .report-section { display: block !important; }
-    .container { padding: 0 20px; }
-    .report-card { box-shadow: none; border: 1px solid #ddd; }
-  }
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+:root{--burgundy:#64092c;--burgundy-light:#8a1e4a;--gold:#dda838;--gold-faint:#fdf6e3;--blue:#084d78;--blue-light:#0a6191;--charcoal:#484848;--light-bg:#f7f5f2;--white:#fff;--border:#e0dcd6;--text:#333;--text-light:#6b6b6b;--success:#2e7d4f;--success-faint:#f0f9f4;--shadow:0 2px 12px rgba(100,9,44,.08);--shadow-lg:0 8px 32px rgba(100,9,44,.12)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Open Sans',sans-serif;background:var(--light-bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,var(--burgundy),var(--burgundy-light));color:var(--white);padding:28px 40px;display:flex;align-items:center;gap:20px;box-shadow:0 4px 20px rgba(100,9,44,.25)}
+.header-icon img{width:100px;height:auto;border-radius:4px;box-shadow:0 4px 8px rgba(0,0,0,.3);padding:10px;background:#fff}
+.header h1{font-size:24px;font-weight:700;letter-spacing:.5px}
+.header p{font-size:13px;opacity:.85;margin-top:2px}
+.container{max-width:1400px;margin:0 auto;padding:32px 40px 60px}
+.card{background:var(--white);border-radius:12px;box-shadow:var(--shadow);margin-bottom:24px;overflow:hidden}
+.card-hdr{padding:16px 28px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--charcoal),#5a5a5a);color:var(--white)}
+.card-body{padding:24px 28px}
+.card-flush{padding:0}
+.instructions{border-left:4px solid var(--gold);padding:20px 28px;background:var(--white);border-radius:12px;box-shadow:var(--shadow);margin-bottom:24px}
+.instructions h2{font-size:18px;font-weight:700;color:var(--burgundy);margin-bottom:14px}
+.instructions ol{margin:0 0 12px 20px;font-size:14px;line-height:1.8}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.uz{border:2px dashed var(--border);border-radius:12px;padding:36px 24px;text-align:center;background:var(--white);cursor:pointer;transition:.25s;position:relative}
+.uz:hover,.uz.dragover{border-color:var(--gold);background:#fffdf5;box-shadow:var(--shadow)}
+.uz.loaded{border-color:var(--success);border-style:solid;background:var(--success-faint);padding:16px 24px;cursor:default}
+.uz .icon{font-size:36px;margin-bottom:10px}
+.uz h3{font-size:15px;color:var(--charcoal);margin-bottom:4px}
+.uz p{font-size:12px;color:var(--text-light)}
+.uz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.uz.loaded input[type=file]{display:none}
+.loaded-info{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.loaded-info .ck{color:var(--success);font-size:18px;font-weight:700}
+.loaded-info .fn{font-weight:600;color:var(--charcoal);font-size:14px}
+.loaded-info .rc{color:var(--text-light);font-size:12px}
+.rbtn{background:0 0;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text-light);cursor:pointer;transition:.2s;font-family:'Open Sans',sans-serif}
+.rbtn:hover{border-color:var(--burgundy);color:var(--burgundy)}
+.data-summary{display:flex;gap:16px;flex-wrap:wrap;padding:16px 28px;background:var(--gold-faint);border:1px solid var(--gold);border-radius:12px;margin-bottom:24px;align-items:center}
+.stat{display:flex;flex-direction:column;align-items:center;padding:0 16px;border-right:1px solid rgba(221,168,56,.3)}
+.stat:last-child{border-right:0}
+.stat-val{font-size:22px;font-weight:700;color:var(--burgundy)}
+.stat-lbl{font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px}
+.vtabs{display:flex;gap:4px;border-bottom:2px solid var(--border);padding:0 4px;margin-bottom:0}
+.vtab{padding:12px 24px;border-radius:8px 8px 0 0;font-size:14px;font-weight:600;cursor:pointer;border:1px solid transparent;border-bottom:0;background:0 0;color:var(--text-light);transition:.2s;font-family:'Open Sans',sans-serif;position:relative}
+.vtab:hover{background:#f0ede8;color:var(--charcoal)}
+.vtab.active{background:var(--white);color:var(--burgundy);border-color:var(--border);z-index:1}
+.vtab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:3px;background:var(--white)}
+.tc{display:none}.tc.active{display:block}
+.fp{background:var(--white);border-radius:0 12px 12px 12px;padding:28px 32px;box-shadow:var(--shadow);margin-bottom:24px}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px}
+.fgl{display:block;font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fgi{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Open Sans',sans-serif;color:var(--text);background:var(--white);transition:border-color .2s}
+.fgi:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 3px rgba(221,168,56,.15)}
+/* Multi-select */
+.ms{position:relative;width:100%}
+.mst{width:100%;padding:9px 32px 9px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Open Sans',sans-serif;color:var(--text);background:var(--white);cursor:pointer;text-align:left;transition:border-color .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;-webkit-appearance:none;appearance:none}
+.mst::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid var(--text-light);pointer-events:none}
+.mst:hover,.mst.open{border-color:var(--gold);box-shadow:0 0 0 3px rgba(221,168,56,.15)}
+.mst .ph{color:var(--text-light)}
+.msd{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);z-index:100;max-height:280px;overflow-y:auto}
+.msd.open{display:block}
+.mss{width:calc(100% - 16px);margin:8px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'Open Sans',sans-serif}
+.mss:focus{outline:0;border-color:var(--gold)}
+.mso{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:13px;transition:background .15s}
+.mso:hover{background:var(--gold-faint)}
+.mso.hid{display:none}
+.mso input[type=checkbox]{accent-color:var(--burgundy);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+.mso label{cursor:pointer;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msa{display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border);background:#faf9f7;border-radius:0 0 8px 8px;position:sticky;bottom:0}
+.msa button{background:0 0;border:0;font-size:12px;font-family:'Open Sans',sans-serif;color:var(--blue);cursor:pointer;font-weight:600;padding:2px 4px}
+.msa button:hover{text-decoration:underline}
+.br{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;font-family:'Open Sans',sans-serif;cursor:pointer;border:0;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-p{background:var(--burgundy);color:var(--white)}.btn-p:hover{background:var(--burgundy-light);box-shadow:var(--shadow)}
+.btn-s{background:var(--white);color:var(--charcoal);border:1px solid var(--border)}.btn-s:hover{border-color:var(--charcoal)}
+.btn-e{background:var(--blue);color:var(--white)}.btn-e:hover{background:var(--blue-light);box-shadow:var(--shadow)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.fsm{font-size:12px;color:var(--text-light);margin-left:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:#f9f7f4;padding:11px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);text-align:center;border-bottom:2px solid var(--border)}
+thead th:first-child{text-align:left}
+tbody td{padding:10px 14px;font-size:13px;text-align:center;border-bottom:1px solid #f0ede8}
+tbody td:first-child{text-align:left;font-weight:600;color:var(--burgundy)}
+tbody tr:hover{background:#fdfcfa}
+.orow td{background:var(--gold-faint)!important;font-weight:700!important;color:var(--charcoal)!important;border-top:2px solid var(--gold)}
+.sb{display:inline-block;padding:3px 10px;border-radius:12px;font-weight:600;font-size:12px}
+.sh{background:#e8f5e9;color:#2e7d32}.sm{background:#fff8e1;color:#b8860b}.sl{background:#fce1ec;color:#c62828}.sn{background:#f0f0f0;color:#757575}
+.ct td{text-align:left;font-size:13px}.ct td:first-child{font-weight:400}
+.cbc{width:36px;text-align:center!important}.cbc input[type=checkbox]{accent-color:var(--burgundy);width:15px;height:15px;cursor:pointer}
+.cex td:not(.cbc){opacity:.35;text-decoration:line-through;color:var(--text-light)!important;font-weight:400!important}
+.cna td:not(.cbc){opacity:.35;text-decoration:line-through;color:#999!important;font-style:italic}
+.csr{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.csi{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Open Sans',sans-serif}
+.csi:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 3px rgba(221,168,56,.15)}
+.cc{font-size:12px;color:var(--text-light);white-space:nowrap}
+.itabs{display:flex;gap:4px;flex-wrap:wrap;padding:0 4px;margin-bottom:0}
+.itab{padding:10px 18px;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);border-bottom:0;background:#f0ede8;color:var(--text-light);transition:.2s;font-family:'Open Sans',sans-serif}
+.itab:hover{background:#e8e4de}
+.itab.active{background:var(--white);color:var(--burgundy);border-color:var(--border);position:relative}
+.itab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--white)}
+.ebar{display:none;margin-bottom:24px;padding:16px 24px;background:var(--white);border-radius:12px;box-shadow:var(--shadow)}.ebar.visible{display:block}
+.ag{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:24px}
+.mc{background:var(--white);border-radius:12px;box-shadow:var(--shadow);padding:20px 24px}
+.mc h3{font-size:13px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.bcr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bl{font-size:12px;font-weight:600;color:var(--charcoal);min-width:120px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt{flex:1;height:22px;background:#f0ede8;border-radius:4px;overflow:hidden}
+.bf{height:100%;border-radius:4px;transition:width .5s;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:700;color:var(--white);min-width:40px}
+.hidden{display:none!important}
+.empty{text-align:center;padding:48px 20px;color:var(--text-light)}
+.empty .icon{font-size:40px;margin-bottom:12px}
+.empty h3{font-size:15px;color:var(--charcoal);margin-bottom:6px}
+@media(max-width:800px){.upload-grid{grid-template-columns:1fr}.container{padding:20px}.header{padding:20px}.fg{grid-template-columns:1fr 1fr}}
+@media print{.header{padding:16px 20px}.upload-grid,.fp,.ebar,.btn,.vtabs,.data-summary,.instructions,.csr,.itabs{display:none!important}.tc{display:block!important}.container{padding:0 20px}.card{box-shadow:none;border:1px solid #ddd}}
 </style>
 </head>
 <body>
-
 <div class="header">
-  <div class="header-icon"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" style="width: 100px; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0, 0, 0, .3); padding: 10px; background: white;" alt="CLEAR Learning Logo"></div>
-  <div>
-    <h1>CLEAR Learning Module Evaluation Report Generator</h1>
-    <p>Filter, analyze, and export module evaluation data</p>
-  </div>
+  <div class="header-icon"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" alt="CLEAR Learning Logo"></div>
+  <div><h1>CLEAR Learning Evaluation Dashboard</h1><p>Upload, filter, analyze, and export module evaluation data</p></div>
 </div>
-
 <div class="container">
-
-	<div class="instructions">
-		<h2 style="font-size: 1.5rem;">Instructions</h2>
-		<ol style="color: #000000;">
-			<li>Open the <strong>CLEARLearning-ModSM.xlsx File</strong> located <a href="ms-excel:ofe|u|https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBuOcUKZ9pESbW3QqV1VotlARBY8LjbWR7Kc536ARCWArw?e=9DyXR6" rel="noopener noreferrer" target="_blank">here</a>.</li>
-			<li>Save the file to a local folder on your device</li>
-			<li>Open the file folder in a file browser and drag the file to the upload zone below</li>
-		</ol>
-		<h3 style="margin: 20px auto; text-align: center; color: #64092c;">PLEASE DO NOT OPEN OR CHANGE THE EXCEL FILE</h3>
-		<p style="font-size: .9rem; color: #000000;">Once you have uploaded the file, use the report filters to display the data you wish to pull from the file. Once you have the report the way you want it, you can export either a <strong>PDF</strong> or an <strong>Excel</strong> file.</p>
-	</div>
-
-  <div class="upload-zone" id="uploadZone">
-    <div class="upload-icon">📊</div>
-    <h3>Drop your Excel file here or click to browse</h3>
-    <p>Accepts .xlsx files &mdash; data will be read from the &ldquo;Sheet1&rdquo; tab</p>
-    <input type="file" id="fileInput" accept=".xlsx,.xls">
+  <div class="instructions">
+    <h2>Getting Started</h2>
+    <ol>
+      <li>Navigate to one or both <strong>Excel files</strong> below. Each file is hyperlinked to it's location in <strong>Amanda Vance's OneDrive</strong>. The tool reads the <strong>Sheet1</strong> tab from each file.</li>
+      <ul style="margin-left: 20px;">
+        <li><strong><a href="https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBq5lQz96jjTKCi5H_f5CyvAXaAWLRxpiAJ-suQb0CIwi0?e=Gzyato" target="_blank" rel="noopener noreferrer">ILT file</a></strong> contains instructor-led training evaluations (includes instructor ratings).</li>
+        <li><strong><a href="https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBT9SxOwAqNRIDyLCI2vIizAUK1bbpXr0m0D9CPW8bOXC4?e=ehRG8Q" target="_blank" rel="noopener noreferrer">Async file</a></strong> contains self-study/asynchronous module evaluations.</li>
+      </ul>
+      <li>Create a local copy of the files.</li>
+      <li>Drag and drop the local files to the appropriate drop zones below.</li>
+      <li>Once loaded, use the <strong>Analyze</strong> tab for data exploration or the <strong>Instructor Reports</strong> tab for PDF/XLSX output.</li>
+    </ol>
+    <p><strong>NOTE:</strong> Asynchronous module evaluations from programs completed prior to this version of the Evaluation Dashboard <i>(2026 02 & 2026 03 Cohorts)</i> are located in the ILT file.
   </div>
-
-  <div class="filters-panel" id="filtersPanel">
-    <div class="filters-title"><h2>⚙ Report Filters</h2></div>
-    <div class="instructions" style="background: #FFFDF9;"><p style="line-height: 1.5; font-size: .9rem; color: #000;"><strong>Note:</strong> To create a report that will be used to update the Master Instructor Report you <strong>MUST</strong> provide the Instructor Name and Cohort Name. Populate as many of the filters below as possible; the more specific you are, the better data you will receive.</p></div>
-    <div class="filters-grid">
-      <div class="filter-group">
-        <label>Course</label>
-        <select id="filterCourse"><option value="">All Courses</option></select>
-      </div>
-      <div class="filter-group">
-        <label>Version</label>
-        <select id="filterVersion"><option value="">All Versions</option></select>
-      </div>
-      <div class="filter-group">
-        <label>Method</label>
-        <select id="filterMethod"><option value="">All Methods</option></select>
-      </div>
-      <div class="filter-group">
-        <label>Module</label>
-        <div class="multi-select" id="moduleMultiSelect">
-          <button type="button" class="multi-select-toggle" id="moduleToggle">
-            <span class="placeholder">All Modules</span>
-          </button>
-          <div class="multi-select-dropdown" id="moduleDropdown">
-            <div id="moduleOptions"></div>
-            <div class="ms-actions">
-              <button type="button" onclick="msSelectAll()">Select All</button>
-              <button type="button" onclick="msClearAll()">Clear All</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="filter-group">
-        <label>Start Date (From)</label>
-        <input type="date" id="filterDateFrom">
-      </div>
-      <div class="filter-group">
-        <label>Start Date (To)</label>
-        <input type="date" id="filterDateTo">
-      </div>
-      <div class="filter-group">
-        <label>Instructor Name</label>
-        <select id="instructorSelect" onchange="handleInstructorChange()">
-          <option value="">-- Select Instructor --</option>
-          <option value="_ASSIGN_MULTI_">Assign per Module (below)</option>
-          <option value="Anderegg, Karen">Anderegg, Karen</option>
-          <option value="Barton, Andrew">Barton, Andrew</option>
-          <option value="Betteridge, Lise">Betteridge, Lise</option>
-          <option value="Chambers, Sarah">Chambers, Sarah</option>
-          <option value="Cooley, Mandi">Cooley, Mandi</option>
-          <option value="Crumley, John">Crumley, John</option>
-          <option value="Curley, Stephen">Curley, Stephen</option>
-          <option value="deFoy, Carmen">deFoy, Carmen</option>
-          <option value="Deforest, Denise">Deforest, Denise</option>
-          <option value="DeLuca, Ryan">DeLuca, Ryan</option>
-          <option value="DeSousa, Lisa">DeSousa, Lisa</option>
-          <option value="Eichrodt, Sean">Eichrodt, Sean</option>
-          <option value="Erikson, Marcus">Erikson, Marcus</option>
-          <option value="Jenkins, Robin">Jenkins, Robin</option>
-          <option value="Kay, David">Kay, David</option>
-          <option value="Keirstead, Graeme">Keirstead, Graeme</option>
-          <option value="Pfiefer, Judy">Pfiefer, Judy</option>
-          <option value="Robinson, Jan">Robinson, Jan</option>
-          <option value="Salvatori, Michael">Salvatori, Michael</option>
-          <option value="Stansfield, Katherine">Stansfield, Katherine</option>
-          <option value="Thibert, Lena">Thibert, Lena</option>
-          <option value="Thompson, David (Eric)">Thompson, David (Eric)</option>
-          <option value="Thompson-May, Brett">Thompson-May, Brett</option>
-          <option value="Verge, Vicki">Verge, Vicki</option>
-          <option value="Wade, Amigo">Wade, Amigo</option>
-          <option value="Wilkie, Kathy">Wilkie, Kathy</option>
-          <option value="Williams, Deanna">Williams, Deanna</option>
-          <option value="_OTHER_">Other (type new name)</option>
-        </select>
-        <input type="text" id="instructorOther" placeholder="Type new instructor name" style="display:none; margin-top: 6px;">
-      </div>
-      <div class="filter-group">
-        <label>Cohort Name</label>
-        <input type="text" id="cohortName" placeholder="e.g. 2026 01 NCIT B US Open">
-      </div>
+  <div class="upload-grid">
+    <div class="uz" id="uzILT"><div class="icon">👩‍🏫</div><h3>Instructor-Led (ILT) Evaluations</h3><p><a href="https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBq5lQz96jjTKCi5H_f5CyvAXaAWLRxpiAJ-suQb0CIwi0?e=Gzyato" target="_blank" rel="noopener noreferrer">CLEARLearning-ILT-Mod-Evals.xlsx</a></p><input type="file" id="fILT" accept=".xlsx,.xls"></div>
+    <div class="uz" id="uzAsync"><div class="icon">💻</div><h3>Self-Study / Async Evaluations</h3><p><a href="https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBT9SxOwAqNRIDyLCI2vIizAUK1bbpXr0m0D9CPW8bOXC4?e=ehRG8Q" target="_blank" rel="noopener noreferrer">CLEARLearning-Async-Mod-Evals.xlsx</a></p><input type="file" id="fAsync" accept=".xlsx,.xls"></div>
+  </div>
+  <div class="data-summary hidden" id="dsum"></div>
+  <div class="hidden" id="main">
+    <div class="vtabs">
+      <button class="vtab active" onclick="sw('a')">📊 Analyze</button>
+      <button class="vtab" onclick="sw('i')">👩‍🏫 Instructor Reports</button>
     </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
-      <button class="btn btn-secondary" onclick="resetFilters()">Reset Filters</button>
-      <span class="filter-summary" id="filterSummary"></span>
-    </div>
-  </div>
-
-  <!-- INSTRUCTOR ASSIGNMENT PANEL (visible only in multi-assign mode) -->
-  <div class="assignment-panel" id="assignmentPanel">
-    <h2>👩‍🏫 Assign Instructors to Modules</h2>
-    <p class="subtitle">Select an instructor for each module included in the report. Modules assigned to the same instructor will be combined into a single report. Only modules with data matching your filters above will appear.</p>
-    <div id="assignmentTableWrap"></div>
-    <div id="assignmentSummary"></div>
-  </div>
-
-  <div class="export-bar" id="exportBar" style="flex-direction: column; align-items: flex-start;">
-    <div style="width: 100%;">
-      <h2 style="margin: 20px auto; text-align: left !important; color: #64092c;">Next Steps:</h2>
-      <div class="instructions">
-        <ol>
-          <li>Review the report below and remove any comments you do not wish to include.</li>
-          <li>Click the <strong>Download PDF</strong> button to generate the file(s) you will send to the instructor(s).</li>
-          <li>Click the <strong>Download XLSX</strong> to generate the file(s) you will use to update the master instructor file.</li>
-          <li>Click the <strong>Update Master Instructor file</strong> button to navigate to the next step.</li>
-        </ol>
+    <!-- ANALYZE -->
+    <div class="tc active" id="va">
+      <div class="fp"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><h2 style="font-size:16px;font-weight:700;color:var(--burgundy)">Filters</h2><span class="fsm" id="afs"></span></div>
+        <div class="fg" id="afg"></div>
+        <div class="br"><button class="btn btn-p" onclick="runA()">Apply Filters</button><button class="btn btn-s" onclick="resetF('a')">Reset</button></div>
       </div>
-      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <button class="btn btn-export" onclick="exportPDF()">📄 Download PDF</button>
-        <button class="btn btn-export" onclick="exportXLSX()">📗 Download XLSX</button>
-        <a href="https://clearlearning.github.io/about/EvalDataUpdater.html" rel="noopener noreferrer" target="_blank" style=" text-decoration: none;" class="btn btn-export">🔗 Update Master Instructor File</a>
-      </div>
+      <div id="ar"></div>
     </div>
-  </div>
-
-  <div class="report-section" id="reportSection">
-    <div id="instructorTabsContainer"></div>
-    <div id="reportContent"></div>
+    <!-- INSTRUCTOR REPORTS -->
+    <div class="tc" id="vi">
+      <div class="fp"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><h2 style="font-size:16px;font-weight:700;color:var(--burgundy)">Report Filters</h2><span class="fsm" id="ifs"></span></div>
+        <div style="background:var(--gold-faint);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:16px"><p style="font-size:13px;line-height:1.5;color:var(--text)"><strong>Note:</strong> Instructor and Cohort names are pulled from the data. Select at least one Instructor and one Cohort to generate reports for the Master Instructor File. A separate PDF and XLSX will be generated for each selected instructor.</p></div>
+        <div class="fg" id="ifg"></div>
+        <div class="br"><button class="btn btn-p" onclick="runI()">Generate Report</button><button class="btn btn-s" onclick="resetF('i')">Reset</button></div>
+      </div>
+      <div class="ebar" id="iebar">
+        <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:12px">Next Steps</h3>
+        <div style="background:var(--gold-faint);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:16px"><ol style="margin:0 0 0 18px;font-size:13px;line-height:1.8"><li>Review the report below and deselect any comments you do not wish to include.</li><li>Click <strong>Download PDF</strong> to generate the file(s) for the instructor(s).</li><li>Click <strong>Download XLSX</strong> for the master instructor file update.</li><li>Click <strong>Update Master Instructor File</strong> to navigate to the next step.</li></ol></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn btn-e" onclick="xPDF()">📄 Download PDF</button><button class="btn btn-e" onclick="xXLSX()">📗 Download XLSX</button><a href="https://clearlearning.github.io/about/EvalDataUpdater.html" target="_blank" rel="noopener noreferrer" class="btn btn-e" style="text-decoration:none">🔗 Update Master Instructor File</a></div>
+      </div>
+      <div id="itc"></div>
+      <div id="irc"></div>
+    </div>
   </div>
 </div>
-
 <script>
-  let allData = [];
-  const ratingCols = [
-    'The instructor was',
-    'The style of delivery was',
-    'The content of this module was',
-    'The amount of material covered was',
-    'The usefulness of this session was'
-  ];
-  const shortLabels = ['Instructor', 'Style', 'Content', 'Coverage', 'Usefulness'];
-  let lastReportData = null;
-  let selectedModules = new Set();
-  let allModuleValues = [];
-  // Multi-instructor mode
-  let isMultiInstructorMode = false;
-  // Keyed by instructor name -> { tableRows, grandAvgs, grandOverall, comments, totalResponses, cohortName, metadata, modules[] }
-  let allInstructorReports = {};
-  let activeInstructorTab = null;
-  // Persists excluded comment indices per instructor across tab switches
-  // Keyed by instructor name -> Set of excluded comment indices
-  let excludedByInstructor = {};
-
-  const instructorList = [
-    'Anderegg, Karen','Barton, Andrew','Betteridge, Lise','Chambers, Sarah',
-    'Cooley, Mandi','Crumley, John','Curley, Stephen','deFoy, Carmen',
-    'Deforest, Denise','DeLuca, Ryan','DeSousa, Lisa','Eichrodt, Sean',
-    'Erikson, Marcus','Jenkins, Robin','Kay, David','Keirstead, Graeme',
-    'Pfiefer, Judy','Robinson, Jan','Salvatori, Michael','Stansfield, Katherine',
-    'Thibert, Lena','Thompson, David (Eric)','Thompson-May, Brett',
-    'Verge, Vicki','Wade, Amigo','Wilkie, Kathy','Williams, Deanna'
-  ];
-
-  // ---- INSTRUCTOR DROPDOWN ----
-  function handleInstructorChange() {
-    const sel = document.getElementById('instructorSelect');
-    const other = document.getElementById('instructorOther');
-    if (sel.value === '_OTHER_') {
-      other.style.display = 'block';
-      other.focus();
-      hideAssignmentPanel();
-    } else if (sel.value === '_ASSIGN_MULTI_') {
-      other.style.display = 'none';
-      other.value = '';
-      // Panel will populate when report is generated
-    } else {
-      other.style.display = 'none';
-      other.value = '';
-      hideAssignmentPanel();
-    }
-  }
-
-  function hideAssignmentPanel() {
-    document.getElementById('assignmentPanel').classList.remove('visible');
-  }
-
-  function getInstructorName() {
-    const sel = document.getElementById('instructorSelect');
-    if (sel.value === '_OTHER_') {
-      return document.getElementById('instructorOther').value.trim();
-    }
-    if (sel.value === '_ASSIGN_MULTI_') return '';
-    return sel.value || '';
-  }
-
-  function getCohortName() {
-    return document.getElementById('cohortName').value.trim();
-  }
-
-  // ---- FILE LOADING ----
-  const uploadZone = document.getElementById('uploadZone');
-  const fileInput = document.getElementById('fileInput');
-
-  uploadZone.addEventListener('dragover', e => {
-    e.preventDefault(); uploadZone.classList.add('dragover');
-  });
-  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-  uploadZone.addEventListener('drop', e => {
-    e.preventDefault(); uploadZone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
-  });
-  fileInput.addEventListener('change', e => {
-    if (e.target.files.length) loadFile(e.target.files[0]);
-  });
-
-  function loadFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-
-        let sheetName = null;
-        if (wb.SheetNames.includes('Sheet1')) {
-          sheetName = 'Sheet1';
-        } else {
-          const match = wb.SheetNames.find(n => n.toLowerCase().trim() === 'sheet1');
-          if (match) {
-            sheetName = match;
-          } else {
-            alert('Could not find a "Sheet1" tab in this workbook.\n\nAvailable tabs: ' + wb.SheetNames.join(', '));
-            return;
-          }
-        }
-
-        const ws = wb.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-
-        if (!json.length) {
-          alert('"Sheet1" appears to be empty. Please check your file.');
-          return;
-        }
-
-        allData = json.map(row => {
-          let startDate = null;
-          const raw = row['Start Date'];
-          if (raw instanceof Date) {
-            startDate = raw;
-          } else if (typeof raw === 'string' && raw.length >= 10) {
-            startDate = new Date(raw);
-            if (isNaN(startDate.getTime())) startDate = null;
-          }
-
-          const ratings = {};
-          ratingCols.forEach(col => {
-            const v = parseFloat(row[col]);
-            ratings[col] = (!isNaN(v) && v >= 0 && v <= 5) ? v : null;
-          });
-
-          return {
-            ...row,
-            _startDate: startDate,
-            _ratings: ratings,
-            _course: String(row['course'] || '').trim(),
-            _version: String(row['version'] || '').trim(),
-            _method: String(row['method'] || '').trim(),
-            _module: String(row['module_name'] || '').trim(),
-            _comment: String(row['Q2'] || '').trim()
-          };
-        });
-
-        showLoadedState(file.name, allData.length);
-        populateFilters();
-        document.getElementById('filtersPanel').classList.add('visible');
-      } catch (err) {
-        alert('Error reading file: ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  function showLoadedState(name, count) {
-    uploadZone.classList.add('loaded');
-    uploadZone.innerHTML = `
-      <div class="loaded-info">
-        <span class="check">&#10003;</span>
-        <span class="filename">${escapeHtml(name)}</span>
-        <button class="reload-btn" onclick="resetAll()">Load Different File</button>
-      </div>`;
-  }
-
-  function resetAll() {
-    allData = [];
-    lastReportData = null;
-    allInstructorReports = {};
-    activeInstructorTab = null;
-    isMultiInstructorMode = false;
-    excludedByInstructor = {};
-    selectedModules.clear();
-    allModuleValues = [];
-    uploadZone.classList.remove('loaded');
-    uploadZone.innerHTML = `
-      <div class="upload-icon">📊</div>
-      <h3>Drop your Excel file here or click to browse</h3>
-      <p>Accepts .xlsx files &mdash; data will be read from the &ldquo;Sheet1&rdquo; tab</p>
-      <input type="file" id="fileInput" accept=".xlsx,.xls">`;
-    document.getElementById('fileInput').addEventListener('change', e => {
-      if (e.target.files.length) loadFile(e.target.files[0]);
-    });
-    document.getElementById('filtersPanel').classList.remove('visible');
-    document.getElementById('reportSection').classList.remove('visible');
-    document.getElementById('exportBar').classList.remove('visible');
-    hideAssignmentPanel();
-  }
-
-  // ---- MULTI-SELECT MODULE DROPDOWN ----
-  const moduleToggle = document.getElementById('moduleToggle');
-  const moduleDropdown = document.getElementById('moduleDropdown');
-
-  moduleToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    moduleDropdown.classList.toggle('open');
-    moduleToggle.classList.toggle('open');
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!document.getElementById('moduleMultiSelect').contains(e.target)) {
-      moduleDropdown.classList.remove('open');
-      moduleToggle.classList.remove('open');
-    }
-  });
-
-  function buildModuleOptions(values) {
-    const container = document.getElementById('moduleOptions');
-    container.innerHTML = '';
-    values.forEach((v, i) => {
-      const div = document.createElement('div');
-      div.className = 'ms-option';
-      const id = 'ms_mod_' + i;
-      div.innerHTML = `<input type="checkbox" id="${id}" value="${escapeHtml(v)}" ${selectedModules.has(v) ? 'checked' : ''}>
-        <label for="${id}">${escapeHtml(v)}</label>`;
-      div.querySelector('input').addEventListener('change', function() {
-        if (this.checked) {
-          selectedModules.add(v);
-        } else {
-          selectedModules.delete(v);
-        }
-        updateModuleToggleLabel();
-      });
-      container.appendChild(div);
-    });
-  }
-
-  function updateModuleToggleLabel() {
-    const toggle = document.getElementById('moduleToggle');
-    if (selectedModules.size === 0 || selectedModules.size === allModuleValues.length) {
-      toggle.innerHTML = '<span class="placeholder">All Modules</span>';
-    } else if (selectedModules.size <= 3) {
-      toggle.textContent = [...selectedModules].sort().join(', ');
-    } else {
-      toggle.textContent = selectedModules.size + ' modules selected';
-    }
-  }
-
-  function msSelectAll() {
-    allModuleValues.forEach(v => selectedModules.add(v));
-    document.querySelectorAll('#moduleOptions input[type="checkbox"]').forEach(cb => cb.checked = true);
-    updateModuleToggleLabel();
-  }
-
-  function msClearAll() {
-    selectedModules.clear();
-    document.querySelectorAll('#moduleOptions input[type="checkbox"]').forEach(cb => cb.checked = false);
-    updateModuleToggleLabel();
-  }
-
-  // ---- FILTERS ----
-  function populateFilters() {
-    populateSelect('filterCourse', [...new Set(allData.map(r => r._course).filter(Boolean))].sort());
-    populateSelect('filterVersion', [...new Set(allData.map(r => r._version).filter(Boolean))].sort());
-    populateSelect('filterMethod', [...new Set(allData.map(r => r._method).filter(Boolean))].sort());
-
-    allModuleValues = [...new Set(allData.map(r => r._module).filter(Boolean))].sort();
-    selectedModules.clear();
-    buildModuleOptions(allModuleValues);
-    updateModuleToggleLabel();
-  }
-
-  function populateSelect(id, values) {
-    const sel = document.getElementById(id);
-    const current = sel.value;
-    const label = sel.options[0].text;
-    sel.innerHTML = `<option value="">${label}</option>`;
-    values.forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = v; opt.textContent = v;
-      sel.appendChild(opt);
-    });
-    sel.value = current;
-  }
-
-  function resetFilters() {
-    ['filterCourse','filterVersion','filterMethod','filterDateFrom','filterDateTo','cohortName']
-      .forEach(id => document.getElementById(id).value = '');
-    document.getElementById('instructorSelect').value = '';
-    document.getElementById('instructorOther').value = '';
-    document.getElementById('instructorOther').style.display = 'none';
-    selectedModules.clear();
-    document.querySelectorAll('#moduleOptions input[type="checkbox"]').forEach(cb => cb.checked = false);
-    updateModuleToggleLabel();
-    document.getElementById('reportSection').classList.remove('visible');
-    document.getElementById('exportBar').classList.remove('visible');
-    document.getElementById('filterSummary').textContent = '';
-    hideAssignmentPanel();
-    allInstructorReports = {};
-    activeInstructorTab = null;
-    isMultiInstructorMode = false;
-    excludedByInstructor = {};
-    document.getElementById('instructorTabsContainer').innerHTML = '';
-  }
-
-  function getFilteredData() {
-    const course = document.getElementById('filterCourse').value;
-    const version = document.getElementById('filterVersion').value;
-    const method = document.getElementById('filterMethod').value;
-    const dateFrom = document.getElementById('filterDateFrom').value;
-    const dateTo = document.getElementById('filterDateTo').value;
-
-    const useModuleFilter = selectedModules.size > 0 && selectedModules.size < allModuleValues.length;
-
-    return allData.filter(row => {
-      if (!row._module) return false;
-      if (course && row._course !== course) return false;
-      if (version && row._version !== version) return false;
-      if (method && row._method !== method) return false;
-      if (useModuleFilter && !selectedModules.has(row._module)) return false;
-      if (dateFrom && row._startDate) {
-        if (row._startDate < new Date(dateFrom + 'T00:00:00')) return false;
-      }
-      if (dateFrom && !row._startDate) return false;
-      if (dateTo && row._startDate) {
-        if (row._startDate > new Date(dateTo + 'T23:59:59')) return false;
-      }
-      if (dateTo && !row._startDate) return false;
-      return true;
-    });
-  }
-
-  // ---- ASSIGNMENT TABLE ----
-  function buildAssignmentTable(filteredModuleNames) {
-    const panel = document.getElementById('assignmentPanel');
-    const wrap = document.getElementById('assignmentTableWrap');
-
-    let html = `<table class="assignment-table"><thead><tr>
-      <th style="width: 50%;">Module</th>
-      <th style="width: 50%;">Instructor</th>
-    </tr></thead><tbody>`;
-
-    filteredModuleNames.forEach((mod, i) => {
-      html += `<tr>
-        <td>${escapeHtml(mod)}</td>
-        <td>
-          <select id="assignInst_${i}" data-module="${escapeHtml(mod)}" class="assign-select" onchange="handleAssignChange(${i})">
-            <option value="">-- Select --</option>
-            ${instructorList.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}
-            <option value="_OTHER_">Other (type name)</option>
-          </select>
-          <input type="text" id="assignOther_${i}" class="assign-other" placeholder="Type instructor name" style="display:none;">
-        </td>
-      </tr>`;
-    });
-
-    html += '</tbody></table>';
-    wrap.innerHTML = html;
-    panel.classList.add('visible');
-    updateAssignmentSummary();
-  }
-
-  function handleAssignChange(idx) {
-    const sel = document.getElementById('assignInst_' + idx);
-    const other = document.getElementById('assignOther_' + idx);
-    if (sel.value === '_OTHER_') {
-      other.style.display = 'block';
-      other.focus();
-      other.addEventListener('input', updateAssignmentSummary);
-    } else {
-      other.style.display = 'none';
-      other.value = '';
-    }
-    updateAssignmentSummary();
-  }
-
-  function getModuleAssignments() {
-    const assignments = {};
-    document.querySelectorAll('.assign-select').forEach((sel, i) => {
-      const mod = sel.getAttribute('data-module');
-      let instructor = sel.value;
-      if (instructor === '_OTHER_') {
-        instructor = document.getElementById('assignOther_' + i).value.trim();
-      }
-      if (instructor && instructor !== '_OTHER_') {
-        if (!assignments[instructor]) assignments[instructor] = [];
-        assignments[instructor].push(mod);
-      }
-    });
-    return assignments;
-  }
-
-  function updateAssignmentSummary() {
-    const assignments = getModuleAssignments();
-    const div = document.getElementById('assignmentSummary');
-    const names = Object.keys(assignments);
-    if (!names.length) {
-      div.innerHTML = '';
-      return;
-    }
-    let html = '<div class="instructor-summary"><h3>Assignment Summary</h3>';
-    names.sort().forEach(name => {
-      html += `<span class="instructor-chip">
-        <span class="module-count">${assignments[name].length}</span>
-        ${escapeHtml(name)}
-      </span>`;
-    });
-    html += '</div>';
-    div.innerHTML = html;
-  }
-
-  // ---- BUILD REPORT DATA for a set of filtered rows ----
-  function buildReportDataForRows(filtered, instructorName, cohortName) {
-    const modules = {};
-    filtered.forEach(row => {
-      const m = row._module;
-      if (!modules[m]) modules[m] = [];
-      modules[m].push(row);
-    });
-    const moduleNames = Object.keys(modules).sort();
-
-    const tableRows = [];
-    let grandTotals = ratingCols.map(() => ({ sum: 0, count: 0 }));
-
-    moduleNames.forEach(mod => {
-      const rows = modules[mod];
-      const avgs = ratingCols.map((col, i) => {
-        const valid = rows.map(r => r._ratings[col]).filter(v => v !== null);
-        const avg = valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
-        if (valid.length) {
-          grandTotals[i].sum += valid.reduce((a, b) => a + b, 0);
-          grandTotals[i].count += valid.length;
-        }
-        return avg;
-      });
-      const allValid = avgs.filter(v => v !== null);
-      const overall = allValid.length ? allValid.reduce((a, b) => a + b, 0) / allValid.length : null;
-      tableRows.push({ module: mod, count: rows.length, avgs, overall });
-    });
-
-    const grandAvgs = grandTotals.map(t => t.count ? t.sum / t.count : null);
-    const grandValidAvgs = grandAvgs.filter(v => v !== null);
-    const grandOverall = grandValidAvgs.length
-      ? grandValidAvgs.reduce((a, b) => a + b, 0) / grandValidAvgs.length : null;
-
-    const comments = [];
-    filtered.forEach(row => {
-      const c = row._comment;
-      if (c && c !== '-' && c !== '.' && c !== '\u2014' && c !== '\u2013' && c.length > 1) {
-        comments.push({
-          module: row._module,
-          date: row._startDate
-            ? row._startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : '',
-          text: c
-        });
-      }
-    });
-
-    const metadata = {
-      instructor: instructorName,
-      cohort: cohortName,
-      course: document.getElementById('filterCourse').value || 'All',
-      version: document.getElementById('filterVersion').value || 'All',
-      method: document.getElementById('filterMethod').value || 'All',
-      modules: moduleNames.join(', ') || 'All',
-      dateFrom: document.getElementById('filterDateFrom').value || '',
-      dateTo: document.getElementById('filterDateTo').value || '',
-      generatedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-    };
-
-    return {
-      tableRows, grandAvgs, grandOverall, comments,
-      totalResponses: filtered.length,
-      instructorName,
-      cohortName,
-      metadata,
-      moduleNames
-    };
-  }
-
-  // ---- REPORT ----
-  function generateReport() {
-    const sel = document.getElementById('instructorSelect');
-    isMultiInstructorMode = (sel.value === '_ASSIGN_MULTI_');
-
-    const filtered = getFilteredData();
-
-    document.getElementById('filterSummary').textContent =
-      `${filtered.length} response${filtered.length !== 1 ? 's' : ''} match your filters`;
-
-    if (!filtered.length) {
-      document.getElementById('reportContent').innerHTML = `
-        <div class="report-card"><div class="report-card-body">
-          <div class="empty-state">
-            <div class="icon">🔍</div>
-            <h3>No responses match these filters</h3>
-            <p>Try adjusting your criteria or date range.</p>
-          </div>
-        </div></div>`;
-      document.getElementById('reportSection').classList.add('visible');
-      document.getElementById('exportBar').classList.remove('visible');
-      hideAssignmentPanel();
-      document.getElementById('instructorTabsContainer').innerHTML = '';
-      return;
-    }
-
-    if (isMultiInstructorMode) {
-      // Show assignment panel with modules that have data
-      const modulesInData = [...new Set(filtered.map(r => r._module))].sort();
-      buildAssignmentTable(modulesInData);
-
-      // Build combined report for preview (no instructor yet)
-      const cohortName = getCohortName();
-      lastReportData = buildReportDataForRows(filtered, '', cohortName);
-
-      // Also build per-instructor reports
-      rebuildMultiInstructorReports(filtered);
-
-      return;
-    }
-
-    // Single instructor mode (original behavior)
-    hideAssignmentPanel();
-    const instructorName = getInstructorName();
-    const cohortName = getCohortName();
-    lastReportData = buildReportDataForRows(filtered, instructorName, cohortName);
-    allInstructorReports = {};
-
-    document.getElementById('instructorTabsContainer').innerHTML = '';
-    renderSingleReport(lastReportData);
-    document.getElementById('reportSection').classList.add('visible');
-    document.getElementById('exportBar').classList.add('visible');
-    wireCommentCheckboxes();
-  }
-
-  function rebuildMultiInstructorReports(filtered) {
-    const assignments = getModuleAssignments();
-    const instructorNames = Object.keys(assignments).sort();
-    const cohortName = getCohortName();
-
-    if (!instructorNames.length) {
-      document.getElementById('reportSection').classList.remove('visible');
-      document.getElementById('exportBar').classList.remove('visible');
-      document.getElementById('instructorTabsContainer').innerHTML = '';
-      return;
-    }
-
-    // Preserve exclusions for instructors that still exist; clear others
-    const oldExcluded = { ...excludedByInstructor };
-    excludedByInstructor = {};
-    instructorNames.forEach(name => {
-      if (oldExcluded[name]) excludedByInstructor[name] = oldExcluded[name];
-    });
-
-    allInstructorReports = {};
-    instructorNames.forEach(name => {
-      const mods = assignments[name];
-      const instFiltered = filtered.filter(r => mods.includes(r._module));
-      if (instFiltered.length) {
-        allInstructorReports[name] = buildReportDataForRows(instFiltered, name, cohortName);
-      }
-    });
-
-    // Set lastReportData to first instructor for single-export compat
-    const firstKey = Object.keys(allInstructorReports)[0];
-    if (firstKey) {
-      lastReportData = allInstructorReports[firstKey];
-      activeInstructorTab = firstKey;
-    }
-
-    renderInstructorTabs();
-    renderSingleReport(allInstructorReports[activeInstructorTab]);
-    document.getElementById('reportSection').classList.add('visible');
-    document.getElementById('exportBar').classList.add('visible');
-    restoreExcludedFromStore(activeInstructorTab);
-    wireCommentCheckboxes();
-  }
-
-  // Called when user clicks "Generate Report" while in multi mode with assignments filled
-  // We attach a second button or hook into the existing one
-  // Actually, let's add a "Generate Reports" button inside the assignment panel
-  // AND keep the main generate button working for both modes.
-
-  // Override: when in multi mode and generate is clicked, also rebuild
-  // We already handle this in generateReport() above.
-
-  // Add a dedicated button in assignment panel
-  function generateMultiReports() {
-    const filtered = getFilteredData();
-    rebuildMultiInstructorReports(filtered);
-  }
-
-  function renderInstructorTabs() {
-    const container = document.getElementById('instructorTabsContainer');
-    const names = Object.keys(allInstructorReports).sort();
-    if (names.length <= 1) {
-      container.innerHTML = '';
-      return;
-    }
-    let html = '<div class="instructor-tabs">';
-    names.forEach(name => {
-      const isActive = name === activeInstructorTab;
-      html += `<button class="instructor-tab${isActive ? ' active' : ''}" onclick="switchInstructorTab('${escapeHtml(name).replace(/'/g, "\\'")}')">${escapeHtml(name)}</button>`;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-  }
-
-  function switchInstructorTab(name) {
-    // Save current tab's checkbox state before switching
-    if (activeInstructorTab) {
-      excludedByInstructor[activeInstructorTab] = getExcludedIndicesFromDOM();
-    }
-    activeInstructorTab = name;
-    lastReportData = allInstructorReports[name];
-    renderInstructorTabs();
-    renderSingleReport(allInstructorReports[name]);
-    // Restore saved checkbox state for this tab
-    restoreExcludedFromStore(name);
-    wireCommentCheckboxes();
-  }
-
-  function restoreExcludedFromStore(instructorName) {
-    const excluded = excludedByInstructor[instructorName];
-    if (!excluded || !excluded.size) return;
-    excluded.forEach(i => {
-      const cb = document.querySelector(`.comment-cb[data-index="${i}"]`);
-      if (cb) {
-        cb.checked = false;
-        const row = document.getElementById('commentRow' + i);
-        if (row) row.classList.add('comment-excluded');
-      }
-    });
-    // Update the toggle-all checkbox state
-    const toggleAll = document.getElementById('toggleAllComments');
-    if (toggleAll) {
-      const allCbs = document.querySelectorAll('.comment-cb');
-      const allChecked = [...allCbs].every(c => c.checked);
-      const noneChecked = [...allCbs].every(c => !c.checked);
-      toggleAll.checked = allChecked;
-      toggleAll.indeterminate = !allChecked && !noneChecked;
-    }
-  }
-
-  function renderSingleReport(reportData) {
-    let html = '';
-    if (reportData.instructorName || reportData.cohortName) {
-      html += `<div style="background: var(--white); border-radius: 12px; padding: 16px 28px; margin-bottom: 16px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">`;
-      if (reportData.instructorName) {
-        html += `<div><span style="font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Instructor:</span> <span style="font-size: 16px; font-weight: 700; color: var(--burgundy);">${escapeHtml(reportData.instructorName)}</span></div>`;
-      }
-      if (reportData.cohortName) {
-        html += `<div><span style="font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Cohort:</span> <span style="font-size: 16px; font-weight: 700; color: var(--blue);">${escapeHtml(reportData.cohortName)}</span></div>`;
-      }
-      html += `</div>`;
-    }
-    html += `
-      <div class="report-card">
-        <div class="report-card-header">📊 Evaluation Scores by Module</div>
-        <div class="report-card-body">
-          <table id="scoresTable">
-            <thead><tr>
-              <th>Module</th>
-              <th>Responses</th>
-              ${shortLabels.map(l => `<th>${l}</th>`).join('')}
-              <th>Overall Avg</th>
-            </tr></thead>
-            <tbody>`;
-
-    reportData.tableRows.forEach(row => {
-      html += `<tr>
-        <td>${escapeHtml(row.module)}</td>
-        <td>${row.count}</td>
-        ${row.avgs.map(a => `<td>${scoreBadge(a)}</td>`).join('')}
-        <td>${scoreBadge(row.overall)}</td>
-      </tr>`;
-    });
-
-    html += `<tr class="overall-row">
-      <td>All Modules</td>
-      <td>${reportData.totalResponses}</td>
-      ${reportData.grandAvgs.map(a => `<td>${scoreBadge(a)}</td>`).join('')}
-      <td>${scoreBadge(reportData.grandOverall)}</td>
-    </tr>`;
-    html += `</tbody></table></div></div>`;
-
-    // Comments
-    if (reportData.comments.length) {
-      html += `
-        <div class="report-card">
-          <div class="report-card-header" style="flex-direction: column; align-items: flex-start;">💬 Open-Ended Comments (${reportData.comments.length})<div style="font-weight: 500; margin-top: 15px;"><strong>Note:</strong> To remove a comment from the report, de-select the checkbox to the left of the comment. Only checked comments will be included in the PDF or Excel download.</div></div>
-          <div class="report-card-body">
-            <table class="comments-table" id="commentsTable">
-              <thead><tr>
-                <th class="cb-col"><input type="checkbox" id="toggleAllComments" checked title="Include/exclude all"></th>
-                <th style="text-align:left">Module</th>
-                <th>Date</th>
-                <th style="text-align:left">Comment</th>
-              </tr></thead>
-              <tbody>`;
-      reportData.comments.forEach((c, i) => {
-        html += `<tr id="commentRow${i}">
-          <td class="cb-col"><input type="checkbox" class="comment-cb" data-index="${i}" checked></td>
-          <td>${escapeHtml(c.module)}</td>
-          <td>${c.date}</td>
-          <td>${escapeHtml(c.text)}</td>
-        </tr>`;
-      });
-      html += `</tbody></table></div></div>`;
-    } else {
-      html += `
-        <div class="report-card">
-          <div class="report-card-header">💬 Open-Ended Comments</div>
-          <div class="report-card-body">
-            <div class="empty-state" style="padding:30px">
-              <p>No comments found for this selection.</p>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    document.getElementById('reportContent').innerHTML = html;
-  }
-
-  function wireCommentCheckboxes() {
-    const toggleAll = document.getElementById('toggleAllComments');
-    if (toggleAll) {
-      toggleAll.addEventListener('change', function() {
-        document.querySelectorAll('.comment-cb').forEach(cb => {
-          cb.checked = this.checked;
-          const row = document.getElementById('commentRow' + cb.dataset.index);
-          row.classList.toggle('comment-excluded', !cb.checked);
-        });
-      });
-      document.querySelectorAll('.comment-cb').forEach(cb => {
-        cb.addEventListener('change', function() {
-          const row = document.getElementById('commentRow' + this.dataset.index);
-          row.classList.toggle('comment-excluded', !this.checked);
-          const allCbs = document.querySelectorAll('.comment-cb');
-          const allChecked = [...allCbs].every(c => c.checked);
-          const noneChecked = [...allCbs].every(c => !c.checked);
-          toggleAll.checked = allChecked;
-          toggleAll.indeterminate = !allChecked && !noneChecked;
-        });
-      });
-    }
-  }
-
-  function scoreBadge(val) {
-    if (val === null) return '<span class="score-badge score-na">N/A</span>';
-    const d = val.toFixed(2);
-    if (val >= 3.5) return `<span class="score-badge score-high">${d}</span>`;
-    if (val >= 2.5) return `<span class="score-badge score-mid">${d}</span>`;
-    return `<span class="score-badge score-low">${d}</span>`;
-  }
-
-  function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  function getFilterText(reportData) {
-    const parts = [];
-    const meta = reportData ? reportData.metadata : null;
-    if (meta) {
-      if (meta.course && meta.course !== 'All') parts.push('Course: ' + meta.course);
-      if (meta.version && meta.version !== 'All') parts.push('Version: ' + meta.version);
-      if (meta.method && meta.method !== 'All') parts.push('Method: ' + meta.method);
-      if (meta.modules && meta.modules !== 'All') parts.push('Modules: ' + meta.modules);
-      if (meta.dateFrom) parts.push('From: ' + meta.dateFrom);
-      if (meta.dateTo) parts.push('To: ' + meta.dateTo);
-      if (meta.instructor) parts.push('Instructor: ' + meta.instructor);
-      if (meta.cohort) parts.push('Cohort: ' + meta.cohort);
-    }
-    return parts.length ? parts.join('  |  ') : 'None (all data)';
-  }
-
-  // Helper: get only the checked comments for the currently visible report
-  function getIncludedComments(reportData) {
-    if (!reportData || !reportData.comments.length) return [];
-    return reportData.comments.filter((c, i) => {
-      const cb = document.querySelector(`.comment-cb[data-index="${i}"]`);
-      return cb ? cb.checked : true;
-    });
-  }
-
-  // Store excluded comment indices per instructor when switching tabs
-  function getExcludedIndicesFromDOM() {
-    const excluded = new Set();
-    document.querySelectorAll('.comment-cb').forEach(cb => {
-      if (!cb.checked) excluded.add(parseInt(cb.dataset.index));
-    });
-    return excluded;
-  }
-
-  // ==========================
-  // EXPORT: PDF
-  // ==========================
-  function buildPDFForReport(reportData, includedComments) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-
-    doc.setFillColor(100, 9, 44);
-    doc.rect(0, 0, pageW, 22, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(reportData.instructorName
-      ? 'Evaluation Report \u2014 ' + reportData.instructorName
-      : 'Evaluation Report', 14, 14);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Generated ' + new Date().toLocaleDateString('en-US', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    }), pageW - 14, 14, { align: 'right' });
-
-    doc.setTextColor(72, 72, 72);
-    doc.setFontSize(10);
-    let pdfY = 30;
-    if (reportData.instructorName) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Instructor: ' + reportData.instructorName, 14, pdfY);
-      pdfY += 6;
-      doc.setFont('helvetica', 'normal');
-    }
-    if (reportData.cohortName) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Cohort: ' + reportData.cohortName, 14, pdfY);
-      pdfY += 6;
-      doc.setFont('helvetica', 'normal');
-    }
-    doc.text('Filters: ' + getFilterText(reportData), 14, pdfY);
-    doc.text('Total Responses: ' + reportData.totalResponses, 14, pdfY + 6);
-
-    const head = [['Module', 'Responses', ...shortLabels, 'Overall Avg']];
-    const body = reportData.tableRows.map(r => [
-      r.module, r.count,
-      ...r.avgs.map(a => a !== null ? a.toFixed(2) : 'N/A'),
-      r.overall !== null ? r.overall.toFixed(2) : 'N/A'
-    ]);
-    body.push([
-      'All Modules', reportData.totalResponses,
-      ...reportData.grandAvgs.map(a => a !== null ? a.toFixed(2) : 'N/A'),
-      reportData.grandOverall !== null ? reportData.grandOverall.toFixed(2) : 'N/A'
-    ]);
-
-    doc.autoTable({
-      startY: pdfY + 14,
-      head, body,
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [72, 72, 72], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [249, 247, 244] },
-      didParseCell: function(data) {
-        if (data.row.index === body.length - 1) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.fillColor = [253, 246, 227];
-        }
-      }
-    });
-
-    if (includedComments.length) {
-      // Group comments by module
-      const commentsByModule = {};
-      includedComments.forEach(c => {
-        if (!commentsByModule[c.module]) commentsByModule[c.module] = [];
-        commentsByModule[c.module].push(c);
-      });
-
-      let y = doc.lastAutoTable.finalY + 12;
-      if (y > doc.internal.pageSize.getHeight() - 30) {
-        doc.addPage(); y = 20;
-      }
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 9, 44);
-      doc.text('Open-Ended Comments (' + includedComments.length + ')', 14, y);
-
-      const moduleOrder = Object.keys(commentsByModule).sort();
-      if (reportData.tableRows.length > 1) {
-        // Multiple modules: show comments grouped by module with sub-headers
-        let startY = y + 4;
-        moduleOrder.forEach(mod => {
-          const modComments = commentsByModule[mod];
-          if (startY > doc.internal.pageSize.getHeight() - 30) {
-            doc.addPage(); startY = 20;
-          }
-          doc.autoTable({
-            startY: startY,
-            head: [[{ content: mod, colSpan: 2, styles: { fillColor: [100, 9, 44], textColor: 255, fontStyle: 'bold', fontSize: 9 } }]],
-            body: modComments.map(c => [c.date, c.text]),
-            styles: { fontSize: 8, cellPadding: 3 },
-            headStyles: { fillColor: [100, 9, 44], textColor: 255, fontStyle: 'bold' },
-            alternateRowStyles: { fillColor: [249, 247, 244] },
-            columnStyles: {
-              0: { cellWidth: 28 },
-              1: { cellWidth: 'auto', fontStyle: 'italic' }
-            }
-          });
-          startY = doc.lastAutoTable.finalY + 6;
-        });
-      } else {
-        // Single module: flat list (original style)
-        doc.autoTable({
-          startY: y + 4,
-          head: [['Module', 'Date', 'Comment']],
-          body: includedComments.map(c => [c.module, c.date, c.text]),
-          styles: { fontSize: 8, cellPadding: 3 },
-          headStyles: { fillColor: [72, 72, 72], textColor: 255, fontStyle: 'bold' },
-          alternateRowStyles: { fillColor: [249, 247, 244] },
-          columnStyles: {
-            0: { cellWidth: 30 },
-            1: { cellWidth: 28 },
-            2: { cellWidth: 'auto', fontStyle: 'italic' }
-          }
-        });
-      }
-    }
-
-    return doc;
-  }
-
-function exportPDF() {
-    if (!lastReportData) return;
-    const prefix = (getCohortName() || 'Evaluation_Report').replace(/\s+/g, '_');
-
-    if (isMultiInstructorMode && Object.keys(allInstructorReports).length > 0) {
-      if (activeInstructorTab) {
-        excludedByInstructor[activeInstructorTab] = getExcludedIndicesFromDOM();
-      }
-      const names = Object.keys(allInstructorReports).sort();
-      let delay = 0;
-      names.forEach(name => {
-        const rd = allInstructorReports[name];
-        const excluded = excludedByInstructor[name] || new Set();
-        const comments = rd.comments.filter((c, i) => !excluded.has(i));
-        const doc = buildPDFForReport(rd, comments);
-        setTimeout(() => {
-          doc.save(prefix + '_' + rd.instructorName.replace(/,/g,'').replace(/\s+/g, '_') + '.pdf');
-        }, delay);
-        delay += 400;
-      });
-      return;
-    }
-
-    // Single instructor mode
-    const includedComments = getIncludedComments(lastReportData);
-    const doc = buildPDFForReport(lastReportData, includedComments);
-    const pdfFilename = lastReportData.instructorName
-      ? prefix + '_' + lastReportData.instructorName.replace(/,/g,'').replace(/\s+/g, '_') + '.pdf'
-      : prefix + '.pdf';
-    doc.save(pdfFilename);
-  }
-  // ==========================
-  // EXPORT: XLSX
-  // ==========================
-  function buildXLSXForReport(reportData, includedComments) {
-    const wb = XLSX.utils.book_new();
-
-    const scoresData = [];
-    const meta = reportData.metadata;
-    scoresData.push(['_META_INSTRUCTOR', meta.instructor || '']);
-    scoresData.push(['_META_COHORT', meta.cohort || '']);
-    scoresData.push(['_META_COURSE', meta.course]);
-    scoresData.push(['_META_VERSION', meta.version]);
-    scoresData.push(['_META_METHOD', meta.method]);
-    scoresData.push(['_META_MODULES', meta.modules]);
-    scoresData.push(['_META_DATE_FROM', meta.dateFrom]);
-    scoresData.push(['_META_DATE_TO', meta.dateTo]);
-    scoresData.push(['_META_GENERATED', meta.generatedDate]);
-    scoresData.push(['_META_RESPONSES', reportData.totalResponses]);
-    scoresData.push([]);
-    scoresData.push(['Module', 'Responses', ...shortLabels, 'Overall Avg']);
-    reportData.tableRows.forEach(r => {
-      scoresData.push([
-        r.module, r.count,
-        ...r.avgs.map(a => a !== null ? Math.round(a * 100) / 100 : ''),
-        r.overall !== null ? Math.round(r.overall * 100) / 100 : ''
-      ]);
-    });
-    scoresData.push([
-      'All Modules', reportData.totalResponses,
-      ...reportData.grandAvgs.map(a => a !== null ? Math.round(a * 100) / 100 : ''),
-      reportData.grandOverall !== null ? Math.round(reportData.grandOverall * 100) / 100 : ''
-    ]);
-
-    const ws1 = XLSX.utils.aoa_to_sheet(scoresData);
-    ws1['!cols'] = [
-      { wch: 16 }, { wch: 12 }, { wch: 14 }, { wch: 14 },
-      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }
-    ];
-    XLSX.utils.book_append_sheet(wb, ws1, 'Scores');
-
-    const commentsData = [['Module', 'Date', 'Comment']];
-    includedComments.forEach(c => {
-      commentsData.push([c.module, c.date, c.text]);
-    });
-    const ws2 = XLSX.utils.aoa_to_sheet(commentsData);
-    ws2['!cols'] = [{ wch: 16 }, { wch: 14 }, { wch: 60 }];
-    XLSX.utils.book_append_sheet(wb, ws2, 'Comments');
-
-    return wb;
-  }
-
-  function exportXLSX() {
-    if (!lastReportData) return;
-
-    if (isMultiInstructorMode && Object.keys(allInstructorReports).length > 0) {
-      // Save current tab's excluded comments into the store
-      if (activeInstructorTab) {
-        excludedByInstructor[activeInstructorTab] = getExcludedIndicesFromDOM();
-      }
-      const names = Object.keys(allInstructorReports).sort();
-
-      names.forEach(name => {
-        const rd = allInstructorReports[name];
-        const excluded = excludedByInstructor[name] || new Set();
-        const comments = rd.comments.filter((c, i) => !excluded.has(i));
-        const wb = buildXLSXForReport(rd, comments);
-        const filename = 'Evaluation_Report_' + rd.instructorName.replace(/\s+/g, '_') + '.xlsx';
-        setTimeout(() => XLSX.writeFile(wb, filename), names.indexOf(name) * 400);
-      });
-      return;
-    }
-
-    // Single instructor mode
-    const includedComments = getIncludedComments(lastReportData);
-    const wb = buildXLSXForReport(lastReportData, includedComments);
-    const xlsxFilename = lastReportData.instructorName
-      ? 'Evaluation_Report_' + lastReportData.instructorName.replace(/\s+/g, '_') + '.xlsx'
-      : 'Evaluation_Report.xlsx';
-    XLSX.writeFile(wb, xlsxFilename);
-  }
-
-  // ---- Wire assignment panel "Generate Reports" into main flow ----
-  // Watch for changes in assignment selects to auto-regenerate
-  document.getElementById('assignmentPanel').addEventListener('change', function(e) {
-    if (e.target.classList.contains('assign-select') || e.target.classList.contains('assign-other')) {
-      updateAssignmentSummary();
-      const filtered = getFilteredData();
-      if (filtered.length) {
-        rebuildMultiInstructorReports(filtered);
-      }
-    }
-  });
-  document.getElementById('assignmentPanel').addEventListener('input', function(e) {
-    if (e.target.classList.contains('assign-other')) {
-      updateAssignmentSummary();
-      // Debounce the rebuild
-      clearTimeout(e.target._debounce);
-      e.target._debounce = setTimeout(() => {
-        const filtered = getFilteredData();
-        if (filtered.length) rebuildMultiInstructorReports(filtered);
-      }, 500);
-    }
-  });
+let iltD=[],asnD=[],allD=[];
+const RK=['rInstructor','rStyle','rContent','rCoverage','rUsefulness'];
+const AL=['Instructor','Style','Content','Coverage','Usefulness'];
+const SL=['Style','Content','Coverage','Usefulness'];
+const SK=RK.slice(1);
+const NA=/^(na|n\/a|none|no comments?|n\/a\.|na\.|none\.)$/i;
+const MS={};
+let IR={},IAT=null,IEX={};
+
+// Upload
+function suz(zid,fid,t){const z=$(zid),f=$(fid);
+z.ondragover=e=>{e.preventDefault();z.classList.add('dragover')};
+z.ondragleave=()=>z.classList.remove('dragover');
+z.ondrop=e=>{e.preventDefault();z.classList.remove('dragover');if(e.dataTransfer.files.length)lf(e.dataTransfer.files[0],t)};
+f.onchange=e=>{if(e.target.files.length)lf(e.target.files[0],t)}}
+suz('uzILT','fILT','ILT');suz('uzAsync','fAsync','Async');
+
+function lf(file,type){const r=new FileReader();r.onload=function(e){try{
+const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+const sn=wb.SheetNames.find(n=>n.toLowerCase().trim()==='sheet1');
+if(!sn){alert('No "Sheet1" found.\nAvailable: '+wb.SheetNames.join(', '));return}
+const j=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+if(!j.length){alert('"Sheet1" empty.');return}
+const rows=j.filter(r=>r['Respondent ID']&&String(r['Respondent ID']).trim()).map(r=>norm(r,type));
+if(type==='ILT'){iltD=rows;sl('uzILT',file.name,rows.length)}else{asnD=rows;sl('uzAsync',file.name,rows.length)}
+allD=[...iltD,...asnD];bfui();sm();
+}catch(er){alert('Error: '+er.message)}};r.readAsArrayBuffer(file)}
+
+function norm(r,s){let d=null;const raw=r['End Date'];
+if(raw instanceof Date)d=raw;else if(typeof raw==='string'&&raw.length>=10){d=new Date(raw);if(isNaN(d))d=null}
+const sf=v=>{const n=parseFloat(v);return(!isNaN(n)&&n>=0&&n<=5)?n:null};
+const g=k=>String(r[k]||'').trim();let ver=g('version');if(ver==='0')ver='';const c=g('Q2');
+return{_s:s,_d:d,_co:g('course'),_v:ver,_m:g('method'),_mod:g('module_name'),_c:c,_ch:g('Cohort'),
+_i:s==='ILT'?g('Instructor2'):'',_na:NA.test(c.trim()),
+rInstructor:s==='ILT'?sf(r['Instructor']):null,rStyle:sf(r['The style of delivery was']),
+rContent:sf(r['The content of this module was']),rCoverage:sf(r['The amount of material covered was']),
+rUsefulness:sf(r['The usefulness of this session was'])}}
+
+function sl(zid,name,cnt){const z=$(zid);z.classList.add('loaded');
+z.innerHTML=`<div class="loaded-info"><span class="ck">&#10003;</span><span class="fn">${esc(name)}</span><span class="rc">(${cnt.toLocaleString()} responses)</span><button class="rbtn" onclick="rz('${zid}')">Replace</button></div>`}
+
+function rz(zid){const isI=zid==='uzILT';if(isI)iltD=[];else asnD=[];
+const z=$(zid);z.classList.remove('loaded');const fid=isI?'fILT':'fAsync';
+z.innerHTML=`<div class="icon">${isI?'👩‍🏫':'💻'}</div><h3>${isI?'Instructor-Led (ILT) Evaluations':'Self-Study / Async Evaluations'}</h3><p>${isI?'CLEARLearning-ILT-Mod-Evals.xlsx':'CLEARLearning-Async-Mod-Evals.xlsx'}</p><input type="file" id="${fid}" accept=".xlsx,.xls">`;
+suz(zid,fid,isI?'ILT':'Async');allD=[...iltD,...asnD];
+if(!allD.length){$('dsum').classList.add('hidden');$('main').classList.add('hidden')}else{bfui();sm()}}
+
+function sm(){if(!allD.length)return;const s=$('dsum');s.classList.remove('hidden');
+const u=k=>new Set(allD.map(r=>r[k]).filter(Boolean)).size;
+s.innerHTML=`<div class="stat"><span class="stat-val">${allD.length.toLocaleString()}</span><span class="stat-lbl">Total</span></div>
+<div class="stat"><span class="stat-val">${iltD.length.toLocaleString()}</span><span class="stat-lbl">ILT</span></div>
+<div class="stat"><span class="stat-val">${asnD.length.toLocaleString()}</span><span class="stat-lbl">Async</span></div>
+<div class="stat"><span class="stat-val">${u('_co')}</span><span class="stat-lbl">Programs</span></div>
+<div class="stat"><span class="stat-val">${u('_ch')}</span><span class="stat-lbl">Cohorts</span></div>
+<div class="stat"><span class="stat-val">${u('_mod')}</span><span class="stat-lbl">Modules</span></div>`;
+$('main').classList.remove('hidden')}
+
+// Filter definitions
+const FD={a:[
+{k:'_s',l:'Source',id:'Src',t:'single',fx:['ILT','Async']},
+{k:'_co',l:'Program',id:'Co',t:'multi'},
+{k:'_v',l:'Version',id:'V',t:'multi'},
+{k:'_m',l:'Method',id:'M',t:'multi'},
+{k:'_ch',l:'Cohort',id:'Ch',t:'multi'},
+{k:'_i',l:'Instructor',id:'I',t:'multi'},
+{k:'_mod',l:'Module',id:'Mod',t:'multi'},
+{k:'_df',l:'Date From',id:'DF',t:'date'},
+{k:'_dt',l:'Date To',id:'DT',t:'date'}
+],i:[
+{k:'_co',l:'Program',id:'Co',t:'multi'},
+{k:'_v',l:'Version',id:'V',t:'multi'},
+{k:'_m',l:'Method',id:'M',t:'multi'},
+{k:'_ch',l:'Cohort',id:'Ch',t:'multi'},
+{k:'_i',l:'Instructor',id:'I',t:'multi'},
+{k:'_mod',l:'Module',id:'Mod',t:'multi'},
+{k:'_df',l:'Date From',id:'DF',t:'date'},
+{k:'_dt',l:'Date To',id:'DT',t:'date'}
+]};
+
+function bfui(){['a','i'].forEach(p=>{const g=$(p==='a'?'afg':'ifg');g.innerHTML='';
+FD[p].forEach(d=>{const fid=p+d.id;const div=document.createElement('div');div.className='filter-group';
+div.innerHTML=`<label class="fgl">${d.l}</label>`;
+if(d.t==='single'){const vals=d.fx||uq(allD.map(r=>r[d.k]));
+div.innerHTML+=`<select class="fgi" id="${fid}"><option value="">All</option>${vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select>`}
+else if(d.t==='date'){div.innerHTML+=`<input type="date" class="fgi" id="${fid}">`}
+else{const vals=uq(allD.map(r=>r[d.k]));
+if(!MS[fid])MS[fid]={sel:new Set(),av:[]};
+MS[fid].av=vals;MS[fid].sel=new Set([...MS[fid].sel].filter(v=>vals.includes(v)));
+div.innerHTML+=`<div class="ms" id="${fid}_w"><button type="button" class="mst" id="${fid}_t"><span class="ph">All</span></button>
+<div class="msd" id="${fid}_d"><input type="text" class="mss" placeholder="Search..." oninput="msSr('${fid}',this.value)">
+<div id="${fid}_o"></div><div class="msa"><button type="button" onclick="msA('${fid}',1)">Select All</button><button type="button" onclick="msA('${fid}',0)">Clear All</button></div></div></div>`;
+g.appendChild(div);setTimeout(()=>{bmo(fid);smt(fid);uml(fid)},0);return}
+g.appendChild(div)})})}
+
+function bmo(k){const c=$(k+'_o');if(!c)return;const{av,sel}=MS[k];c.innerHTML='';
+av.forEach((v,i)=>{const d=document.createElement('div');d.className='mso';d.setAttribute('data-s',v.toLowerCase());
+const id=k+'_'+i;d.innerHTML=`<input type="checkbox" id="${id}" value="${esc(v)}" ${sel.has(v)?'checked':''}><label for="${id}">${esc(v)}</label>`;
+d.querySelector('input').onchange=function(){if(this.checked)sel.add(v);else sel.delete(v);uml(k)};c.appendChild(d)})}
+
+function smt(k){const t=$(k+'_t'),d=$(k+'_d');if(!t||!d)return;
+const nt=t.cloneNode(true);t.parentNode.replaceChild(nt,t);
+nt.onclick=e=>{e.stopPropagation();
+document.querySelectorAll('.msd.open').forEach(x=>{if(x!==d)x.classList.remove('open')});
+document.querySelectorAll('.mst.open').forEach(x=>{if(x!==nt)x.classList.remove('open')});
+d.classList.toggle('open');nt.classList.toggle('open');
+if(d.classList.contains('open')){const s=d.querySelector('.mss');if(s){s.value='';msSr(k,'');s.focus()}}}}
+
+document.addEventListener('click',e=>{if(!e.target.closest('.ms')){
+document.querySelectorAll('.msd.open').forEach(d=>d.classList.remove('open'));
+document.querySelectorAll('.mst.open').forEach(t=>t.classList.remove('open'))}});
+
+function uml(k){const t=$(k+'_t');if(!t)return;const{sel,av}=MS[k];
+if(!sel.size||sel.size===av.length)t.innerHTML='<span class="ph">All</span>';
+else if(sel.size<=2)t.textContent=[...sel].sort().join(', ');
+else t.textContent=sel.size+' selected'}
+
+function msSr(k,q){const ql=q.toLowerCase();
+document.querySelectorAll('#'+k+'_o .mso').forEach(o=>o.classList.toggle('hid',ql&&!o.getAttribute('data-s').includes(ql)))}
+
+function msA(k,sa){const{sel,av}=MS[k];if(sa)av.forEach(v=>sel.add(v));else sel.clear();
+document.querySelectorAll('#'+k+'_o input[type=checkbox]').forEach(c=>c.checked=!!sa);uml(k)}
+
+function uq(a){return[...new Set(a.filter(v=>v!=null&&v!==''))].sort()}
+
+function gf(p){return allD.filter(row=>{if(!row._mod)return false;
+for(const d of FD[p]){const fid=p+d.id;
+if(d.t==='single'){const v=$(fid)?.value;if(v&&row[d.k]!==v)return false}
+else if(d.t==='multi'){const m=MS[fid];if(m&&m.sel.size>0&&m.sel.size<m.av.length){if(!m.sel.has(row[d.k]||''))return false}}
+else if(d.t==='date'){const v=$(fid)?.value;if(v&&d.id==='DF'){if(!row._d||row._d<new Date(v+'T00:00:00'))return false}
+if(v&&d.id==='DT'){if(!row._d||row._d>new Date(v+'T23:59:59'))return false}}}return true})}
+
+function resetF(p){FD[p].forEach(d=>{const fid=p+d.id;
+if(d.t==='single'||d.t==='date'){const e=$(fid);if(e)e.value=''}
+else{const m=MS[fid];if(m){m.sel.clear();bmo(fid);uml(fid)}}});
+$(p==='a'?'afs':'ifs').textContent='';
+if(p==='a')$('ar').innerHTML='';
+else{$('irc').innerHTML='';$('iebar').classList.remove('visible');$('itc').innerHTML='';IR={};IAT=null;IEX={}}}
+
+function sw(v){document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.tc').forEach(t=>t.classList.remove('active'));
+const i=v==='a'?0:1;document.querySelectorAll('.vtab')[i].classList.add('active');
+$(v==='a'?'va':'vi').classList.add('active')}
+
+// ==========================================================
+// ANALYZE
+// ==========================================================
+function runA(){const f=gf('a');$('afs').textContent=f.length+' response'+(f.length!==1?'s':'')+' match';
+if(!f.length){$('ar').innerHTML=`<div class="card"><div class="card-body"><div class="empty"><div class="icon">🔍</div><h3>No responses match</h3><p>Try adjusting filters.</p></div></div></div>`;return}
+const hi=f.some(r=>r._s==='ILT'),lb=hi?AL:SL,ks=hi?RK:SK;
+let h='';h+=bst(f,lb,ks,'Module','_mod');
+if(uq(f.map(r=>r._co)).length>1)h+=bst(f,lb,ks,'Program','_co');
+if(uq(f.map(r=>r._ch)).length>1)h+=bst(f,lb,ks,'Cohort','_ch');
+if(uq(f.map(r=>r._v)).length>1)h+=bst(f,lb,ks,'Version','_v');
+const il=f.filter(r=>r._s==='ILT'&&r._i);
+if(uq(il.map(r=>r._i)).length>1)h+=bst(il,AL,RK,'Instructor','_i');
+h+=bch(f);h+=bcm(f,'a',true);
+$('ar').innerHTML=h;wcb('a')}
+
+function bst(data,labels,keys,gl,gk){const gs={};data.forEach(r=>{const g=r[gk]||'(Blank)';(gs[g]=gs[g]||[]).push(r)});
+const ns=Object.keys(gs).sort();let gt=keys.map(()=>({s:0,c:0}));
+const rows=ns.map(n=>{const rs=gs[n];const avgs=keys.map((k,i)=>{const v=rs.map(r=>r[k]).filter(x=>x!=null);
+const a=v.length?v.reduce((a,b)=>a+b,0)/v.length:null;if(v.length){gt[i].s+=v.reduce((a,b)=>a+b,0);gt[i].c+=v.length}return a});
+const va=avgs.filter(x=>x!=null);return{n,c:rs.length,avgs,o:va.length?va.reduce((a,b)=>a+b,0)/va.length:null}});
+const ga=gt.map(t=>t.c?t.s/t.c:null),gv=ga.filter(x=>x!=null),go=gv.length?gv.reduce((a,b)=>a+b,0)/gv.length:null;
+let h=`<div class="card"><div class="card-hdr">📊 Scores by ${gl}</div><div class="card-flush"><table><thead><tr><th>${gl}</th><th>N</th>${labels.map(l=>`<th>${l}</th>`).join('')}<th>Overall</th></tr></thead><tbody>`;
+rows.forEach(r=>{h+=`<tr><td>${esc(r.n)}</td><td>${r.c}</td>${r.avgs.map(a=>`<td>${bdg(a)}</td>`).join('')}<td>${bdg(r.o)}</td></tr>`});
+h+=`<tr class="orow"><td>All ${gl}s</td><td>${data.length}</td>${ga.map(a=>`<td>${bdg(a)}</td>`).join('')}<td>${bdg(go)}</td></tr></tbody></table></div></div>`;return h}
+
+function bch(f){let h='<div class="ag">';
+const bc=(t,k,c,mx)=>{const m={};f.forEach(r=>{const k2=r[k]||'(Blank)';m[k2]=(m[k2]||0)+1});return brc(t,m,c,mx)};
+h+=bc('Responses by Program','_co','#64092c');h+=bc('Responses by Method','_m','#084d78');h+=bc('Responses by Cohort (Top 10)','_ch','#dda838',10);
+h+='</div>';return h}
+
+function brc(title,data,color,max){const e=Object.entries(data).sort((a,b)=>b[1]-a[1]);const d=max?e.slice(0,max):e;const mx=d[0]?.[1]||1;
+let h=`<div class="mc"><h3>${title}</h3>`;
+d.forEach(([l,c])=>{h+=`<div class="bcr"><span class="bl" title="${esc(l)}">${esc(l)}</span><div class="bt"><div class="bf" style="width:${Math.max(8,c/mx*100)}%;background:${color}">${c}</div></div></div>`});
+if(max&&e.length>max)h+=`<div style="font-size:11px;color:var(--text-light);text-align:right;margin-top:4px">+${e.length-max} more</div>`;
+h+='</div>';return h}
+
+// ==========================================================
+// COMMENTS
+// ==========================================================
+function bcm(filtered,pfx,showExtra){const cmts=[];
+filtered.forEach(r=>{const c=r._c;if(c&&c.length>1&&c!=='-'&&c!=='.'&&c!=='\u2014'&&c!=='\u2013')
+cmts.push({mod:r._mod,ch:r._ch,inst:r._i,src:r._s,
+dt:r._d?r._d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'',
+txt:c,na:r._na})});
+if(!cmts.length)return`<div class="card"><div class="card-hdr">💬 Comments</div><div class="card-body"><div class="empty" style="padding:24px"><p>No comments.</p></div></div></div>`;
+let h=`<div class="card"><div class="card-hdr" style="flex-direction:column;align-items:flex-start">💬 Comments (${cmts.length})<div style="font-weight:400;font-size:12px;margin-top:8px;opacity:.85">Deselect to exclude. NA/None/No Comment auto-deselected.</div></div>
+<div class="card-body" style="padding:12px 28px"><div class="csr"><input type="text" class="csi" id="${pfx}cs" placeholder="Search comments..." oninput="fcs('${pfx}')">
+<span class="cc" id="${pfx}cc"></span><button class="btn btn-sm btn-s" onclick="tac('${pfx}',1)">Select All</button><button class="btn btn-sm btn-s" onclick="tac('${pfx}',0)">Deselect All</button></div></div>
+<div class="card-flush"><table class="ct" id="${pfx}ct"><thead><tr><th class="cbc"><input type="checkbox" id="${pfx}ta" checked></th><th style="text-align:left">Module</th>`;
+if(showExtra)h+=`<th style="text-align:left">Cohort</th><th>Source</th>`;
+h+=`<th>Date</th><th style="text-align:left">Comment</th></tr></thead><tbody>`;
+cmts.forEach((c,i)=>{const cl=c.na?'cna cex':'',ck=c.na?'':'checked';
+h+=`<tr id="${pfx}r${i}" class="${cl}" data-t="${esc(c.txt.toLowerCase())}"><td class="cbc"><input type="checkbox" class="${pfx}cb" data-i="${i}" ${ck}></td><td>${esc(c.mod)}</td>`;
+if(showExtra)h+=`<td style="font-weight:400;color:var(--text)">${esc(c.ch)}</td><td style="font-size:11px">${c.src}</td>`;
+h+=`<td style="white-space:nowrap;font-weight:400;color:var(--text-light)">${c.dt}</td><td style="font-weight:400;color:var(--text);font-style:italic">${esc(c.txt)}</td></tr>`});
+h+='</tbody></table></div></div>';return h}
+
+function wcb(pfx){const ta=$(pfx+'ta');if(!ta)return;
+ta.onchange=function(){document.querySelectorAll('.'+pfx+'cb').forEach(cb=>{const r=$(pfx+'r'+cb.dataset.i);
+if(r.style.display==='none')return;cb.checked=ta.checked;r.classList.toggle('cex',!cb.checked)});ucc(pfx)};
+document.querySelectorAll('.'+pfx+'cb').forEach(cb=>{cb.onchange=function(){
+const r=$(pfx+'r'+this.dataset.i);r.classList.toggle('cex',!this.checked);sta(pfx);ucc(pfx)}}); ucc(pfx)}
+
+function fcs(pfx){const q=$(pfx+'cs').value.toLowerCase();
+document.querySelectorAll('#'+pfx+'ct tbody tr').forEach(r=>{r.style.display=(!q||(r.getAttribute('data-t')||'').includes(q))?'':'none'});ucc(pfx)}
+
+function tac(pfx,s){document.querySelectorAll('.'+pfx+'cb').forEach(cb=>{const r=$(pfx+'r'+cb.dataset.i);
+if(r.style.display==='none')return;cb.checked=!!s;r.classList.toggle('cex',!s)});
+const ta=$(pfx+'ta');if(ta)ta.checked=!!s;ucc(pfx)}
+
+function ucc(pfx){const vis=document.querySelectorAll('#'+pfx+'ct tbody tr:not([style*="display: none"])');
+const sel=[...vis].filter(r=>{const cb=r.querySelector('.'+pfx+'cb');return cb&&cb.checked});
+const e=$(pfx+'cc');if(e)e.textContent=`${sel.length} of ${vis.length} selected`}
+
+function sta(pfx){const ta=$(pfx+'ta');if(!ta)return;const cbs=document.querySelectorAll('.'+pfx+'cb');
+const ac=[...cbs].every(c=>c.checked),nc=[...cbs].every(c=>!c.checked);ta.checked=ac;ta.indeterminate=!ac&&!nc}
+
+// ==========================================================
+// INSTRUCTOR REPORTS
+// ==========================================================
+function runI(){const f=gf('i');$('ifs').textContent=f.length+' response'+(f.length!==1?'s':'')+' match';
+if(!f.length){$('irc').innerHTML=`<div class="card"><div class="card-body"><div class="empty"><div class="icon">🔍</div><h3>No responses match</h3><p>Try adjusting filters.</p></div></div></div>`;
+$('iebar').classList.remove('visible');$('itc').innerHTML='';IR={};IAT=null;IEX={};return}
+// Group by instructor
+const bi={};f.forEach(r=>{const inst=r._i||'(No Instructor)';(bi[inst]=bi[inst]||[]).push(r)});
+const ins=Object.keys(bi).sort();IR={};IEX={};
+ins.forEach(n=>{const rows=bi[n];const chs=uq(rows.map(r=>r._ch));const cs=chs.length===1?chs[0]:chs.join(', ');
+IR[n]=brd(rows,n==='(No Instructor)'?'':n,cs)});
+IAT=ins[0];rit();rsr(IR[IAT]);$('iebar').classList.add('visible');wcb('i')}
+
+function brd(f,inst,coh){const mods={};f.forEach(r=>(mods[r._mod]=mods[r._mod]||[]).push(r));
+const mn=Object.keys(mods).sort();const hi=f.some(r=>r._s==='ILT');const lb=hi?AL:SL,ks=hi?RK:SK;
+let gt=ks.map(()=>({s:0,c:0}));
+const tr=mn.map(m=>{const rs=mods[m];const avgs=ks.map((k,i)=>{const v=rs.map(r=>r[k]).filter(x=>x!=null);
+const a=v.length?v.reduce((a,b)=>a+b,0)/v.length:null;if(v.length){gt[i].s+=v.reduce((a,b)=>a+b,0);gt[i].c+=v.length}return a});
+const va=avgs.filter(x=>x!=null);return{mod:m,c:rs.length,avgs,o:va.length?va.reduce((a,b)=>a+b,0)/va.length:null}});
+const ga=gt.map(t=>t.c?t.s/t.c:null),gv=ga.filter(x=>x!=null),go=gv.length?gv.reduce((a,b)=>a+b,0)/gv.length:null;
+const cmts=[];f.forEach(r=>{const c=r._c;if(c&&c.length>1&&c!=='-'&&c!=='.'&&c!=='\u2014'&&c!=='\u2013')
+cmts.push({mod:r._mod,dt:r._d?r._d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'',txt:c,na:r._na})});
+const gms=id=>{const m=MS['i'+id];return m&&m.sel.size>0&&m.sel.size<m.av.length?[...m.sel].sort().join(', '):'All'};
+return{tr,ga,go,cmts,tot:f.length,inst,coh,lb,ks,hi,mn,
+meta:{instructor:inst,cohort:coh,course:gms('Co'),version:gms('V'),method:gms('M'),
+modules:mn.join(', ')||'All',dateFrom:$('iDF')?.value||'',dateTo:$('iDT')?.value||'',
+generatedDate:new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}}}
+
+function rit(){const c=$('itc');const ns=Object.keys(IR).sort();
+if(ns.length<=1){c.innerHTML='';return}
+c.innerHTML='<div class="itabs">'+ns.map(n=>`<button class="itab${n===IAT?' active':''}" onclick="sit('${esc(n).replace(/'/g,"\\'")}')">${esc(n)}</button>`).join('')+'</div>'}
+
+function sit(n){if(IAT)IEX[IAT]=gex();IAT=n;rit();rsr(IR[n]);rex(n);wcb('i')}
+
+function rsr(rd){let h='';
+if(rd.inst||rd.coh){h+=`<div style="background:var(--white);border-radius:12px;padding:14px 24px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:20px;flex-wrap:wrap">`;
+if(rd.inst)h+=`<div><span style="font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px">Instructor:</span> <span style="font-size:15px;font-weight:700;color:var(--burgundy)">${esc(rd.inst)}</span></div>`;
+if(rd.coh)h+=`<div><span style="font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px">Cohort:</span> <span style="font-size:15px;font-weight:700;color:var(--blue)">${esc(rd.coh)}</span></div>`;
+h+='</div>'}
+h+=`<div class="card"><div class="card-hdr">📊 Evaluation Scores by Module</div><div class="card-flush"><table><thead><tr><th>Module</th><th>N</th>${rd.lb.map(l=>`<th>${l}</th>`).join('')}<th>Overall</th></tr></thead><tbody>`;
+rd.tr.forEach(r=>{h+=`<tr><td>${esc(r.mod)}</td><td>${r.c}</td>${r.avgs.map(a=>`<td>${bdg(a)}</td>`).join('')}<td>${bdg(r.o)}</td></tr>`});
+h+=`<tr class="orow"><td>All Modules</td><td>${rd.tot}</td>${rd.ga.map(a=>`<td>${bdg(a)}</td>`).join('')}<td>${bdg(rd.go)}</td></tr></tbody></table></div></div>`;
+// Comments
+if(rd.cmts.length){
+h+=`<div class="card"><div class="card-hdr" style="flex-direction:column;align-items:flex-start">💬 Open-Ended Comments (${rd.cmts.length})<div style="font-weight:400;font-size:12px;margin-top:8px;opacity:.85">Deselect to exclude from exports. NA/None/No Comment auto-deselected.</div></div>
+<div class="card-body" style="padding:12px 28px"><div class="csr"><input type="text" class="csi" id="ics" placeholder="Search comments..." oninput="fcs('i')">
+<span class="cc" id="icc"></span><button class="btn btn-sm btn-s" onclick="tac('i',1)">Select All</button><button class="btn btn-sm btn-s" onclick="tac('i',0)">Deselect All</button></div></div>
+<div class="card-flush"><table class="ct" id="ict"><thead><tr><th class="cbc"><input type="checkbox" id="ita" checked></th><th style="text-align:left">Module</th><th>Date</th><th style="text-align:left">Comment</th></tr></thead><tbody>`;
+rd.cmts.forEach((c,i)=>{const cl=c.na?'cna cex':'',ck=c.na?'':'checked';
+h+=`<tr id="ir${i}" class="${cl}" data-t="${esc(c.txt.toLowerCase())}"><td class="cbc"><input type="checkbox" class="icb" data-i="${i}" ${ck}></td><td>${esc(c.mod)}</td><td style="white-space:nowrap;font-weight:400;color:var(--text-light)">${c.dt}</td><td style="font-weight:400;color:var(--text);font-style:italic">${esc(c.txt)}</td></tr>`});
+h+='</tbody></table></div></div>'}else{
+h+=`<div class="card"><div class="card-hdr">💬 Comments</div><div class="card-body"><div class="empty" style="padding:24px"><p>No comments.</p></div></div></div>`}
+$('irc').innerHTML=h}
+
+function gex(){const ex=new Set();document.querySelectorAll('.icb').forEach(cb=>{if(!cb.checked)ex.add(parseInt(cb.dataset.i))});return ex}
+function rex(n){const ex=IEX[n];if(!ex||!ex.size)return;
+ex.forEach(i=>{const cb=document.querySelector(`.icb[data-i="${i}"]`);if(cb){cb.checked=false;const r=$('ir'+i);if(r)r.classList.add('cex')}});sta('i')}
+
+function gic(rd){return rd.cmts.filter((c,i)=>{const cb=document.querySelector(`.icb[data-i="${i}"]`);return cb?cb.checked:!c.na})}
+
+// ==========================================================
+// PDF
+// ==========================================================
+function bpdf(rd,cmts){const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+const pw=doc.internal.pageSize.getWidth();
+doc.setFillColor(100,9,44);doc.rect(0,0,pw,22,'F');doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
+doc.text(rd.inst?'Evaluation Report \u2014 '+rd.inst:'Evaluation Report',14,14);
+doc.setFontSize(9);doc.setFont('helvetica','normal');
+doc.text('Generated '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),pw-14,14,{align:'right'});
+doc.setTextColor(72,72,72);doc.setFontSize(10);let y=30;
+if(rd.inst){doc.setFont('helvetica','bold');doc.text('Instructor: '+rd.inst,14,y);y+=6;doc.setFont('helvetica','normal')}
+if(rd.coh){doc.setFont('helvetica','bold');doc.text('Cohort: '+rd.coh,14,y);y+=6;doc.setFont('helvetica','normal')}
+doc.text('Filters: '+ft(rd),14,y);doc.text('Total Responses: '+rd.tot,14,y+6);
+const hd=[['Module','N',...rd.lb,'Overall']];
+const bd=rd.tr.map(r=>[r.mod,r.c,...r.avgs.map(a=>a!=null?a.toFixed(2):'N/A'),r.o!=null?r.o.toFixed(2):'N/A']);
+bd.push(['All Modules',rd.tot,...rd.ga.map(a=>a!=null?a.toFixed(2):'N/A'),rd.go!=null?rd.go.toFixed(2):'N/A']);
+doc.autoTable({startY:y+14,head:hd,body:bd,styles:{fontSize:9,cellPadding:3},headStyles:{fillColor:[72,72,72],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[249,247,244]},
+didParseCell:function(d){if(d.row.index===bd.length-1){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[253,246,227]}}});
+if(cmts.length){const bm={};cmts.forEach(c=>(bm[c.mod]=bm[c.mod]||[]).push(c));
+let cy=doc.lastAutoTable.finalY+12;if(cy>doc.internal.pageSize.getHeight()-30){doc.addPage();cy=20}
+doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(100,9,44);
+doc.text('Open-Ended Comments ('+cmts.length+')',14,cy);const ms=Object.keys(bm).sort();
+if(rd.tr.length>1){let sy=cy+4;ms.forEach(m=>{if(sy>doc.internal.pageSize.getHeight()-30){doc.addPage();sy=20}
+doc.autoTable({startY:sy,head:[[{content:m,colSpan:2,styles:{fillColor:[100,9,44],textColor:255,fontStyle:'bold',fontSize:9}}]],
+body:bm[m].map(c=>[c.dt,c.txt]),styles:{fontSize:8,cellPadding:3},headStyles:{fillColor:[100,9,44],textColor:255,fontStyle:'bold'},
+alternateRowStyles:{fillColor:[249,247,244]},columnStyles:{0:{cellWidth:28},1:{cellWidth:'auto',fontStyle:'italic'}}});sy=doc.lastAutoTable.finalY+6})}
+else{doc.autoTable({startY:cy+4,head:[['Module','Date','Comment']],body:cmts.map(c=>[c.mod,c.dt,c.txt]),styles:{fontSize:8,cellPadding:3},
+headStyles:{fillColor:[72,72,72],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[249,247,244]},
+columnStyles:{0:{cellWidth:30},1:{cellWidth:28},2:{cellWidth:'auto',fontStyle:'italic'}}})}}
+return doc}
+
+function xPDF(){const ns=Object.keys(IR).sort();if(!ns.length)return;
+if(IAT)IEX[IAT]=gex();let dl=0;
+ns.forEach(n=>{const rd=IR[n],ex=IEX[n]||new Set(),cmts=rd.cmts.filter((c,i)=>!ex.has(i));
+const doc=bpdf(rd,cmts);const pfx=(rd.coh||'Evaluation_Report').replace(/\s+/g,'_');
+const sfx=rd.inst?'_'+rd.inst.replace(/,/g,'').replace(/\s+/g,'_'):'';
+setTimeout(()=>doc.save(pfx+sfx+'.pdf'),dl);dl+=400})}
+
+// ==========================================================
+// XLSX
+// ==========================================================
+function bxl(rd,cmts){const wb=XLSX.utils.book_new();const m=rd.meta;
+const sd=[['_META_INSTRUCTOR',m.instructor||''],['_META_COHORT',m.cohort||''],['_META_COURSE',m.course],
+['_META_VERSION',m.version],['_META_METHOD',m.method],['_META_MODULES',m.modules],
+['_META_DATE_FROM',m.dateFrom],['_META_DATE_TO',m.dateTo],['_META_GENERATED',m.generatedDate],
+['_META_RESPONSES',rd.tot],[],['Module','N',...rd.lb,'Overall']];
+rd.tr.forEach(r=>sd.push([r.mod,r.c,...r.avgs.map(a=>a!=null?Math.round(a*100)/100:''),r.o!=null?Math.round(r.o*100)/100:'']));
+sd.push(['All Modules',rd.tot,...rd.ga.map(a=>a!=null?Math.round(a*100)/100:''),rd.go!=null?Math.round(rd.go*100)/100:'']);
+const ws1=XLSX.utils.aoa_to_sheet(sd);ws1['!cols']=[{wch:16},{wch:10},...rd.lb.map(()=>({wch:14})),{wch:14}];
+XLSX.utils.book_append_sheet(wb,ws1,'Scores');
+const cd=[['Module','Date','Comment']];cmts.forEach(c=>cd.push([c.mod,c.dt,c.txt]));
+const ws2=XLSX.utils.aoa_to_sheet(cd);ws2['!cols']=[{wch:16},{wch:14},{wch:60}];
+XLSX.utils.book_append_sheet(wb,ws2,'Comments');return wb}
+
+function xXLSX(){const ns=Object.keys(IR).sort();if(!ns.length)return;
+if(IAT)IEX[IAT]=gex();
+ns.forEach((n,i)=>{const rd=IR[n],ex=IEX[n]||new Set(),cmts=rd.cmts.filter((c,j)=>!ex.has(j));
+const wb=bxl(rd,cmts);const fn='Evaluation_Report_'+(rd.inst||'NoInstructor').replace(/\s+/g,'_')+'.xlsx';
+setTimeout(()=>XLSX.writeFile(wb,fn),i*400)})}
+
+// Helpers
+function bdg(v){if(v==null)return'<span class="sb sn">N/A</span>';const d=v.toFixed(2);
+if(v>=3.5)return`<span class="sb sh">${d}</span>`;if(v>=2.5)return`<span class="sb sm">${d}</span>`;return`<span class="sb sl">${d}</span>`}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function $(id){return document.getElementById(id)}
+function ft(rd){const p=[],m=rd.meta;if(m.course&&m.course!=='All')p.push('Course: '+m.course);
+if(m.version&&m.version!=='All')p.push('Version: '+m.version);if(m.method&&m.method!=='All')p.push('Method: '+m.method);
+if(m.modules&&m.modules!=='All')p.push('Modules: '+m.modules);if(m.dateFrom)p.push('From: '+m.dateFrom);
+if(m.dateTo)p.push('To: '+m.dateTo);if(m.instructor)p.push('Instructor: '+m.instructor);
+if(m.cohort)p.push('Cohort: '+m.cohort);return p.length?p.join('  |  '):'None (all data)'}
 </script>
-
 </body>
 </html>
