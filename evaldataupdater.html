@@ -302,7 +302,7 @@
   <div class="header-icon"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" style="width: 100px; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0, 0, 0, .3); padding: 10px; background: white;" alt="CLEAR Learning Logo"></div>
   <div>
     <h1>Master Instructor File Updater</h1>
-    <p>Update the master instructor file with new evaluation data pulled from the Module Evaluation Report Generator</p>
+    <p>Update the master instructor file with new evaluation data pulled from the Evaluation Dashboard</p>
   </div>
 </div>
 
@@ -311,7 +311,7 @@
   <div class="instructions">
     <h2>Instructions</h2>
     <ol style="line-height: 2;">
-      <li>Upload one or more <strong>evaluation report Excel files</strong> exported from the Report Generator in <span style="background: #64092c; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, .3); padding: 5px 15px; color: white;">Section 1</span> below. You can upload multiple files at once.</li>
+      <li>Upload one or more <strong>evaluation report Excel files</strong> exported from the Evaluation Dashboard in <span style="background: #64092c; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, .3); padding: 5px 15px; color: white;">Section 1</span> below. You can upload multiple files at once.</li>
       <li>Upload the <strong>instructor master workbook</strong> (located <a href="https://clearorg.sharepoint.com/:f:/s/CLEARStaff/IgD1nJ1HiawSTrcxtrh7rR9cAYHw7kFhMKO2X6Fa3voW_VE?e=x4kYGN" rel="noopener noreferrer" target="_blank">here</a>) in <span style="background: #084d78; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, .3); padding: 5px 15px; color: white;">Section 2</span> below.</li>
       <li>Review the data preview, then click <strong>Update &amp; Download</strong> to append all module scores to the correct instructor tabs and download the updated workbook.</li>
     </ol>
@@ -328,7 +328,7 @@
       <div class="upload-area" id="reportUpload">
         <div class="icon">📊</div>
         <h4>Drop report Excel files here or click to browse</h4>
-        <p>Select one or more .xlsx files exported from the Evaluation Report Generator</p>
+        <p>Select one or more .xlsx files exported from the Evaluation Dashboard</p>
         <input type="file" id="reportFileInput" accept=".xlsx,.xls" multiple>
       </div>
       <div id="reportFileList"></div>
@@ -356,11 +356,11 @@
     <div class="action-summary" id="actionSummary"></div>
     <div class="preview-section" id="previewArea"></div>
     <div class="btn-row" style="margin-top: 20px;">
-      <button class="btn btn-success" onclick="performUpdate()">✓ Update &amp; Download</button>
+      <button class="btn btn-success" onclick="performUpdate()">&#10003; Update &amp; Download</button>
       <button class="btn btn-secondary" onclick="resetAll()">Start Over</button>
     </div>
     <div class="done-message" id="doneMessage">
-      <strong>✓ Workbook Updated Successfully</strong>
+      <strong>&#10003; Workbook Updated Successfully</strong>
       <span id="doneDetail"></span>
     </div>
   </div>
@@ -396,7 +396,7 @@
   function processReportFiles(fileList) {
     const files = Array.from(fileList).filter(f => f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
     if (!files.length) {
-      alert('Please select .xlsx files exported from the Evaluation Report Generator.');
+      alert('Please select .xlsx files exported from the Evaluation Dashboard.');
       return;
     }
 
@@ -426,42 +426,121 @@
     const ws = wb.Sheets[wsName];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
+    // ---- Parse _META_ rows ----
     const meta = {};
-    let dataStartRow = 0;
+    let dataStartRow = -1;
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      if (typeof row[0] === 'string' && row[0].startsWith('_META_')) {
-        const key = row[0].replace('_META_', '').toLowerCase();
+      const cell0 = String(row[0] || '').trim();
+
+      // Collect metadata
+      if (cell0.startsWith('_META_')) {
+        const key = cell0.replace('_META_', '').toLowerCase();
         meta[key] = row[1] !== undefined ? String(row[1]) : '';
-      } else if (row[0] === 'Module' && row[1] === 'Responses') {
-        dataStartRow = i + 1;
-        break;
+        continue;
+      }
+
+      // Find the header row by scanning all cells for "Module"
+      // New format: Cohort Name, Course, Version, Method, Module, Responses, ...
+      // Old format: Module, Responses, Instructor, Style, ...
+      const rowStrs = row.map(c => String(c || '').trim());
+      const moduleIdx = rowStrs.indexOf('Module');
+      if (moduleIdx >= 0) {
+        const nextCell = rowStrs[moduleIdx + 1] || '';
+        if (nextCell === 'Responses' || nextCell === 'N') {
+          dataStartRow = i + 1;
+          break;
+        }
       }
     }
 
     if (!meta.instructor) {
-      return { fileName, error: 'No instructor name found. Was this exported with an instructor name selected?' };
+      return { fileName, error: 'No instructor name found (_META_INSTRUCTOR missing). Was this exported from the Evaluation Dashboard with an instructor selected?' };
     }
 
+    if (dataStartRow < 0) {
+      return { fileName, error: 'Could not find the data header row (expected "Module" / "Responses" columns). Is this a valid evaluation report export?' };
+    }
+
+    // ---- Detect column mapping from header row ----
+    const headerRow = rows[dataStartRow - 1];
+    // Build a map of header label -> column index
+    const colMap = {};
+    headerRow.forEach((val, idx) => {
+      colMap[String(val).trim()] = idx;
+    });
+
+    // Find the column indices for each score
+    // Support both old format ("Instructor", "Style", etc.) and new format labels
+    const moduleCol = colMap['Module'] !== undefined ? colMap['Module'] : 0;
+    const responsesCol = colMap['Responses'] !== undefined ? colMap['Responses'] : (colMap['N'] !== undefined ? colMap['N'] : 1);
+
+    // Score columns - look for various possible header names
+    const findCol = (...names) => {
+      for (const n of names) {
+        if (colMap[n] !== undefined) return colMap[n];
+      }
+      return -1;
+    };
+
+    const instructorCol = findCol('Instructor', 'The instructor was');
+    const styleCol = findCol('Style', 'The style of delivery was');
+    const contentCol = findCol('Content', 'The content of this module was');
+    const coverageCol = findCol('Coverage', 'The amount of material covered was');
+    const usefulnessCol = findCol('Usefulness', 'The usefulness of this session was');
+    const overallCol = findCol('Overall Avg', 'Overall', 'Overall Module Average');
+
+    // Also look for per-row metadata columns (new format includes these in each data row)
+    const cohortCol = findCol('Cohort Name', 'Cohort');
+    const courseCol = findCol('Course');
+    const versionCol = findCol('Version');
+    const methodCol = findCol('Method');
+
+    // ---- Parse data rows ----
     const moduleRows = [];
     for (let i = dataStartRow; i < rows.length; i++) {
       const r = rows[i];
-      const modName = String(r[0] || '').trim();
+      const modName = String(r[moduleCol] || '').trim();
+
+      // Skip empty rows and the "All Modules" summary row
       if (!modName || modName === 'All Modules') continue;
+
+      // Skip any rows that look like metadata leaking through
+      if (modName.startsWith('_META_')) continue;
+
+      const safeNum = (colIdx) => {
+        if (colIdx < 0) return null;
+        const v = r[colIdx];
+        if (v === '' || v === undefined || v === null) return null;
+        const n = parseFloat(v);
+        return isNaN(n) ? null : n;
+      };
+
+      const safeStr = (colIdx) => {
+        if (colIdx < 0) return '';
+        return String(r[colIdx] || '').trim();
+      };
+
       moduleRows.push({
         module: modName,
-        responses: typeof r[1] === 'number' ? r[1] : parseInt(r[1]) || 0,
-        instructor: typeof r[2] === 'number' ? r[2] : parseFloat(r[2]) || null,
-        style: typeof r[3] === 'number' ? r[3] : parseFloat(r[3]) || null,
-        content: typeof r[4] === 'number' ? r[4] : parseFloat(r[4]) || null,
-        coverage: typeof r[5] === 'number' ? r[5] : parseFloat(r[5]) || null,
-        usefulness: typeof r[6] === 'number' ? r[6] : parseFloat(r[6]) || null,
-        overall: typeof r[7] === 'number' ? r[7] : parseFloat(r[7]) || null
+        responses: safeNum(responsesCol) || 0,
+        instructor: safeNum(instructorCol),
+        style: safeNum(styleCol),
+        content: safeNum(contentCol),
+        coverage: safeNum(coverageCol),
+        usefulness: safeNum(usefulnessCol),
+        overall: safeNum(overallCol),
+        // Per-row metadata: prefer row values, fall back to _META_ values
+        cohort: safeStr(cohortCol) || meta.cohort || '',
+        course: safeStr(courseCol) || meta.course || '',
+        version: safeStr(versionCol) || meta.version || '',
+        method: safeStr(methodCol) || meta.method || ''
       });
     }
 
     if (!moduleRows.length) {
-      return { fileName, error: 'No module data found in this file.' };
+      return { fileName, error: 'No module data rows found in this file.' };
     }
 
     return { fileName, meta, moduleRows, error: null };
@@ -478,25 +557,25 @@
     reportFiles.forEach((r, i) => {
       if (r.error) {
         html += `<div class="report-file-item has-error">
-          <span class="rfi-icon">⚠️</span>
+          <span class="rfi-icon">&#9888;&#65039;</span>
           <span class="rfi-name">${esc(r.fileName)}</span>
           <span class="rfi-error">${esc(r.error)}</span>
-          <button class="rfi-remove" onclick="removeReport(${i})" title="Remove">✕</button>
+          <button class="rfi-remove" onclick="removeReport(${i})" title="Remove">&#10005;</button>
         </div>`;
       } else {
         html += `<div class="report-file-item">
-          <span class="rfi-icon">✓</span>
+          <span class="rfi-icon">&#10003;</span>
           <span class="rfi-instructor">${esc(r.meta.instructor)}</span>
-          <span class="rfi-detail">${esc(r.meta.cohort || '')}${r.meta.cohort ? ' · ' : ''}${r.moduleRows.length} module(s)</span>
+          <span class="rfi-detail">${esc(r.meta.cohort || '')}${r.meta.cohort ? ' &middot; ' : ''}${r.moduleRows.length} module(s)</span>
           <span class="rfi-detail" style="color: var(--text-light);">${esc(r.fileName)}</span>
-          <button class="rfi-remove" onclick="removeReport(${i})" title="Remove">✕</button>
+          <button class="rfi-remove" onclick="removeReport(${i})" title="Remove">&#10005;</button>
         </div>`;
       }
     });
 
     html += `</div>
       <div class="add-more-row">
-        <label class="add-more-btn">➕ Add More Files<input type="file" id="addMoreInput" accept=".xlsx,.xls" multiple></label>
+        <label class="add-more-btn">&#10133; Add More Files<input type="file" id="addMoreInput" accept=".xlsx,.xls" multiple></label>
         <button class="clear-all-btn" onclick="clearReports()">Clear All</button>
       </div>`;
 
@@ -564,7 +643,7 @@
     const tabCount = masterWB.SheetNames.filter(n => n !== 'Master').length;
     el.innerHTML = `
       <div class="loaded-info">
-        <span class="check">✓</span>
+        <span class="check">&#10003;</span>
         <span class="fname">${esc(masterFileName)}</span>
         <span class="fdetail">${tabCount} instructor tab(s)</span>
         <button class="change-btn" onclick="resetMaster()">Change</button>
@@ -577,7 +656,7 @@
     const el = masterUpload;
     el.classList.remove('loaded');
     el.innerHTML = `
-      <div class="icon">📁</div>
+      <div class="icon">&#128193;</div>
       <h4>Drop the master workbook here or click to browse</h4>
       <p>The .xlsx workbook with instructor tabs</p>
       <input type="file" id="masterFileInput" accept=".xlsx,.xls">`;
@@ -641,10 +720,10 @@
         r.moduleRows.forEach(mod => {
           totalRows++;
           previewHtml += `<tr>
-            <td>${esc(r.meta.cohort || '')}</td>
-            <td>${esc(r.meta.course || '')}</td>
-            <td>${esc(r.meta.version || '')}</td>
-            <td>${esc(r.meta.method || '')}</td>
+            <td>${esc(mod.cohort || '')}</td>
+            <td>${esc(mod.course || '')}</td>
+            <td>${esc(mod.version || '')}</td>
+            <td>${esc(mod.method || '')}</td>
             <td>${esc(mod.module)}</td>
             <td>${mod.responses}</td>
             <td>${fmtScore(mod.instructor)}</td>
@@ -700,10 +779,10 @@
       reports.forEach(r => {
         r.moduleRows.forEach(mod => {
           newRows.push([
-            r.meta.cohort || '',
-            r.meta.course || '',
-            r.meta.version || '',
-            r.meta.method || '',
+            mod.cohort || '',
+            mod.course || '',
+            mod.version || '',
+            mod.method || '',
             mod.module,
             mod.responses,
             mod.instructor,
@@ -751,7 +830,7 @@
     if (tabsCreated.length) parts.push(`Created ${tabsCreated.length} new tab(s): ${tabsCreated.join(', ')}`);
     parts.push(`${totalRowsAdded} total row(s) added.`);
 
-    document.getElementById('doneDetail').textContent = parts.join(' · ');
+    document.getElementById('doneDetail').textContent = parts.join(' \u00B7 ');
     document.getElementById('doneMessage').classList.add('visible');
   }
 
@@ -787,9 +866,9 @@
 
       // Ensure cell N1 exists with the link text
       if (!ws['N1']) {
-        ws['N1'] = { t: 's', v: '← Back to Master' };
+        ws['N1'] = { t: 's', v: '\u2190 Back to Master' };
       } else {
-        ws['N1'].v = '← Back to Master';
+        ws['N1'].v = '\u2190 Back to Master';
       }
       ws['N1'].l = { Target: "#Master!A1" };
 
@@ -815,9 +894,9 @@
   }
 
   function fmtScore(val) {
-    if (val === null || val === undefined || val === '') return '—';
+    if (val === null || val === undefined || val === '') return '\u2014';
     const n = parseFloat(val);
-    return isNaN(n) ? '—' : n.toFixed(2);
+    return isNaN(n) ? '\u2014' : n.toFixed(2);
   }
 </script>
 
