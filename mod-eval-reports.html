@@ -137,11 +137,12 @@ tbody tr:hover{background:#fdfcfa}
       <li>Drag and drop the local files to the appropriate drop zones below.</li>
       <li>Once loaded, use the <strong>Analyze</strong> tab for data exploration or the <strong>Instructor Reports</strong> tab for PDF/XLSX output.</li>
     </ol>
-    <p><strong>NOTE:</strong> Asynchronous module evaluations from programs completed prior to this version of the Evaluation Dashboard <i>(2026 02 & 2026 03 Cohorts)</i> are located in the ILT file.
+    <p><strong>NOTE:</strong> Asynchronous module evaluations from programs completed prior to this version of the Evaluation Dashboard <i>(2026 02 & 2026 03 Cohorts)</i> are located in the ILT file.</p>
+  </div>
   </div>
   <div class="upload-grid">
-    <div class="uz" id="uzILT"><div class="icon">👩‍🏫</div><h3>Instructor-Led (ILT) Evaluations</h3><p><a href="https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBq5lQz96jjTKCi5H_f5CyvAXaAWLRxpiAJ-suQb0CIwi0?e=Gzyato" target="_blank" rel="noopener noreferrer">CLEARLearning-ILT-Mod-Evals.xlsx</a></p><input type="file" id="fILT" accept=".xlsx,.xls"></div>
-    <div class="uz" id="uzAsync"><div class="icon">💻</div><h3>Self-Study / Async Evaluations</h3><p><a href="https://clearorg-my.sharepoint.com/:x:/g/personal/avance_clearhq_org/IQBT9SxOwAqNRIDyLCI2vIizAUK1bbpXr0m0D9CPW8bOXC4?e=ehRG8Q" target="_blank" rel="noopener noreferrer">CLEARLearning-Async-Mod-Evals.xlsx</a></p><input type="file" id="fAsync" accept=".xlsx,.xls"></div>
+    <div class="uz" id="uzILT"><div class="icon">👩‍🏫</div><h3>Instructor-Led (ILT) Evaluations</h3><p>CLEARLearning-ILT-Mod-Evals.xlsx</p><input type="file" id="fILT" accept=".xlsx,.xls"></div>
+    <div class="uz" id="uzAsync"><div class="icon">💻</div><h3>Self-Study / Async Evaluations</h3><p>CLEARLearning-Async-Mod-Evals.xlsx</p><input type="file" id="fAsync" accept=".xlsx,.xls"></div>
   </div>
   <div class="data-summary hidden" id="dsum"></div>
   <div class="hidden" id="main">
@@ -184,24 +185,63 @@ const NA=/^(na|n\/a|none|no comments?|n\/a\.|na\.|none\.)$/i;
 const MS={};
 let IR={},IAT=null,IEX={};
 
-// Upload
-function suz(zid,fid,t){const z=$(zid),f=$(fid);
-z.ondragover=e=>{e.preventDefault();z.classList.add('dragover')};
-z.ondragleave=()=>z.classList.remove('dragover');
-z.ondrop=e=>{e.preventDefault();z.classList.remove('dragover');if(e.dataTransfer.files.length)lf(e.dataTransfer.files[0],t)};
-f.onchange=e=>{if(e.target.files.length)lf(e.target.files[0],t)}}
-suz('uzILT','fILT','ILT');suz('uzAsync','fAsync','Async');
+// Upload - two separate drop zones
+function setupZone(zoneId,inputId,type){
+  var zone=document.getElementById(zoneId);
+  var input=document.getElementById(inputId);
+  zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('dragover')});
+  zone.addEventListener('dragleave',function(){zone.classList.remove('dragover')});
+  zone.addEventListener('drop',function(e){e.preventDefault();zone.classList.remove('dragover');
+    if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0],type,zoneId,inputId)});
+  input.addEventListener('change',function(e){
+    if(e.target.files.length)loadFile(e.target.files[0],type,zoneId,inputId)});
+}
 
-function lf(file,type){const r=new FileReader();r.onload=function(e){try{
-const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-const sn=wb.SheetNames.find(n=>n.toLowerCase().trim()==='sheet1');
-if(!sn){alert('No "Sheet1" found.\nAvailable: '+wb.SheetNames.join(', '));return}
-const j=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
-if(!j.length){alert('"Sheet1" empty.');return}
-const rows=j.filter(r=>r['Respondent ID']&&String(r['Respondent ID']).trim()).map(r=>norm(r,type));
-if(type==='ILT'){iltD=rows;sl('uzILT',file.name,rows.length)}else{asnD=rows;sl('uzAsync',file.name,rows.length)}
-allD=[...iltD,...asnD];bfui();sm();
-}catch(er){alert('Error: '+er.message)}};r.readAsArrayBuffer(file)}
+function loadFile(file,type,zoneId,inputId){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      var sn=wb.SheetNames.find(function(n){return n.toLowerCase().trim()==='sheet1'});
+      if(!sn){alert('No "Sheet1" found.\nAvailable: '+wb.SheetNames.join(', '));return}
+      var j=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+      if(!j.length){alert('"Sheet1" is empty.');return}
+      var rows=j.filter(function(r){return r['Respondent ID']&&String(r['Respondent ID']).trim()}).map(function(r){return norm(r,type)});
+      if(type==='ILT'){iltD=rows}else{asnD=rows}
+      allD=[].concat(iltD,asnD);
+      showLoaded(zoneId,file.name,rows.length,type,inputId);
+      bfui();sm();
+    }catch(er){alert('Error reading file: '+er.message)}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showLoaded(zoneId,name,count,type,inputId){
+  var z=document.getElementById(zoneId);
+  z.classList.add('loaded');
+  z.innerHTML='<div class="loaded-info"><span class="ck">&#10003;</span><span class="fn">'+esc(name)+'</span><span class="rc">('+count.toLocaleString()+' responses)</span><button class="rbtn" onclick="reloadZone(\''+zoneId+'\',\''+inputId+'\',\''+type+'\')">Replace</button></div>';
+}
+
+function reloadZone(zoneId,inputId,type){
+  if(type==='ILT'){iltD=[]}else{asnD=[]}
+  var z=document.getElementById(zoneId);
+  z.classList.remove('loaded');
+  var icon=type==='ILT'?'👩‍🏫':'💻';
+  var title=type==='ILT'?'Instructor-Led (ILT) Evaluations':'Self-Study / Async Evaluations';
+  var desc=type==='ILT'?'CLEARLearning-ILT-Mod-Evals.xlsx':'CLEARLearning-Async-Mod-Evals.xlsx';
+  z.innerHTML='<div class="icon">'+icon+'</div><h3>'+title+'</h3><p>'+desc+'</p><input type="file" id="'+inputId+'" accept=".xlsx,.xls">';
+  setupZone(zoneId,inputId,type);
+  allD=[].concat(iltD,asnD);
+  if(!allD.length){document.getElementById('dsum').classList.add('hidden');document.getElementById('main').classList.add('hidden')}
+  else{bfui();sm()}
+}
+
+// Initialize both zones after DOM is ready
+function initZones(){
+  setupZone('uzILT','fILT','ILT');
+  setupZone('uzAsync','fAsync','Async');
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initZones)}else{initZones()}
 
 function norm(r,s){let d=null;const raw=r['End Date'];
 if(raw instanceof Date)d=raw;else if(typeof raw==='string'&&raw.length>=10){d=new Date(raw);if(isNaN(d))d=null}
@@ -212,15 +252,6 @@ _i:s==='ILT'?g('Instructor2'):'',_na:NA.test(c.trim()),
 rInstructor:s==='ILT'?sf(r['Instructor']):null,rStyle:sf(r['The style of delivery was']),
 rContent:sf(r['The content of this module was']),rCoverage:sf(r['The amount of material covered was']),
 rUsefulness:sf(r['The usefulness of this session was'])}}
-
-function sl(zid,name,cnt){const z=$(zid);z.classList.add('loaded');
-z.innerHTML=`<div class="loaded-info"><span class="ck">&#10003;</span><span class="fn">${esc(name)}</span><span class="rc">(${cnt.toLocaleString()} responses)</span><button class="rbtn" onclick="rz('${zid}')">Replace</button></div>`}
-
-function rz(zid){const isI=zid==='uzILT';if(isI)iltD=[];else asnD=[];
-const z=$(zid);z.classList.remove('loaded');const fid=isI?'fILT':'fAsync';
-z.innerHTML=`<div class="icon">${isI?'👩‍🏫':'💻'}</div><h3>${isI?'Instructor-Led (ILT) Evaluations':'Self-Study / Async Evaluations'}</h3><p>${isI?'CLEARLearning-ILT-Mod-Evals.xlsx':'CLEARLearning-Async-Mod-Evals.xlsx'}</p><input type="file" id="${fid}" accept=".xlsx,.xls">`;
-suz(zid,fid,isI?'ILT':'Async');allD=[...iltD,...asnD];
-if(!allD.length){$('dsum').classList.add('hidden');$('main').classList.add('hidden')}else{bfui();sm()}}
 
 function sm(){if(!allD.length)return;const s=$('dsum');s.classList.remove('hidden');
 const u=k=>new Set(allD.map(r=>r[k]).filter(Boolean)).size;
@@ -411,18 +442,26 @@ IAT=ins[0];rit();rsr(IR[IAT]);$('iebar').classList.add('visible');wcb('i')}
 function brd(f,inst,coh){const mods={};f.forEach(r=>(mods[r._mod]=mods[r._mod]||[]).push(r));
 const mn=Object.keys(mods).sort();const hi=f.some(r=>r._s==='ILT');const lb=hi?AL:SL,ks=hi?RK:SK;
 let gt=ks.map(()=>({s:0,c:0}));
+// Helper: get most common value from an array
+const mode=arr=>{const m={};arr.filter(Boolean).forEach(v=>m[v]=(m[v]||0)+1);let best='',bestC=0;
+for(const[k,c]of Object.entries(m)){if(c>bestC){best=k;bestC=c}}return best};
 const tr=mn.map(m=>{const rs=mods[m];const avgs=ks.map((k,i)=>{const v=rs.map(r=>r[k]).filter(x=>x!=null);
 const a=v.length?v.reduce((a,b)=>a+b,0)/v.length:null;if(v.length){gt[i].s+=v.reduce((a,b)=>a+b,0);gt[i].c+=v.length}return a});
-const va=avgs.filter(x=>x!=null);return{mod:m,c:rs.length,avgs,o:va.length?va.reduce((a,b)=>a+b,0)/va.length:null}});
+const va=avgs.filter(x=>x!=null);
+// Derive per-module metadata from the actual data rows
+return{mod:m,c:rs.length,avgs,o:va.length?va.reduce((a,b)=>a+b,0)/va.length:null,
+course:mode(rs.map(r=>r._co)),version:mode(rs.map(r=>r._v)),method:mode(rs.map(r=>r._m)),cohort:mode(rs.map(r=>r._ch))}});
 const ga=gt.map(t=>t.c?t.s/t.c:null),gv=ga.filter(x=>x!=null),go=gv.length?gv.reduce((a,b)=>a+b,0)/gv.length:null;
 const cmts=[];f.forEach(r=>{const c=r._c;if(c&&c.length>1&&c!=='-'&&c!=='.'&&c!=='\u2014'&&c!=='\u2013')
 cmts.push({mod:r._mod,dt:r._d?r._d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'',txt:c,na:r._na})});
 const gms=id=>{const m=MS['i'+id];return m&&m.sel.size>0&&m.sel.size<m.av.length?[...m.sel].sort().join(', '):'All'};
+// Derive metadata from the actual data, not filter selections
+const dataCourse=uq(f.map(r=>r._co));const dataVersion=uq(f.map(r=>r._v));const dataMethod=uq(f.map(r=>r._m));
 return{tr,ga,go,cmts,tot:f.length,inst,coh,lb,ks,hi,mn,
-meta:{instructor:inst,cohort:coh,course:gms('Co'),version:gms('V'),method:gms('M'),
-modules:mn.join(', ')||'All',dateFrom:$('iDF')?.value||'',dateTo:$('iDT')?.value||'',
+meta:{instructor:inst,cohort:coh,
+course:dataCourse.join(', ')||'',version:dataVersion.join(', ')||'',method:dataMethod.join(', ')||'',
+modules:mn.join(', ')||'',dateFrom:$('iDF')?.value||'',dateTo:$('iDT')?.value||'',
 generatedDate:new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}}}
-
 function rit(){const c=$('itc');const ns=Object.keys(IR).sort();
 if(ns.length<=1){c.innerHTML='';return}
 c.innerHTML='<div class="itabs">'+ns.map(n=>`<button class="itab${n===IAT?' active':''}" onclick="sit('${esc(n).replace(/'/g,"\\'")}')">${esc(n)}</button>`).join('')+'</div>'}
@@ -497,13 +536,25 @@ setTimeout(()=>doc.save(pfx+sfx+'.pdf'),dl);dl+=400})}
 // XLSX
 // ==========================================================
 function bxl(rd,cmts){const wb=XLSX.utils.book_new();const m=rd.meta;
+// Always write fixed 12-column format matching the Master Instructor File Updater:
+// Cohort, Course, Version, Method, Module, Responses, Instructor, Style, Content, Coverage, Usefulness, Overall Avg
 const sd=[['_META_INSTRUCTOR',m.instructor||''],['_META_COHORT',m.cohort||''],['_META_COURSE',m.course],
 ['_META_VERSION',m.version],['_META_METHOD',m.method],['_META_MODULES',m.modules],
 ['_META_DATE_FROM',m.dateFrom],['_META_DATE_TO',m.dateTo],['_META_GENERATED',m.generatedDate],
-['_META_RESPONSES',rd.tot],[],['Module','N',...rd.lb,'Overall']];
-rd.tr.forEach(r=>sd.push([r.mod,r.c,...r.avgs.map(a=>a!=null?Math.round(a*100)/100:''),r.o!=null?Math.round(r.o*100)/100:'']));
-sd.push(['All Modules',rd.tot,...rd.ga.map(a=>a!=null?Math.round(a*100)/100:''),rd.go!=null?Math.round(rd.go*100)/100:'']);
-const ws1=XLSX.utils.aoa_to_sheet(sd);ws1['!cols']=[{wch:16},{wch:10},...rd.lb.map(()=>({wch:14})),{wch:14}];
+['_META_RESPONSES',rd.tot],[],
+['Cohort Name','Course','Version','Method','Module','Responses','Instructor','Style','Content','Coverage','Usefulness','Overall Avg']];
+// Each module row gets its own cohort/course/version/method derived from the actual data
+rd.tr.forEach(r=>{const rv=x=>x!=null?Math.round(x*100)/100:'';
+const vals=[null,null,null,null,null]; // Instructor,Style,Content,Coverage,Usefulness
+rd.ks.forEach((k,i)=>{const pos=RK.indexOf(k);if(pos>=0)vals[pos]=r.avgs[i]});
+sd.push([r.cohort||rd.coh||'',r.course||'',r.version||'',r.method||'',r.mod,r.c,...vals.map(rv),rv(r.o)])});
+// Grand totals row
+const gvals=[null,null,null,null,null];
+rd.ks.forEach((k,i)=>{const pos=RK.indexOf(k);if(pos>=0)gvals[pos]=rd.ga[i]});
+const rv=x=>x!=null?Math.round(x*100)/100:'';
+sd.push(['','','','','All Modules',rd.tot,...gvals.map(rv),rv(rd.go)]);
+const ws1=XLSX.utils.aoa_to_sheet(sd);
+ws1['!cols']=[{wch:24},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:20}];
 XLSX.utils.book_append_sheet(wb,ws1,'Scores');
 const cd=[['Module','Date','Comment']];cmts.forEach(c=>cd.push([c.mod,c.dt,c.txt]));
 const ws2=XLSX.utils.aoa_to_sheet(cd);ws2['!cols']=[{wch:16},{wch:14},{wch:60}];
@@ -520,9 +571,9 @@ function bdg(v){if(v==null)return'<span class="sb sn">N/A</span>';const d=v.toFi
 if(v>=3.5)return`<span class="sb sh">${d}</span>`;if(v>=2.5)return`<span class="sb sm">${d}</span>`;return`<span class="sb sl">${d}</span>`}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function $(id){return document.getElementById(id)}
-function ft(rd){const p=[],m=rd.meta;if(m.course&&m.course!=='All')p.push('Course: '+m.course);
-if(m.version&&m.version!=='All')p.push('Version: '+m.version);if(m.method&&m.method!=='All')p.push('Method: '+m.method);
-if(m.modules&&m.modules!=='All')p.push('Modules: '+m.modules);if(m.dateFrom)p.push('From: '+m.dateFrom);
+function ft(rd){const p=[],m=rd.meta;if(m.course)p.push('Course: '+m.course);
+if(m.version)p.push('Version: '+m.version);if(m.method)p.push('Method: '+m.method);
+if(m.modules)p.push('Modules: '+m.modules);if(m.dateFrom)p.push('From: '+m.dateFrom);
 if(m.dateTo)p.push('To: '+m.dateTo);if(m.instructor)p.push('Instructor: '+m.instructor);
 if(m.cohort)p.push('Cohort: '+m.cohort);return p.length?p.join('  |  '):'None (all data)'}
 </script>
