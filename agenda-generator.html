@@ -7,32 +7,25 @@
 <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Trebuchet+MS&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --burgundy:#64092c; --burgundy-light:#8a1e4a; --gold:#dda838; --gold-light:#f0c96a; --gold-pale:#fdf4e0;
     --blue:#084d78; --blue-light:#0a6ba8; --gray:#484848; --gray-light:#f4f4f5; --gray-mid:#e0e0e0; --white:#ffffff;
     --pass-green:#2e7d32; --pass-bg:#e8f5e9; --fail-red:#c62828; --fail-bg:#ffebee; --warn-amber:#f57f17; --warn-bg:#fff8e1;
     --radius:6px; --shadow:0 2px 8px rgba(0,0,0,0.08); --shadow-lg:0 4px 16px rgba(0,0,0,0.12);
   }
-
   html { scroll-behavior: smooth; }
   body { font-family:'Open Sans',sans-serif; color:var(--gray); background:var(--gray-light); min-height:100vh; font-size:14px; line-height:1.5; }
   h1,h2,h3,h4 { font-family:'Trebuchet MS','Open Sans',sans-serif; }
-
   .header { background:linear-gradient(135deg,var(--burgundy) 0%,var(--burgundy-light) 100%); color:var(--white); padding:24px 32px; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow-lg); }
   .header-icon { width:48px;height:48px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0; }
   .header h1 { font-size:22px;font-weight:700; } .header p { font-size:13px;opacity:0.85;margin-top:2px; }
-
   .main { max-width:1600px; margin:0 auto; padding:24px 32px 48px; }
-
   .panel { background:var(--white);border-radius:var(--radius);padding:28px 32px;box-shadow:var(--shadow);margin-bottom:24px; }
   .panel h2 { font-size:17px;color:var(--burgundy);margin-bottom:20px;display:flex;align-items:center;gap:8px; }
   .panel-section { border:1px solid var(--gray-mid);border-radius:var(--radius);padding:20px;margin-bottom:16px; }
   .panel-section:last-child { margin-bottom:0; }
   .panel-section h3 { font-size:14px;color:var(--burgundy);margin-bottom:12px; }
-
   .form-row { display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end; }
   .form-row:last-child { margin-bottom:0; }
   .form-group { display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px; }
@@ -42,7 +35,6 @@
   .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1); }
   .form-group input:disabled,.form-group select:disabled { background:#f0f0f0;color:#aaa; }
   .inline-note { font-size:12px;color:#888;margin-top:2px;line-height:1.4; }
-
   .search-select { position:relative; }
   .search-select input { width:100%;padding:10px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:14px;font-family:'Open Sans',sans-serif;background:var(--white); }
   .search-select input:focus { outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1); }
@@ -50,8 +42,10 @@
   .search-select .dropdown.open { display:block; }
   .search-select .dropdown .opt { padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-light); }
   .search-select .dropdown .opt:hover { background:#e3f2fd; }
+  .search-select .dropdown .opt .tag { display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-left:8px;vertical-align:middle; }
+  .search-select .dropdown .opt .tag-virtual { background:#e3f2fd;color:#1565c0; }
+  .search-select .dropdown .opt .tag-inperson { background:#e8f5e9;color:#2e7d32; }
   .search-select .dropdown .no-match { padding:9px 14px;font-size:13px;color:#999;font-style:italic; }
-
   .connection-status { display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--radius);font-size:13px; }
   .connection-status.connected { background:var(--pass-bg);color:var(--pass-green); }
   .connection-status.disconnected { background:var(--fail-bg);color:var(--fail-red); }
@@ -61,7 +55,6 @@
   .dot.green { background:var(--pass-green); } .dot.red { background:var(--fail-red); }
   .dot.amber { background:var(--warn-amber);animation:pulse 1s infinite; } .dot.gray { background:#bbb; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
-
   .btn { padding:11px 28px;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;font-family:'Open Sans',sans-serif;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;white-space:nowrap; }
   .btn:disabled { opacity:0.4;cursor:not-allowed; }
   .btn-primary { background:var(--blue);color:var(--white); } .btn-primary:hover:not(:disabled) { background:var(--blue-light);box-shadow:var(--shadow); }
@@ -69,23 +62,22 @@
   .btn-gold { background:var(--gold);color:var(--burgundy);font-weight:700; } .btn-gold:hover:not(:disabled) { background:var(--gold-light); }
   .btn-ghost { background:transparent;color:var(--gray);border:1.5px solid var(--gray-mid); } .btn-ghost:hover:not(:disabled) { background:var(--gray-light); }
   .btn-danger { background:var(--white);color:var(--fail-red);border:1.5px solid var(--fail-red); } .btn-danger:hover:not(:disabled) { background:var(--fail-bg); }
+  .btn-burgundy { background:var(--burgundy);color:var(--white);font-weight:700; } .btn-burgundy:hover:not(:disabled) { background:var(--burgundy-light); }
   .btn-sm { padding:7px 16px;font-size:12px; }
   .btn-row { display:flex;gap:10px;flex-wrap:wrap;align-items:center; }
-
   .status-bar { padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-top:14px;display:none; }
   .status-bar.info { background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;display:block; }
   .status-bar.success { background:var(--pass-bg);color:var(--pass-green);border:1px solid #a5d6a7;display:block; }
   .status-bar.error { background:var(--fail-bg);color:var(--fail-red);border:1px solid #ef9a9a;display:block; }
-
   .schedule-wrap { overflow-x:auto;border:1px solid var(--gray-mid);border-radius:var(--radius); }
   .schedule-table { width:100%;border-collapse:collapse;font-size:13px; }
   .schedule-table thead th { background:var(--burgundy);color:var(--white);padding:10px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;position:sticky;top:0;z-index:2;white-space:nowrap; }
   .schedule-table tbody tr { transition:background 0.15s; }
   .schedule-table tbody tr.row-ilt { background:var(--white); }
   .schedule-table tbody tr.row-portal { background:var(--white); }
-  .schedule-table tbody tr.row-ilt:hover { background:var(--gray-light); }
-  .schedule-table tbody tr.row-portal:hover { background:var(--gray-light); }
+  .schedule-table tbody tr.row-ilt:hover,.schedule-table tbody tr.row-portal:hover { background:var(--gray-light); }
   .schedule-table tbody tr.row-selected { outline:2px solid var(--burgundy);outline-offset:-2px; }
+  .schedule-table tbody tr.row-day-header td { background:var(--burgundy);color:var(--white);font-weight:700;font-size:13px;padding:10px 12px; }
   .schedule-table td { padding:8px 10px;border-bottom:1px solid var(--gray-mid);vertical-align:middle; }
   .schedule-table tbody tr:last-child td { border-bottom:none; }
   .col-check { width:36px;padding:8px 6px 8px 12px !important; }
@@ -106,9 +98,6 @@
   .empty-state { text-align:center;padding:52px 24px;color:#999; }
   .empty-icon { font-size:36px;margin-bottom:12px;opacity:.5; }
   .empty-state p { font-size:13px;max-width:340px;margin:0 auto; }
-  .spinner { display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg);} }
-
   .preview-doc { background:var(--white);border:1px solid var(--gray-mid);border-radius:var(--radius);padding:40px 44px;font-family:'Open Sans',sans-serif;font-size:12.5px;line-height:1.55;box-shadow:var(--shadow); }
   .preview-doc .doc-title { font-size:17px;font-weight:700;text-align:center;color:var(--burgundy);margin-bottom:6px; }
   .preview-doc .doc-cohort { text-align:center;font-size:13px;color:var(--gray);margin-bottom:18px; }
@@ -119,15 +108,13 @@
   .preview-doc .doc-intro strong { color:var(--burgundy); }
   .prev-table { width:100%;border-collapse:collapse;font-size:12px; }
   .prev-table th { background:var(--burgundy);color:var(--white);padding:8px 10px;text-align:left;font-weight:700; }
-  .prev-table td { padding:6px 10px;border:1px solid #d4c8c0;vertical-align:top; }
-  .prev-table tr.zoom-row td { background:var(--white); }
-  .prev-table tr:not(.zoom-row) td { background:var(--white); }
+  .prev-table td { padding:6px 10px;border:1px solid #d4c8c0;vertical-align:top;background:var(--white); }
+  .prev-table tr.day-header-row td { background:var(--burgundy);color:var(--white);font-weight:700;font-size:13px;padding:10px; }
   .prev-table .session-title { font-weight:700;color:var(--burgundy);margin-bottom:4px; }
   .prev-table .session-topics { margin:4px 0 0 16px;padding:0;font-size:11.5px;color:var(--gray); }
   .prev-table .session-topics li { margin-bottom:2px; }
-  .doc-legend { display:flex;gap:28px;flex-wrap:wrap;margin-top:18px;font-size:11.5px;padding-top:14px;border-top:1px solid var(--gray-mid);justify-content:center; }
-  .legend-item { display:flex;align-items:center;gap:7px;color:#888; }
-  .legend-swatch { width:14px;height:14px;border-radius:2px;border:1px solid #ccc;flex-shrink:0; }
+  .ip-fields { background:var(--pass-bg);border:1px solid #a5d6a7;border-radius:var(--radius);padding:16px 20px;margin-top:12px; }
+  .ip-fields h4 { font-size:12px;color:var(--pass-green);margin-bottom:10px;font-weight:700; }
   .hidden { display:none !important; }
   .text-muted { color:#888;font-size:12px; }
   @media(max-width:768px){.header{padding:16px;}.main{padding:16px;}.panel{padding:16px;}.form-row{flex-direction:column;}}
@@ -135,18 +122,15 @@
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-icon">&#128197;</div>
   <div><h1>Program Agenda Generator</h1><p>Select a program, set dates, and generate formatted agendas</p></div>
 </div>
-
 <div class="main">
   <div class="panel">
     <h2>&#9881;&#65039; Setup</h2>
-
     <div class="panel-section" id="apiSection">
-      <h3>API Connection <span style="font-weight:400;font-size:12px;color:#888;">(optional — not required for agenda generation)</span></h3>
+      <h3>API Connection <span style="font-weight:400;font-size:12px;color:#888;">(optional)</span></h3>
       <div class="form-row">
         <div class="form-group" style="flex:2;"><label>Worker URL</label><input type="text" id="workerUrl" value="https://clear-lms-proxy.avance.workers.dev"><span class="inline-note">Pre-configured. Only needed if verifying live course data.</span></div>
         <div class="form-group" style="flex:1;"><label>Auth Token</label><input type="password" id="authToken" placeholder="Enter access token (first time only)"></div>
@@ -154,7 +138,6 @@
       </div>
       <div class="connection-status idle" id="connectionStatus"><span class="dot gray"></span> API connection is optional. Course data is built into this tool.</div>
     </div>
-
     <div class="panel-section">
       <h3>1. Select Program</h3>
       <div class="form-row">
@@ -162,7 +145,6 @@
       </div>
       <div id="courseStatus" class="status-bar"></div>
     </div>
-
     <div class="panel-section">
       <h3>2. Program Details</h3>
       <div class="form-row">
@@ -173,6 +155,15 @@
       <div class="form-row">
         <div class="form-group"><label>Introductory Text <span style="font-weight:400;text-transform:none;letter-spacing:0;">(HTML formatting preserved in preview &amp; PDF)</span></label><textarea id="introText" rows="6" placeholder="Auto-filled when you select a program"></textarea></div>
       </div>
+      <div id="ipFields" class="ip-fields hidden">
+        <h4>&#128205; In-Person Program Settings</h4>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 200px;"><label>Start Date (Day 1)</label><input type="date" id="ipStartDate" onchange="onIpSettingChange()"></div>
+          <div class="form-group" style="flex:0 0 160px;"><label>Daily Start Time</label><select id="ipStartTime" onchange="onIpSettingChange()"><option value="07:00">7:00 AM</option><option value="07:30">7:30 AM</option><option value="08:00" selected>8:00 AM</option><option value="08:30">8:30 AM</option><option value="09:00">9:00 AM</option><option value="09:30">9:30 AM</option><option value="10:00">10:00 AM</option></select></div>
+          <div class="form-group" style="flex:1;"><label>Location</label><input type="text" id="ipLocation" placeholder="e.g. Austin, TX"></div>
+        </div>
+        <span class="inline-note">Set Day 1 date and daily start time. All session times auto-adjust based on the start time offset from the default. Assign instructors per session in the table below.</span>
+      </div>
     </div>
   </div>
 
@@ -181,14 +172,14 @@
     <div class="batch-bar" id="batchBar"><span id="batchCount">0 rows selected</span><button class="btn btn-sm btn-danger" onclick="removeSelected()">&#128465; Remove Selected</button><button class="btn btn-sm btn-ghost" onclick="clearSelection()">&#10005; Deselect All</button></div>
     <div class="empty-state" id="scheduleEmpty"><div class="empty-icon">&#128197;</div><p>Select a program above to load the schedule template with the correct sessions.</p></div>
     <div id="scheduleTableWrap" class="hidden">
-      <p class="text-muted" style="margin-bottom:10px;"><strong style="color:var(--gray);">Highlighted rows</strong> are live Zoom sessions — set date and start/end times. Self-paced rows have no date/time. Check boxes for batch removal.</p>
+      <p class="text-muted" id="scheduleHint" style="margin-bottom:10px;"></p>
       <div class="schedule-wrap">
         <table class="schedule-table" id="agendaTable">
-          <thead><tr><th class="col-check"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="Select all"></th><th style="min-width:148px;">Date</th><th style="min-width:120px;">Start</th><th style="min-width:120px;">End</th><th style="min-width:140px;">Platform</th><th>Session Name</th><th style="width:32px;"></th></tr></thead>
+          <thead id="agendaThead"><tr><th class="col-check"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="Select all"></th><th style="min-width:148px;">Date</th><th style="min-width:120px;">Start</th><th style="min-width:120px;">End</th><th style="min-width:140px;">Platform</th><th style="min-width:160px;">Instructor</th><th>Session Name</th><th style="width:32px;"></th></tr></thead>
           <tbody id="agendaBody"></tbody>
         </table>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="addManualRow()">+ Add Row</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="addManualRow()" id="btnAddRow">+ Add Row</button>
     </div>
   </div>
 
@@ -196,7 +187,8 @@
     <h2>&#128196; Preview &amp; Export</h2>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="generatePreview()">&#128065; Preview Agenda</button>
-      <button class="btn btn-gold" onclick="exportPDF()">&#11015; Download PDF</button>
+      <button class="btn btn-gold" onclick="exportPDF()">&#11015; Program Agenda PDF</button>
+      <button class="btn btn-burgundy" onclick="exportInstructorPDF()">&#128101; Instructor Agenda PDF</button>
     </div>
     <div id="previewSection" class="hidden" style="margin-top:24px;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--gray-mid);border-bottom:none;">
@@ -212,125 +204,139 @@
 'use strict';
 
 // ═══════════════════════════════════════════════════════
-// COURSE DATABASE
+// INSTRUCTOR LIST
+// ═══════════════════════════════════════════════════════
+const INSTRUCTORS=[
+'Anderegg, Karen','Barton, Andrew','Betteridge, Lise','Chambers, Sarah',
+'Cooley, Mandi','Crumley, John','Curley, Stephen','deFoy, Carmen',
+'Deforest, Denise','DeLuca, Ryan','DeSousa, Lisa','Eichrodt, Sean',
+'Erikson, Marcus','Jenkins, Robin','Kay, David','Keirstead, Graeme',
+'Pfiefer, Judy','Robinson, Jan','Salvatori, Michael','Stansfield, Katherine',
+'Thibert, Lena','Thompson, David (Eric)','Thompson-May, Brett',
+'Verge, Vicki','Wade, Amigo','Wilkie, Kathy','Williams, Deanna'
+];
+
+// ═══════════════════════════════════════════════════════
+// COURSE DATABASE — VIRTUAL (11 programs)
 // ═══════════════════════════════════════════════════════
 const COURSES=[
-{id:142,name:'Advanced Concepts in Regulatory Governance - Online Program',pdfTitle:'Advanced Concepts in Regulatory Governance \u2014 Schedule',hasTopics:true,lastColHeader:'Session Details',
+{id:142,name:'Advanced Concepts in Regulatory Governance - Online Program',pdfTitle:'Advanced Concepts in Regulatory Governance \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the invitations to all live instructor-led sessions, and self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to receive certification of completion.</p>',
 rows:[
 {platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
 {platform:'Zoom',displayName:'Module 1: Instructor-Led Session',isILT:true,title:'Module 1: Striving for Governance Excellence: Leadership and the Public Trust',topicsHtml:'<ul><li>Concepts of Public Interest</li><li>Avoiding Hazards</li><li>Board Members as Leaders</li></ul>'},
 {platform:'Zoom',displayName:'Module 2: Instructor-Led Session',isILT:true,title:'Module 2: Evaluation',topicsHtml:'<ul><li>Define Evaluation</li><li>Evaluation Methods</li><li>Results vs Process Tools</li><li>Considering Impact</li></ul>'},
-{platform:'Zoom',displayName:'Module 3: Instructor-Led Session',isILT:true,title:'Module 3: Public Reporting',topicsHtml:'<ul><li>Overall Purpose</li><li>Important Attributes</li><li>Common Challenges</li><li>Ways of Reporting</li><li>Program Review</li></ul>'}
-]},
-
-{id:128,name:'Canadian NCIT - Basic Online Program',pdfTitle:'Canadian NCIT - Basic Online Program \u2014 Schedule',hasTopics:false,lastColHeader:'Session Name',
+{platform:'Zoom',displayName:'Module 3: Instructor-Led Session',isILT:true,title:'Module 3: Public Reporting',topicsHtml:'<ul><li>Overall Purpose</li><li>Important Attributes</li><li>Common Challenges</li><li>Ways of Reporting</li><li>Program Review</li></ul>'}]},
+{id:128,name:'Canadian NCIT - Basic Online Program',pdfTitle:'Canadian NCIT - Basic Online Program \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and all self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to be eligible to take the final exam and be eligible for CLEAR certification.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Professional Conduct - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Principles of Administrative Law - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Investigative Process - Instructor Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Principles of Evidence - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Evidence Collection, Tagging, and Storage - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Week One Q & A Session with Instructor',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Interviewing Techniques - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Investigator Safety - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Overview of Inspections and Inspection Procedures - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Report Writing - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Program Review & Final Exam Information - Live Session',isILT:true,title:null,topicsHtml:null}
-]},
-
-{id:146,name:'Communications and the Art of Persuasion - Online Program',pdfTitle:'Communications and the Art of Persuasion \u2014 Schedule',hasTopics:false,lastColHeader:'Session Name',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Learning Portal',displayName:'Professional Conduct - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Principles of Administrative Law - Self-Study',isILT:false},{platform:'Zoom',displayName:'Investigative Process - Instructor Led Session',isILT:true},{platform:'Learning Portal',displayName:'Principles of Evidence - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Evidence Collection, Tagging, and Storage - Self-Study',isILT:false},{platform:'Zoom',displayName:'Week One Q & A Session with Instructor',isILT:true},{platform:'Zoom',displayName:'Interviewing Techniques - Instructor-Led Session',isILT:true},{platform:'Learning Portal',displayName:'Investigator Safety - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Overview of Inspections and Inspection Procedures - Self-Study',isILT:false},{platform:'Zoom',displayName:'Report Writing - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Program Review & Final Exam Information - Live Session',isILT:true}]},
+{id:146,name:'Communications and the Art of Persuasion - Online Program',pdfTitle:'Communications and the Art of Persuasion \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
 introHtml:'<p>This program will be delivered virtually. Program information will be emailed to each participant one week before the session. An eBook version of the program manual will be provided, which participants can either print or save to their desktop for easy access and review.</p><p><strong>Completion Requirement:</strong> Participants must attend the live virtual session to receive completion. This session is not recorded, nor will a recording be provided.</p><h3>Event Details:</h3><p>The ability to communicate effectively is a key component of being a successful investigator.</p><p>Effective communication involves conveying your thoughts and positions to others as clearly, concisely, and unambiguously as possible and in turn receiving information that others are providing to you with as little distortion and misunderstanding as possible. Good communication skills can serve to improve operational efficiency and productivity in the workplace and increase the confidence level of employees. On the other hand, poor communication skills may cause message interpretation or misunderstanding and lead to roadblocks in getting desired information.</p><p>This session will introduce participants to key components for effective communication including preparation and delivery techniques, the use of language and physicality to get your point across, listening skills, and the use of presentation aids.</p>',
-rows:[
-{platform:'Zoom',displayName:'Communications and the Art of Persuasion',isILT:true,title:null,topicsHtml:null}
-]},
-
-{id:157,name:'Developing a Professional Attitude: Ethics for the Regulatory Investigator - Online Program',pdfTitle:'Developing a Professional Attitude: Ethics for the Regulatory Investigator \u2014 Schedule',hasTopics:false,lastColHeader:'Session Name',
+rows:[{platform:'Zoom',displayName:'Communications and the Art of Persuasion',isILT:true}]},
+{id:157,name:'Developing a Professional Attitude: Ethics for the Regulatory Investigator - Online Program',pdfTitle:'Developing a Professional Attitude: Ethics for the Regulatory Investigator \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
 introHtml:'<p>This program will be delivered virtually. Program information will be emailed to each participant one week before the session. An eBook version of the program manual will be provided, which participants can either print or save to their desktop for easy access and review.</p><p><strong>Completion Requirement:</strong> Participants must attend the live virtual session to receive completion. This session is not recorded, nor will a recording be provided.</p><h3>Event Details:</h3><p>Investigators are called upon to apply professional judgment to ever-changing factual situations as they perform their duties. These discretionary decisions coupled with the authority possessed by an investigator during the investigatory stage can have very real consequences for all parties involved including the Regulant, the department or agency the investigator represents, and the investigator. There is a need to ensure that the investigator understands the importance of maintaining high ethical standards in carrying out his or her duties including the exercise of professional judgment. This course is designed to provide students with an advanced understanding of guidelines for ethical behavior as a regulatory investigator.</p><p>The course will (i) review models for professional conduct and behavior by examining ethical standards established by statute or governmental policy and professional ethical standards, (ii) explore the concepts of conflict of interests and scope of liability as they relate to public employment in general and the work of the investigator in specific, and (iii) consider practical applications of ethical dilemmas through case studies and scenarios.</p>',
-rows:[
-{platform:'Zoom',displayName:'Developing a Professional Attitude: Ethics for the Regulatory Investigator',isILT:true,title:null,topicsHtml:null}
-]},
-
-{id:169,name:'Drug Diversion Investigations',pdfTitle:'Drug Diversion Investigations \u2014 Schedule',hasTopics:true,lastColHeader:'Session Details',
+rows:[{platform:'Zoom',displayName:'Developing a Professional Attitude: Ethics for the Regulatory Investigator',isILT:true}]},
+{id:169,name:'Drug Diversion Investigations',pdfTitle:'Drug Diversion Investigations \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All coursework must be completed by the end of the program to receive the certificate of completion.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Session One',isILT:true,title:'Session One',topicsHtml:'<ul><li>Defining drug diversion investigations</li><li>Accountability systems</li><li>Detection and Prevention</li></ul>'},
-{platform:'Zoom',displayName:'Session Two',isILT:true,title:'Session Two',topicsHtml:'<ul><li>Facility investigations</li><li>Investigative tools</li><li>Completing an investigation</li></ul>'}
-]},
-
-{id:138,name:'Executive Leadership Program for Regulators (Online Training)',pdfTitle:'Executive Leadership Program for Regulators \u2014 Schedule',hasTopics:true,lastColHeader:'Session Details',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Zoom',displayName:'Session One',isILT:true,title:'Session One',topicsHtml:'<ul><li>Defining drug diversion investigations</li><li>Accountability systems</li><li>Detection and Prevention</li></ul>'},{platform:'Zoom',displayName:'Session Two',isILT:true,title:'Session Two',topicsHtml:'<ul><li>Facility investigations</li><li>Investigative tools</li><li>Completing an investigation</li></ul>'}]},
+{id:138,name:'Executive Leadership Program for Regulators (Online Training)',pdfTitle:'Executive Leadership Program for Regulators \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. Each module consists of self-paced content and an instructor-led live session. It is suggested that self-paced content be completed prior to the associated live session.</p><p>This program begins with a pre-work component to be completed on the <strong>CLEAR Learning Education Platform</strong>.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to receive certification of completion.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Module 1: Instructor-Led Session',isILT:true,title:'Module 1: Regulatory Leadership',topicsHtml:'<ul><li>Leadership and Emotional Intelligence</li><li>Situational Leadership</li><li>Leading with Authority</li><li>Problematic Leadership Practices</li><li>Characteristics of Regulatory Leadership</li></ul>'},
-{platform:'Zoom',displayName:'Module 2: Instructor-Led Session',isILT:true,title:'Module 2: Organizational Culture and Change',topicsHtml:'<ul><li>Organizational Structure</li><li>Organizational Culture</li><li>Leading Organizational Change</li><li>Organizational Effectiveness</li></ul>'},
-{platform:'Zoom',displayName:'Module 3: Instructor-Led Session',isILT:true,title:'Module 3: Creating a Positive Regulatory Reputation through Public Outreach and Relations',topicsHtml:'<ul><li>Overarching Considerations</li><li>Transparency and its Link to Trust</li><li>Strategies for Meaningful Management</li><li>Media Relations</li><li>Effective Crisis Communication</li></ul>'},
-{platform:'Zoom',displayName:'Module 4: Instructor-Led Session',isILT:true,title:'Module 4: Creating an Appropriate Relationship with Stakeholders and the Art of Negotiation',topicsHtml:'<ul><li>Create an Appropriate Relationship with Stakeholders</li><li>Appropriate Roles and Relationships between Staff and Board Members</li><li>The Art of Negotiation</li></ul>'}
-]},
-
-{id:165,name:'Getting the Most From Your Board',pdfTitle:'Getting the Most From Your Board \u2014 Schedule',hasTopics:false,lastColHeader:'Session Name',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Zoom',displayName:'Module 1: Instructor-Led Session',isILT:true,title:'Module 1: Regulatory Leadership',topicsHtml:'<ul><li>Leadership and Emotional Intelligence</li><li>Situational Leadership</li><li>Leading with Authority</li><li>Problematic Leadership Practices</li><li>Characteristics of Regulatory Leadership</li></ul>'},{platform:'Zoom',displayName:'Module 2: Instructor-Led Session',isILT:true,title:'Module 2: Organizational Culture and Change',topicsHtml:'<ul><li>Organizational Structure</li><li>Organizational Culture</li><li>Leading Organizational Change</li><li>Organizational Effectiveness</li></ul>'},{platform:'Zoom',displayName:'Module 3: Instructor-Led Session',isILT:true,title:'Module 3: Creating a Positive Regulatory Reputation through Public Outreach and Relations',topicsHtml:'<ul><li>Overarching Considerations</li><li>Transparency and its Link to Trust</li><li>Strategies for Meaningful Management</li><li>Media Relations</li><li>Effective Crisis Communication</li></ul>'},{platform:'Zoom',displayName:'Module 4: Instructor-Led Session',isILT:true,title:'Module 4: Creating an Appropriate Relationship with Stakeholders and the Art of Negotiation',topicsHtml:'<ul><li>Create an Appropriate Relationship with Stakeholders</li><li>Appropriate Roles and Relationships between Staff and Board Members</li><li>The Art of Negotiation</li></ul>'}]},
+{id:165,name:'Getting the Most From Your Board',pdfTitle:'Getting the Most From Your Board \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
 introHtml:'<p>This program will be delivered virtually. Program information will be emailed to each participant one week before the session. An eBook version of the program manual will be provided, which participants can either print or save to their desktop for easy access and review.</p><p><strong>Completion Requirement:</strong> Participants must attend the live virtual sessions to receive completion. Sessions will be recorded and made available to attendees who are unable to attend a live session; however, we ask that all attendees make every effort to attend the live sessions so that they receive the most value from the program.</p><p><strong>Note:</strong> Recordings are only made available to those registered for this specific event and are deleted once the event is complete.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Roles of a Board Chair',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Running Effective Board Meetings',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Challenges',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Staff Interactions',isILT:true,title:null,topicsHtml:null}
-]},
-
-{id:143,name:'Investigating Reports of Sexual Misconduct - Online Program',pdfTitle:'Investigating Reports of Sexual Misconduct \u2014 Schedule',hasTopics:true,lastColHeader:'Session Details',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Zoom',displayName:'Roles of a Board Chair',isILT:true},{platform:'Zoom',displayName:'Running Effective Board Meetings',isILT:true},{platform:'Zoom',displayName:'Challenges',isILT:true},{platform:'Zoom',displayName:'Staff Interactions',isILT:true}]},
+{id:143,name:'Investigating Reports of Sexual Misconduct - Online Program',pdfTitle:'Investigating Reports of Sexual Misconduct \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-paced content be completed prior to the first live workshop.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules must be completed to receive certification of completion.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Workshop One',isILT:true,title:'Workshop Session One',topicsHtml:'<ul><li>Defining sexual misconduct</li><li>Types, trends and statistics regarding sexual misconduct</li><li>Interviewing persons of interest</li></ul>'},
-{platform:'Zoom',displayName:'Workshop Two',isILT:true,title:'Workshop Session Two',topicsHtml:'<ul><li>Types of evidence</li><li>Vicarious trauma and investigator self-care</li><li>Interviewing complainants and witnesses</li></ul>'}
-]},
-
-{id:126,name:'NCIT - Basic Online Program',pdfTitle:'NCIT - Basic Online Program \u2014 Schedule',hasTopics:false,lastColHeader:'Session Name',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Zoom',displayName:'Workshop One',isILT:true,title:'Workshop Session One',topicsHtml:'<ul><li>Defining sexual misconduct</li><li>Types, trends and statistics regarding sexual misconduct</li><li>Interviewing persons of interest</li></ul>'},{platform:'Zoom',displayName:'Workshop Two',isILT:true,title:'Workshop Session Two',topicsHtml:'<ul><li>Types of evidence</li><li>Vicarious trauma and investigator self-care</li><li>Interviewing complainants and witnesses</li></ul>'}]},
+{id:126,name:'NCIT - Basic Online Program',pdfTitle:'NCIT - Basic Online Program \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and all self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to be eligible to take the final exam and be eligible for <strong>CLEAR certification</strong>.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Professional Conduct - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Principles of Administrative Law - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Investigative Process - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Principles of Evidence - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Evidence Collection, Tagging, and Storage - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Week One Q & A - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Interviewing Techniques - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Investigator Safety - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Overview of Inspections and Inspection Procedures - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Report Writing - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Program Review & Exam Information - Instructor-Led Session',isILT:true,title:null,topicsHtml:null}
-]},
-
-{id:129,name:'NCIT - Specialized Online Program',pdfTitle:'NCIT - Specialized Online Program \u2014 Schedule',hasTopics:false,lastColHeader:'Session Name',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Learning Portal',displayName:'Professional Conduct - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Principles of Administrative Law - Self-Study',isILT:false},{platform:'Zoom',displayName:'Investigative Process - Instructor-Led Session',isILT:true},{platform:'Learning Portal',displayName:'Principles of Evidence - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Evidence Collection, Tagging, and Storage - Self-Study',isILT:false},{platform:'Zoom',displayName:'Week One Q & A - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Interviewing Techniques - Instructor-Led Session',isILT:true},{platform:'Learning Portal',displayName:'Investigator Safety - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Overview of Inspections and Inspection Procedures - Self-Study',isILT:false},{platform:'Zoom',displayName:'Report Writing - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Program Review & Exam Information - Instructor-Led Session',isILT:true}]},
+{id:129,name:'NCIT - Specialized Online Program',pdfTitle:'NCIT - Specialized Online Program \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and all self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to be eligible to take the final exam.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Advanced Interviewing Skills - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Live Session - Cognitive Memory Recall Technique (CMRT)',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Live Session - Behavioral Analysis & Questioning',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Advanced Investigative Analysis - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Live Session - Module Review',isILT:true,title:null,topicsHtml:null},
-{platform:'Learning Portal',displayName:'Investigative Report Development - Self-Study',isILT:false,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Live Session - Observation Skills',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Live Session - Module Review',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Live Session - Program Review & Test Prep',isILT:true,title:null,topicsHtml:null}
-]},
-
-{id:147,name:'Skills for the Regulatory Administrator: Staffing a Board',pdfTitle:'Skills for the Regulatory Administrator: Staffing a Board \u2014 Schedule',hasTopics:true,lastColHeader:'Session Details',
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Learning Portal',displayName:'Advanced Interviewing Skills - Self-Study',isILT:false},{platform:'Zoom',displayName:'Live Session - Cognitive Memory Recall Technique (CMRT)',isILT:true},{platform:'Zoom',displayName:'Live Session - Behavioral Analysis & Questioning',isILT:true},{platform:'Learning Portal',displayName:'Advanced Investigative Analysis - Self-Study',isILT:false},{platform:'Zoom',displayName:'Live Session - Module Review',isILT:true},{platform:'Learning Portal',displayName:'Investigative Report Development - Self-Study',isILT:false},{platform:'Zoom',displayName:'Live Session - Observation Skills',isILT:true},{platform:'Zoom',displayName:'Live Session - Module Review',isILT:true},{platform:'Zoom',displayName:'Live Session - Program Review & Test Prep',isILT:true}]},
+{id:147,name:'Skills for the Regulatory Administrator: Staffing a Board',pdfTitle:'Skills for the Regulatory Administrator: Staffing a Board \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
 introHtml:'<p>This schedule contains live instructor-led sessions with required attendance at the date and time specified below. With the exception of the Welcome &amp; Introduction, links to all live sessions will be provided on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live sessions, or the make-up recording must be completed to be eligible to receive certification of completion.</p>',
-rows:[
-{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true,title:null,topicsHtml:null},
-{platform:'Zoom',displayName:'Module 1 Live Session Link',isILT:true,title:'Module 1: Characteristics of Regulatory Governance',topicsHtml:'<ul><li>Overview of Professional Regulation</li><li>Operations vs Policy</li><li>Understanding the Culture of Your Board</li><li>Importance of Transparency</li><li>Highlights of Global Trends in Regulation</li></ul>'},
-{platform:'Zoom',displayName:'Module 2 Live Session Link',isILT:true,title:'Module 2: Organizational Culture and Change',topicsHtml:'<ul><li>Adopting a Strategic Mindset</li><li>Building and Maintaining Relationships</li><li>Leading Collaboratively</li><li>Understanding Transparency</li><li>Establishing and Assessing Performance and Policy Outcomes</li></ul>'},
-{platform:'Zoom',displayName:'Module 3 Live Session Link',isILT:true,title:'Module 3: Creating a Positive Regulatory Reputation through Public Outreach and Relations',topicsHtml:'<ul><li>Preparing Board Materials</li><li>Presentation Skills</li><li>Using Data Effectively to Support Decision Making</li><li>When Staff or Board Members Step Outside Their Roles</li></ul>'}
-]}
+rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Zoom',displayName:'Module 1 Live Session Link',isILT:true,title:'Module 1: Characteristics of Regulatory Governance',topicsHtml:'<ul><li>Overview of Professional Regulation</li><li>Operations vs Policy</li><li>Understanding the Culture of Your Board</li><li>Importance of Transparency</li><li>Highlights of Global Trends in Regulation</li></ul>'},{platform:'Zoom',displayName:'Module 2 Live Session Link',isILT:true,title:'Module 2: Organizational Culture and Change',topicsHtml:'<ul><li>Adopting a Strategic Mindset</li><li>Building and Maintaining Relationships</li><li>Leading Collaboratively</li><li>Understanding Transparency</li><li>Establishing and Assessing Performance and Policy Outcomes</li></ul>'},{platform:'Zoom',displayName:'Module 3 Live Session Link',isILT:true,title:'Module 3: Creating a Positive Regulatory Reputation through Public Outreach and Relations',topicsHtml:'<ul><li>Preparing Board Materials</li><li>Presentation Skills</li><li>Using Data Effectively to Support Decision Making</li><li>When Staff or Board Members Step Outside Their Roles</li></ul>'}]},
+
+// ═══════════════════════════════════════════════════════
+// IN-PERSON PROGRAMS (4 programs)
+// ═══════════════════════════════════════════════════════
+{id:'ip-ncit-b-us',name:'NCIT Basic Program - In-Person (US)',pdfTitle:'National Certified Investigator & Inspector Training \u2014 Basic Program',
+isInPerson:true,numDays:3,defaultStart:'08:00',hasExam:true,dayStartNote:'Programming begins at 8:00 AM each day',lastColHeader:'Topic',
+introHtml:'<p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p><p>Schedule is subject to change.</p>',
+days:[
+{day:1,label:'Day One',sessions:[
+{start:'07:30',end:'08:00',topic:'Registration',isBreak:false},{start:'08:00',end:'08:30',topic:'Introduction',isBreak:false},
+{start:'08:30',end:'10:00',topic:'Module 1: Professional Conduct',isBreak:false},{start:'10:00',end:'10:15',topic:'Break',isBreak:true},
+{start:'10:15',end:'12:15',topic:'Module 2: Principles of Administrative Law',isBreak:false},{start:'12:15',end:'13:30',topic:'Lunch',isBreak:true},
+{start:'13:30',end:'15:15',topic:'Module 3: Investigative Process',isBreak:false},{start:'15:15',end:'15:30',topic:'Break',isBreak:true},
+{start:'15:30',end:'17:30',topic:'Module 3: Investigative Process (continued)',isBreak:false}]},
+{day:2,label:'Day Two',sessions:[
+{start:'08:00',end:'10:00',topic:'Module 4: Principles of Evidence',isBreak:false},{start:'10:00',end:'10:15',topic:'Break',isBreak:true},
+{start:'10:15',end:'12:15',topic:'Module 5: Evidence Collection, Tagging, and Storage',isBreak:false},{start:'12:15',end:'13:15',topic:'Lunch',isBreak:true},
+{start:'13:15',end:'15:15',topic:'Module 6: Interviewing Techniques',isBreak:false},{start:'15:15',end:'15:30',topic:'Break',isBreak:true},
+{start:'15:30',end:'16:30',topic:'Module 6: Interviewing Techniques (continued)',isBreak:false},{start:'16:30',end:'17:15',topic:'Module 7: Investigator Safety',isBreak:false}]},
+{day:3,label:'Day Three',sessions:[
+{start:'08:00',end:'09:00',topic:'Module 8: Overview of Inspections and Inspection Procedures',isBreak:false},{start:'09:00',end:'10:00',topic:'Module 9: Report Writing',isBreak:false},
+{start:'10:00',end:'10:15',topic:'Break',isBreak:true},{start:'10:15',end:'12:15',topic:'Module 9: Report Writing (continued)',isBreak:false},
+{start:'12:15',end:'13:15',topic:'Lunch',isBreak:true},{start:'13:15',end:'15:15',topic:'Module 10: Testifying in Administrative and Criminal Proceedings',isBreak:false},
+{start:'15:15',end:'15:30',topic:'Break',isBreak:true},{start:'15:30',end:'16:30',topic:'Question & Answer Session/Review',isBreak:false},{start:'16:30',end:'17:30',topic:'Final Examination',isBreak:false}]}]},
+{id:'ip-ncit-b-can',name:'Canadian NCIT Basic Program - In-Person',pdfTitle:'National Certified Investigator & Inspector Training \u2014 Canadian Basic Program',
+isInPerson:true,numDays:3,defaultStart:'08:00',hasExam:true,dayStartNote:'Programming begins at 8:00 AM each day',lastColHeader:'Topic',
+introHtml:'<p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p><p>Schedule is subject to change.</p>',
+days:[
+{day:1,label:'Day One',sessions:[
+{start:'07:30',end:'08:00',topic:'Registration',isBreak:false},{start:'08:00',end:'08:30',topic:'Introduction',isBreak:false},
+{start:'08:30',end:'10:00',topic:'Module 1: Professional Conduct',isBreak:false},{start:'10:00',end:'10:15',topic:'Break',isBreak:true},
+{start:'10:15',end:'12:15',topic:'Module 2: Principles of Administrative Law',isBreak:false},{start:'12:15',end:'13:30',topic:'Lunch',isBreak:true},
+{start:'13:30',end:'15:15',topic:'Module 3: Investigative Process',isBreak:false},{start:'15:15',end:'15:30',topic:'Break',isBreak:true},
+{start:'15:30',end:'17:30',topic:'Module 3: Investigative Process (continued)',isBreak:false}]},
+{day:2,label:'Day Two',sessions:[
+{start:'08:00',end:'10:00',topic:'Module 4: Principles of Evidence',isBreak:false},{start:'10:00',end:'10:15',topic:'Break',isBreak:true},
+{start:'10:15',end:'12:15',topic:'Module 5: Evidence Collection, Tagging, and Storage',isBreak:false},{start:'12:15',end:'13:15',topic:'Lunch',isBreak:true},
+{start:'13:15',end:'15:15',topic:'Module 6: Interviewing Techniques',isBreak:false},{start:'15:15',end:'15:30',topic:'Break',isBreak:true},
+{start:'15:30',end:'16:30',topic:'Module 6: Interviewing Techniques (continued)',isBreak:false},{start:'16:30',end:'17:15',topic:'Module 7: Investigator Safety',isBreak:false}]},
+{day:3,label:'Day Three',sessions:[
+{start:'08:00',end:'09:00',topic:'Module 8: Overview of Inspections and Inspection Procedures',isBreak:false},{start:'09:00',end:'10:00',topic:'Module 9: Report Writing',isBreak:false},
+{start:'10:00',end:'10:15',topic:'Break',isBreak:true},{start:'10:15',end:'12:15',topic:'Module 9: Report Writing (continued)',isBreak:false},
+{start:'12:15',end:'13:15',topic:'Lunch',isBreak:true},{start:'13:15',end:'15:15',topic:'Module 10: Testifying in Administrative and Criminal Proceedings',isBreak:false},
+{start:'15:15',end:'15:30',topic:'Break',isBreak:true},{start:'15:30',end:'16:30',topic:'Question & Answer Session/Review',isBreak:false},{start:'16:30',end:'17:30',topic:'Final Examination',isBreak:false}]}]},
+{id:'ip-ncit-s',name:'NCIT Specialized Program - In-Person',pdfTitle:'National Certified Investigator & Inspector Training \u2014 Specialized Program',
+isInPerson:true,numDays:3,defaultStart:'09:00',hasExam:true,dayStartNote:'Programming begins at 9:00 AM each day',lastColHeader:'Topic',
+introHtml:'<p>Schedule is subject to change.</p>',
+days:[
+{day:1,label:'Day One',sessions:[
+{start:'08:30',end:'09:00',topic:'Registration',isBreak:false},{start:'09:00',end:'09:10',topic:'Program Introduction',isBreak:false},
+{start:'09:10',end:'10:30',topic:'Module 1: Advanced Interviewing Techniques',isBreak:false},{start:'10:30',end:'10:45',topic:'Break',isBreak:true},
+{start:'10:45',end:'13:00',topic:'Module 1: Advanced Interviewing Techniques (continued)',isBreak:false},{start:'13:00',end:'14:00',topic:'Lunch',isBreak:true},
+{start:'14:00',end:'16:00',topic:'Module 1: Advanced Interviewing Techniques (continued)',isBreak:false},{start:'16:00',end:'16:15',topic:'Break',isBreak:true},
+{start:'16:15',end:'17:00',topic:'Module 1: Advanced Interviewing Techniques (continued)',isBreak:false}]},
+{day:2,label:'Day Two',sessions:[
+{start:'09:00',end:'10:15',topic:'Module 1: Advanced Interviewing Techniques (continued)',isBreak:false},{start:'10:15',end:'10:30',topic:'Break',isBreak:true},
+{start:'10:30',end:'12:30',topic:'Module 2: Advanced Investigative Analysis',isBreak:false},{start:'12:30',end:'13:30',topic:'Lunch',isBreak:true},
+{start:'13:30',end:'15:15',topic:'Module 2: Advanced Investigative Analysis (continued)',isBreak:false},{start:'15:15',end:'15:30',topic:'Break',isBreak:true},
+{start:'15:30',end:'17:00',topic:'Module 3: Investigative Report Development',isBreak:false}]},
+{day:3,label:'Day Three',sessions:[
+{start:'09:00',end:'10:45',topic:'Module 3: Investigative Report Development (continued)',isBreak:false},{start:'10:45',end:'11:00',topic:'Break',isBreak:true},
+{start:'11:00',end:'12:00',topic:'Module 3: Investigative Report Development (continued)',isBreak:false},{start:'12:00',end:'13:00',topic:'Lunch',isBreak:true},
+{start:'13:00',end:'15:15',topic:'Program Review / Final Exam',isBreak:false}]}]},
+{id:'ip-ncit-ait',name:'NCIT Applied Investigative Techniques - In-Person',pdfTitle:'NCIT Applied Investigative Techniques \u2014 Program Agenda',
+isInPerson:true,numDays:2,defaultStart:'08:30',hasExam:false,dayStartNote:'',lastColHeader:'Topic',
+introHtml:'',
+days:[
+{day:1,label:'Day One',sessions:[
+{start:'08:30',end:'09:00',topic:'Welcome & Introductions',isBreak:false},{start:'09:00',end:'09:15',topic:'Program Overview',isBreak:false},
+{start:'09:15',end:'10:15',topic:'Complaint Intake & Analysis',isBreak:false},{start:'10:15',end:'10:30',topic:'Break',isBreak:true},
+{start:'10:30',end:'10:55',topic:'Complaint Intake & Analysis (continued)',isBreak:false},{start:'10:55',end:'12:30',topic:'Investigative Planning',isBreak:false},
+{start:'12:30',end:'13:30',topic:'Lunch',isBreak:true},{start:'13:30',end:'15:00',topic:'Gathering Evidence',isBreak:false},
+{start:'15:00',end:'15:15',topic:'Break',isBreak:true},{start:'15:15',end:'16:30',topic:'Interviewing',isBreak:false}]},
+{day:2,label:'Day Two',sessions:[
+{start:'08:30',end:'08:40',topic:'Welcome Back & Warm Up Activity',isBreak:false},{start:'08:40',end:'10:00',topic:'Interviewing (continued)',isBreak:false},
+{start:'10:00',end:'10:15',topic:'Break',isBreak:true},{start:'10:15',end:'11:30',topic:'Interviewing (continued)',isBreak:false},
+{start:'11:30',end:'12:30',topic:'Lunch',isBreak:true},{start:'12:30',end:'14:00',topic:'Investigative Reports',isBreak:false},
+{start:'14:00',end:'14:15',topic:'Break',isBreak:true},{start:'14:15',end:'14:45',topic:'Testifying',isBreak:false},
+{start:'14:45',end:'14:50',topic:'Break',isBreak:true},{start:'14:50',end:'16:15',topic:'Testifying (continued)',isBreak:false},
+{start:'16:15',end:'16:30',topic:'Program Review',isBreak:false}]}]}
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -342,7 +348,11 @@ let selectedCourse=null, rows=[], _rowId=0;
 // INIT
 // ═══════════════════════════════════════════════════════
 (function(){
-  setupSearchSelect('courseInput','courseDropdown','courseValue',COURSES.map(c=>({value:String(c.id),label:c.name})),onCourseSelect);
+  const items=COURSES.map(c=>{
+    const tag=c.isInPerson?'<span class="tag tag-inperson">In-Person</span>':'<span class="tag tag-virtual">Virtual</span>';
+    return {value:String(c.id),label:c.name,html:esc(c.name)+' '+tag};
+  });
+  setupSearchSelect('courseInput','courseDropdown','courseValue',items,onCourseSelect);
   document.getElementById('courseCount').textContent=COURSES.length+' programs available';
   const u=localStorage.getItem('clear_worker_url'),t=localStorage.getItem('clear_auth_token');
   if(u)document.getElementById('workerUrl').value=u;
@@ -362,15 +372,39 @@ async function doConnect(){
 function setConn(s,t){const el=document.getElementById('connectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':s==='idle'?'gray':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
 
 // ═══════════════════════════════════════════════════════
-// SEARCHABLE DROPDOWN
+// SEARCHABLE DROPDOWN (with HTML tags)
 // ═══════════════════════════════════════════════════════
 function setupSearchSelect(iId,dId,hId,items,onSel){
   const inp=document.getElementById(iId),dd=document.getElementById(dId),hid=document.getElementById(hId);
-  function render(f){const fl=f?items.filter(x=>x.label.toLowerCase().includes(f.toLowerCase())):items;if(!fl.length){dd.innerHTML='<div class="no-match">No matches</div>';}else{dd.innerHTML=fl.map(x=>'<div class="opt" data-val="'+x.value+'">'+esc(x.label)+'</div>').join('');dd.querySelectorAll('.opt').forEach(o=>{o.addEventListener('mousedown',e=>{e.preventDefault();inp.value=o.textContent;hid.value=o.dataset.val;dd.classList.remove('open');if(onSel)onSel(o.dataset.val,o.textContent);});});}}
-  inp.addEventListener('focus',()=>{render(inp.value);dd.classList.add('open');});
+  function render(f){
+    const fl=f?items.filter(x=>x.label.toLowerCase().includes(f.toLowerCase())):items;
+    if(!fl.length){dd.innerHTML='<div class="no-match">No matches</div>';}
+    else{dd.innerHTML=fl.map(x=>'<div class="opt" data-val="'+x.value+'">'+x.html+'</div>').join('');
+    dd.querySelectorAll('.opt').forEach(o=>{o.addEventListener('mousedown',e=>{e.preventDefault();inp.value=items.find(i=>i.value===o.dataset.val).label;hid.value=o.dataset.val;dd.classList.remove('open');if(onSel)onSel(o.dataset.val);});});}
+  }
+  inp.addEventListener('focus',()=>{render('');dd.classList.add('open');});
   inp.addEventListener('input',()=>{hid.value='';render(inp.value);dd.classList.add('open');});
   inp.addEventListener('blur',()=>{setTimeout(()=>dd.classList.remove('open'),150);});
   render('');
+}
+
+// ═══════════════════════════════════════════════════════
+// INSTRUCTOR DROPDOWN BUILDER
+// ═══════════════════════════════════════════════════════
+function instOptions(selected){
+  let h='<option value="">\u2014 Select \u2014</option><option value="CLEAR Staff"'+(selected==='CLEAR Staff'?' selected':'')+'>CLEAR Staff</option>';
+  INSTRUCTORS.forEach(n=>{h+='<option value="'+esc(n)+'"'+(selected===n?' selected':'')+'>'+esc(n)+'</option>';});
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════
+// TIME OFFSET HELPER
+// ═══════════════════════════════════════════════════════
+function timeToMin(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function minToTime(m){const h=Math.floor(m/60),mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+function offsetTime(origTime,defaultStart,newStart){
+  const offset=timeToMin(newStart)-timeToMin(defaultStart);
+  return minToTime(timeToMin(origTime)+offset);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -380,28 +414,94 @@ function onCourseSelect(cId){
   selectedCourse=COURSES.find(c=>String(c.id)===cId);if(!selectedCourse)return;
   document.getElementById('programTitle').value=selectedCourse.pdfTitle;
   document.getElementById('introText').value=selectedCourse.introHtml;
-  rows=selectedCourse.rows.map(r=>({id:++_rowId,displayName:r.displayName,isILT:r.isILT,platform:r.platform,title:r.title||null,topicsHtml:r.topicsHtml||null,date:'',startTime:'',endTime:'',selected:false}));
+  const ipF=document.getElementById('ipFields');
+  if(selectedCourse.isInPerson){
+    ipF.classList.remove('hidden');
+    document.getElementById('ipStartTime').value=selectedCourse.defaultStart;
+    document.getElementById('scheduleHint').innerHTML='In-person program \u2014 set Day 1 date and start time above, then assign instructors per session below.';
+    document.getElementById('btnAddRow').style.display='none';
+    buildInPersonRows();
+  } else {
+    ipF.classList.add('hidden');
+    document.getElementById('scheduleHint').innerHTML='<strong style="color:var(--gray);">Zoom sessions</strong> require date, start/end times, and an instructor assignment. Self-paced rows have no date/time/instructor.';
+    document.getElementById('btnAddRow').style.display='';
+    rows=selectedCourse.rows.map(r=>({id:++_rowId,displayName:r.displayName,isILT:r.isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:'',startTime:'',endTime:'',instructor:'',selected:false,isDayHeader:false}));
+  }
   renderTable();
   document.getElementById('scheduleEmpty').style.display='none';
   document.getElementById('scheduleTableWrap').classList.remove('hidden');
   updateIltCount();
-  const cs=document.getElementById('courseStatus'),iN=rows.filter(r=>r.isILT).length,pN=rows.filter(r=>!r.isILT).length;
-  cs.className='status-bar success';cs.textContent='\u2713 Loaded '+rows.length+' sessions ('+iN+' Zoom, '+pN+' self-paced)';cs.style.display='block';
+  const cs=document.getElementById('courseStatus');
+  cs.className='status-bar success';
+  cs.textContent=selectedCourse.isInPerson?'\u2713 Loaded in-person program ('+selectedCourse.numDays+'-day schedule)':'\u2713 Loaded '+rows.length+' sessions ('+rows.filter(r=>r.isILT).length+' Zoom, '+rows.filter(r=>!r.isILT).length+' self-paced)';
+  cs.style.display='block';
 }
 
 // ═══════════════════════════════════════════════════════
-// TABLE
+// IN-PERSON: Build rows with time offset
+// ═══════════════════════════════════════════════════════
+function buildInPersonRows(){
+  // Preserve existing instructor assignments
+  const prevInst={};rows.forEach(r=>{if(r.displayName&&r.instructor)prevInst[r.displayName]=r.instructor;});
+  rows=[];
+  const startDate=document.getElementById('ipStartDate').value;
+  const newStart=document.getElementById('ipStartTime').value;
+  const defStart=selectedCourse.defaultStart;
+  selectedCourse.days.forEach((day,di)=>{
+    let dateStr='';
+    if(startDate){const d=new Date(startDate+'T12:00:00');d.setDate(d.getDate()+di);dateStr=d.toISOString().split('T')[0];}
+    const dateLabel=dateStr?fmtDate(dateStr):'[Set start date]';
+    rows.push({id:++_rowId,isDayHeader:true,dayLabel:day.label,dateLabel:dateLabel,dateStr:dateStr});
+    day.sessions.forEach(s=>{
+      const adjStart=offsetTime(s.start,defStart,newStart);
+      const adjEnd=offsetTime(s.end,defStart,newStart);
+      rows.push({id:++_rowId,isDayHeader:false,isILT:true,platform:'In-Person',displayName:s.topic,
+        startTime:adjStart,endTime:adjEnd,date:dateStr,isBreak:s.isBreak||false,
+        title:null,topicsHtml:null,instructor:prevInst[s.topic]||'',selected:false});
+    });
+  });
+}
+
+function onIpSettingChange(){
+  if(!selectedCourse||!selectedCourse.isInPerson)return;
+  buildInPersonRows();renderTable();
+}
+
+// ═══════════════════════════════════════════════════════
+// TABLE RENDERING
 // ═══════════════════════════════════════════════════════
 function renderTable(){
   const tz=document.getElementById('timezone').value,tb=document.getElementById('agendaBody');tb.innerHTML='';
+  const isIP=selectedCourse&&selectedCourse.isInPerson;
+  const thead=document.getElementById('agendaThead');
+  if(isIP){
+    thead.innerHTML='<tr><th>Start</th><th></th><th>End</th><th style="min-width:160px;">Instructor</th><th>'+esc(selectedCourse.lastColHeader)+'</th></tr>';
+  } else {
+    thead.innerHTML='<tr><th class="col-check"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="Select all"></th><th style="min-width:148px;">Date</th><th style="min-width:120px;">Start</th><th style="min-width:120px;">End</th><th style="min-width:140px;">Platform</th><th style="min-width:160px;">Instructor</th><th>'+(selectedCourse?esc(selectedCourse.lastColHeader):'Session Name')+'</th><th style="width:32px;"></th></tr>';
+  }
   rows.forEach((row,i)=>{
-    const tr=document.createElement('tr');tr.className=(row.isILT?'row-ilt':'row-portal')+(row.selected?' row-selected':'');
-    const ck='<td class="col-check"><input type="checkbox" '+(row.selected?'checked':'')+' onchange="toggleRow('+i+',this.checked)"></td>';
-    const dl='<td style="padding:4px 8px;"><button onclick="removeRow('+i+')" title="Remove" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:18px;line-height:1;padding:2px 4px;" onmouseenter="this.style.color=\'var(--fail-red)\'" onmouseleave="this.style.color=\'#bbb\'">\u00d7</button></td>';
-    const nm='<td><input type="text" class="tbl-input" value="'+esc(row.displayName)+'" onchange="upd('+i+',\'displayName\',this.value)"></td>';
-    const pl='<td><select class="tbl-select" onchange="updPlatform('+i+',this.value)"><option value="Zoom"'+(row.platform==='Zoom'?' selected':'')+'>Zoom</option><option value="Learning Portal"'+(row.platform==='Learning Portal'?' selected':'')+'>Learning Portal</option><option value="Teams"'+(row.platform==='Teams'?' selected':'')+'>Teams</option><option value="Other"'+(row.platform==='Other'?' selected':'')+'>Other</option></select></td>';
-    if(row.isILT){tr.innerHTML=ck+'<td><input type="date" class="tbl-input" value="'+row.date+'" onchange="upd('+i+',\'date\',this.value)"></td><td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.startTime||'')+'" onchange="upd('+i+',\'startTime\',this.value)"><span class="tz-tag">'+tz+'</span></div></td><td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.endTime||'')+'" onchange="upd('+i+',\'endTime\',this.value)"><span class="tz-tag">'+tz+'</span></div></td>'+pl+nm+dl;}
-    else{tr.innerHTML=ck+'<td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td>'+pl+nm+dl;}
+    const tr=document.createElement('tr');
+    if(row.isDayHeader){
+      tr.className='row-day-header';
+      const cs=isIP?5:8;
+      tr.innerHTML='<td colspan="'+cs+'" style="background:var(--burgundy);color:var(--white);font-weight:700;font-size:13px;padding:10px 12px;">'+esc(row.dayLabel)+' \u2014 '+esc(row.dateLabel)+'</td>';
+      tb.appendChild(tr);return;
+    }
+    if(isIP){
+      tr.className='row-ilt';
+      const startD=fmtTime(row.startTime);const endD=fmtTime(row.endTime);
+      const instCell=row.isBreak?'<td></td>':'<td><select class="tbl-select" style="min-width:160px;" onchange="upd('+i+',\'instructor\',this.value)">'+instOptions(row.instructor)+'</select></td>';
+      tr.innerHTML='<td style="white-space:nowrap;">'+esc(startD)+'</td><td style="text-align:center;color:#bbb;">\u2013</td><td style="white-space:nowrap;">'+esc(endD)+'</td>'+instCell+'<td>'+esc(row.displayName)+'</td>';
+    } else {
+      tr.className=(row.isILT?'row-ilt':'row-portal')+(row.selected?' row-selected':'');
+      const ck='<td class="col-check"><input type="checkbox" '+(row.selected?'checked':'')+' onchange="toggleRow('+i+',this.checked)"></td>';
+      const dl='<td style="padding:4px 8px;"><button onclick="removeRow('+i+')" title="Remove" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:18px;line-height:1;padding:2px 4px;" onmouseenter="this.style.color=\'var(--fail-red)\'" onmouseleave="this.style.color=\'#bbb\'">\u00d7</button></td>';
+      const nm='<td><input type="text" class="tbl-input" value="'+esc(row.displayName)+'" onchange="upd('+i+',\'displayName\',this.value)"></td>';
+      const pl='<td><select class="tbl-select" onchange="updPlatform('+i+',this.value)"><option value="Zoom"'+(row.platform==='Zoom'?' selected':'')+'>Zoom</option><option value="Learning Portal"'+(row.platform==='Learning Portal'?' selected':'')+'>Learning Portal</option><option value="Teams"'+(row.platform==='Teams'?' selected':'')+'>Teams</option><option value="Other"'+(row.platform==='Other'?' selected':'')+'>Other</option></select></td>';
+      const inst=row.isILT?'<td><select class="tbl-select" style="min-width:160px;" onchange="upd('+i+',\'instructor\',this.value)">'+instOptions(row.instructor)+'</select></td>':'<td><span class="cell-muted">\u2014</span></td>';
+      if(row.isILT){tr.innerHTML=ck+'<td><input type="date" class="tbl-input" value="'+row.date+'" onchange="upd('+i+',\'date\',this.value)"></td><td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.startTime||'')+'" onchange="upd('+i+',\'startTime\',this.value)"><span class="tz-tag">'+tz+'</span></div></td><td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.endTime||'')+'" onchange="upd('+i+',\'endTime\',this.value)"><span class="tz-tag">'+tz+'</span></div></td>'+pl+inst+nm+dl;}
+      else{tr.innerHTML=ck+'<td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td>'+pl+inst+nm+dl;}
+    }
     tb.appendChild(tr);
   });
 }
@@ -410,19 +510,19 @@ function renderTable(){
 // ROW OPS
 // ═══════════════════════════════════════════════════════
 function upd(i,f,v){rows[i][f]=v;}
-function updPlatform(i,v){rows[i].platform=v;rows[i].isILT=(v==='Zoom'||v==='Teams');renderTable();updateIltCount();}
+function updPlatform(i,v){rows[i].platform=v;rows[i].isILT=(v==='Zoom'||v==='Teams');if(!rows[i].isILT)rows[i].instructor='';renderTable();updateIltCount();}
 function removeRow(i){rows.splice(i,1);renderTable();updateIltCount();}
-function addManualRow(){rows.push({id:++_rowId,displayName:'New Session',isILT:true,platform:'Zoom',title:null,topicsHtml:null,date:'',startTime:'',endTime:'',selected:false});renderTable();updateIltCount();}
+function addManualRow(){rows.push({id:++_rowId,displayName:'New Session',isILT:true,platform:'Zoom',title:null,topicsHtml:null,date:'',startTime:'',endTime:'',instructor:'',selected:false,isDayHeader:false});renderTable();updateIltCount();}
 function toggleRow(i,c){rows[i].selected=c;refreshBatch();renderTable();}
-function toggleSelectAll(cb){rows.forEach(r=>r.selected=cb.checked);refreshBatch();renderTable();}
-function clearSelection(){rows.forEach(r=>r.selected=false);document.getElementById('selectAll').checked=false;refreshBatch();renderTable();}
-function removeSelected(){rows=rows.filter(r=>!r.selected);document.getElementById('selectAll').checked=false;refreshBatch();renderTable();updateIltCount();}
+function toggleSelectAll(cb){rows.forEach(r=>{if(!r.isDayHeader)r.selected=cb.checked;});refreshBatch();renderTable();}
+function clearSelection(){rows.forEach(r=>r.selected=false);const sa=document.getElementById('selectAll');if(sa)sa.checked=false;refreshBatch();renderTable();}
+function removeSelected(){rows=rows.filter(r=>!r.selected);const sa=document.getElementById('selectAll');if(sa)sa.checked=false;refreshBatch();renderTable();updateIltCount();}
 function refreshBatch(){const n=rows.filter(r=>r.selected).length,b=document.getElementById('batchBar');if(n>0){b.classList.add('visible');document.getElementById('batchCount').textContent=n+' row'+(n!==1?'s':'')+' selected';}else b.classList.remove('visible');}
-function updateIltCount(){const n=rows.filter(r=>r.isILT).length;document.getElementById('iltCount').textContent=n>0?n+' Zoom session'+(n!==1?'s':''):'';}
+function updateIltCount(){const n=rows.filter(r=>r.isILT&&!r.isDayHeader).length;document.getElementById('iltCount').textContent=n>0?n+' session'+(n!==1?'s':''):'';}
 function onTzChange(){if(rows.length>0)renderTable();}
 
 // ═══════════════════════════════════════════════════════
-// SESSION CELL BUILDER (preview + PDF)
+// SESSION CELL (preview + PDF)
 // ═══════════════════════════════════════════════════════
 function sessionCell(row,forPdf){
   if(!row.title&&!row.topicsHtml) return esc(row.displayName);
@@ -436,24 +536,141 @@ function sessionCell(row,forPdf){
 // PREVIEW
 // ═══════════════════════════════════════════════════════
 function generatePreview(){
-  const title=document.getElementById('programTitle').value||'Program Schedule',cohort=document.getElementById('cohortName').value,intro=document.getElementById('introText').value,tz=document.getElementById('timezone').value,lastCol=selectedCourse?selectedCourse.lastColHeader:'Session Name';
-  const trs=rows.map(row=>{const z=row.platform==='Zoom'||row.platform==='Teams';return '<tr class="'+(z?'zoom-row':'')+'"><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td><strong>'+esc(row.platform)+'</strong></td><td>'+sessionCell(row,false)+'</td></tr>';}).join('');
-  document.getElementById('previewContent').innerHTML='<div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+'<div class="doc-intro">'+intro+'</div><div class="doc-tz">All times are in '+esc(tz)+'</div><table class="prev-table"><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>'+trs+'</tbody></table>';
+  const title=document.getElementById('programTitle').value||'Program Schedule';
+  const cohort=document.getElementById('cohortName').value;
+  const intro=document.getElementById('introText').value;
+  const tz=document.getElementById('timezone').value;
+  const lastCol=selectedCourse?selectedCourse.lastColHeader:'Session Name';
+  const isIP=selectedCourse&&selectedCourse.isInPerson;
+  const location=document.getElementById('ipLocation').value;
+
+  let body='';
+  if(isIP){
+    // Group rows by day headers
+    let currentDay=null;
+    rows.forEach(row=>{
+      if(row.isDayHeader){
+        if(currentDay!==null) body+='</tbody></table>';
+        body+='<div style="background:#64092c;color:#fff;font-weight:700;padding:10px 12px;margin-top:16px;font-size:13px;">'+esc(row.dayLabel)+' - '+esc(row.dateLabel)+'</div>';
+        body+='<table class="prev-table"><thead><tr><th style="width:90px;">Start</th><th style="width:10px;"></th><th style="width:90px;">End</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>';
+        currentDay=row;
+      } else {
+        body+='<tr><td style="white-space:nowrap;">'+esc(fmtTime(row.startTime))+'</td><td style="text-align:center;color:#bbb;">\u2013</td><td style="white-space:nowrap;">'+esc(fmtTime(row.endTime))+'</td><td>'+esc(row.displayName)+'</td></tr>';
+      }
+    });
+    if(currentDay!==null) body+='</tbody></table>';
+  } else {
+    body+='<div class="doc-tz">All times are in '+esc(tz)+'</div>';
+    body+='<table class="prev-table"><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>';
+    rows.forEach(row=>{if(row.isDayHeader)return;const z=row.platform==='Zoom'||row.platform==='Teams';body+='<tr><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td><strong>'+esc(row.platform)+'</strong></td><td>'+sessionCell(row,false)+'</td></tr>';});
+    body+='</tbody></table>';
+  }
+
+  let h='<div class="doc-title">'+esc(title)+'</div>';
+  if(cohort) h+='<div class="doc-cohort">'+esc(cohort)+'</div>';
+  if(location&&isIP) h+='<div class="doc-cohort">'+esc(location)+'</div>';
+  if(intro) h+='<div class="doc-intro">'+intro+'</div>';
+  h+=body;
+
+  document.getElementById('previewContent').innerHTML=h;
   document.getElementById('previewSection').classList.remove('hidden');
   document.getElementById('previewSection').scrollIntoView({behavior:'smooth'});
 }
 
 // ═══════════════════════════════════════════════════════
-// PDF EXPORT
+// PDF: PROGRAM AGENDA (no instructor column)
 // ═══════════════════════════════════════════════════════
 function exportPDF(){
   const title=document.getElementById('programTitle').value||'Program Schedule',cohort=document.getElementById('cohortName').value,intro=document.getElementById('introText').value,tz=document.getElementById('timezone').value;
   const fullTitle=cohort?title+' \u2014 '+cohort:title;
   const lastCol=selectedCourse?selectedCourse.lastColHeader:'Session Name';
-  const trs=rows.map(row=>{const z=row.platform==='Zoom'||row.platform==='Teams';const pd=z?'<strong>'+esc(row.platform)+'</strong>':'<span style="color:#64092c;">'+esc(row.platform)+'</span>';return '<tr class="'+(z?'zoom-row':'')+'"><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td>'+pd+'</td><td class="col-name-cell">'+sessionCell(row,true)+'</td></tr>';}).join('');
-  const safe=fullTitle.replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
-  const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:portrait;margin:0.6in 0.65in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:11pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:16pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:11pt;color:#484848;margin-top:3px;}.doc-meta{font-size:9pt;color:#7a6b62;text-align:right;line-height:1.6;}.doc-intro{font-size:9.5pt;color:#484848;line-height:1.55;margin-bottom:16px;}.doc-intro p{margin-bottom:8px;break-inside:avoid;}.doc-intro h3{font-size:10pt;color:#64092c;margin:12px 0 4px;}.doc-intro strong{color:#64092c;}.doc-tz{font-size:9pt;font-weight:700;color:#484848;margin-bottom:10px;}table{width:100%;border-collapse:collapse;font-size:9.5pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:7pt 8pt;text-align:left;font-weight:700;font-size:8.5pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:6pt 8pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}col.col-date{width:90px;}col.col-start{width:78px;}col.col-end{width:78px;}col.col-plat{width:90px;}col.col-name{width:auto;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div><div class="doc-intro">'+intro+'</div><div class="doc-tz">All times are in '+esc(tz)+'</div><table><colgroup><col class="col-date"><col class="col-start"><col class="col-end"><col class="col-plat"><col class="col-name"></colgroup><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>'+trs+'</tbody></table><script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
-  const win=window.open('','_blank');if(!win){alert('Pop-up blocked. Please allow pop-ups for this page and try again.');return;}win.document.write(html);win.document.close();
+  const isIP=selectedCourse&&selectedCourse.isInPerson;
+  const location=document.getElementById('ipLocation').value;
+
+  if(isIP){
+    // Compact in-person PDF matching mockup
+    const dayNote=selectedCourse.dayStartNote||'';
+    const hasExam=selectedCourse.hasExam;
+    let body='';
+    // Intro
+    if(hasExam) body+='<div class="ip-intro"><p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p></div>';
+    if(dayNote) body+='<div class="ip-intro"><p>'+esc(dayNote)+'. Schedule is subject to change.</p></div>';
+    else body+='<div class="ip-intro"><p>Schedule is subject to change.</p></div>';
+    // Day tables
+    let dayOpen=false;
+    rows.forEach(row=>{
+      if(row.isDayHeader){
+        if(dayOpen) body+='</table>';
+        body+='<div class="day-bar">'+esc(row.dayLabel)+' \u2014 '+esc(row.dateLabel)+'</div><table>';
+        dayOpen=true;
+      } else {
+        const cls=row.isBreak?' class="brk"':'';
+        body+='<tr'+cls+'><td class="tc">'+esc(fmtTime(row.startTime))+'</td><td class="td">\u2013</td><td class="tc">'+esc(fmtTime(row.endTime))+'</td><td>'+esc(row.displayName)+'</td></tr>';
+      }
+    });
+    if(dayOpen) body+='</table>';
+
+    const safe=fullTitle.replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+    const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap");@page{size:portrait;margin:0.5in 0.6in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:9pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:8px;margin-bottom:10px;}.doc-title{font-size:14pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:9.5pt;color:#484848;margin-top:2px;}.doc-meta{font-size:8pt;color:#7a6b62;text-align:right;line-height:1.5;}.ip-intro{font-size:8pt;color:#484848;line-height:1.45;margin-bottom:4px;}.ip-intro p{margin-bottom:4px;}.ip-intro strong{color:#64092c;}.day-bar{background:#64092c;color:#fff;font-weight:700;padding:5pt 8pt;font-size:9pt;margin-top:8pt;}table{width:100%;border-collapse:collapse;font-size:8.5pt;}td{padding:3pt 6pt;border-bottom:0.5pt solid #d4c8c0;vertical-align:top;line-height:1.35;}.tc{white-space:nowrap;width:62px;color:#666;}.td{width:10px;text-align:center;color:#bbb;}tr.brk td{color:#999;font-style:italic;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+(location?'<div class="doc-cohort">'+esc(location)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Program Agenda</div></div>'+body+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
+    const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
+  } else {
+    // Virtual PDF (unchanged)
+    const trs=rows.map(row=>{if(row.isDayHeader)return'';const z=row.platform==='Zoom'||row.platform==='Teams';const pd=z?'<strong>'+esc(row.platform)+'</strong>':'<span style="color:#64092c;">'+esc(row.platform)+'</span>';return '<tr><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td>'+pd+'</td><td class="col-name-cell">'+sessionCell(row,true)+'</td></tr>';}).join('');
+    const safe=fullTitle.replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+    let bodyHtml='<div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>';
+    if(intro) bodyHtml+='<div class="doc-intro">'+intro+'</div>';
+    bodyHtml+='<div class="doc-tz">All times are in '+esc(tz)+'</div><table><colgroup><col class="col-date"><col class="col-start"><col class="col-end"><col class="col-plat"><col class="col-name"></colgroup><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>'+trs+'</tbody></table>';
+    const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:portrait;margin:0.6in 0.65in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:11pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:16pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:11pt;color:#484848;margin-top:3px;}.doc-meta{font-size:9pt;color:#7a6b62;text-align:right;line-height:1.6;}.doc-intro{font-size:9.5pt;color:#484848;line-height:1.55;margin-bottom:16px;}.doc-intro p{margin-bottom:8px;break-inside:avoid;}.doc-intro h3{font-size:10pt;color:#64092c;margin:12px 0 4px;}.doc-intro strong{color:#64092c;}.doc-tz{font-size:9pt;font-weight:700;color:#484848;margin-bottom:10px;}table{width:100%;border-collapse:collapse;font-size:9.5pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:7pt 8pt;text-align:left;font-weight:700;font-size:8.5pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:6pt 8pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}col.col-date{width:90px;}col.col-start{width:78px;}col.col-end{width:78px;}col.col-plat{width:90px;}col.col-name{width:auto;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+bodyHtml+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
+    const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PDF: INSTRUCTOR AGENDA (includes instructor column)
+// ═══════════════════════════════════════════════════════
+function exportInstructorPDF(){
+  const title=document.getElementById('programTitle').value||'Program Schedule',cohort=document.getElementById('cohortName').value,intro=document.getElementById('introText').value,tz=document.getElementById('timezone').value;
+  const instTitle=title.replace(/Schedule$/,'Instructor Agenda').replace(/\u2014 Schedule$/,'\u2014 Instructor Agenda');
+  const fullTitle=cohort?instTitle+' \u2014 '+cohort:instTitle;
+  const lastCol=selectedCourse?selectedCourse.lastColHeader:'Session Name';
+  const isIP=selectedCourse&&selectedCourse.isInPerson;
+  const location=document.getElementById('ipLocation').value;
+
+  if(isIP){
+    // Compact in-person Instructor PDF (portrait, with instructor column)
+    const dayNote=selectedCourse.dayStartNote||'';
+    const hasExam=selectedCourse.hasExam;
+    let body='<div class="ip-note">This document is for internal use only. Do not distribute to program attendees.</div>';
+    if(hasExam) body+='<div class="ip-intro"><p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p></div>';
+    if(dayNote) body+='<div class="ip-intro"><p>'+esc(dayNote)+'. Schedule is subject to change.</p></div>';
+    else body+='<div class="ip-intro"><p>Schedule is subject to change.</p></div>';
+    let dayOpen=false;
+    rows.forEach(row=>{
+      if(row.isDayHeader){
+        if(dayOpen) body+='</table>';
+        body+='<div class="day-bar">'+esc(row.dayLabel)+' \u2014 '+esc(row.dateLabel)+'</div><table>';
+        dayOpen=true;
+      } else {
+        const cls=row.isBreak?' class="brk"':'';
+        const instName=row.instructor?esc(row.instructor):(row.isBreak?'':'');
+        body+='<tr'+cls+'><td class="tc">'+esc(fmtTime(row.startTime))+'</td><td class="td">\u2013</td><td class="tc">'+esc(fmtTime(row.endTime))+'</td><td>'+esc(row.displayName)+'</td><td class="ti">'+instName+'</td></tr>';
+      }
+    });
+    if(dayOpen) body+='</table>';
+
+    const safe=('Instructor_Agenda_'+(cohort||title)).replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+    const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap");@page{size:portrait;margin:0.5in 0.6in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:9pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:8px;margin-bottom:10px;}.doc-title{font-size:14pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:9.5pt;color:#484848;margin-top:2px;}.doc-meta{font-size:8pt;color:#7a6b62;text-align:right;line-height:1.5;}.ip-note{font-size:7.5pt;color:#888;margin-bottom:6px;font-style:italic;}.ip-intro{font-size:8pt;color:#484848;line-height:1.45;margin-bottom:4px;}.ip-intro p{margin-bottom:4px;}.ip-intro strong{color:#64092c;}.day-bar{background:#64092c;color:#fff;font-weight:700;padding:5pt 8pt;font-size:9pt;margin-top:8pt;}table{width:100%;border-collapse:collapse;font-size:8.5pt;}td{padding:3pt 6pt;border-bottom:0.5pt solid #d4c8c0;vertical-align:top;line-height:1.35;}.tc{white-space:nowrap;width:62px;color:#666;}.td{width:10px;text-align:center;color:#bbb;}.ti{width:120px;font-weight:600;color:#084d78;white-space:nowrap;}tr.brk td{color:#999;font-style:italic;}tr.brk .ti{color:#999;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+(location?'<div class="doc-cohort">'+esc(location)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Instructor Agenda</div></div>'+body+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
+    const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
+  } else {
+    // Virtual Instructor PDF (landscape, unchanged)
+    const trs=rows.map(row=>{if(row.isDayHeader)return'';const z=row.platform==='Zoom'||row.platform==='Teams';const pd=z?'<strong>'+esc(row.platform)+'</strong>':'<span style="color:#64092c;">'+esc(row.platform)+'</span>';const instName=z&&row.instructor?esc(row.instructor):'<span style="color:#bbb;">\u2014</span>';return '<tr><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td>'+pd+'</td><td style="font-weight:600;color:#084d78;white-space:nowrap;">'+instName+'</td><td class="col-name-cell">'+sessionCell(row,true)+'</td></tr>';}).join('');
+    const safe=('Instructor_Agenda_'+(cohort||title)).replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+    let bodyHtml='<div class="doc-header"><div><div class="doc-title">'+esc(instTitle)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Instructor Agenda<br>Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>';
+    bodyHtml+='<div style="font-size:8.5pt;color:#888;margin-bottom:10px;font-style:italic;">This document is for internal use only. Do not distribute to program attendees.</div>';
+    bodyHtml+='<div style="font-size:8.5pt;font-weight:700;color:#484848;margin-bottom:10px;">All times are in '+esc(tz)+'</div><table><colgroup><col style="width:82px"><col style="width:72px"><col style="width:72px"><col style="width:78px"><col style="width:130px"><col></colgroup><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>Instructor</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>'+trs+'</tbody></table>';
+    const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:landscape;margin:0.5in 0.55in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:10pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:15pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:10pt;color:#484848;margin-top:3px;}.doc-meta{font-size:8.5pt;color:#7a6b62;text-align:right;line-height:1.6;}table{width:100%;border-collapse:collapse;font-size:9pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:6pt 7pt;text-align:left;font-weight:700;font-size:8pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:5pt 7pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+bodyHtml+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
+    const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
