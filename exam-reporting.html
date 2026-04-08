@@ -41,6 +41,7 @@
   .btn-secondary{background:var(--white);color:var(--blue);border:1.5px solid var(--blue);} .btn-secondary:hover{background:rgba(8,77,120,0.05);}
   .btn-gold{background:var(--gold);color:var(--burgundy);} .btn-gold:hover{background:var(--gold-light);}
   .btn-sm{padding:7px 16px;font-size:12px;}
+  .btn-danger{background:var(--fail-red);color:var(--white);} .btn-danger:hover{background:#b71c1c;box-shadow:var(--shadow);}
   .status-bar{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none;}
   .status-bar.info{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;display:block;}
   .status-bar.success{background:var(--pass-bg);color:var(--pass-green);border:1px solid #a5d6a7;display:block;}
@@ -81,12 +82,32 @@
   .preview-nav{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius);}
   .preview-nav .nav-left{display:flex;align-items:center;gap:8px;flex-shrink:0;} .preview-nav .nav-info{flex:1;font-size:13px;font-weight:600;color:var(--gray);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .preview-nav .nav-right{flex-shrink:0;}
   .reminder-list{margin:16px 0;padding:16px;background:var(--gray-light);border-radius:var(--radius);max-height:200px;overflow-y:auto;font-size:13px;}
-  .reminder-list-item{padding:6px 0;border-bottom:1px solid var(--gray-mid);display:flex;justify-content:space-between;}
+  .reminder-list-item{padding:6px 0;border-bottom:1px solid var(--gray-mid);display:flex;align-items:center;gap:10px;}
   .reminder-list-item:last-child{border-bottom:none;}
+  .reminder-list-item label{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;}
+  .reminder-list-item label input[type="checkbox"]{accent-color:var(--burgundy);width:16px;height:16px;cursor:pointer;}
+  .reminder-list-item .student-name{flex:1;}
+  .reminder-list-item .student-email{color:#888;font-size:12px;}
+  .reminder-list-item .student-score{font-size:12px;font-weight:600;padding:2px 8px;border-radius:3px;}
+  .reminder-list-item .student-score.fail{background:var(--fail-bg);color:var(--fail-red);}
+  .select-all-bar{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:12px;border-bottom:1px solid var(--gray-mid);margin-bottom:4px;}
+  .select-all-bar label{display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:var(--burgundy);}
+  .select-all-bar label input{accent-color:var(--burgundy);width:16px;height:16px;cursor:pointer;}
+  .select-all-bar .selection-count{color:#888;margin-left:auto;}
   .date-prompt-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
   .date-prompt-box{background:var(--white);padding:32px;border-radius:var(--radius);box-shadow:var(--shadow-lg);max-width:400px;width:90%;}
   .date-prompt-box h3{margin-bottom:16px;color:var(--burgundy);}
   .date-prompt-box .btn-row{display:flex;gap:10px;margin-top:20px;}
+  .email-type-toggle{display:flex;gap:0;border:1.5px solid var(--gray-mid);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+  .email-type-toggle button{flex:1;padding:12px 20px;font-size:13px;font-weight:600;font-family:'Open Sans',sans-serif;border:none;cursor:pointer;transition:all 0.2s;background:var(--white);color:var(--gray);border-right:1px solid var(--gray-mid);}
+  .email-type-toggle button:last-child{border-right:none;}
+  .email-type-toggle button.active{background:var(--burgundy);color:var(--white);}
+  .email-type-toggle button:not(.active):hover{background:var(--gray-light);}
+  .email-section{display:none;} .email-section.active{display:block;}
+  .info-callout{padding:14px 18px;border-radius:var(--radius);font-size:13px;line-height:1.5;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;}
+  .info-callout.warn{background:var(--warn-bg);color:#7a6200;border:1px solid #ffe082;}
+  .info-callout.info{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;}
+  .info-callout .callout-icon{font-size:18px;flex-shrink:0;line-height:1.2;}
   @media(max-width:768px){.header{padding:16px;}.main{padding:16px;}.panel{padding:16px;}.form-row{flex-direction:column;}.summary-cards{flex-direction:column;}}
   @media print{.header{background:var(--burgundy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.panel{display:none;}.tab-bar{display:none;}.actions-bar{display:none;}.results-panel{box-shadow:none;border:1px solid #ddd;}.cell-pass,.cell-fail{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 </style>
@@ -190,65 +211,165 @@
     <!-- Email Reminders Tab -->
     <div class="tab-content" id="tab-reminders">
       <div style="max-width:800px;">
-        <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">&#128231; Exam Reminder Emails</h3>
-        <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">Generate reminder emails for students who have been assigned to the exam but have not yet completed it. These emails can be sent via Power Automate.</p>
-        
-        <div class="panel-section">
-          <h3>Eligible Students</h3>
-          <p style="font-size:12px;color:#888;margin-bottom:12px;">Students who are assigned to the exam but have not yet taken it:</p>
-          <div class="reminder-list" id="reminderList">
-            <p style="color:#999;font-style:italic;">Pull exam data first to see eligible students.</p>
-          </div>
-          <div id="reminderSummary" style="margin-top:12px;font-size:13px;color:var(--gray);"></div>
+        <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">&#128231; Student Email Notifications</h3>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">Generate and export email notifications for students. Choose an email type below to configure and preview emails before exporting for Power Automate.</p>
+
+        <!-- Email Type Toggle -->
+        <div class="email-type-toggle">
+          <button class="active" data-emailtype="reminder" id="toggleReminder">&#9993; Exam Reminder</button>
+          <button data-emailtype="failed" id="toggleFailed">&#10060; Exam Failed Notice</button>
         </div>
 
-        <div class="panel-section">
-          <h3>Email Template Settings</h3>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Program Name</label>
-              <input type="text" id="reminderProgramName" placeholder="e.g., NCIT Basic US Program" readonly style="background:#f0f0f0;">
-              <span class="inline-note">Auto-populated from course selection.</span>
-            </div>
-            <div class="form-group">
-              <label>Exam Deadline</label>
-              <input type="text" id="reminderDeadline" placeholder="e.g., April 15, 2026">
-              <span class="inline-note">Date by which students must complete the exam.</span>
-            </div>
+        <!-- =============================== -->
+        <!-- EXAM REMINDER SECTION -->
+        <!-- =============================== -->
+        <div class="email-section active" id="section-reminder">
+          <div class="info-callout info">
+            <span class="callout-icon">&#9432;</span>
+            <span>Reminder emails target students who have been <strong>assigned to the exam but have not yet attempted it</strong>. Use this to prompt students before their exam window closes.</span>
           </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:2;">
-              <label>Email Body</label>
-              <textarea id="reminderBody" style="min-height:140px;">Our records show that you have not yet taken the {programName}. Your exam window ends on {deadline}. If you are unable to complete the exam by this date please contact us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.
+          <div class="panel-section">
+            <h3>Eligible Students</h3>
+            <p style="font-size:12px;color:#888;margin-bottom:8px;">Students assigned to the exam who have not yet taken it. Uncheck any students you do not want to include.</p>
+            <div class="reminder-list" id="reminderList">
+              <p style="color:#999;font-style:italic;">Pull exam data first to see eligible students.</p>
+            </div>
+            <div id="reminderSummary" style="margin-top:12px;font-size:13px;color:var(--gray);"></div>
+          </div>
+
+          <div class="panel-section">
+            <h3>Email Template Settings</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Program Name</label>
+                <input type="text" id="reminderProgramName" placeholder="e.g., NCIT Basic US Program" readonly style="background:#f0f0f0;">
+                <span class="inline-note">Auto-populated from course selection.</span>
+              </div>
+              <div class="form-group">
+                <label>Exam Deadline</label>
+                <input type="text" id="reminderDeadline" placeholder="e.g., April 15, 2026">
+                <span class="inline-note">Date by which students must complete the exam.</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:2;">
+                <label>Email Body</label>
+                <textarea id="reminderBody" style="min-height:140px;">Our records show that you have not yet taken the {programName}. Your exam window ends on {deadline}. If you are unable to complete the exam by this date please contact us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.
 
 Please log in to the CLEAR Learning Portal at <a href="https://www.portal.clearhq.org">https://www.portal.clearhq.org</a> to access and complete your exam.</textarea>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
-          <button class="btn btn-primary" id="generateRemindersBtn" disabled>&#9993; Generate Reminder Emails</button>
-        </div>
-        <div id="reminderStatus" class="status-bar" style="margin-top:16px;"></div>
-
-        <!-- Email Preview Section (hidden until generated) -->
-        <div id="reminderPreviewSection" class="hidden" style="margin-top:24px;">
-          <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">Email Preview</h3>
-          <div class="preview-nav">
-            <div class="nav-left">
-              <button class="btn btn-sm btn-secondary" id="reminderPrevBtn">&#8592;</button>
-              <button class="btn btn-sm btn-secondary" id="reminderNextBtn">&#8594;</button>
-            </div>
-            <span class="nav-info" id="reminderPreviewCount">1 of 1</span>
-            <div class="nav-right">
-              <button class="btn btn-sm btn-secondary" id="reminderCopyBtn">Copy This Email</button>
-            </div>
-          </div>
-          <div class="email-preview-frame" id="reminderPreviewFrame"></div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
-            <button class="btn btn-primary" id="exportReminderPABtn" style="background:var(--burgundy);">&#9993; Export Emails for Power Automate</button>
+            <button class="btn btn-primary" id="generateRemindersBtn" disabled>&#9993; Generate Reminder Emails</button>
+          </div>
+          <div id="reminderStatus" class="status-bar" style="margin-top:16px;"></div>
+
+          <!-- Email Preview Section (hidden until generated) -->
+          <div id="reminderPreviewSection" class="hidden" style="margin-top:24px;">
+            <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">Email Preview</h3>
+            <div class="preview-nav">
+              <div class="nav-left">
+                <button class="btn btn-sm btn-secondary" id="reminderPrevBtn">&#8592;</button>
+                <button class="btn btn-sm btn-secondary" id="reminderNextBtn">&#8594;</button>
+              </div>
+              <span class="nav-info" id="reminderPreviewCount">1 of 1</span>
+              <div class="nav-right">
+                <button class="btn btn-sm btn-secondary" id="reminderCopyBtn">Copy This Email</button>
+              </div>
+            </div>
+            <div class="email-preview-frame" id="reminderPreviewFrame"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+              <button class="btn btn-primary" id="exportReminderPABtn" style="background:var(--burgundy);">&#9993; Export Emails for Power Automate</button>
+            </div>
           </div>
         </div>
+
+        <!-- =============================== -->
+        <!-- EXAM FAILED SECTION -->
+        <!-- =============================== -->
+        <div class="email-section" id="section-failed">
+          <div class="info-callout warn">
+            <span class="callout-icon">&#9888;</span>
+            <span>Failed exam notifications are sent <strong>manually after question analysis is complete</strong>. Scores reflect any excluded questions. Only students who attempted the exam and scored below 70% are listed here.</span>
+          </div>
+          <div class="panel-section">
+            <h3>Students Who Did Not Pass</h3>
+            <p style="font-size:12px;color:#888;margin-bottom:8px;">Students who attempted the exam and received a score below the 70% passing threshold (after any question exclusions). Uncheck any students you do not want to include.</p>
+            <div class="reminder-list" id="failedList">
+              <p style="color:#999;font-style:italic;">Pull exam data and complete question analysis first.</p>
+            </div>
+            <div id="failedSummary" style="margin-top:12px;font-size:13px;color:var(--gray);"></div>
+          </div>
+
+          <div class="panel-section">
+            <h3>Email Template Settings</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Program Name</label>
+                <input type="text" id="failedProgramName" placeholder="e.g., NCIT Basic US Program" readonly style="background:#f0f0f0;">
+                <span class="inline-note">Auto-populated from course selection.</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Retake Fee</label>
+                <input type="text" id="failedRetakeFee" placeholder="e.g., $100.00" value="$100.00">
+                <span class="inline-note">The fee charged for an exam retake. May vary by program.</span>
+              </div>
+              <div class="form-group">
+                <label>Contact Email</label>
+                <input type="text" id="failedContactEmail" placeholder="clearlearning@clearhq.org" value="clearlearning@clearhq.org">
+                <span class="inline-note">Default is the CLEAR Learning email; however update if needed.</span>
+              </div>
+              <div class="form-group">
+                <label>Retake Access Duration</label>
+                <input type="text" id="failedRetakeDuration" placeholder="e.g., 7 days" value="7 days">
+                <span class="inline-note">Length of time granted for the retake attempt.</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:2;">
+                <label>Email Body</label>
+                <textarea id="failedBody" style="min-height:220px;">Thank you for your effort in completing the {programName}. After a thorough review of all exam results, we regret to inform you that your score did not meet the 70% passing threshold required for certification.
+
+We understand this may be disappointing, and we want to ensure you are aware of the options available to you.
+
+If you would like to retake the exam, a retake fee of {feeAmount} applies. To begin the retake process, please contact us at {contactEmail} to submit your request. Our team will issue an invoice for the retake fee, and once payment has been received, you will be granted an additional {duration} of access to the exam.
+
+After completing your retake, please notify us at {contactEmail} so we can process your results. Please allow 3–5 business days from the time we receive your notification for results to be reviewed and finalized.
+
+If you have any questions about the retake process or would like to discuss your options, please do not hesitate to reach out. We are here to support you.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+            <button class="btn btn-danger" id="generateFailedBtn" disabled>&#10060; Generate Exam Failed Emails</button>
+          </div>
+          <div id="failedStatus" class="status-bar" style="margin-top:16px;"></div>
+
+          <!-- Failed Email Preview Section -->
+          <div id="failedPreviewSection" class="hidden" style="margin-top:24px;">
+            <h3 style="font-size:15px;color:var(--burgundy);margin-bottom:16px;">Email Preview</h3>
+            <div class="preview-nav">
+              <div class="nav-left">
+                <button class="btn btn-sm btn-secondary" id="failedPrevBtn">&#8592;</button>
+                <button class="btn btn-sm btn-secondary" id="failedNextBtn">&#8594;</button>
+              </div>
+              <span class="nav-info" id="failedPreviewCount">1 of 1</span>
+              <div class="nav-right">
+                <button class="btn btn-sm btn-secondary" id="failedCopyBtn">Copy This Email</button>
+              </div>
+            </div>
+            <div class="email-preview-frame" id="failedPreviewFrame"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+              <button class="btn btn-primary" id="exportFailedPABtn" style="background:var(--burgundy);">&#10060; Export Emails for Power Automate</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -281,7 +402,12 @@ Please log in to the CLEAR Learning Portal at <a href="https://www.portal.clearh
 // ============================================================
 // STATE & CONFIG
 // ============================================================
-const STATE = { workerUrl:'', authToken:'', connected:false, courses:[], groups:[], selectedCourse:null, selectedGroup:null, examType:'', cohort:'', mergedData:null, excludedQuestions:new Set(), reportData:null, reminderStudents:[], currentReminderPreview:0 };
+const STATE = {
+  workerUrl:'', authToken:'', connected:false, courses:[], groups:[], selectedCourse:null, selectedGroup:null,
+  examType:'', cohort:'', mergedData:null, excludedQuestions:new Set(), reportData:null,
+  reminderStudents:[], reminderSelected:new Set(), currentReminderPreview:0,
+  failedStudents:[], failedSelected:new Set(), currentFailedPreview:0
+};
 
 // ============================================================
 // CREDLY BADGE TEMPLATE IDS
@@ -357,15 +483,16 @@ async function loadCourses(){
 async function onCourseSelect(courseId,courseName){
   if(!courseId){document.getElementById('groupInput').disabled=true;document.getElementById('groupInput').placeholder='Select a course first';updatePullButton();return;}
   STATE.selectedCourse=STATE.courses.find(c=>String(c.id)===courseId);
-  // Auto-detect exam type from course name
   if(!document.getElementById('examType').value && courseName){
     const lower=courseName.toLowerCase();
     for(const [pattern,type] of Object.entries(COURSE_PATTERNS)){
       if(lower.includes(pattern)){document.getElementById('examType').value=type;break;}
     }
   }
-  // Update reminder program name
-  if(courseName) document.getElementById('reminderProgramName').value=courseName;
+  if(courseName){
+    document.getElementById('reminderProgramName').value=courseName;
+    document.getElementById('failedProgramName').value=courseName;
+  }
   try{
     const allGroups=await apiCall('/v1/groups');
     STATE.groups=allGroups;
@@ -397,19 +524,16 @@ async function pullExamData(){
   showProgress(true);
 
   try{
-    // Step 1: Get group members
     setProgressText('Fetching group members...');setProgressPct(5);
     const gd=await apiCall('/v1/groups/id:'+groupId);
     const memberIds=(gd.users||[]).map(u=>u.user_id||u.id);
     if(memberIds.length===0) throw new Error('No users found in this group.');
 
-    // Step 2: Get course structure to find test units
     setProgressText('Fetching course structure...');setProgressPct(10);
     const cd=await apiCall('/v1/courses/id:'+courseId);
     const testUnits=(cd.units||[]).filter(u=>u.type&&u.type.toLowerCase()==='test');
     if(testUnits.length===0) throw new Error('No test units found in this course. Make sure the selected course contains the exam.');
 
-    // Step 3: For each student, get test answers for each test unit
     const students=[];
     for(let i=0;i<memberIds.length;i++){
       const userId=memberIds[i];
@@ -440,7 +564,6 @@ async function pullExamData(){
               });
             }
           }catch(te){
-            // Student may not have taken this test unit yet - that's okay
             console.warn('No test answers for user '+userId+' on test '+tu.id+': '+te.message);
           }
         }
@@ -461,34 +584,28 @@ async function pullExamData(){
 
     if(students.length===0) throw new Error('No student data could be retrieved.');
 
-    // Build question labels
     const maxQs=Math.max(...students.map(s=>s.answers.length));
     const questionLabels=[];
     for(let i=0;i<maxQs;i++) questionLabels.push('Q'+(i+1));
 
-    // Pad short answer arrays
     students.forEach(s=>{while(s.answers.length<maxQs) s.answers.push(0);});
 
-    // Store question texts from first student who has them
     const qTexts=students.find(s=>s._questionTexts&&s._questionTexts.length>0);
     const questionTextMap={};
     if(qTexts){qTexts._questionTexts.forEach((t,i)=>{if(t) questionTextMap[i]=t;});}
 
     const merged={students,questions:questionLabels,examType,questionTexts:questionTextMap};
 
-    // Apply exam-specific removals
     if(config.removeQuestions.length>0) removeQuestions(merged,config.removeQuestions);
 
     STATE.mergedData=merged;
 
-    // Calculate scores
     calculateScores(merged,config);
     STATE.reportData=buildReport(merged,config,cohort);
 
-    // Identify students who need reminders (assigned but haven't completed)
     updateReminderStudents();
+    updateFailedStudents();
 
-    // Render
     renderSummary(STATE.reportData,config);
     renderReportTable(STATE.reportData,config);
     renderQuestionAnalysis(merged,config);
@@ -511,6 +628,18 @@ function setStatus(msg,type){const s=document.getElementById('statusBar');s.clas
 // Tab Handling
 // ============================================================
 document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+btn.dataset.tab).classList.add('active');});});
+
+// ============================================================
+// Email Type Toggle (Reminder vs Failed)
+// ============================================================
+document.querySelectorAll('.email-type-toggle button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.email-type-toggle button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.email-section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('section-'+btn.dataset.emailtype).classList.add('active');
+  });
+});
 
 // ============================================================
 // Remove Questions
@@ -652,17 +781,13 @@ function renderReportTable(reportData,config){
   updateFilterCount();
 }
 
-// Search/Filter functionality
 document.getElementById('reportSearchInput').addEventListener('input',function(){
   const searchTerm=this.value.toLowerCase().trim();
   const rows=document.querySelectorAll('#reportTable tbody tr');
   rows.forEach(row=>{
     const searchData=row.dataset.search||'';
-    if(!searchTerm||searchData.includes(searchTerm)){
-      row.classList.remove('filtered-out');
-    }else{
-      row.classList.add('filtered-out');
-    }
+    if(!searchTerm||searchData.includes(searchTerm)){row.classList.remove('filtered-out');}
+    else{row.classList.add('filtered-out');}
   });
   updateFilterCount();
 });
@@ -671,11 +796,8 @@ function updateFilterCount(){
   const total=document.querySelectorAll('#reportTable tbody tr').length;
   const visible=document.querySelectorAll('#reportTable tbody tr:not(.filtered-out)').length;
   const el=document.getElementById('filterCount');
-  if(total>0){
-    el.textContent=visible===total?total+' records':'Showing '+visible+' of '+total;
-  }else{
-    el.textContent='';
-  }
+  if(total>0){el.textContent=visible===total?total+' records':'Showing '+visible+' of '+total;}
+  else{el.textContent='';}
 }
 
 // ============================================================
@@ -743,6 +865,8 @@ document.getElementById('recalcBtn').addEventListener('click',()=>{
     }
   });
   renderSummary(STATE.reportData,config);renderReportTable(STATE.reportData,config);
+  // Also update the failed students list since scores changed
+  updateFailedStudents();
   setStatus('Adjusted grades recalculated. '+STATE.excludedQuestions.size+' question(s) excluded.','success');
 });
 
@@ -807,14 +931,8 @@ function exportCredlyCSV(){
   const badgeAIA=BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA&&!BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA:'';
   const badgeIRD=BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD&&!BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD.startsWith('REPLACE')?BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD:'';
 
-  if(!isSpecialized && !badgeBasic){
-    alert('The NCIT Basic Badge Template ID has not been configured. Contact your administrator to update the tool.');
-    return;
-  }
-  if(isSpecialized && !badgeSpecOverall && !badgeAIS && !badgeAIA && !badgeIRD){
-    alert('No Specialized Badge Template IDs have been configured. Contact your administrator to update the tool.');
-    return;
-  }
+  if(!isSpecialized && !badgeBasic){alert('The NCIT Basic Badge Template ID has not been configured.');return;}
+  if(isSpecialized && !badgeSpecOverall && !badgeAIS && !badgeAIA && !badgeIRD){alert('No Specialized Badge Template IDs have been configured.');return;}
 
   const eligible=STATE.reportData.filter(r=>{
     const score=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
@@ -823,10 +941,7 @@ function exportCredlyCSV(){
     return passed && paid;
   });
 
-  if(eligible.length===0){
-    alert('No eligible candidates found. Candidates must have a passing score (\u226570%) and Paid = Yes to be included in the Credly export.');
-    return;
-  }
+  if(eligible.length===0){alert('No eligible candidates found. Candidates must have a passing score (\u226570%) and Paid = Yes.');return;}
 
   const credlyHeaders=['Badge Template ID','Recipient Email','Issued To First Name','Issued To Middle Name','Issued To Last Name','Issued at','Expires at','Issuer Earner ID','Group Tag','Country or Territory','State or Province','Evidence Name','Evidence URL','URL Evidence Description','Text Evidence Title','Text Evidence Description','Id Evidence Title','Id Evidence Description','Locale'];
   const credlyRows=[];
@@ -847,58 +962,27 @@ function exportCredlyCSV(){
     }else{
       if(badgeSpecOverall){
         const overallScore=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
-        if(overallScore>=70){
-          credlyRows.push([badgeSpecOverall,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program',overallScore.toFixed(1)+'%','','','en']);
-          badgesIssued=true;
-        }
+        if(overallScore>=70){credlyRows.push([badgeSpecOverall,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program',overallScore.toFixed(1)+'%','','','en']);badgesIssued=true;}
       }
-
-      if(badgeAIS){
-        const aisScore=r.aisAdjusted?r.aisAdjScoreNum:r.aisScoreNum;
-        if(aisScore!==null && aisScore>=70){
-          credlyRows.push([badgeAIS,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program - AIS',aisScore.toFixed(1)+'%','','','en']);
-          badgesIssued=true;
-        }
-      }
-
-      if(badgeAIA){
-        const aiaScore=r.aiaAdjusted?r.aiaAdjScoreNum:r.aiaScoreNum;
-        if(aiaScore!==null && aiaScore>=70){
-          credlyRows.push([badgeAIA,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program - AIA',aiaScore.toFixed(1)+'%','','','en']);
-          badgesIssued=true;
-        }
-      }
-
-      if(badgeIRD){
-        const irdScore=r.irdAdjusted?r.irdAdjScoreNum:r.irdScoreNum;
-        if(irdScore!==null && irdScore>=70){
-          credlyRows.push([badgeIRD,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program - IRD',irdScore.toFixed(1)+'%','','','en']);
-          badgesIssued=true;
-        }
-      }
+      if(badgeAIS){const aisScore=r.aisAdjusted?r.aisAdjScoreNum:r.aisScoreNum;if(aisScore!==null&&aisScore>=70){credlyRows.push([badgeAIS,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program - AIS',aisScore.toFixed(1)+'%','','','en']);badgesIssued=true;}}
+      if(badgeAIA){const aiaScore=r.aiaAdjusted?r.aiaAdjScoreNum:r.aiaScoreNum;if(aiaScore!==null&&aiaScore>=70){credlyRows.push([badgeAIA,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program - AIA',aiaScore.toFixed(1)+'%','','','en']);badgesIssued=true;}}
+      if(badgeIRD){const irdScore=r.irdAdjusted?r.irdAdjScoreNum:r.irdScoreNum;if(irdScore!==null&&irdScore>=70){credlyRows.push([badgeIRD,r.email,r.firstName,'',r.lastName,issuedAt,'','','','','','','','','NCIT Specialized Program - IRD',irdScore.toFixed(1)+'%','','','en']);badgesIssued=true;}}
     }
 
     if(badgesIssued) r.digitalBadgeIssued=issuedAt;
   });
 
-  if(credlyRows.length===0){
-    alert('No badge rows were generated. Check that Badge Template IDs are entered and that eligible candidates exist.');
-    return;
-  }
+  if(credlyRows.length===0){alert('No badge rows were generated.');return;}
 
   let csv='\uFEFF'+credlyHeaders.map(h=>'"'+h+'"').join(',')+'\n';
-  credlyRows.forEach(row=>{
-    csv+=row.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')+'\n';
-  });
+  credlyRows.forEach(row=>{csv+=row.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')+'\n';});
 
   downloadFile(csv,'Credly_Bulk_Issue_'+STATE.cohort.replace(/\s+/g,'_')+'.csv','text/csv');
 
   const config2=EXAM_CONFIG[STATE.examType];
   renderReportTable(STATE.reportData,config2);
 
-  const badgeCount=credlyRows.length;
-  const candidateCount=eligible.length;
-  setStatus('Credly export complete: '+badgeCount+' badge(s) for '+candidateCount+' candidate(s).','success');
+  setStatus('Credly export complete: '+credlyRows.length+' badge(s) for '+eligible.length+' candidate(s).','success');
 }
 
 // ============================================================
@@ -913,227 +997,273 @@ paymentDrop.addEventListener('dragleave',()=>{paymentDrop.style.borderColor='var
 paymentDrop.addEventListener('drop',e=>{e.preventDefault();paymentDrop.style.borderColor='var(--gray-mid)';paymentDrop.style.background='var(--gray-light)';if(e.dataTransfer.files.length)processPaymentFile(e.dataTransfer.files[0]);});
 paymentInput.addEventListener('change',e=>{if(e.target.files.length)processPaymentFile(e.target.files[0]);});
 
-function setPaymentStatus(msg,type){
-  const el=document.getElementById('paymentStatus');
-  el.className='status-bar'+(type?' '+type:'');
-  el.innerHTML=msg;
-}
+function setPaymentStatus(msg,type){const el=document.getElementById('paymentStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
 
 function processPaymentFile(file){
-  if(!STATE.reportData||STATE.reportData.length===0){
-    setPaymentStatus('Please pull exam data first before importing payment data.','error');
-    return;
-  }
-
+  if(!STATE.reportData||STATE.reportData.length===0){setPaymentStatus('Please pull exam data first before importing payment data.','error');return;}
   const reader=new FileReader();
   reader.onload=function(e){
     try{
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-
+      const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
       if(rows.length===0){setPaymentStatus('The uploaded file contains no data.','error');return;}
-
-      const sampleRow=rows[0];
-      const keys=Object.keys(sampleRow);
+      const sampleRow=rows[0];const keys=Object.keys(sampleRow);
       const emailKey=keys.find(k=>k.toLowerCase().trim()==='email');
       const paymentKey=keys.find(k=>k.toLowerCase().trim()==='payment status');
-
-      if(!emailKey){setPaymentStatus('Could not find an "Email" column in the uploaded file. Found columns: '+keys.join(', '),'error');return;}
-      if(!paymentKey){setPaymentStatus('Could not find a "Payment Status" column in the uploaded file. Found columns: '+keys.join(', '),'error');return;}
-
+      if(!emailKey){setPaymentStatus('Could not find an "Email" column. Found columns: '+keys.join(', '),'error');return;}
+      if(!paymentKey){setPaymentStatus('Could not find a "Payment Status" column. Found columns: '+keys.join(', '),'error');return;}
       const paymentMap=new Map();
-      rows.forEach(row=>{
-        const email=String(row[emailKey]||'').toLowerCase().trim();
-        const status=String(row[paymentKey]||'').trim();
-        if(email) paymentMap.set(email,status);
-      });
-
-      let matched=0,unmatched=0,notInReport=0;
-      const unmatchedNames=[];
-
+      rows.forEach(row=>{const email=String(row[emailKey]||'').toLowerCase().trim();const status=String(row[paymentKey]||'').trim();if(email)paymentMap.set(email,status);});
+      let matched=0,unmatched=0,notInReport=0;const unmatchedNames=[];
       STATE.reportData.forEach(r=>{
         const email=String(r.email||'').toLowerCase().trim();
         if(paymentMap.has(email)){
-          const status=paymentMap.get(email);
-          const lower=status.toLowerCase();
-          if(lower==='completed'||lower==='paid'||lower==='approved'||lower==='success'||lower==='yes'){
-            r.paid='Yes';
-          }else if(lower==='pending'||lower==='processing'){
-            r.paid='Pending';
-          }else if(lower==='refunded'||lower==='cancelled'||lower==='canceled'||lower==='declined'||lower==='failed'||lower==='no'){
-            r.paid='No';
-          }else{
-            r.paid=status;
-          }
+          const status=paymentMap.get(email);const lower=status.toLowerCase();
+          if(lower==='completed'||lower==='paid'||lower==='approved'||lower==='success'||lower==='yes'){r.paid='Yes';}
+          else if(lower==='pending'||lower==='processing'){r.paid='Pending';}
+          else if(lower==='refunded'||lower==='cancelled'||lower==='canceled'||lower==='declined'||lower==='failed'||lower==='no'){r.paid='No';}
+          else{r.paid=status;}
           matched++;
-        }else{
-          unmatched++;
-          unmatchedNames.push(r.firstName+' '+r.lastName);
-        }
+        }else{unmatched++;unmatchedNames.push(r.firstName+' '+r.lastName);}
       });
-
       notInReport=paymentMap.size-matched;
-
-      const config=EXAM_CONFIG[STATE.examType];
-      renderReportTable(STATE.reportData,config);
-
+      const config=EXAM_CONFIG[STATE.examType];renderReportTable(STATE.reportData,config);
       let msg='<strong>'+matched+'</strong> of '+STATE.reportData.length+' student(s) matched by email.';
       if(unmatched>0) msg+=' <strong>'+unmatched+'</strong> student(s) had no matching payment record: '+unmatchedNames.join(', ')+'.';
       if(notInReport>0) msg+=' '+notInReport+' payment record(s) in the file did not match any student in the exam report.';
       setPaymentStatus(msg,matched>0?'success':'error');
-
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
       document.querySelector('.tab-btn[data-tab="report"]').classList.add('active');
       document.getElementById('tab-report').classList.add('active');
-
-    }catch(err){
-      setPaymentStatus('Error reading file: '+err.message,'error');
-      console.error(err);
-    }
+    }catch(err){setPaymentStatus('Error reading file: '+err.message,'error');console.error(err);}
   };
   reader.readAsArrayBuffer(file);
 }
 
 // ============================================================
-// Email Reminders
+// SHARED: Selectable Student List Renderer
+// ============================================================
+function renderSelectableList(listElId, students, selectedSet, scoreField, showScore){
+  const listEl=document.getElementById(listElId);
+  if(students.length===0){
+    listEl.innerHTML=scoreField?
+      '<p style="color:var(--pass-green);font-style:italic;">&#10003; No students meet the criteria.</p>':
+      '<p style="color:var(--pass-green);font-style:italic;">&#10003; All students have completed the exam.</p>';
+    return;
+  }
+  let h='<div class="select-all-bar"><label><input type="checkbox" class="select-all-cb" data-list="'+listElId+'" checked> Select All</label><span class="selection-count" id="'+listElId+'Count">'+selectedSet.size+' of '+students.length+' selected</span></div>';
+  students.forEach((s,i)=>{
+    const checked=selectedSet.has(i)?'checked':'';
+    const scoreHtml=showScore&&s[scoreField]!==undefined?'<span class="student-score fail">'+parseFloat(s[scoreField]).toFixed(1)+'%</span>':'';
+    h+='<div class="reminder-list-item"><label><input type="checkbox" class="student-cb" data-list="'+listElId+'" data-idx="'+i+'" '+checked+'><span class="student-name">'+esc(s.firstName)+' '+esc(s.lastName)+'</span></label><span class="student-email">'+esc(s.email)+'</span>'+scoreHtml+'</div>';
+  });
+  listEl.innerHTML=h;
+
+  // Event: individual checkboxes
+  listEl.querySelectorAll('.student-cb').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const idx=parseInt(cb.dataset.idx);
+      if(cb.checked) selectedSet.add(idx); else selectedSet.delete(idx);
+      updateSelectionCount(listElId,students.length,selectedSet);
+      updateSelectAllState(listElId,students.length,selectedSet);
+    });
+  });
+
+  // Event: select all checkbox
+  const selectAllCb=listEl.querySelector('.select-all-cb');
+  if(selectAllCb){
+    selectAllCb.addEventListener('change',()=>{
+      const checked=selectAllCb.checked;
+      students.forEach((_,i)=>{if(checked)selectedSet.add(i);else selectedSet.delete(i);});
+      listEl.querySelectorAll('.student-cb').forEach(cb=>{cb.checked=checked;});
+      updateSelectionCount(listElId,students.length,selectedSet);
+    });
+  }
+}
+
+function updateSelectionCount(listElId,total,selectedSet){
+  const el=document.getElementById(listElId+'Count');
+  if(el) el.textContent=selectedSet.size+' of '+total+' selected';
+}
+
+function updateSelectAllState(listElId,total,selectedSet){
+  const listEl=document.getElementById(listElId);
+  const selectAllCb=listEl.querySelector('.select-all-cb');
+  if(selectAllCb){
+    selectAllCb.checked=selectedSet.size===total;
+    selectAllCb.indeterminate=selectedSet.size>0&&selectedSet.size<total;
+  }
+}
+
+// ============================================================
+// Email Reminders (Exam Not Attempted)
 // ============================================================
 function updateReminderStudents(){
   if(!STATE.reportData||STATE.reportData.length===0){
-    STATE.reminderStudents=[];
+    STATE.reminderStudents=[];STATE.reminderSelected.clear();
     document.getElementById('generateRemindersBtn').disabled=true;
     document.getElementById('reminderList').innerHTML='<p style="color:#999;font-style:italic;">Pull exam data first to see eligible students.</p>';
     document.getElementById('reminderSummary').innerHTML='';
     return;
   }
 
-  // Filter: no exam date (not completed) but has been assigned (is in the group and retrieved via API)
-  // We exclude those with a date of exam (they've taken it)
   STATE.reminderStudents=STATE.reportData.filter(r=>!r.dateOfExam||r.dateOfExam.trim()==='');
 
-  const listEl=document.getElementById('reminderList');
-  const summaryEl=document.getElementById('reminderSummary');
+  // Initialize all as selected
+  STATE.reminderSelected.clear();
+  STATE.reminderStudents.forEach((_,i)=>STATE.reminderSelected.add(i));
 
+  renderSelectableList('reminderList',STATE.reminderStudents,STATE.reminderSelected,null,false);
+
+  const summaryEl=document.getElementById('reminderSummary');
   if(STATE.reminderStudents.length===0){
-    listEl.innerHTML='<p style="color:var(--pass-green);font-style:italic;">&#10003; All students have completed the exam.</p>';
     summaryEl.innerHTML='';
     document.getElementById('generateRemindersBtn').disabled=true;
   }else{
-    let h='';
-    STATE.reminderStudents.forEach(s=>{
-      h+='<div class="reminder-list-item"><span>'+esc(s.firstName)+' '+esc(s.lastName)+'</span><span style="color:#888;">'+esc(s.email)+'</span></div>';
-    });
-    listEl.innerHTML=h;
     summaryEl.innerHTML='<strong>'+STATE.reminderStudents.length+'</strong> student(s) have not yet completed the exam.';
     document.getElementById('generateRemindersBtn').disabled=false;
   }
 }
 
-function setReminderStatus(msg,type){
-  const el=document.getElementById('reminderStatus');
-  el.className='status-bar'+(type?' '+type:'');
-  el.innerHTML=msg;
-}
+function setReminderStatus(msg,type){const el=document.getElementById('reminderStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
 
 // Generate reminders button - shows date prompt first
 document.getElementById('generateRemindersBtn').addEventListener('click',()=>{
-  if(STATE.reminderStudents.length===0){
-    setReminderStatus('No students to send reminders to.','error');
-    return;
-  }
-  // Show date prompt modal
+  const selectedStudents=STATE.reminderStudents.filter((_,i)=>STATE.reminderSelected.has(i));
+  if(selectedStudents.length===0){setReminderStatus('No students selected. Check the boxes next to the students you want to send reminders to.','error');return;}
   document.getElementById('datePromptOverlay').classList.remove('hidden');
   document.getElementById('datePromptInput').value=document.getElementById('reminderDeadline').value||'';
   document.getElementById('datePromptInput').focus();
 });
 
-document.getElementById('datePromptCancel').addEventListener('click',()=>{
-  document.getElementById('datePromptOverlay').classList.add('hidden');
-});
+document.getElementById('datePromptCancel').addEventListener('click',()=>{document.getElementById('datePromptOverlay').classList.add('hidden');});
 
 document.getElementById('datePromptConfirm').addEventListener('click',()=>{
   const deadline=document.getElementById('datePromptInput').value.trim();
-  if(!deadline){
-    alert('Please enter a deadline date.');
-    return;
-  }
+  if(!deadline){alert('Please enter a deadline date.');return;}
   document.getElementById('reminderDeadline').value=deadline;
   document.getElementById('datePromptOverlay').classList.add('hidden');
   generateReminderEmails();
 });
 
-// Allow Enter key in date prompt
-document.getElementById('datePromptInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    e.preventDefault();
-    document.getElementById('datePromptConfirm').click();
-  }
-});
+document.getElementById('datePromptInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();document.getElementById('datePromptConfirm').click();}});
 
 function generateReminderEmails(){
-  if(STATE.reminderStudents.length===0){
-    setReminderStatus('No students to send reminders to.','error');
-    return;
-  }
-
+  const selectedStudents=STATE.reminderStudents.filter((_,i)=>STATE.reminderSelected.has(i));
+  if(selectedStudents.length===0){setReminderStatus('No students selected.','error');return;}
   const deadline=document.getElementById('reminderDeadline').value.trim();
-  if(!deadline){
-    setReminderStatus('Please enter an exam deadline date.','error');
-    return;
-  }
+  if(!deadline){setReminderStatus('Please enter an exam deadline date.','error');return;}
 
   STATE.currentReminderPreview=0;
   document.getElementById('reminderPreviewSection').classList.remove('hidden');
   renderReminderPreview();
-  setReminderStatus('Generated '+STATE.reminderStudents.length+' reminder email(s). Preview them below and export when ready.','success');
+  setReminderStatus('Generated '+selectedStudents.length+' reminder email(s). Preview them below and export when ready.','success');
 }
 
+function getSelectedReminderStudents(){return STATE.reminderStudents.filter((_,i)=>STATE.reminderSelected.has(i));}
+
 function renderReminderPreview(){
-  const students=STATE.reminderStudents;
+  const students=getSelectedReminderStudents();
   if(students.length===0)return;
-  const idx=STATE.currentReminderPreview;
+  const idx=Math.min(STATE.currentReminderPreview,students.length-1);
+  STATE.currentReminderPreview=idx;
   const s=students[idx];
-  document.getElementById('reminderPreviewCount').innerHTML=(idx+1)+' of '+students.length+' — '+esc(s.firstName)+' '+esc(s.lastName);
+  document.getElementById('reminderPreviewCount').innerHTML=(idx+1)+' of '+students.length+' &mdash; '+esc(s.firstName)+' '+esc(s.lastName);
   document.getElementById('reminderPreviewFrame').innerHTML=buildReminderEmailHtml(s,false);
 }
 
-document.getElementById('reminderPrevBtn').addEventListener('click',()=>{
-  if(STATE.currentReminderPreview>0){
-    STATE.currentReminderPreview--;
-    renderReminderPreview();
-  }
-});
-
-document.getElementById('reminderNextBtn').addEventListener('click',()=>{
-  if(STATE.currentReminderPreview<STATE.reminderStudents.length-1){
-    STATE.currentReminderPreview++;
-    renderReminderPreview();
-  }
-});
+document.getElementById('reminderPrevBtn').addEventListener('click',()=>{if(STATE.currentReminderPreview>0){STATE.currentReminderPreview--;renderReminderPreview();}});
+document.getElementById('reminderNextBtn').addEventListener('click',()=>{const students=getSelectedReminderStudents();if(STATE.currentReminderPreview<students.length-1){STATE.currentReminderPreview++;renderReminderPreview();}});
 
 document.getElementById('reminderCopyBtn').addEventListener('click',()=>{
   const frame=document.getElementById('reminderPreviewFrame');
-  const range=document.createRange();
-  range.selectNodeContents(frame);
-  const sel=window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  document.execCommand('copy');
-  sel.removeAllRanges();
-  const btn=document.getElementById('reminderCopyBtn');
-  btn.textContent='Copied!';
-  setTimeout(()=>btn.textContent='Copy This Email',1500);
+  const range=document.createRange();range.selectNodeContents(frame);
+  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+  document.execCommand('copy');sel.removeAllRanges();
+  const btn=document.getElementById('reminderCopyBtn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy This Email',1500);
 });
 
-function buildReminderEmailHtml(student,wrapDoc){
-  const programName=document.getElementById('reminderProgramName').value||'NCIT Program';
-  const deadline=document.getElementById('reminderDeadline').value||'[deadline not set]';
-  const bodyTemplate=document.getElementById('reminderBody').value;
-  
-  const bodyText=bodyTemplate.replace(/\{programName\}/g,programName).replace(/\{deadline\}/g,deadline);
-  const bodyLines=bodyText.split('\n').filter(l=>l.trim());
+// ============================================================
+// Exam Failed Notifications
+// ============================================================
+function updateFailedStudents(){
+  if(!STATE.reportData||STATE.reportData.length===0){
+    STATE.failedStudents=[];STATE.failedSelected.clear();
+    document.getElementById('generateFailedBtn').disabled=true;
+    document.getElementById('failedList').innerHTML='<p style="color:#999;font-style:italic;">Pull exam data and complete question analysis first.</p>';
+    document.getElementById('failedSummary').innerHTML='';
+    return;
+  }
 
+  const hasExclusions=STATE.excludedQuestions.size>0;
+
+  // Students who attempted the exam (have a date) and scored below 70%
+  STATE.failedStudents=STATE.reportData.filter(r=>{
+    if(!r.dateOfExam||r.dateOfExam.trim()==='') return false; // didn't attempt
+    const score=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
+    return score>0 && score<70; // scored between 1% and <70%
+  });
+
+  // Add the effective score to each failed student for display
+  STATE.failedStudents.forEach(s=>{
+    s._effectiveScore=hasExclusions?s.adjustedScoreNum:s.totalScoreNum;
+  });
+
+  // Initialize all as selected
+  STATE.failedSelected.clear();
+  STATE.failedStudents.forEach((_,i)=>STATE.failedSelected.add(i));
+
+  renderSelectableList('failedList',STATE.failedStudents,STATE.failedSelected,'_effectiveScore',true);
+
+  const summaryEl=document.getElementById('failedSummary');
+  if(STATE.failedStudents.length===0){
+    summaryEl.innerHTML='';
+    document.getElementById('generateFailedBtn').disabled=true;
+  }else{
+    summaryEl.innerHTML='<strong>'+STATE.failedStudents.length+'</strong> student(s) attempted the exam and did not achieve a passing score.';
+    document.getElementById('generateFailedBtn').disabled=false;
+  }
+}
+
+function setFailedStatus(msg,type){const el=document.getElementById('failedStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
+
+function getSelectedFailedStudents(){return STATE.failedStudents.filter((_,i)=>STATE.failedSelected.has(i));}
+
+document.getElementById('generateFailedBtn').addEventListener('click',()=>{
+  const selectedStudents=getSelectedFailedStudents();
+  if(selectedStudents.length===0){setFailedStatus('No students selected. Check the boxes next to the students you want to notify.','error');return;}
+
+  STATE.currentFailedPreview=0;
+  document.getElementById('failedPreviewSection').classList.remove('hidden');
+  renderFailedPreview();
+  setFailedStatus('Generated '+selectedStudents.length+' exam result notification(s). Preview them below and export when ready.','success');
+});
+
+function renderFailedPreview(){
+  const students=getSelectedFailedStudents();
+  if(students.length===0)return;
+  const idx=Math.min(STATE.currentFailedPreview,students.length-1);
+  STATE.currentFailedPreview=idx;
+  const s=students[idx];
+  document.getElementById('failedPreviewCount').innerHTML=(idx+1)+' of '+students.length+' &mdash; '+esc(s.firstName)+' '+esc(s.lastName)+' ('+parseFloat(s._effectiveScore).toFixed(1)+'%)';
+  document.getElementById('failedPreviewFrame').innerHTML=buildFailedEmailHtml(s,false);
+}
+
+document.getElementById('failedPrevBtn').addEventListener('click',()=>{if(STATE.currentFailedPreview>0){STATE.currentFailedPreview--;renderFailedPreview();}});
+document.getElementById('failedNextBtn').addEventListener('click',()=>{const students=getSelectedFailedStudents();if(STATE.currentFailedPreview<students.length-1){STATE.currentFailedPreview++;renderFailedPreview();}});
+
+document.getElementById('failedCopyBtn').addEventListener('click',()=>{
+  const frame=document.getElementById('failedPreviewFrame');
+  const range=document.createRange();range.selectNodeContents(frame);
+  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+  document.execCommand('copy');sel.removeAllRanges();
+  const btn=document.getElementById('failedCopyBtn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy This Email',1500);
+});
+
+// ============================================================
+// Shared Email Builder (Header + Signature)
+// ============================================================
+function buildEmailShell(student, headerTitle, bodyContentHtml, wrapDoc){
   const F="font-family:'Open Sans',Arial,Helvetica,sans-serif;";
   const FH="font-family:'Trebuchet MS',Arial,Helvetica,sans-serif;";
   const SP='<tr><td style="height:24px;font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr>';
@@ -1144,7 +1274,7 @@ function buildReminderEmailHtml(student,wrapDoc){
   }
 
   // Header
-  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#64092c;"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:24px 36px;"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td width="74" valign="middle" style="padding-right:18px;"><!--[if mso]><table cellpadding="0" cellspacing="0" border="0"><tr><td width="56" height="56"><![endif]--><img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR" width="56" height="56" style="display:block;width:56px;height:56px;border:0;"/><!--[if mso]></td></tr></table><![endif]--></td><td valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+FH+'font-size:20px;font-weight:700;color:#ffffff;line-height:24px;mso-line-height-rule:exactly;">Exam Reminder</td></tr><tr><td style="'+F+'font-size:12px;color:rgba(255,255,255,0.7);line-height:16px;mso-line-height-rule:exactly;padding-top:3px;">CLEAR Learning Portal</td></tr></table></td></tr></table></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table>';
+  h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#64092c;"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:24px 36px;"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td width="74" valign="middle" style="padding-right:18px;"><!--[if mso]><table cellpadding="0" cellspacing="0" border="0"><tr><td width="56" height="56"><![endif]--><img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR" width="56" height="56" style="display:block;width:56px;height:56px;border:0;"/><!--[if mso]></td></tr></table><![endif]--></td><td valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+FH+'font-size:20px;font-weight:700;color:#ffffff;line-height:24px;mso-line-height-rule:exactly;">'+esc(headerTitle)+'</td></tr><tr><td style="'+F+'font-size:12px;color:rgba(255,255,255,0.7);line-height:16px;mso-line-height-rule:exactly;padding-top:3px;">CLEAR Learning Portal</td></tr></table></td></tr></table></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table>';
 
   // Gold stripe
   h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="height:4px;background-color:#dda838;font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>';
@@ -1155,16 +1285,8 @@ function buildReminderEmailHtml(student,wrapDoc){
   // Greeting
   h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:16px;color:#333333;line-height:24px;mso-line-height-rule:exactly;padding-bottom:20px;">Hello <strong>'+esc(student.firstName)+' '+esc(student.lastName)+'</strong>,</td></tr></table>';
 
-  // Body paragraphs - allow HTML (for links) but bold program name and deadline
-  bodyLines.forEach(line=>{
-    let lineHtml=line;
-    // Bold the program name and deadline (escape them for safe replacement, but allow other HTML through)
-    lineHtml=lineHtml.split(programName).join('<strong>'+esc(programName)+'</strong>');
-    lineHtml=lineHtml.split(deadline).join('<strong style="color:#64092c;">'+esc(deadline)+'</strong>');
-    // Style any links with the CLEAR blue color
-    lineHtml=lineHtml.replace(/<a /g,'<a style="color:#084d78;" ');
-    h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+lineHtml+'</td></tr></table>';
-  });
+  // Body paragraphs
+  h+=bodyContentHtml;
 
   h+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">'+SP+'</table>';
 
@@ -1182,11 +1304,72 @@ function buildReminderEmailHtml(student,wrapDoc){
   return h;
 }
 
-// Export Reminder Emails for Power Automate (ZIP)
-document.getElementById('exportReminderPABtn').addEventListener('click',async()=>{
-  const students=STATE.reminderStudents;
-  if(students.length===0){alert('No reminder emails to export.');return;}
+// ============================================================
+// Build Reminder Email HTML
+// ============================================================
+function buildReminderEmailHtml(student,wrapDoc){
+  const F="font-family:'Open Sans',Arial,Helvetica,sans-serif;";
+  const programName=document.getElementById('reminderProgramName').value||'NCIT Program';
+  const deadline=document.getElementById('reminderDeadline').value||'[deadline not set]';
+  const bodyTemplate=document.getElementById('reminderBody').value;
+  
+  const bodyText=bodyTemplate.replace(/\{programName\}/g,programName).replace(/\{deadline\}/g,deadline);
+  const bodyLines=bodyText.split('\n').filter(l=>l.trim());
 
+  let bodyHtml='';
+  bodyLines.forEach(line=>{
+    let lineHtml=line;
+    lineHtml=lineHtml.split(programName).join('<strong>'+esc(programName)+'</strong>');
+    lineHtml=lineHtml.split(deadline).join('<strong style="color:#64092c;">'+esc(deadline)+'</strong>');
+    lineHtml=lineHtml.replace(/<a /g,'<a style="color:#084d78;" ');
+    bodyHtml+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+lineHtml+'</td></tr></table>';
+  });
+
+  return buildEmailShell(student,'Exam Reminder',bodyHtml,wrapDoc);
+}
+
+// ============================================================
+// Build Failed Exam Email HTML
+// ============================================================
+function buildFailedEmailHtml(student,wrapDoc){
+  const F="font-family:'Open Sans',Arial,Helvetica,sans-serif;";
+  const programName=document.getElementById('failedProgramName').value||'NCIT Program';
+  const feeAmount=document.getElementById('failedRetakeFee').value||'$100.00';
+  const contactEmail=document.getElementById('failedContactEmail').value||'clearlearning@clearhq.org';
+  const duration=document.getElementById('failedRetakeDuration').value||'7 days';
+  const bodyTemplate=document.getElementById('failedBody').value;
+
+  let bodyText=bodyTemplate
+    .replace(/\{programName\}/g,programName)
+    .replace(/\{feeAmount\}/g,feeAmount)
+    .replace(/\{contactEmail\}/g,contactEmail)
+    .replace(/\{duration\}/g,duration);
+
+  const bodyLines=bodyText.split('\n').filter(l=>l.trim());
+
+  let bodyHtml='';
+  bodyLines.forEach(line=>{
+    let lineHtml=esc(line);
+    // Bold key values
+    lineHtml=lineHtml.split(esc(programName)).join('<strong>'+esc(programName)+'</strong>');
+    lineHtml=lineHtml.split(esc(feeAmount)).join('<strong style="color:#64092c;">'+esc(feeAmount)+'</strong>');
+    lineHtml=lineHtml.split(esc(duration)).join('<strong>'+esc(duration)+'</strong>');
+    // Convert contact email references to mailto links
+    const safeEmail=esc(contactEmail);
+    const mailtoLink='<a href="mailto:'+encodeURI(contactEmail)+'?subject='+encodeURIComponent('NCIT Exam Retake Request')+'" style="color:#084d78;">'+safeEmail+'</a>';
+    lineHtml=lineHtml.split(safeEmail).join(mailtoLink);
+    bodyHtml+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+lineHtml+'</td></tr></table>';
+  });
+
+  return buildEmailShell(student,'Exam Results Notification',bodyHtml,wrapDoc);
+}
+
+// ============================================================
+// Export Reminder Emails for Power Automate (ZIP)
+// ============================================================
+document.getElementById('exportReminderPABtn').addEventListener('click',async()=>{
+  const students=getSelectedReminderStudents();
+  if(students.length===0){alert('No reminder emails to export.');return;}
   const deadline=document.getElementById('reminderDeadline').value.trim();
   if(!deadline){alert('Please enter an exam deadline date first.');return;}
 
@@ -1194,41 +1377,49 @@ document.getElementById('exportReminderPABtn').addEventListener('click',async()=
   btn.disabled=true;btn.innerHTML='&#9993; Generating ZIP...';
 
   try{
-    const zip=new JSZip();
-    const folder=zip.folder('ExamReminderEmails');
-
+    const zip=new JSZip();const folder=zip.folder('ExamReminderEmails');
     students.forEach(s=>{
       const fullHtml=buildReminderEmailHtml(s,true);
       const safeEmail=(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_');
       folder.file('ExamReminder_'+safeEmail+'.html',fullHtml);
     });
-
-    const manifest=students.map(s=>({
-      email:s.email,
-      firstName:s.firstName,
-      lastName:s.lastName,
-      file:'ExamReminder_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',
-      cohort:s.cohort
-    }));
+    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,file:'ExamReminder_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
     folder.file('_manifest.json',JSON.stringify(manifest,null,2));
-
     const blob=await zip.generateAsync({type:'blob'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download='ExamReminderEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ExamReminderEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
     setReminderStatus('Exported '+students.length+' reminder email(s) to ZIP file.','success');
-  }catch(err){
-    alert('Error generating ZIP: '+err.message);
-    console.error(err);
-  }
+  }catch(err){alert('Error generating ZIP: '+err.message);console.error(err);}
 
   btn.disabled=false;btn.innerHTML='&#9993; Export Emails for Power Automate';
+});
+
+// ============================================================
+// Export Failed Exam Emails for Power Automate (ZIP)
+// ============================================================
+document.getElementById('exportFailedPABtn').addEventListener('click',async()=>{
+  const students=getSelectedFailedStudents();
+  if(students.length===0){alert('No failed exam emails to export.');return;}
+
+  const btn=document.getElementById('exportFailedPABtn');
+  btn.disabled=true;btn.innerHTML='&#10060; Generating ZIP...';
+
+  try{
+    const zip=new JSZip();const folder=zip.folder('ExamFailedEmails');
+    students.forEach(s=>{
+      const fullHtml=buildFailedEmailHtml(s,true);
+      const safeEmail=(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_');
+      folder.file('ExamFailed_'+safeEmail+'.html',fullHtml);
+    });
+    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,score:parseFloat(s._effectiveScore).toFixed(1),file:'ExamFailed_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
+    folder.file('_manifest.json',JSON.stringify(manifest,null,2));
+    const blob=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ExamFailedEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    setFailedStatus('Exported '+students.length+' exam result notification(s) to ZIP file.','success');
+  }catch(err){alert('Error generating ZIP: '+err.message);console.error(err);}
+
+  btn.disabled=false;btn.innerHTML='&#10060; Export Emails for Power Automate';
 });
 </script>
 </body>
