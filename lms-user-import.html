@@ -212,7 +212,7 @@ const res={created:0,existing:0,failed:0,errors:[]};
 try{
 // Create users
 for(let i=0;i<STATE.importUsers.length;i++){const u=STATE.importUsers[i];prog('Creating user '+(i+1)+'/'+STATE.importUsers.length+'...');
-try{const p=new URLSearchParams();p.set('first_name',u.firstName);p.set('last_name',u.lastName);p.set('email',u.email);p.set('login',u.email);p.set('password',u.password);p.set('language',u.language);await apiPost('/v1/usersignup',p.toString());res.created++;}
+try{const p=new URLSearchParams();p.set('first_name',u.firstName);p.set('last_name',u.lastName);p.set('email',u.email);p.set('login',u.email);p.set('password',u.password);p.set('custom_field_11',u.password);p.set('language',u.language);await apiPost('/v1/usersignup',p.toString());res.created++;}
 catch(e){if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;else{res.failed++;res.errors.push(u.email+': '+e.message);}}}
 // Create group with key
 prog('Creating group...');
