@@ -57,6 +57,25 @@
   .exam-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-mid);font-size:13px;}
   .exam-row:last-child{border-bottom:none;}.exam-score{font-weight:700;font-size:15px;}
   .exam-score.pass{color:var(--green);}.exam-score.fail{color:var(--red);}
+
+  /* ── SCORM Report Block ── */
+  .scorm-report{border-radius:var(--radius);margin-top:16px;overflow:hidden;border:1px solid var(--gray-mid);}
+  .scorm-report-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--burgundy);color:var(--white);}
+  .scorm-report-header h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0;}
+  .scorm-report-header .scorm-progress{font-size:13px;font-weight:700;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:12px;}
+  .scorm-report-header .scorm-progress.complete{background:var(--green);color:var(--white);}
+  .scorm-report-body{padding:16px;}
+  .scorm-last-page{font-size:12px;color:#888;margin-bottom:12px;}
+  .scorm-last-page strong{color:var(--gray);}
+  .scorm-all-done{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--green-bg);border-radius:var(--radius);color:var(--green);font-weight:600;font-size:13px;}
+  .scorm-incomplete-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy);margin-bottom:8px;}
+  .scorm-incomplete-list{display:flex;flex-direction:column;gap:6px;}
+  .scorm-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--red-bg);border-radius:var(--radius);font-size:13px;color:var(--red);}
+  .scorm-item-icon{font-size:14px;flex-shrink:0;}
+  .scorm-item-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#e57373;min-width:70px;}
+  .scorm-item-label{flex:1;color:var(--gray);}
+  .scorm-no-data{font-size:13px;color:#999;font-style:italic;padding:8px 0;}
+
   .action-bar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:20px;background:var(--gray-light);border-radius:var(--radius);margin-top:20px;}
   .status-bar{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-top:12px;display:none;}
   .status-bar.info{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;display:block;}
@@ -136,7 +155,6 @@ async function doSearch(){
   el.innerHTML='<p style="color:#888;padding:8px 0;">Searching...</p>';
   document.getElementById('panelUser').classList.add('hidden');
   try{
-    // Cache all users on first search
     if(!STATE.allUsers)STATE.allUsers=await apiCall('/v1/users');
     const lower=q.toLowerCase();
     const matches=STATE.allUsers.filter(u=>{
@@ -149,6 +167,75 @@ async function doSearch(){
   }catch(e){el.innerHTML='<p style="color:var(--red);">Error: '+esc(e.message)+'</p>';}
 }
 
+// ── SCORM Progress Report (fetched from Cloudflare KV) ────────────────────
+const SCORM_ITEM_META = {
+  'Page':            { icon: '📄' },
+  'Tab':             { icon: '🗂️' },
+  'Accordion':       { icon: '📖' },
+  'Thumbnail':       { icon: '🖼️' },
+  'Scenario':        { icon: '🎭' },
+  'Knowledge Check': { icon: '❓' },
+  'Reflection':      { icon: '✍️' },
+};
+
+function getItemMeta(label) {
+  const colon = label.indexOf(':');
+  if (colon === -1) return { icon: '⚠️', type: '', itemLabel: label };
+  const type = label.substring(0, colon).trim();
+  const itemLabel = label.substring(colon + 1).trim();
+  const meta = SCORM_ITEM_META[type] || { icon: '⚠️' };
+  return { icon: meta.icon, type, itemLabel };
+}
+
+async function fetchScormReports(userId) {
+  try {
+    const r = await fetch(
+      STATE.workerUrl.replace(/\/+$/, '') + '/scorm/getall?user_id=' + userId,
+      { headers: { 'X-Auth-Token': STATE.authToken } }
+    );
+    const data = await r.json();
+    return data.found ? data.records : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function buildScormReportHtml(record) {
+  const support = record.support;
+  const isComplete = support.incomplete && support.incomplete.length === 0;
+
+  let html = '<div class="scorm-report">';
+
+  // Header
+  html += `<div class="scorm-report-header">
+    <h4>📊 Interactive Progress — ${esc(record.module_name)}</h4>
+    <span class="scorm-progress${isComplete ? ' complete' : ''}">${esc(support.progress)}</span>
+  </div>`;
+
+  html += '<div class="scorm-report-body">';
+  html += `<p class="scorm-last-page">Last page seen: <strong>${esc(support.lastPageSeen || '—')}</strong> &nbsp;·&nbsp; <span style="color:#aaa;font-size:11px;">Saved: ${esc(new Date(record.saved_at).toLocaleString())}</span></p>`;
+
+  if (isComplete) {
+    html += '<div class="scorm-all-done">✅ All interactive elements completed — nothing is blocking this learner.</div>';
+  } else {
+    const items = support.incomplete || [];
+    html += `<div class="scorm-incomplete-label">Not yet completed (${items.length} remaining)</div>`;
+    html += '<div class="scorm-incomplete-list">';
+    items.forEach(label => {
+      const { icon, type, itemLabel } = getItemMeta(label);
+      html += `<div class="scorm-item">
+        <span class="scorm-item-icon">${icon}</span>
+        <span class="scorm-item-type">${esc(type)}</span>
+        <span class="scorm-item-label">${esc(itemLabel)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
 // Load user detail
 async function loadUser(userId){
   const panel=document.getElementById('panelUser');panel.classList.remove('hidden');
@@ -159,16 +246,13 @@ async function loadUser(userId){
     STATE.selectedUser=user;
     const initials=((user.first_name||'')[0]||'')+((user.last_name||'')[0]||'');
 
-    // Build user header with groups
     let headerHtml='<div class="user-avatar">'+esc(initials.toUpperCase())+'</div><div style="flex:1;"><div class="user-name">'+esc(user.first_name||'')+' '+esc(user.last_name||'')+'</div><div class="user-email">'+esc(user.email||'')+(user.login?' &middot; Login: '+esc(user.login):'')+'</div>';
-    // Fetch groups
     const userGroups=(user.groups||[]);
     if(userGroups.length>0){
       const groupNames=[];
       for(const g of userGroups){try{const gd=await apiCall('/v1/groups/id:'+(g.id||g.group_id||g));groupNames.push(gd.name||'Group '+gd.id);}catch(e){groupNames.push('Group '+(g.id||g.group_id||g));}}
       headerHtml+='<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">'+groupNames.map(n=>'<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);">'+esc(n)+'</span>').join('')+'</div>';
     }else{
-      // Try fetching all groups and filtering
       try{const allGroups=await apiCall('/v1/groups');const memberOf=[];
       for(const g of allGroups){try{const gd=await apiCall('/v1/groups/id:'+g.id);if(gd.users&&gd.users.some(u=>(u.user_id||u.id)==userId))memberOf.push(g.name);}catch(e){}}
       if(memberOf.length>0){headerHtml+='<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">'+memberOf.map(n=>'<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);">'+esc(n)+'</span>').join('')+'</div>';}
@@ -177,12 +261,16 @@ async function loadUser(userId){
     headerHtml+='</div>';
     document.getElementById('userHeader').innerHTML=headerHtml;
 
-    // Get enrolled courses
     const courses=user.courses||[];
     STATE.userCourses=courses;
     if(courses.length===0){document.getElementById('courseCards').innerHTML='<p style="color:#888;">This user is not enrolled in any courses.</p>';setupMarkCourse([]);panel.scrollIntoView({behavior:'smooth'});return;}
 
-    // Fetch details for each course
+    // Fetch SCORM progress records from KV for this user
+    const scormRecords = await fetchScormReports(userId);
+    // Index by module_id for easy lookup
+    const scormByModule = {};
+    scormRecords.forEach(r => { scormByModule[r.module_id] = r; });
+
     let html='';
     STATE.courseDetails={};
     for(let i=0;i<courses.length;i++){
@@ -193,6 +281,7 @@ async function loadUser(userId){
         const units=status.units||[];
         const filteredUnits=units.filter(u=>shouldIncludeUnit(u.name));
         const testUnits=units.filter(u=>u.type&&u.type.toLowerCase()==='test');
+
         const completionStatus=c.completion_status_formatted||c.completion_status||status.completion_status||'Not Started';
         const completionPct=c.completion_percentage||status.completion_percentage||'0';
         const enrolledDate=c.enrolled_on||c.enrolled_on_timestamp||status.enrolled_on||'';
@@ -212,6 +301,52 @@ async function loadUser(userId){
         }else{
           html+='<p style="font-size:13px;color:#888;margin-bottom:12px;">No matching modules in this course.</p>';
         }
+
+        // SCORM progress reports from KV — match by unit id only
+        // Log unit ids for debugging
+        console.log('Course:', c.name, '| Unit IDs:', units.map(u => u.id));
+        units.forEach(u => {
+          const record = scormByModule[String(u.id)];
+          console.log('Checking unit', u.id, '→', record ? 'FOUND' : 'not found');
+          if (record) {
+            const reportId = 'scorm-report-' + u.id;
+            const isComplete = record.support.incomplete && record.support.incomplete.length === 0;
+            const progressLabel = record.support.progress;
+            const headerBg = isComplete ? '#2e7d32' : 'var(--burgundy)';
+
+            html += `<div class="scorm-report">
+              <div class="scorm-report-header" onclick="this.nextElementSibling.classList.toggle('open')" style="cursor:pointer;background:${headerBg};">
+                <h4>📊 ${esc(record.module_name)}</h4>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span class="scorm-progress${isComplete ? ' complete' : ''}">${esc(progressLabel)}</span>
+                  <span style="font-size:11px;opacity:0.7;">▼</span>
+                </div>
+              </div>
+              <div class="course-card-body" id="${reportId}">
+                <div class="scorm-report-body">`;
+
+            html += `<p class="scorm-last-page">Last page seen: <strong>${esc(record.support.lastPageSeen || '—')}</strong> &nbsp;·&nbsp; <span style="color:#aaa;font-size:11px;">Saved: ${esc(new Date(record.saved_at).toLocaleString())}</span></p>`;
+
+            if (isComplete) {
+              html += '<div class="scorm-all-done">✅ All interactive elements completed — nothing is blocking this learner.</div>';
+            } else {
+              const items = record.support.incomplete || [];
+              html += `<div class="scorm-incomplete-label">Not yet completed (${items.length} remaining)</div>`;
+              html += '<div class="scorm-incomplete-list">';
+              items.forEach(label => {
+                const { icon, type, itemLabel } = getItemMeta(label);
+                html += `<div class="scorm-item">
+                  <span class="scorm-item-icon">${icon}</span>
+                  <span class="scorm-item-type">${esc(type)}</span>
+                  <span class="scorm-item-label">${esc(itemLabel)}</span>
+                </div>`;
+              });
+              html += '</div>';
+            }
+
+            html += `</div></div></div>`;
+          }
+        });
 
         // Exam scores
         if(testUnits.length>0){
