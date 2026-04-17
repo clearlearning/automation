@@ -273,13 +273,13 @@ main{max-width:820px;margin:0 auto;padding:36px 20px 80px}
   <div class="card-title">Email Code</div>
   <div class="card-desc">Copy everything below and paste it into TalentLMS. Line 1 is the subject, line 2 is the HTML body.</div>
   <div class="success">✅ Generated for <strong id="out-label"></strong></div>
-  <div class="instr"><strong>How to use:</strong> Click <strong>Copy All</strong>, then navigate to <strong>TalentLMS</strong>. While using the <strong>Administrator</strong> role, locate the appropriate email template in the <strong>Events Engine</strong> tab, paste the copied content into the body of the email, and click <strong>Update Notification</strong>.</div>
+  <div class="instr"><strong>How to use:</strong> Click <strong>Copy All</strong>, then navigate to <strong>TalentLMS</strong>. While using the <strong>Administrator</strong> role, locate the appropriate email template in the <strong>Events Engine</strong> tab, paste the copied content into the body of the email, and click <strong>Update Notification</strong>.<br><br>Use the <strong>Download as .txt</strong> button to save a text file with this code. Move the file created into the cohort folder. This will prevent you from having to regenerate emails if the event engine needs to be updated again for any reason.</div>
   <div class="out-box">
     <button class="copy-btn" id="copy-btn" onclick="copyAll()">Copy All</button>
     <textarea id="out-text" readonly></textarea>
   </div>
   <div class="btn-row" style="margin-top:14px">
-    <button class="rst-btn" onclick="reset()">← Edit Another Email</button>
+    <button class="rst-btn" onclick="reset()">← Edit Another Email</button><button class="rst-btn" onclick="downloadTxt()">⬇ Download as .txt</button>
   </div>
 </div>
 
@@ -439,6 +439,17 @@ function generate(){
   document.getElementById('out-label').textContent = LABELS[current]||current;
   document.getElementById('card-out').classList.add('show');
   setTimeout(()=>document.getElementById('card-out').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function downloadTxt(){
+  const ta = document.getElementById('out-text');
+  const blob = new Blob([ta.value], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const label = (current && LABELS[current]) ? LABELS[current].replace(/[^a-zA-Z0-9]+/g,'-') : 'email-template';
+  a.download = label + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function copyAll(){
