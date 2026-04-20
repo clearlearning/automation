@@ -195,18 +195,37 @@
     </div>
 
     <!-- Payment Import -->
-    <div class="tab-content" id="tab-payment">
-      <div style="max-width:600px;">
-        <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">Upload the ecommerce transaction report (.xlsx) to auto-populate the <strong>Paid</strong> column. Records are matched by email address.</p>
-        <div id="paymentDropZone" style="border:2px dashed var(--gray-mid);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--gray-light);margin-bottom:16px;">
-          <div style="font-size:28px;margin-bottom:6px;">&#128179;</div>
-          <p style="font-size:14px;color:var(--gray);">Drop ecommerce report here, or click to browse</p>
-          <p style="font-size:12px;color:#999;margin-top:4px;">Accepts .xlsx files with an Email and Payment Status column</p>
-          <input type="file" id="paymentFileInput" accept=".xlsx,.xls" style="display:none">
+<div style="max-width:660px;">
+
+        <!-- Novi Live Pull -->
+        <div class="panel-section" style="margin-bottom:20px;">
+          <h3 style="font-size:14px;color:var(--burgundy);margin-bottom:12px;">&#127760; Pull from Novi AMS</h3>
+          <div class="form-row" style="margin-bottom:10px;">
+            <div class="form-group" style="flex:1;"><label>Novi Auth Token</label><input type="password" id="noviToken" placeholder="Enter Novi token (first time only)"><span class="inline-note">Stored locally — enter once.</span></div>
+            <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="noviConnectBtn">Connect</button></div>
+          </div>
+          <div class="connection-status disconnected" id="noviConnectionStatus" style="margin-bottom:12px;"><span class="dot red"></span> Not connected to Novi</div>
+          <div class="form-row" style="margin-bottom:10px;">
+            <div class="form-group" style="flex:1;"><label>Novi Event</label><div class="search-select"><input type="text" id="noviEventInput" placeholder="Connect to Novi first" disabled><div class="dropdown" id="noviEventDropdown"></div></div><input type="hidden" id="noviEventValue"></div>
+            <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-primary" id="noviPullBtn" disabled>Pull Payment Data</button></div>
+          </div>
+          <div id="noviPullStatus" class="status-bar"></div>
         </div>
-        <div id="paymentStatus" class="status-bar"></div>
+
+        <!-- Manual Upload Fallback -->
+        <div class="panel-section">
+          <h3 style="font-size:14px;color:var(--burgundy);margin-bottom:12px;">&#128196; Manual Upload (fallback)</h3>
+          <p style="font-size:13px;color:var(--gray);margin-bottom:12px;">Upload the ecommerce transaction report (.xlsx) to auto-populate the <strong>Paid</strong> column. Records are matched by email address.</p>
+          <div id="paymentDropZone" style="border:2px dashed var(--gray-mid);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--gray-light);margin-bottom:12px;">
+            <div style="font-size:28px;margin-bottom:6px;">&#128179;</div>
+            <p style="font-size:14px;color:var(--gray);">Drop ecommerce report here, or click to browse</p>
+            <p style="font-size:12px;color:#999;margin-top:4px;">Accepts .xlsx files with an Email and Payment Status column</p>
+            <input type="file" id="paymentFileInput" accept=".xlsx,.xls" style="display:none">
+          </div>
+          <div id="paymentStatus" class="status-bar"></div>
+        </div>
+
       </div>
-    </div>
 
     <!-- Email Reminders Tab -->
     <div class="tab-content" id="tab-reminders">
@@ -1039,6 +1058,158 @@ function processPaymentFile(file){
   };
   reader.readAsArrayBuffer(file);
 }
+
+// ============================================================
+// Novi AMS Integration
+// ============================================================
+(function(){
+  const t=localStorage.getItem('clear_novi_token');
+  if(t){document.getElementById('noviToken').value=t;}
+})();
+
+async function noviCall(path){
+  const token=document.getElementById('noviToken').value.trim();
+  const workerUrl=STATE.workerUrl.replace(/\/+$/,'');
+  const r=await fetch(workerUrl+'/novi'+path,{headers:{'X-Auth-Token':STATE.authToken}});
+  if(!r.ok){const t=await r.text();throw new Error('Novi API '+r.status+': '+t);}
+  return r.json();
+}
+
+function setNoviConnection(status,text){
+  const el=document.getElementById('noviConnectionStatus');
+  el.className='connection-status '+status;
+  const d=status==='connected'?'green':status==='loading'?'amber':'red';
+  el.innerHTML='<span class="dot '+d+'"></span> '+esc(text);
+}
+
+function setNoviPullStatus(msg,type){
+  const el=document.getElementById('noviPullStatus');
+  el.className='status-bar'+(type?' '+type:'');
+  el.innerHTML=msg;
+}
+
+async function doNoviConnect(){
+  const token=document.getElementById('noviToken').value.trim();
+  if(!token){alert('Enter your Novi auth token first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first (Section 1) — the same worker handles Novi.');return;}
+  setNoviConnection('loading','Connecting to Novi...');
+  try{
+    const events=await noviCall('/api/events?pageSize=200&offset=0');
+    const list=(events.Results||events||[]).filter(e=>e.Name||e.EventName);
+    if(!list.length){setNoviConnection('disconnected','Connected but no events found.');return;}
+    STATE.noviEvents=list;
+    localStorage.setItem('clear_novi_token',token);
+    setNoviConnection('connected','Connected — '+list.length+' events loaded');
+    // populate dropdown
+    const input=document.getElementById('noviEventInput');
+    const dd=document.getElementById('noviEventDropdown');
+    input.disabled=false;
+    input.placeholder='Type to search events...';
+// Sort: future/today first (ascending), then past (descending)
+    const now = new Date();
+    const sorted = [...list].sort((a, b) => {
+      const da = new Date(a.StartDate), db = new Date(b.StartDate);
+      const aFuture = da >= now, bFuture = db >= now;
+      if(aFuture && bFuture) return db - da;
+      if(!aFuture && !bFuture) return db - da;
+      return aFuture ? -1 : 1;
+    });
+
+    function formatDate(d){
+      if(!d) return '';
+      const dt = new Date(d);
+      return (dt.getMonth()+1).toString().padStart(2,'0')+'/'
+            +dt.getDate().toString().padStart(2,'0')+'/'
+            +dt.getFullYear();
+    }
+
+    function renderNoviDropdown(filter){
+      const filtered = sorted.filter(e =>
+        (e.Name||'').toLowerCase().includes(filter.toLowerCase()) ||
+        (e.EventCategory?.Name||'').toLowerCase().includes(filter.toLowerCase()) ||
+        formatDate(e.StartDate).includes(filter)
+      );
+      dd.innerHTML = filtered.length
+        ? filtered.map(e =>
+            '<div class="opt" data-id="'+esc(e.EventUniqueId)+'" data-name="'+esc(e.Name)+'">'
+            +'<span style="color:#888;font-size:11px;margin-right:8px;">'+formatDate(e.StartDate)+'</span>'
+            +esc(e.Name)
+            +(e.EventCategory?.Name ? '<span style="color:#aaa;font-size:11px;margin-left:6px;">('+esc(e.EventCategory.Name)+')</span>' : '')
+            +'</div>'
+          ).join('')
+        : '<div class="no-match">No events match</div>';
+      dd.classList.add('open');
+    }
+
+    input.addEventListener('focus',()=>renderNoviDropdown(input.value));
+    input.addEventListener('input',()=>renderNoviDropdown(input.value));
+    dd.addEventListener('mousedown',e=>{
+      const opt=e.target.closest('.opt');
+      if(!opt)return;
+      document.getElementById('noviEventValue').value=opt.dataset.id;
+      input.value=opt.dataset.name;
+      dd.classList.remove('open');
+      document.getElementById('noviPullBtn').disabled=false;
+    });
+    document.addEventListener('click',e=>{if(!e.target.closest('.search-select'))dd.classList.remove('open');});
+  }catch(err){
+    setNoviConnection('disconnected','Connection failed: '+err.message);
+    console.error(err);
+  }
+}
+
+document.getElementById('noviConnectBtn').addEventListener('click',doNoviConnect);
+
+document.getElementById('noviPullBtn').addEventListener('click',async()=>{
+  const eventId=document.getElementById('noviEventValue').value;
+  if(!eventId){alert('Select a Novi event first.');return;}
+  if(!STATE.reportData||STATE.reportData.length===0){setNoviPullStatus('Pull exam data first before importing payment data.','error');return;}
+  const btn=document.getElementById('noviPullBtn');
+  btn.disabled=true;btn.textContent='Pulling...';
+  setNoviPullStatus('Fetching attendees from Novi...','info');
+  try{
+    let allAttendees=[];let offset=0;const pageSize=200;
+    while(true){
+      const res=await noviCall('/api/attendees?eventId='+eventId+'&pageSize='+pageSize+'&offset='+offset);
+      const page=Array.isArray(res)?res:(res.Results||[]);
+      allAttendees=allAttendees.concat(page);
+      if(page.length<pageSize)break;
+      offset+=pageSize;
+    }
+    // build email map — exclude @clearhq.org
+    const paymentMap=new Map();
+    allAttendees.forEach(a=>{
+      const email=String(a.Email||'').toLowerCase().trim();
+      if(!email||email.endsWith('@clearhq.org'))return;
+      if(a.Cancelled){paymentMap.set(email,'Cancelled');}
+      else if(a.PricePaid>0){paymentMap.set(email,'Yes');}
+      else{paymentMap.set(email,'No');}
+    });
+    // match against report
+    let matched=0,unmatched=0;
+    const unmatchedNames=[];
+    STATE.reportData.forEach((r,i)=>{
+      const email=String(r.email||'').toLowerCase().trim();
+      if(paymentMap.has(email)){
+        r.paid=paymentMap.get(email);
+        matched++;
+        // update cell live
+        const cell=document.querySelector('#reportTable tbody tr:nth-child('+(i+1)+') td[data-field="paid"]');
+        if(cell)cell.textContent=r.paid;
+      }else{
+        unmatched++;
+        unmatchedNames.push(r.firstName+' '+r.lastName);
+      }
+    });
+    let msg='<strong>'+matched+'</strong> student(s) matched and updated.';
+    if(unmatched>0)msg+=' <strong>'+unmatched+'</strong> student(s) had no matching Novi record: '+unmatchedNames.join(', ')+'.';
+    setNoviPullStatus(msg,matched>0?'success':'error');
+  }catch(err){
+    setNoviPullStatus('Error pulling from Novi: '+err.message,'error');
+    console.error(err);
+  }
+  btn.disabled=false;btn.textContent='Pull Payment Data';
+});
 
 // ============================================================
 // SHARED: Selectable Student List Renderer
