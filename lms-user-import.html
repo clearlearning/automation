@@ -77,14 +77,34 @@
       <div class="connection-status disconnected" id="connectionStatus"><span class="dot red"></span> Not connected</div>
     </div>
     <div class="panel-section">
-      <h3>2. Upload Attendee File</h3>
-      <div class="drop-zone" id="dropZone">
-        <div class="icon">&#128196;</div>
-        <p>Drop the attendee CSV file here, or click to browse</p>
-        <p class="sub">Accepts .csv files exported from the ecommerce platform</p>
-        <input type="file" id="fileInput" accept=".csv" style="display:none">
+      <h3>2. Attendee Data Source</h3>
+
+      <!-- Novi Live Pull -->
+      <div style="border:1px solid var(--gray-mid);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--burgundy);margin-bottom:12px;">&#127760; Pull from Novi AMS</div>
+        <div class="form-row" style="margin-bottom:10px;">
+          <div class="form-group" style="flex:1;"><label>Novi Auth Token</label><input type="password" id="noviToken" placeholder="Enter Novi token (first time only)"><span class="inline-note">Stored locally — enter once.</span></div>
+          <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="noviConnectBtn">Connect</button></div>
+        </div>
+        <div class="connection-status disconnected" id="noviConnectionStatus" style="margin-bottom:12px;"><span class="dot red"></span> Not connected to Novi</div>
+        <div class="form-row" style="margin-bottom:10px;">
+          <div class="form-group" style="flex:1;"><label>Novi Event</label><div class="search-select"><input type="text" id="noviEventInput" placeholder="Connect to Novi first" disabled><div class="dropdown" id="noviEventDropdown"></div></div><input type="hidden" id="noviEventValue"></div>
+          <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-primary" id="noviPullBtn" disabled>Pull Attendees</button></div>
+        </div>
+        <div id="noviPullStatus" class="status-bar"></div>
       </div>
-      <div id="fileStatus" class="status-bar"></div>
+
+      <!-- Manual Upload Fallback -->
+      <div style="border:1px solid var(--gray-mid);border-radius:var(--radius);padding:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--burgundy);margin-bottom:12px;">&#128196; Manual Upload (fallback)</div>
+        <div class="drop-zone" id="dropZone">
+          <div class="icon">&#128196;</div>
+          <p>Drop the attendee CSV file here, or click to browse</p>
+          <p class="sub">Accepts .csv files exported from the ecommerce platform</p>
+          <input type="file" id="fileInput" accept=".csv" style="display:none">
+        </div>
+        <div id="fileStatus" class="status-bar"></div>
+      </div>
     </div>
     <div class="panel-section">
       <h3>3. Group &amp; Course Configuration</h3>
@@ -138,6 +158,112 @@ function rend(f){const avail=STATE.courses.filter(c=>!STATE.selectedCourses.find
 inp.addEventListener('focus',()=>{rend(inp.value);dd.classList.add('open');});inp.addEventListener('input',()=>{rend(inp.value);dd.classList.add('open');});inp.addEventListener('blur',()=>{setTimeout(()=>dd.classList.remove('open'),150);});rend('');}
 function renderChips(){document.getElementById('selectedCourses').innerHTML=STATE.selectedCourses.map((c,i)=>'<div class="course-chip">'+esc(c.name)+' <span class="remove" onclick="rmCourse('+i+')">&times;</span></div>').join('');}
 function rmCourse(i){STATE.selectedCourses.splice(i,1);renderChips();}
+
+// ============================================================
+// Novi AMS Integration
+// ============================================================
+(function(){const t=localStorage.getItem('clear_novi_token');if(t)document.getElementById('noviToken').value=t;})();
+
+async function noviCall(path){
+  const workerUrl=STATE.workerUrl.replace(/\/+$/,'');
+  const r=await fetch(workerUrl+'/novi'+path,{headers:{'X-Auth-Token':STATE.authToken}});
+  if(!r.ok){const t=await r.text();throw new Error('Novi API '+r.status+': '+t);}
+  return r.json();
+}
+
+function setNoviCon(s,t){const el=document.getElementById('noviConnectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
+function setNoviPullStatus(msg,type){const el=document.getElementById('noviPullStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
+
+async function doNoviConnect(){
+  const token=document.getElementById('noviToken').value.trim();
+  if(!token){alert('Enter your Novi auth token first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first (Section 1) — the same worker handles Novi.');return;}
+  setNoviCon('loading','Connecting to Novi...');
+  try{
+    const events=await noviCall('/api/events?pageSize=200&offset=0');
+    const list=(events.Results||events||[]).filter(e=>e.Name||e.EventName);
+    if(!list.length){setNoviCon('disconnected','Connected but no events found.');return;}
+    STATE.noviEvents=list;
+    localStorage.setItem('clear_novi_token',token);
+    setNoviCon('connected','Connected — '+list.length+' events loaded');
+    const input=document.getElementById('noviEventInput');
+    const dd=document.getElementById('noviEventDropdown');
+    input.disabled=false;
+    input.placeholder='Type to search events...';
+    const now=new Date();
+    const sorted=[...list].sort((a,b)=>{
+      const da=new Date(a.StartDate),db=new Date(b.StartDate);
+      const aF=da>=now,bF=db>=now;
+      if(aF&&bF)return db-da;
+      if(!aF&&!bF)return db-da;
+      return aF?-1:1;
+    });
+    function formatDate(d){if(!d)return'';const dt=new Date(d);return(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0')+'/'+dt.getFullYear();}
+    function renderNoviDropdown(filter){
+      const filtered=sorted.filter(e=>(e.Name||'').toLowerCase().includes(filter.toLowerCase())||(e.EventCategory?.Name||'').toLowerCase().includes(filter.toLowerCase())||formatDate(e.StartDate).includes(filter));
+      dd.innerHTML=filtered.length
+        ?filtered.map(e=>'<div class="opt" data-id="'+esc(e.EventUniqueId)+'" data-name="'+esc(e.Name)+'">'+'<span style="color:#888;font-size:11px;margin-right:8px;">'+formatDate(e.StartDate)+'</span>'+esc(e.Name)+(e.EventCategory?.Name?'<span style="color:#aaa;font-size:11px;margin-left:6px;">('+esc(e.EventCategory.Name)+')</span>':'')+'</div>').join('')
+        :'<div class="no-match">No events match</div>';
+      dd.classList.add('open');
+    }
+    input.addEventListener('focus',()=>renderNoviDropdown(input.value));
+    input.addEventListener('input',()=>renderNoviDropdown(input.value));
+    dd.addEventListener('mousedown',e=>{
+      const opt=e.target.closest('.opt');
+      if(!opt)return;
+      document.getElementById('noviEventValue').value=opt.dataset.id;
+      input.value=opt.dataset.name;
+      dd.classList.remove('open');
+      document.getElementById('noviPullBtn').disabled=false;
+    });
+    document.addEventListener('click',e=>{if(!e.target.closest('.search-select'))dd.classList.remove('open');});
+  }catch(err){setNoviCon('disconnected','Connection failed: '+err.message);console.error(err);}
+}
+
+document.getElementById('noviConnectBtn').addEventListener('click',doNoviConnect);
+
+document.getElementById('noviPullBtn').addEventListener('click',async()=>{
+  const eventId=document.getElementById('noviEventValue').value;
+  if(!eventId){alert('Select a Novi event first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first.');return;}
+  const btn=document.getElementById('noviPullBtn');
+  btn.disabled=true;btn.textContent='Pulling...';
+  setNoviPullStatus('Fetching attendees from Novi...','info');
+  try{
+    let allAttendees=[];let offset=0;const pageSize=200;
+    while(true){
+      const res=await noviCall('/api/attendees?eventId='+eventId+'&pageSize='+pageSize+'&offset='+offset);
+      const page=Array.isArray(res)?res:(res.Results||[]);
+      allAttendees=allAttendees.concat(page);
+      if(page.length<pageSize)break;
+      offset+=pageSize;
+    }
+    // Exclude @clearhq.org and cancelled
+    const valid=allAttendees.filter(a=>{
+      const email=String(a.Email||'').toLowerCase().trim();
+      return email&&!email.endsWith('@clearhq.org')&&!a.Cancelled;
+    });
+    if(!valid.length){setNoviPullStatus('No eligible attendees found for this event.','error');btn.disabled=false;btn.textContent='Pull Attendees';return;}
+    // Map attendee fields to user object
+    STATE.attendees=valid.map(a=>{
+      const email=String(a.Email||'').toLowerCase().trim();
+      const fn=(a.FirstName||'').trim();
+      const ln=(a.LastName||'').trim();
+      const co=(a.CompanyName||'').trim();
+      const jt=(a.JobTitle||a.Title||'').trim();
+      const city=(a.City||'').trim();
+      const st=(a.State||a.StateProvince||'').trim();
+      const zip=(a.ZipCode||a.PostalCode||'').trim();
+      const cn=inferCountry(st,(a.Country||'').trim());
+      return{email,firstName:fn,lastName:ln,company:co,jobTitle:jt,city,state:st,zip,country:cn};
+    });
+    STATE.importUsers=STATE.attendees.filter(u=>u.email).map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
+    setNoviPullStatus('Loaded <strong>'+STATE.importUsers.length+'</strong> attendee(s) from Novi.','success');
+    setFS('','');
+    renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
+  }catch(err){setNoviPullStatus('Error: '+err.message,'error');console.error(err);}
+  btn.disabled=false;btn.textContent='Pull Attendees';
+});
 
 // File upload
 const dz=document.getElementById('dropZone');const fi=document.getElementById('fileInput');
