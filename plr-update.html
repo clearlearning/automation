@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLR Page Updater · CLEAR Learning</title>
+<style>
+  :root {
+    --burgundy: #64092C;
+    --bm: #7B1E1E;
+    --gold: #DDA838;
+    --gold-lt: #C9973A;
+    --border: #EDE8E0;
+    --text: #1c1410;
+    --muted: #4a3f38;
+    --green: #2d6a4f;
+    --green-bg: #d8f3dc;
+    --red: #9b2226;
+    --red-bg: #ffd7d9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0ece6; color: var(--text); min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #4a0620 0%, var(--bm) 100%);
+    padding: 20px 36px; display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  header .badge { font-size: 26px; }
+  header h1 { font-family: Georgia, serif; font-size: 1.35em; color: #fff; font-weight: 600; }
+  header p { font-size: 0.78em; color: rgba(255,255,255,0.6); margin-top: 2px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .layout { display: grid; grid-template-columns: 420px 1fr; gap: 0; height: calc(100vh - 70px); }
+
+  .left-panel { background: #fff; border-right: 1px solid var(--border); padding: 24px 22px; overflow-y: auto; }
+
+  .step-label {
+    font-size: 0.7em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--burgundy); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .step-label::before {
+    content: attr(data-n); width: 20px; height: 20px; border-radius: 50%;
+    background: var(--burgundy); color: #fff; display: flex; align-items: center;
+    justify-content: center; font-size: 0.9em; font-weight: 700; flex-shrink: 0;
+  }
+
+  .section-card { margin-bottom: 18px; }
+  .section-card + .section-card { border-top: 1px solid var(--border); padding-top: 18px; }
+
+  textarea, input[type="text"], input[type="url"], input[type="number"], select {
+    width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 6px;
+    font-size: 0.88em; color: var(--text); background: #faf9f7;
+    transition: border-color 0.2s; font-family: inherit;
+  }
+  textarea { resize: vertical; }
+  textarea.code { font-family: 'Consolas','Courier New',monospace; font-size: 0.76em; min-height: 100px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold-lt); }
+
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 11px; }
+  .field:last-child { margin-bottom: 0; }
+  label { font-size: 0.72em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5a1414; }
+  label .req { color: var(--gold-lt); }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .month-row { display: flex; gap: 8px; align-items: center; }
+  .month-row select { flex: 1; }
+  .month-sep { font-size: 0.85em; color: #7a6e67; font-weight: 700; flex-shrink: 0; }
+
+  .tag-row { display: flex; gap: 6px; }
+  .tag-row input { flex: 1; }
+  .btn-tag { padding: 9px 13px; background: var(--burgundy); color: #fff; border: none; border-radius: 6px; font-size: 0.8em; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn-tag:hover { background: var(--bm); }
+  .tags-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; min-height: 26px; }
+  .tag-chip { background: var(--border); color: var(--muted); font-size: 0.76em; font-weight: 500; padding: 3px 9px 3px 11px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
+  .tag-chip button { background: none; border: none; cursor: pointer; color: var(--gold-lt); font-size: 1em; padding: 0; line-height: 1; }
+
+  .parse-bar { display: none; align-items: center; gap: 7px; margin-top: 7px; font-size: 0.74em; font-weight: 600; }
+  .parse-bar.ok { display: flex; color: var(--green); }
+  .parse-bar.err { display: flex; color: var(--red); }
+  .parse-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  .alert { display: none; padding: 10px 14px; border-radius: 6px; font-size: 0.82em; font-weight: 500; margin-bottom: 12px; }
+  .alert.error { background: var(--red-bg); color: var(--red); border-left: 3px solid var(--red); display: block; }
+  .alert.success { background: var(--green-bg); color: var(--green); border-left: 3px solid var(--green); display: block; }
+
+  .btn-generate {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, var(--burgundy) 0%, var(--bm) 100%);
+    color: #fff; border: none; border-radius: 8px; font-size: 0.92em; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s;
+  }
+  .btn-generate:hover { opacity: 0.9; }
+
+  .right-panel { display: flex; flex-direction: column; overflow: hidden; }
+  .tab-bar { display: flex; background: #f5f1ec; border-bottom: 1px solid var(--border); padding: 0 20px; }
+  .tab-btn {
+    padding: 13px 20px; border: none; background: none; cursor: pointer;
+    font-size: 0.81em; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #7a6e67; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn.active { color: var(--burgundy); border-bottom-color: var(--burgundy); }
+  .tab-btn:hover:not(.active) { color: var(--bm); }
+
+  .tab-content { flex: 1; overflow: hidden; display: none; min-height: 0; }
+  .tab-content.active { display: flex; flex-direction: column; }
+
+  #preview-frame { flex: 1; border: none; background: #fff; width: 100%; min-height: 0; }
+
+  .preview-placeholder {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #b0a99e; gap: 12px; padding: 40px; text-align: center;
+  }
+  .preview-placeholder p { font-size: 0.88em; max-width: 240px; line-height: 1.55; }
+
+  .output-wrap { flex: 1; display: flex; flex-direction: column; padding: 18px 22px; gap: 11px; overflow: hidden; min-height: 0; }
+  .output-instructions {
+    font-size: 0.8em; color: var(--muted); line-height: 1.5;
+    background: #faf8f5; border: 1px solid var(--border); border-radius: 6px; padding: 11px 13px; flex-shrink: 0;
+  }
+  .output-instructions strong { color: var(--burgundy); }
+  #output-html {
+    flex: 1; font-family: 'Consolas','Courier New',monospace; font-size: 0.72em; line-height: 1.5;
+    padding: 13px; border: 2px solid var(--gold-lt); border-radius: 6px;
+    background: #1c1410; color: #e8d8c0; resize: none; min-height: 0;
+  }
+  .copy-row { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+  .btn-copy {
+    padding: 10px 20px; background: var(--gold); color: var(--text); border: none;
+    border-radius: 6px; font-size: 0.84em; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background 0.15s;
+  }
+  .btn-copy:hover { background: var(--gold-lt); color: #fff; }
+  #copy-confirm { font-size: 0.81em; color: var(--green); font-weight: 600; opacity: 0; transition: opacity 0.3s; }
+  #copy-confirm.show { opacity: 1; }
+
+  .empty-output { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #b0a99e; gap: 10px; text-align: center; }
+  .empty-output p { font-size: 0.86em; max-width: 220px; line-height: 1.5; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    .right-panel { height: 600px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">📋</div>
+  <div>
+    <h1>PLR Page Updater</h1>
+    <p>CLEAR Learning · Professional Licensing Report</p>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="left-panel">
+
+    <div class="section-card">
+      <div class="step-label" data-n="1">Paste Existing Page HTML</div>
+      <div class="field">
+        <label>Source HTML from Novi <span class="req">*</span></label>
+        <textarea class="code" id="existing-html" rows="7" placeholder="Copy the full page source from the Novi editor and paste here..."></textarea>
+        <div id="parse-bar" class="parse-bar"><div class="parse-dot"></div><span id="parse-msg"></span></div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="step-label" data-n="2">New Issue Details</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Volume <span class="req">*</span></label>
+          <input type="number" id="vol" placeholder="e.g. 38" min="1">
+        </div>
+        <div class="field">
+          <label>Issue Nos. <span class="req">*</span></label>
+          <input type="text" id="issue-nos" placeholder="e.g. 5/6">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Months <span class="req">*</span></label>
+        <div class="month-row">
+          <select id="month1">
+            <option value="">— First —</option>
+            <option>January</option><option>March</option><option>May</option>
+            <option>July</option><option>September</option><option>November</option>
+          </select>
+          <span class="month-sep">/</span>
+          <select id="month2">
+            <option value="">— Second —</option>
+            <option>February</option><option>April</option><option>June</option>
+            <option>August</option><option>October</option><option>December</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Year <span class="req">*</span></label>
+          <input type="number" id="year" placeholder="2026" min="2020" max="2099">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>PDF Download URL <span class="req">*</span></label>
+        <input type="url" id="pdf-url" placeholder="https://assets-002.noviams.com/novi-file-uploads/clear/PLR-Issues/...">
+      </div>
+
+      <div class="field">
+        <label>Issue Description <span class="req">*</span></label>
+        <textarea id="description" rows="3" placeholder="Brief summary of this issue's focus and content..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Topic Tags</label>
+        <div class="tag-row">
+          <input type="text" id="tag-input" placeholder="Type a tag, press Add or Enter">
+          <button class="btn-tag" onclick="addTag()">+ Add</button>
+        </div>
+        <div class="tags-wrap" id="tags-wrap"></div>
+      </div>
+    </div>
+
+    <div id="alert-box" class="alert"></div>
+    <button class="btn-generate" onclick="generate()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Generate Updated HTML
+    </button>
+
+  </div>
+
+  <div class="right-panel">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('preview',this)">👁 Preview</button>
+      <button class="tab-btn" onclick="switchTab('output',this)">&lt;/&gt; Output HTML</button>
+    </div>
+
+    <div class="tab-content active" id="tab-preview">
+      <div class="preview-placeholder" id="preview-placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <p>Fill in the form and click <strong>Generate Updated HTML</strong> to preview the page before copying.</p>
+      </div>
+      <iframe id="preview-frame" style="display:none;" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+    </div>
+
+    <div class="tab-content" id="tab-output">
+      <div class="output-wrap">
+        <div class="output-instructions">
+          <strong>How to use:</strong> Click <em>Copy All HTML</em>, open the PLR page in Novi, select all existing content in the editor, and paste to replace it entirely. Novi will automatically add <code>data-feathr-*</code> tracking attributes when you save.
+        </div>
+        <div class="empty-output" id="empty-output">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <p>Generated HTML will appear here after you click Generate.</p>
+        </div>
+        <textarea id="output-html" style="display:none;" readonly></textarea>
+        <div class="copy-row" id="copy-row" style="display:none;">
+          <button class="btn-copy" onclick="copyOutput()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy All HTML
+          </button>
+          <span id="copy-confirm">✓ Copied to clipboard!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── TAGS ─────────────────────────────────────────────────────────
+const tags = [];
+document.getElementById('tag-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addTag(); }
+});
+function addTag() {
+  const inp = document.getElementById('tag-input');
+  const v = inp.value.trim();
+  if (!v || tags.includes(v)) { inp.value = ''; return; }
+  tags.push(v); renderTags(); inp.value = '';
+}
+function removeTag(i) { tags.splice(i, 1); renderTags(); }
+function renderTags() {
+  document.getElementById('tags-wrap').innerHTML = tags.map((t, i) =>
+    `<span class="tag-chip">${t}<button onclick="removeTag(${i})">×</button></span>`
+  ).join('');
+}
+
+// ─── PARSE STATUS ─────────────────────────────────────────────────
+document.getElementById('existing-html').addEventListener('input', function() {
+  const bar = document.getElementById('parse-bar');
+  const msg = document.getElementById('parse-msg');
+  const v = this.value.trim();
+  if (!v) { bar.className = 'parse-bar'; return; }
+  const ok = v.includes('<!-- CURRENT ISSUE -->') &&
+             v.includes('<!-- ARCHIVE SECTION -->') &&
+             v.includes('<!-- OLDER ISSUES CONTACT -->');
+  bar.className = ok ? 'parse-bar ok' : 'parse-bar err';
+  msg.textContent = ok ? 'Page structure recognized — ready to update'
+                       : 'Warning: expected section markers not found — check pasted HTML';
+});
+
+// ─── TABS ─────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────
+const ABBREV = {January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'May',June:'Jun',
+                July:'Jul',August:'Aug',September:'Sep',October:'Oct',November:'Nov',December:'Dec'};
+function abbrev(m) { return ABBREV[m] || m; }
+function showAlert(msg, type) { const el = document.getElementById('alert-box'); el.textContent = msg; el.className = 'alert ' + type; }
+function clearAlert() { document.getElementById('alert-box').className = 'alert'; }
+
+// ─── PARSE OLD CURRENT ISSUE ──────────────────────────────────────
+function parseCurrentIssue(src) {
+  // Work only within the current section
+  const secStart = src.indexOf('<!-- CURRENT ISSUE -->');
+  const secEnd   = src.indexOf('<!-- ARCHIVE SECTION -->');
+  const sec = src.slice(secStart, secEnd);
+
+  // Volume / Numbers / Month1 / Month2 / Year
+  const MONTHS = 'January|February|March|April|May|June|July|August|September|October|November|December';
+  const metaRe = new RegExp(
+    'Volume\\s+(\\d+)\\s*(?:&middot;|·)[^N]*Numbers?\\s+([\\d/]+)\\s*(?:&middot;|·)\\s*(' + MONTHS + ')\\/(' + MONTHS + ')\\s+(\\d{4})'
+  );
+  const m = sec.match(metaRe);
+  let vol='', nos='', m1='', m2='', yr='';
+  if (m) { vol=m[1]; nos=m[2]; m1=m[3]; m2=m[4]; yr=m[5]; }
+
+  // PDF URL — first .pdf href in current section
+  const pdfM = sec.match(/href="([^"]+\.pdf)"/);
+  const pdfUrl = pdfM ? pdfM[1] : '';
+
+  return { vol, nos, m1, m2, yr, pdfUrl };
+}
+
+// ─── BUILD ARCHIVE ROW ────────────────────────────────────────────
+function buildArchiveRow(vol, nos, m1, m2, yr, pdfUrl) {
+  return (
+    `<div class="plr-archive-row" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #FFFFFF; border: 1px solid #EDE8E0; border-left: 3px solid #C9973A; border-radius: 4px;">\n` +
+    `<div><span style="font-family: 'Barlow',sans-serif; font-size: 1.05em; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: #9b7226; margin-right: 12px;">Vol. ${vol} &middot; No. ${nos}</span> ` +
+    `<span style="font-family: 'Source Serif 4',Georgia,serif; font-size: 1em; color: #1c1410;">${m1} / ${m2} ${yr}</span></div>\n` +
+    `<div style="display: flex; gap: 8px; flex-shrink: 0; margin-left: 16px;">` +
+    `<a href="${pdfUrl}" rel="noopener noreferrer" target="_blank" style="font-family: 'Barlow',sans-serif; font-size: 1.05em; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 6px 14px; border-radius: 4px; background: #EDE8E0; color: #4a3f38; text-decoration: none;">` +
+    `<svg width="14" height="14" viewBox="0 0 24 24" fill="#7B1E1E"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg> Download PDF</a></div>\n` +
+    `</div>`
+  );
+}
+
+// ─── BUILD NEW YEAR SECTION ───────────────────────────────────────
+function buildNewYearSection(yr, rowHtml) {
+  return (
+    `<!-- ── YEAR: ${yr} (open by default) ── -->\n` +
+    `<div style="margin-bottom: 16px;">\n` +
+    `<div class="plr-year-toggle" onclick="plrToggle(this)">` +
+    `<svg class="plr-year-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">` +
+    `<polyline points="6 9 12 15 18 9"></polyline></svg> ` +
+    `<span class="plr-year-label">${yr}</span>\n` +
+    `<div class="plr-year-rule"></div>\n` +
+    `</div>\n` +
+    `<div class="plr-year-issues open">\n` +
+    rowHtml + `\n` +
+    `</div>\n` +
+    `</div>`
+  );
+}
+
+// ─── INSERT ROW AT TOP OF YEAR'S ISSUES DIV ───────────────────────
+// The open year uses exactly '<div class="plr-year-issues open">'
+// Closed years use exactly '<div class="plr-year-issues">'.
+// Simple literal string find — no parsing needed.
+function insertRowIntoYear(archiveBlock, yearStr, rowHtml) {
+  const labelMarker = `<span class="plr-year-label">${yearStr}</span>`;
+  const labelIdx = archiveBlock.indexOf(labelMarker);
+  if (labelIdx === -1) return archiveBlock;
+
+  // Try open variant first, then closed
+  let insertAfter = -1;
+  for (const tag of ['<div class="plr-year-issues open">', '<div class="plr-year-issues">']) {
+    const idx = archiveBlock.indexOf(tag, labelIdx);
+    if (idx !== -1) { insertAfter = idx + tag.length; break; }
+  }
+  if (insertAfter === -1) return archiveBlock;
+
+  return archiveBlock.slice(0, insertAfter) + '\n' + rowHtml + '\n' + archiveBlock.slice(insertAfter);
+}
+
+// ─── CLOSE ALL OPEN YEAR SECTIONS IN ARCHIVE BLOCK ───────────────
+// Operates only on the archive block string — splits on exact class strings
+// and rejoins without " open", never touching the CSS in the styles block
+function closeAllOpenYears(archiveBlock) {
+  // Replace class="plr-year-chevron open" -> class="plr-year-chevron"
+  archiveBlock = archiveBlock.split('class="plr-year-chevron open"').join('class="plr-year-chevron"');
+  // Replace class="plr-year-issues open" -> class="plr-year-issues"
+  archiveBlock = archiveBlock.split('class="plr-year-issues open"').join('class="plr-year-issues"');
+  return archiveBlock;
+}
+
+// ─── MAIN GENERATE ────────────────────────────────────────────────
+function generate() {
+  clearAlert();
+
+  const src    = document.getElementById('existing-html').value;
+  const newVol = document.getElementById('vol').value.trim();
+  const newNos = document.getElementById('issue-nos').value.trim();
+  const newM1  = document.getElementById('month1').value;
+  const newM2  = document.getElementById('month2').value;
+  const newYr  = document.getElementById('year').value.trim();
+  const newPdf = document.getElementById('pdf-url').value.trim();
+  const newDesc= document.getElementById('description').value.trim();
+
+  // Validation
+  if (!src.trim())
+    return showAlert('Please paste the existing page HTML in Step 1.', 'error');
+  if (!newVol || !newNos || !newM1 || !newM2 || !newYr || !newPdf || !newDesc)
+    return showAlert('Please fill in all required fields (marked with *).', 'error');
+  if (!src.includes('<!-- CURRENT ISSUE -->'))
+    return showAlert('Cannot find <!-- CURRENT ISSUE --> in pasted HTML. Copy the full source from Novi.', 'error');
+  if (!src.includes('<!-- ARCHIVE SECTION -->'))
+    return showAlert('Cannot find <!-- ARCHIVE SECTION --> in pasted HTML. Copy the full source from Novi.', 'error');
+  if (!src.includes('<!-- OLDER ISSUES CONTACT -->'))
+    return showAlert('Cannot find <!-- OLDER ISSUES CONTACT --> in pasted HTML. Copy the full source from Novi.', 'error');
+
+  // ── Slice into three pieces using exact comment markers ───────────
+  // Mirrors the verified Python exactly:
+  //   styles_block  = src[:current_start]
+  //   archive_block = src[archive_start:older_start]
+  //   tail_block    = src[older_start:]
+  const currentStart = src.indexOf('<!-- CURRENT ISSUE -->');
+  const archiveStart = src.indexOf('<!-- ARCHIVE SECTION -->');
+  const olderStart   = src.indexOf('<!-- OLDER ISSUES CONTACT -->');
+
+  const stylesBlock  = src.slice(0, currentStart);
+  let   archiveBlock = src.slice(archiveStart, olderStart);
+  const tailBlock    = src.slice(olderStart);
+
+  // ── Build archive row for the NEW issue (what the user just entered) ──
+  const newRow = buildArchiveRow(newVol, newNos, newM1, newM2, newYr, newPdf);
+
+  // ── Update archive block ──────────────────────────────────────────
+  const yearLabel = `<span class="plr-year-label">${newYr}</span>`;
+  const yearExistsInArchive = archiveBlock.includes(yearLabel);
+
+  if (yearExistsInArchive) {
+    // Same year: insert new issue row at the top of its year section
+    archiveBlock = insertRowIntoYear(archiveBlock, newYr, newRow);
+  } else {
+    // New year:
+    // 1. Close all currently-open year sections within the archive block
+    archiveBlock = closeAllOpenYears(archiveBlock);
+    // 2. Prepend a new open year section before the first existing year comment
+    {
+      const newYearSection = buildNewYearSection(newYr, newRow);
+      const firstYearCommentIdx = archiveBlock.indexOf('<!-- ── YEAR:');
+      if (firstYearCommentIdx !== -1) {
+        archiveBlock = archiveBlock.slice(0, firstYearCommentIdx) + newYearSection + '\n' + archiveBlock.slice(firstYearCommentIdx);
+      }
+    }
+  }
+
+  // ── Build new current issue section ──────────────────────────────
+  const tagsHtml = tags.length
+    ? '<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px;">' +
+      tags.map(t => `<span style="font-family: 'Barlow',sans-serif; font-size: 0.85em; font-weight: 500; background: #EDE8E0; color: #4a3f38; padding: 4px 10px; border-radius: 20px;">${t}</span>`).join(' ') +
+      '</div>\n'
+    : '';
+
+  const newCurrentSection = (
+    `<!-- CURRENT ISSUE -->\n` +
+    `<section id="current">\n` +
+    `<div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 28px; padding-bottom: 12px; border-bottom: 2px solid rgba(123,30,30,0.18);">\n` +
+    `<h2 style="font-family: 'Playfair Display',Georgia,serif; font-size: 22px; font-weight: 600; color: #5a1414; letter-spacing: -0.01em; margin: 0;">Current Issue</h2>\n` +
+    `<span style="font-family: 'Barlow',sans-serif; font-size: 1.05em; font-weight: bold; letter-spacing: 0.15em; text-transform: uppercase; color: #9b7226;">Latest Release</span></div>\n` +
+    `<div class="plr-feature-block" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 6px 24px rgba(28,20,16,0.12); display: grid; grid-template-columns: 220px 1fr; overflow: hidden; margin-bottom: 60px; border: 1px solid #EDE8E0;">\n` +
+    `<div class="plr-feature-cover" style="background: linear-gradient(160deg,#5A1414 0%,#7B1E1E 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; position: relative; overflow: hidden;">\n` +
+    `<div style="position: absolute; bottom: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: rgba(201,151,58,0.15);"></div>\n` +
+    `<div style="background: #FFFFFF; width: 160px; height: 200px; border-radius: 3px; box-shadow: 0 16px 48px rgba(28,20,16,0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden;">\n` +
+    `<div style="position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg,#7B1E1E,#C9973A);"></div>\n` +
+    `<div style="position: absolute; top: 12px; right: -24px; background: #C9973A; color: #1c1410; font-family: 'Barlow',sans-serif; font-size: 10px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 32px; transform: rotate(45deg);">New</div>\n` +
+    `<img src="https://assets-002.noviams.com/novi-file-uploads/clear/PLR-Issues/Clear26_PLRLogo.png" alt="Professional Licensing Report" style="width: 80px; opacity: 0.9;"> ` +
+    `<span style="font-family: 'Barlow',sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #7a6e67; margin-top: 8px;">${abbrev(newM1)}/${abbrev(newM2)} &middot; ${newYr}</span></div>\n` +
+    `</div>\n` +
+    `<div class="plr-feature-meta" style="padding: 36px 40px; display: flex; flex-direction: column; justify-content: center;">\n` +
+    `<div style="font-family: 'Barlow',sans-serif; font-size: 1.05em; font-weight: bold; letter-spacing: 0.2em; text-transform: uppercase; color: #9b7226; margin-bottom: 10px;">Volume ${newVol} &middot; Numbers ${newNos} &middot; ${newM1}/${newM2} ${newYr}</div>\n` +
+    `<h2 style="font-family: 'Playfair Display',Georgia,serif; font-size: 1.7em; font-weight: bold; color: #1c1410; line-height: 1.25; margin: 0 0 6px 0;">Professional Licensing Report</h2>\n` +
+    `<p style="font-family: 'Source Serif 4',Georgia,serif; font-size: 1.25em; color: #4a3f38; font-style: italic; margin: 0 0 16px 0;">${newM1}/${newM2} ${newYr}</p>\n` +
+    `<p style="font-family: 'Source Serif 4',Georgia,serif; font-size: 1.2em; color: #4a3f38; line-height: 1.65; margin: 0 0 24px 0; border-left: 3px solid #C9973A; padding-left: 16px;">${newDesc}</p>\n` +
+    tagsHtml +
+    `<div class="plr-feature-actions" style="display: flex; gap: 12px; flex-wrap: wrap;">` +
+    `<a href="${newPdf}" rel="noopener noreferrer" target="_blank" style="font-family: 'Barlow',sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 12px 24px; border-radius: 4px; background: transparent; color: #7b1e1e; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 2px solid #7B1E1E;"> ` +
+    `<svg width="14" height="14" viewBox="0 0 24 24" fill="#7B1E1E"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg> Download PDF </a></div>\n` +
+    `</div>\n` +
+    `</div>\n` +
+    `</section>`
+  );
+
+  // ── Reassemble exactly as Python does: styles + current + archive + tail ──
+  const output = stylesBlock + newCurrentSection + '\n' + archiveBlock + tailBlock;
+
+  // ── Populate output ───────────────────────────────────────────────
+  document.getElementById('output-html').value = output;
+  document.getElementById('output-html').style.display = 'block';
+  document.getElementById('empty-output').style.display = 'none';
+  document.getElementById('copy-row').style.display = 'flex';
+
+  // ── Preview ───────────────────────────────────────────────────────
+  document.getElementById('preview-placeholder').style.display = 'none';
+  const frame = document.getElementById('preview-frame');
+  frame.style.display = 'block';
+  frame.srcdoc = (
+    `<!DOCTYPE html><html><head>` +
+    `<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+    `<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">` +
+    `<style>body{margin:0;padding:28px 36px;background:#f5f2ee;}</style>` +
+    `</head><body>` + output + `</body></html>`
+  );
+
+  showAlert('✓ Generated! Review in the Preview tab, then switch to Output HTML to copy.', 'success');
+  switchTab('preview', document.querySelectorAll('.tab-btn')[0]);
+}
+
+// ─── COPY ─────────────────────────────────────────────────────────
+function copyOutput() {
+  const ta = document.getElementById('output-html');
+  ta.select(); ta.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const el = document.getElementById('copy-confirm');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }).catch(() => document.execCommand('copy'));
+}
+</script>
+</body>
+</html>
