@@ -162,6 +162,7 @@
       <button class="tab-btn" data-tab="questions">Question Analysis</button>
       <button class="tab-btn" data-tab="payment">Payment Import</button>
       <button class="tab-btn" data-tab="reminders">Email Reminders</button>
+      <button class="tab-btn" data-tab="credly">&#127942; Credly Badges</button>
     </div>
     <div class="tab-content active" id="tab-report">
       <div class="summary-cards" id="summaryCards"></div>
@@ -196,7 +197,7 @@
 
     <!-- Payment Import -->
     <div class="tab-content" id="tab-payment">
-      <div style="max-width:660px;">
+<div style="max-width:660px;">
 
         <!-- Novi Live Pull -->
         <div class="panel-section" style="margin-bottom:20px;">
@@ -394,6 +395,34 @@ If you have any questions about the retake process or would like to discuss your
       </div>
     </div>
 
+    <!-- Credly Badges Tab -->
+    <div class="tab-content" id="tab-credly">
+      <div style="max-width:760px;">
+        <div class="panel-section" style="margin-bottom:16px;">
+          <h3 style="font-size:14px;color:var(--burgundy);margin-bottom:12px;">&#127981; Credly API Connection</h3>
+          <div class="form-row" style="margin-bottom:10px;">
+            <div class="form-group" style="flex:1;"><label>Credly API Token</label><input type="password" id="credlyToken" placeholder="Enter Credly API token (first time only)"><span class="inline-note">Stored locally — enter once.</span></div>
+            <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="credlyConnectBtn">Connect</button></div>
+          </div>
+          <div class="connection-status disconnected" id="credlyConnectionStatus"><span class="dot red"></span> Not connected to Credly</div>
+        </div>
+        <div class="panel-section" style="margin-bottom:16px;">
+          <h3 style="font-size:14px;color:var(--burgundy);margin-bottom:12px;">&#128269; Badge Eligibility Preview</h3>
+          <p style="font-size:13px;color:var(--gray);margin-bottom:12px;">Checks Credly for already-issued badges and shows only what still needs to be issued. Requires exam data to be loaded and Paid column populated.</p>
+          <button class="btn btn-sm btn-secondary" id="credlyCheckBtn" disabled>Check Issued Badges</button>
+          <div id="credlyCheckStatus" class="status-bar" style="margin-top:12px;"></div>
+          <div id="credlyPreviewWrap" style="margin-top:16px;display:none;">
+            <div class="table-wrap" id="credlyPreviewTable"></div>
+            <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="credlyIssueBtn" style="background:var(--burgundy);">&#127942; Issue Badges via Credly API</button>
+              <span id="credlyIssueCount" style="font-size:13px;color:var(--gray);"></span>
+            </div>
+          </div>
+          <div id="credlyIssueStatus" class="status-bar" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="actions-bar">
       <button class="btn btn-primary" id="exportCsvBtn">Export Report CSV</button>
       <button class="btn btn-gold" id="exportXlsxBtn">Export Report XLSX</button>
@@ -439,6 +468,20 @@ const BADGE_TEMPLATE_IDS = {
   NCIT_SPECIALIZED_AIS:    '798db787-f804-462d-906c-5a55bcb1ce5a',
   NCIT_SPECIALIZED_AIA:    '60466608-4af1-43f9-b1aa-97e358e22c15',
   NCIT_SPECIALIZED_IRD:    '0bd3fed4-8e27-4afb-ad9e-061d7b25f8ab'
+};
+
+// Maps the selected TalentLMS exam course name → the prereq program course name
+// whose completion status populates the "Certificate Assigned" column.
+const PREREQ_COURSE_MAP = {
+  'NCIT - Basic Online Program Final Exam': 'NCIT - Basic Online Program',
+  'NCIT - Basic Final Exam (Accommodations)': 'NCIT - Basic Online Program',
+  'Canadian NCIT Basic Final Exam': 'Canadian NCIT - Basic Online Program',
+  'Canadian NCIT Basic Final Exam (Accomodations)': 'Canadian NCIT - Basic Online Program',
+  'NCIT - Basic In-Person Program': 'NCIT - Basic In-Person Program',
+  'Canadian NCIT - Basic In-Person Program': 'Canadian NCIT - Basic In-Person Program',
+  'NCIT - Specialized Program Final Exam': 'NCIT - Specialized Online Program',
+  'NCIT - Specialized Program Final Exam Accomodations': 'NCIT - Specialized Online Program',
+  'NCIT - Specialized In-Person Program': 'NCIT - Specialized In-Person Program'
 };
 
 const EXAM_CONFIG = {
@@ -589,6 +632,16 @@ async function pullExamData(){
           }
         }
 
+        // Look up prereq course completion for the "Certificate Assigned" column
+        let prereqStatus='';
+        const prereqName=PREREQ_COURSE_MAP[STATE.selectedCourse?STATE.selectedCourse.name:''];
+        if(prereqName&&Array.isArray(ui.courses)){
+          const pc=ui.courses.find(c=>(c.name||'').trim()===prereqName);
+          if(pc&&(pc.completion_status||'').toLowerCase()==='completed'){
+            prereqStatus=pc.completed_on||'Completed';
+          }
+        }
+
         students.push({
           'first name':ui.first_name||'',
           'last name':ui.last_name||'',
@@ -597,6 +650,7 @@ async function pullExamData(){
           'score':testScore,
           'status':testStatus,
           'hasTestAttempt':hasTestAttempt,
+          'prereqStatus':prereqStatus,
           answers:studentAnswers,
           _questionTexts:questionTexts
         });
@@ -744,7 +798,7 @@ function buildReport(merged,config,cohort){
       aiaDisplayGrade:config.hasTopics?(s.aiaAdjusted?s.aiaAdjGrade:s.aiaGrade):'',
       irdDisplayGrade:config.hasTopics?(s.irdAdjusted?s.irdAdjGrade:s.irdGrade):'',
       rawGrade:s.rawGrade,adjustedGrade:s.adjustedGrade,adjustedScore:s.adjustedScore.toFixed(1)+'%',adjustedScoreNum:s.adjustedScore,
-      isAdjusted:hasExclusions,note:'',paid:'',digitalBadgeIssued:'',certificateAssigned:'',
+      isAdjusted:hasExclusions,note:'',paid:'',digitalBadgeIssued:'',certificateAssigned:s.prereqStatus||'',
       hasTestAttempt:s.hasTestAttempt,hasCompletedExam:!!s['date']
     };
   });
@@ -1005,6 +1059,182 @@ function exportCredlyCSV(){
 
   setStatus('Credly export complete: '+credlyRows.length+' badge(s) for '+eligible.length+' candidate(s).','success');
 }
+
+// ============================================================
+// Credly API Integration
+// ============================================================
+const CREDLY_ORG_ID='b561ce75-a66d-43be-bbd1-884caaefe963';
+
+(function(){const t=localStorage.getItem('clear_credly_token');if(t)document.getElementById('credlyToken').value=t;})();
+
+async function credlyCall(path,opts){
+  const token=document.getElementById('credlyToken').value.trim();
+  const workerUrl=STATE.workerUrl.replace(/\/+$/,'');
+  const o=opts||{};
+  const r=await fetch(workerUrl+'/credly'+path,{...o,headers:Object.assign({'X-Auth-Token':STATE.authToken,'X-Credly-Token':token},o.headers||{})});
+  if(!r.ok){const t=await r.text();throw new Error('Credly API '+r.status+': '+t);}
+  return r.json();
+}
+
+function setCredlyCon(s,t){const el=document.getElementById('credlyConnectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
+function setCredlyCheckStatus(msg,type){const el=document.getElementById('credlyCheckStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
+function setCredlyIssueStatus(msg,type){const el=document.getElementById('credlyIssueStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
+
+document.getElementById('credlyConnectBtn').addEventListener('click',async()=>{
+  const token=document.getElementById('credlyToken').value.trim();
+  if(!token){alert('Enter your Credly API token first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first.');return;}
+  setCredlyCon('loading','Connecting to Credly...');
+  try{
+    const res=await credlyCall('/v1/organizations/'+CREDLY_ORG_ID+'/badge_templates?page=1&per=1');
+    localStorage.setItem('clear_credly_token',token);
+    setCredlyCon('connected','Connected to Credly');
+    document.getElementById('credlyCheckBtn').disabled=false;
+  }catch(err){setCredlyCon('disconnected','Connection failed: '+err.message);console.error(err);}
+});
+
+document.getElementById('credlyCheckBtn').addEventListener('click',async()=>{
+  if(!STATE.reportData||STATE.reportData.length===0){setCredlyCheckStatus('Load exam data first.','error');return;}
+  setCredlyCheckStatus('Fetching already-issued badges from Credly...','info');
+  document.getElementById('credlyPreviewWrap').style.display='none';
+  try{
+    // Use high_volume_issued_badge_search per template to get all issued badge emails
+    const allTemplateIds=Object.values(BADGE_TEMPLATE_IDS);
+    const issuedMap=new Map(); // email|templateId => true
+    let checked=0;
+    for(const tid of allTemplateIds){
+      setCredlyCheckStatus('Checking issued badges ('+(++checked)+'/'+allTemplateIds.length+')...','info');
+      try{
+let nextPath='/v1/organizations/'+CREDLY_ORG_ID+'/high_volume_issued_badge_search?filter[badge_template_id]='+tid+'&per=200';
+        while(nextPath){
+          const res=await credlyCall(nextPath);
+          const badges=(res.data||[]);
+          badges.forEach(b=>{
+            const email=(b.recipient_email||'').toLowerCase().trim();
+            const btid=(b.badge_template&&b.badge_template.id)||'';
+            const state=(b.state||'').toLowerCase();
+            if(email&&btid&&state!=='revoked'&&state!=='rejected'){
+              const issuedDate=b.issued_at_date||(b.issued_at?b.issued_at.split('T')[0]:'');
+              const existing=issuedMap.get(email+'|'+btid);
+              if(!existing||issuedDate>existing)issuedMap.set(email+'|'+btid,issuedDate||'issued');
+            }
+          });
+          const meta=res.metadata||{};
+          if(meta.next_page_url&&badges.length>0){
+            nextPath=meta.next_page_url.replace(/^https?:\/\/api\.credly\.com\/api/,'');
+          }else{
+            nextPath=null;
+          }
+        }
+      }catch(e){console.warn('Badge check failed for template '+tid,e);}
+    }
+    // Backfill digitalBadgeIssued column from Credly results
+    const allTids=Object.values(BADGE_TEMPLATE_IDS);
+    STATE.reportData.forEach((r,idx)=>{
+      const email=(r.email||'').toLowerCase().trim();
+      if(!email)return;
+      const dates=allTids.map(tid=>issuedMap.get(email+'|'+tid)).filter(d=>d&&d!=='issued');
+      if(dates.length===0)return;
+      dates.sort();
+      const earliest=dates[0];
+      if(r.digitalBadgeIssued!==earliest){
+        r.digitalBadgeIssued=earliest;
+        const cell=document.querySelector('#reportTable tbody tr:nth-child('+(idx+1)+') td[data-field="digitalBadgeIssued"]');
+        if(cell)cell.textContent=earliest;
+      }
+    });
+    // Determine which badges still need issuing
+    const config=EXAM_CONFIG[STATE.examType];
+    const isSpecialized=config.hasTopics;
+    const today=new Date().toISOString().split('T')[0];
+    const pendingRows=[];
+    STATE.reportData.forEach(r=>{
+      const email=(r.email||'').toLowerCase().trim();
+      const passed=parseFloat(r._effectiveScore||r.totalScore)>=70;
+      const paid=String(r.paid||'').toLowerCase()==='yes';
+      if(!passed||!paid)return;
+      const issuedAt=r.dateOfExam||today;
+      if(!isSpecialized){
+        const tid=BADGE_TEMPLATE_IDS.NCIT_BASIC;
+        if(!issuedMap.has(email+'|'+tid)){
+          pendingRows.push({r,tid,badgeName:'NCIT Basic',issuedAt,score:parseFloat(r._effectiveScore||r.totalScore)});
+        }
+      }else{
+        const overallScore=parseFloat(r._effectiveScore||r.totalScore);
+        const checks=[
+          {tid:BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_OVERALL,name:'NCIT Specialized',score:overallScore,pass:overallScore>=70},
+          {tid:BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIS,name:'NCIT Specialized - Advanced Interviewing',score:r.aisAdjusted?r.aisAdjScoreNum:r.aisScoreNum,pass:(r.aisAdjusted?r.aisAdjScoreNum:r.aisScoreNum)>=70},
+          {tid:BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_AIA,name:'NCIT Specialized - Investigative Analysis',score:r.aiaAdjusted?r.aiaAdjScoreNum:r.aiaScoreNum,pass:(r.aiaAdjusted?r.aiaAdjScoreNum:r.aiaScoreNum)>=70},
+          {tid:BADGE_TEMPLATE_IDS.NCIT_SPECIALIZED_IRD,name:'NCIT Specialized - Report Development',score:r.irdAdjusted?r.irdAdjScoreNum:r.irdScoreNum,pass:(r.irdAdjusted?r.irdAdjScoreNum:r.irdScoreNum)>=70}
+        ];
+        checks.forEach(c=>{
+          if(c.score!==null&&c.pass&&!issuedMap.has(email+'|'+c.tid)){
+            pendingRows.push({r,tid:c.tid,badgeName:c.name,issuedAt,score:c.score});
+          }
+        });
+      }
+    });
+    // Store for issue step
+    STATE.credlyPending=pendingRows;
+    // Render preview table
+    const wrap=document.getElementById('credlyPreviewWrap');
+    const tbl=document.getElementById('credlyPreviewTable');
+    if(pendingRows.length===0){
+      setCredlyCheckStatus('All eligible badges have already been issued in Credly.','success');
+      return;
+    }
+    let h='<table><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Badge</th><th>Score</th><th>Exam Date</th></tr></thead><tbody>';
+    pendingRows.forEach((p,i)=>{
+      h+='<tr><td>'+(i+1)+'</td><td>'+esc(p.r.firstName+' '+p.r.lastName)+'</td><td>'+esc(p.r.email)+'</td><td>'+esc(p.badgeName)+'</td><td>'+p.score.toFixed(1)+'%</td><td>'+esc(p.issuedAt)+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    tbl.innerHTML=h;
+    document.getElementById('credlyIssueCount').textContent=pendingRows.length+' badge(s) ready to issue';
+    wrap.style.display='block';
+    setCredlyCheckStatus('<strong>'+pendingRows.length+'</strong> badge(s) pending issuance.','info');
+  }catch(err){setCredlyCheckStatus('Error: '+err.message,'error');console.error(err);}
+});
+
+document.getElementById('credlyIssueBtn').addEventListener('click',async()=>{
+  const pending=STATE.credlyPending||[];
+  if(!pending.length){alert('No badges to issue.');return;}
+  const btn=document.getElementById('credlyIssueBtn');
+  btn.disabled=true;btn.textContent='Issuing...';
+  setCredlyIssueStatus('Issuing badges...','info');
+  let issued=0,failed=0;const errors=[];
+  for(let i=0;i<pending.length;i++){
+    const p=pending[i];
+    setCredlyIssueStatus('Issuing badge '+(i+1)+'/'+pending.length+': '+p.r.firstName+' '+p.r.lastName+'...','info');
+    try{
+      await credlyCall('/v1/organizations/'+CREDLY_ORG_ID+'/badges',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          recipient_email:p.r.email,
+          recipient_name:p.r.firstName+' '+p.r.lastName,
+          badge_template_id:p.tid,
+          issued_at:(function(){const d=new Date(p.issuedAt);if(isNaN(d))return new Date().toISOString().replace('T',' ').replace(/\..+/,'')+' +0000';const pad=n=>String(n).padStart(2,'0');return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+':'+pad(d.getUTCSeconds())+' +0000';})(),
+          issued_to_first_name:p.r.firstName,
+          issued_to_last_name:p.r.lastName,
+          evidence_items:[{type:'url',title:p.badgeName,description:p.score.toFixed(1)+'% exam score'}]
+        })
+      });
+      // Update digitalBadgeIssued in report
+      p.r.digitalBadgeIssued=p.issuedAt;
+      const idx=STATE.reportData.indexOf(p.r);
+      if(idx>=0){const cell=document.querySelector('#reportTable tbody tr:nth-child('+(idx+1)+') td[data-field="digitalBadgeIssued"]');if(cell)cell.textContent=p.issuedAt;}
+      issued++;
+    }catch(err){failed++;errors.push(p.r.email+' ('+p.badgeName+'): '+err.message);}
+  }
+  let msg='<strong>Done.</strong> '+issued+' badge(s) issued successfully.';
+  if(failed>0)msg+=' '+failed+' failed:<br>'+errors.map(e=>'&bull; '+esc(e)).join('<br>');
+  setCredlyIssueStatus(msg,failed>0?'error':'success');
+  STATE.credlyPending=[];
+  document.getElementById('credlyPreviewWrap').style.display='none';
+  btn.disabled=false;btn.textContent='&#127942; Issue Badges via Credly API';
+});
+
+
 
 // ============================================================
 // Payment Import
