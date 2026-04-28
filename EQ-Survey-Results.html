@@ -57,6 +57,27 @@
   header .gold-bar-h { display: none; }
   .header-text { display: flex; flex-direction: column; gap: 1px; }
 
+  /* DATE FILTER */
+  .date-filter-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .date-filter-row label { margin-bottom:0; white-space:nowrap; }
+  .date-filter-row input[type="date"] { width:auto; padding:8px 12px; font-size:13px; }
+  .date-filter-clear { font-size:12px; color:var(--crimson); cursor:pointer; text-decoration:underline; background:none; border:none; padding:0; font-family:'DM Sans',sans-serif; }
+
+  /* ACCORDIONS */
+  .accordion { border:1px solid var(--border); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
+  .accordion-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; background:var(--crimson); cursor:pointer; user-select:none;
+  }
+  .accordion-header:hover { background:var(--crimson-deep); }
+  .accordion-title { font-family:'DM Serif Display',serif; font-size:16px; color:white; }
+  .accordion-count { font-size:12px; color:rgba(255,255,255,0.65); margin-left:10px; }
+  .accordion-chevron { color:white; font-size:14px; transition:transform 0.2s; }
+  .accordion-chevron.open { transform:rotate(180deg); }
+  .accordion-body { display:none; }
+  .accordion-body.open { display:block; }
+
+  /* GOLD ACCENT BAR */
   /* GOLD ACCENT BAR */
   .gold-bar { height: 4px; background: var(--gold); flex-shrink: 0; }
 
@@ -471,15 +492,15 @@
         <div class="program-grid">
           <div class="program-card selected" data-course="131" data-survey="2198" onclick="selectProgram(this)">
             <div class="program-name">ELPR – In-Person Program</div>
-            <div class="program-meta">Course 131 · Survey 2198</div>
+            <div class="program-meta">Course 131 · Survey 2198 (EQ)</div>
           </div>
           <div class="program-card" data-course="138" data-survey="2300" onclick="selectProgram(this)">
             <div class="program-name">ELPR – Online Program</div>
-            <div class="program-meta">Course 138 · Survey 2300</div>
+            <div class="program-meta">Course 138 · Survey 2300 (EQ)</div>
           </div>
-          <div class="program-card" data-course="141" data-survey="2320" onclick="selectProgram(this)">
+          <div class="program-card" data-course="141" data-survey="2320" data-comm-survey="2321" onclick="selectProgram(this)">
             <div class="program-name">So, You Think You Want to be a Board or Council Member</div>
-            <div class="program-meta">Course 141 · Survey 2320</div>
+            <div class="program-meta">Course 141 · Surveys 2320 (EQ) & 2321 (Communication Styles)</div>
           </div>
         </div>
       </div>
@@ -562,27 +583,57 @@
     <div class="section-label">Class Averages vs. High Functioning Threshold</div>
     <div class="stats-row" id="statsRow"></div>
 
-    <!-- LEARNER TABLE -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <!-- EQ ACCORDION (default open) -->
+    <div class="accordion" id="eqAccordion">
+      <div class="accordion-header" onclick="toggleAccordion('eqAccordion')">
+        <div style="display:flex;align-items:center;">
+          <div class="accordion-title">Emotional Intelligence Results</div>
+          <div class="accordion-count" id="eqAccordionCount"></div>
         </div>
-        <div class="card-title">Learner Scores</div>
+        <div class="accordion-chevron open" id="eqAccordionChevron">▼</div>
       </div>
-      <div class="table-wrap">
-        <table class="learner-table">
-          <thead>
-            <tr>
-              <th>Learner</th>
-              <th>Self-Awareness<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 36</span></th>
-              <th>Empathy<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 18</span></th>
-              <th>Self-Motivation<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 24</span></th>
-              <th>Social Skills<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 18</span></th>
-            </tr>
-          </thead>
-          <tbody id="learnerTableBody"></tbody>
-        </table>
+      <div class="accordion-body open" id="eqAccordionBody">
+        <div class="table-wrap">
+          <table class="learner-table">
+            <thead>
+              <tr>
+                <th>Learner</th>
+                <th>Self-Awareness<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 36</span></th>
+                <th>Empathy<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 18</span></th>
+                <th>Self-Motivation<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 24</span></th>
+                <th>Social Skills<br/><span style="font-weight:400;opacity:0.7;font-size:10px;">HFT: 18</span></th>
+              </tr>
+            </thead>
+            <tbody id="learnerTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMM ACCORDION (course 141 only, default closed) -->
+    <div class="accordion hidden" id="commAccordion">
+      <div class="accordion-header" onclick="toggleAccordion('commAccordion')">
+        <div style="display:flex;align-items:center;">
+          <div class="accordion-title">Communications Style Results</div>
+          <div class="accordion-count" id="commAccordionCount"></div>
+        </div>
+        <div class="accordion-chevron" id="commAccordionChevron">▼</div>
+      </div>
+      <div class="accordion-body" id="commAccordionBody">
+        <div class="table-wrap">
+          <table class="learner-table">
+            <thead>
+              <tr>
+                <th>Learner</th>
+                <th>Demonstrator</th>
+                <th>Assertor</th>
+                <th>Narrator</th>
+                <th>Contemplator</th>
+              </tr>
+            </thead>
+            <tbody id="commTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -756,7 +807,7 @@ const EQ_CONFIG = {
 const PROGRAMS = {
   '131': { name: 'ELPR – In-Person Program',   courseId: '131', surveyId: '2198' },
   '138': { name: 'ELPR – Online Program',       courseId: '138', surveyId: '2300' },
-  '141': { name: 'So, You Think You Want to be a Board or Council Member', courseId: '141', surveyId: '2320' }
+  '141': { name: 'So, You Think You Want to be a Board or Council Member', courseId: '141', surveyId: '2320', commSurveyId: '2321' }
 };
 
 let selectedProgram = PROGRAMS['131'];
@@ -772,7 +823,8 @@ function selectProgram(el) {
   selectedProgram = {
     name: el.querySelector('.program-name').textContent,
     courseId: el.dataset.course,
-    surveyId: el.dataset.survey
+    surveyId: el.dataset.survey,
+    commSurveyId: el.dataset.commSurvey || null
   };
 }
 
@@ -1055,7 +1107,21 @@ async function startPull() {
             lastName  = parts.slice(1).join(' ') || '';
           }
 
-          learnerData.push({ firstName, lastName, email, ...scores });
+          // ── Also pull comm style quiz (course 141 only) ──────────────────
+          let commScores = null;
+          if (selectedProgram.commSurveyId) {
+            try {
+              const commResp = await apiCall(
+                `/v1/getsurveyanswers/survey_id:${selectedProgram.commSurveyId},user_id:${uid}`
+              );
+              if (commResp) {
+                commScores = scoreCommStyle(commResp);
+              }
+            } catch(ce) { /* user hasn't completed comm quiz — leave null */ }
+          }
+
+          const completedOn = resp.completed_on || resp.completion_date || null;
+          learnerData.push({ firstName, lastName, email, ...scores, commScores, completedOn });
         }
       } catch(e) {
         // 404 = user hasn't completed survey, skip silently
@@ -1211,18 +1277,16 @@ function renderResults() {
     </div>`;
   }).join('');
 
-  // Learner table
-  const tbody = document.getElementById('learnerTableBody');
-  tbody.innerHTML = processedLearners.map(l => {
-    const pill = (score, hft) => `<span class="score-pill ${score >= hft ? 'score-above' : 'score-below'}">${score}</span>`;
-    return `<tr>
-      <td><div class="learner-name">${l.firstName} ${l.lastName}</div><div class="learner-email">${l.email}</div></td>
-      <td>${pill(l.selfAwareness, 36)}</td>
-      <td>${pill(l.empathy, 18)}</td>
-      <td>${pill(l.selfMotivation, 24)}</td>
-      <td>${pill(l.socialSkills, 18)}</td>
-    </tr>`;
-  }).join('');
+  // Populate both accordion tables
+  renderReviewTables(processedLearners);
+
+  // Show comm accordion only for course 141
+  const commAcc = document.getElementById('commAccordion');
+  if (selectedProgram.commSurveyId) {
+    commAcc.classList.remove('hidden');
+  } else {
+    commAcc.classList.add('hidden');
+  }
 
   // Generate table
   const gtbody = document.getElementById('generateTableBody');
@@ -1360,6 +1424,8 @@ ${descRow('Self-Motivation', 'Individuals who score above the HFT in self-motiva
 ${descRow('Social Skills', 'Individuals who score above the HFT in social skills sense others\' developmental needs, inspire and lead groups, send clear and convincing messages, build effective inter-personal relationships, and work well with others to achieve shared goals. They build effective bonds between individuals. Often, they appear to be socializing with coworkers, but they are actually working to build solid relationships at work.')}
 </table>
 
+${buildCommStyleHTML(learner.commScores)}
+
 <!-- SIGN OFF -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
 <tr><td style="font-family:'Open Sans',Arial,Helvetica,sans-serif;font-size:14px;color:#484848;line-height:23px;padding-bottom:20px;">Thank you for completing the Emotional Quotient Survey. Plan to have these results with you during the class discussion on Emotional Intelligence. You will not be required to share your results; they will simply be for your reference.</td></tr>
@@ -1417,6 +1483,217 @@ ${descRow('Social Skills', 'Individuals who score above the HFT in social skills
 </table>
 </body>
 </html>`;
+}
+
+
+// ============================================================
+// COMM STYLE SCORING — Course 141, Survey 2321
+// Scoring key from BMT_Bootcamp_Quiz_Results_Spreadsheet.xlsx (A/D/N/C tabs)
+// Each question maps one answer letter to each style.
+// Answer options in TalentLMS start with "A. ", "B. ", "C. ", "D. " —
+// we strip everything after the first character.
+// ============================================================
+
+const COMM_KEY = {
+  //        Q1    Q2    Q3    Q4    Q5    Q6    Q7    Q8    Q9   Q10   Q11   Q12   Q13   Q14   Q15   Q16   Q17   Q18   Q19   Q20
+  A: { 1:'C',2:'C',3:'B',4:'C',5:'B',6:'B',7:'A',8:'C',9:'C',10:'B',11:'C',12:'D',13:'A',14:'D',15:'C',16:'C',17:'C',18:'B',19:'B',20:'A' },
+  D: { 1:'A',2:'B',3:'A',4:'D',5:'C',6:'D',7:'D',8:'D',9:'A',10:'D',11:'A',12:'A',13:'B',14:'C',15:'A',16:'B',17:'D',18:'C',19:'C',20:'D' },
+  N: { 1:'B',2:'A',3:'D',4:'A',5:'A',6:'C',7:'B',8:'A',9:'B',10:'A',11:'B',12:'B',13:'D',14:'B',15:'B',16:'D',17:'B',18:'D',19:'A',20:'B' },
+  C: { 1:'D',2:'D',3:'C',4:'B',5:'D',6:'A',7:'C',8:'B',9:'D',10:'C',11:'D',12:'C',13:'C',14:'A',15:'D',16:'A',17:'A',18:'A',19:'D',20:'C' },
+};
+
+const COMM_META = {
+  A: {
+    name: 'Demonstrator',
+    summary: 'Demonstrators are people-oriented, fast-paced and enthusiastic. They prefer an informal atmosphere and can be outrageous, spontaneous, excitable, and sociable. They are idea people who like the limelight.<br/><br/>Some potential negative traits to a Demonstrator include being unreliable, self-centered, overly optimistic, and indiscriminate.',
+    tendTo: ['Be disorganized', 'Be late', 'Lose track of details', 'Wear bright colors', 'Take the initiative', 'Laugh loud and often', 'Like to talk about themselves'],
+    professions: ['Salesperson', 'Trial Lawyer', 'Entertainer', 'Public Relations Officer', 'Advertising Executive', 'Social Director'],
+  },
+  D: {
+    name: 'Assertor',
+    summary: 'Assertors are fast-paced and direct but more task-oriented. They can be hard-working, ambitious leaders and can make decisions quickly. They are goal-oriented, assertive, and confident.<br/><br/>Some potential negative traits to an Assertor include being impatient, competitive and judgmental.',
+    tendTo: ['Be on time', 'Prefer efficiency', 'Prefer a formal setting and dress', 'Be serious', 'Take the lead', 'Ask pointed/challenging questions', 'Have strong opinions'],
+    professions: ['CEO', 'Politician', 'Lawyer', 'Reporter', 'Entrepreneur', 'Director', 'Stockbroker', 'Military NCO'],
+  },
+  N: {
+    name: 'Narrator',
+    summary: 'Narrators are slow-paced and indirect, but more people oriented. They are warm, gentle and cooperative. They value relationships over goals and are good at listening. They are generally open-minded.<br/><br/>Some potential negative traits to a Narrator include being overly meek and easily sidetracked.',
+    tendTo: ['Be accommodating', 'Wear casual clothing', 'Take initiative to form relationships', 'Have pictures of friends and family on their desk', 'Laugh quietly but often', 'Show gratitude easily'],
+    professions: ['Counselor', 'Minister', 'Nurse', 'Teacher', 'HR Manager', 'Social Worker'],
+  },
+  C: {
+    name: 'Contemplator',
+    summary: 'Contemplators are task-oriented however they are more indirect and may work at a slower pace than Assertors. They tend to be analytical thinkers. They are persistent and pride themselves on orderliness and accuracy.<br/><br/>Some potential negative traits to a Contemplator include being withdrawn, rigid, closed-minded, and pessimistic.',
+    tendTo: ['Dress conservatively', 'Keep to themselves', 'Not initiate conversation', 'Take detailed notes', 'Be serious', 'Need facts, figures, statistics and proof'],
+    professions: ['Accountant', 'Engineer', 'Electrician', 'Jeweler', 'Administrative Assistant', 'Repair person', 'Scientist', 'Plumber'],
+  },
+};
+
+function scoreCommStyle(resp) {
+  // Flatten questions the same way scoreFromSurveyResponse does
+  const childQuestions = [];
+  for (const q of (resp.questions || [])) {
+    for (const cq of (q.child_questions || [])) {
+      childQuestions.push(cq);
+    }
+  }
+  // If no child_questions, use top-level questions directly
+  const qs = childQuestions.length > 0 ? childQuestions : (resp.questions || []);
+
+  const scores = { A: 0, D: 0, N: 0, C: 0 };
+
+  qs.slice(0, 20).forEach((q, i) => {
+    const qNum = i + 1;
+    // user_answers object — try values first, then keys
+    const ua = q.user_answers || {};
+    const rawAnswer =
+      Object.values(ua)[0] ||   // e.g. "A. Talk easily with others"
+      Object.keys(ua)[0]   ||   // fallback: key might be the letter
+      q.answer             ||
+      q.user_answer        || '';
+
+    // Strip to first letter and uppercase — handles "A. ...", "a", "A", etc.
+    const letter = String(rawAnswer).trim().toUpperCase().charAt(0);
+
+    if (['A','B','C','D'].includes(letter)) {
+      for (const style of ['A','D','N','C']) {
+        if (letter === COMM_KEY[style][qNum]) {
+          scores[style]++;
+          break;
+        }
+      }
+    }
+  });
+
+  return scores;
+}
+
+function commDominantNames(scores) {
+  const max = Math.max(scores.A, scores.D, scores.N, scores.C);
+  return ['A','D','N','C']
+    .filter(s => scores[s] === max)
+    .map(s => COMM_META[s].name)
+    .join(' / ');
+}
+
+function buildCommStyleHTML(commScores) {
+  if (!commScores) return '';
+  const max = Math.max(commScores.A, commScores.D, commScores.N, commScores.C);
+  const dominantNames = ['A','D','N','C'].filter(s => commScores[s] === max).map(s => COMM_META[s].name).join(' / ');
+
+  const scoreRows = ['A','D','N','C'].map(s => {
+    const isDom = commScores[s] === max;
+    const bg  = isDom ? '#fdf6e3' : '#ffffff';
+    const fw  = isDom ? 'font-weight:700;' : '';
+    const clr = isDom ? '#6f4e1a' : '#333333';
+    return '<tr>'
+      + '<td style="padding:11px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:13px;color:#333333;border-bottom:1px solid #f0f0f0;background-color:' + bg + ';' + fw + '">' + COMM_META[s].name + (isDom ? ' \u2605' : '') + '</td>'
+      + '<td style="padding:11px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:' + clr + ';text-align:center;border-bottom:1px solid #f0f0f0;background-color:' + bg + ';">' + commScores[s] + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const descRows = ['A','D','N','C'].map(s => {
+    const m = COMM_META[s];
+    const isDom = commScores[s] === max;
+    const bg = isDom ? '#fdf6e3' : '#ffffff';
+    const domLabel = isDom ? '<br/><span style="font-size:11px;color:#6f4e1a;font-weight:400;">Your dominant style</span>' : '';
+    const bullets = m.tendTo.map(t => '&bull; ' + t).join('<br/>');
+    return '<tr>'
+      + '<td style="padding:12px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#64092c;border-bottom:1px solid #f0f0f0;background-color:' + bg + ';white-space:nowrap;vertical-align:top;">' + m.name + domLabel + '</td>'
+      + '<td style="padding:12px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:13px;color:#484848;line-height:21px;border-bottom:1px solid #f0f0f0;background-color:' + bg + ';">'
+      + m.summary + '<br/><br/>'
+      + '<strong style="font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:#64092c;">They tend to:</strong><br/>'
+      + bullets + '<br/><br/>'
+      + '<strong style="font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:#64092c;">Common Professions:</strong><br/>' + m.professions.map(p => '&bull; ' + p).join('<br/>') + '<br/>'
+
+      + '</td></tr>';
+  }).join('');
+
+  return '\n<!-- COMM STYLE DIVIDER -->\n'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:24px;"><tr><td style="height:4px;background-color:#dda838;font-size:1px;line-height:1px;">&nbsp;</td></tr></table>\n'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="font-family:\'Trebuchet MS\',Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#64092c;padding-bottom:12px;">Communications Style Results</td></tr></table>\n'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:14px;color:#484848;line-height:23px;padding-bottom:20px;">Thank you for completing the <strong>Communications Style Quiz</strong>. Your dominant communication style is <strong style="color:#64092c;">' + dominantNames + '</strong>. Most people use a combination of styles, with one or two more dominant categories. Your scores are shown below.</td></tr></table>\n'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border:1px solid #e4e7ec;margin-bottom:24px;"><tr><td style="background-color:#64092c;padding:12px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;" width="60%">Communication Style</td><td style="background-color:#64092c;padding:12px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;text-align:center;" width="40%">Your Score</td></tr>' + scoreRows + '</table>\n'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border:1px solid #e4e7ec;margin-bottom:24px;"><tr><td colspan="2" style="background-color:#64092c;padding:12px 18px;font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">About the Four Communication Styles</td></tr>' + descRows + '</table>\n'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:24px;"><tr><td style="font-family:\'Open Sans\',Arial,Helvetica,sans-serif;font-size:14px;color:#484848;line-height:23px;padding:14px 16px;background-color:#fdf6e3;border-left:3px solid #dda838;">Understanding your communication style can help you be more effective in board and council settings. Plan to have these results with you during the class discussion. You will not be required to share your results; they will simply be for your reference.</td></tr></table>\n';
+}
+
+
+// ============================================================
+// ACCORDION TOGGLE
+// ============================================================
+function toggleAccordion(id) {
+  const body    = document.getElementById(id + 'Body');
+  const chevron = document.getElementById(id + 'Chevron');
+  const isOpen  = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+// ============================================================
+// DATE FILTER
+// ============================================================
+function applyDateFilter() {
+  const from = document.getElementById('filterFrom').value;
+  const to   = document.getElementById('filterTo').value;
+  let filtered = processedLearners;
+  if (from) filtered = filtered.filter(l => l.completedOn && l.completedOn >= from);
+  if (to)   filtered = filtered.filter(l => l.completedOn && l.completedOn <= to);
+  const countEl = document.getElementById('filterCount');
+  if (from || to) {
+    countEl.textContent = filtered.length + ' of ' + processedLearners.length + ' learners shown';
+  } else {
+    countEl.textContent = '';
+  }
+  renderReviewTables(filtered);
+}
+
+function clearDateFilter() {
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value   = '';
+  document.getElementById('filterCount').textContent = '';
+  renderReviewTables(processedLearners);
+}
+
+// ============================================================
+// RENDER REVIEW TABLES (shared by initial render + date filter)
+// ============================================================
+function renderReviewTables(learners) {
+  const pill = (score, hft) => `<span class="score-pill ${score >= hft ? 'score-above' : 'score-below'}">${score}</span>`;
+
+  // EQ table
+  const eqTbody = document.getElementById('learnerTableBody');
+  eqTbody.innerHTML = learners.map(l => `<tr>
+    <td><div class="learner-name">${l.firstName} ${l.lastName}</div><div class="learner-email">${l.email}</div></td>
+    <td>${pill(l.selfAwareness, 36)}</td>
+    <td>${pill(l.empathy, 18)}</td>
+    <td>${pill(l.selfMotivation, 24)}</td>
+    <td>${pill(l.socialSkills, 18)}</td>
+  </tr>`).join('');
+  document.getElementById('eqAccordionCount').textContent = '— ' + learners.length + ' learners';
+
+  // Comm table (only populated for course 141)
+  const commTbody = document.getElementById('commTableBody');
+  if (selectedProgram.commSurveyId) {
+    const commStyles = ['A','D','N','C'];
+    commTbody.innerHTML = learners.map(l => {
+      if (!l.commScores) {
+        return `<tr>
+          <td><div class="learner-name">${l.firstName} ${l.lastName}</div><div class="learner-email">${l.email}</div></td>
+          <td colspan="4" style="color:var(--muted);font-size:12px;">No comm style data</td>
+        </tr>`;
+      }
+      const max = Math.max(l.commScores.A, l.commScores.D, l.commScores.N, l.commScores.C);
+      return `<tr>
+        <td><div class="learner-name">${l.firstName} ${l.lastName}</div><div class="learner-email">${l.email}</div></td>
+        ${commStyles.map(s => {
+          const isDom = l.commScores[s] === max;
+          return `<td style="${isDom ? 'font-weight:700;color:var(--crimson);' : ''}">${l.commScores[s]}${isDom ? ' ★' : ''}</td>`;
+        }).join('')}
+      </tr>`;
+    }).join('');
+    document.getElementById('commAccordionCount').textContent = '— ' + learners.filter(l => l.commScores).length + ' learners';
+  }
 }
 
 // ============================================================
