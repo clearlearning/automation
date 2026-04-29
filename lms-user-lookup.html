@@ -52,29 +52,16 @@
   .module-table{width:100%;border-collapse:collapse;font-size:13px;white-space:normal;}
   .module-table th{background:var(--burgundy);color:var(--white);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;}
   .module-table td{padding:9px 14px;border-bottom:1px solid var(--gray-mid);}.module-table tr:nth-child(even){background:#fafafa;}
-  .exam-card{background:var(--gray-light);border-radius:var(--radius);padding:16px 20px;margin-top:16px;}
-  .exam-card h4{font-size:13px;color:var(--burgundy);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;}
-  .exam-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-mid);font-size:13px;}
-  .exam-row:last-child{border-bottom:none;}.exam-score{font-weight:700;font-size:15px;}
-  .exam-score.pass{color:var(--green);}.exam-score.fail{color:var(--red);}
 
-  /* ── SCORM Report Block ── */
-  .scorm-report{border-radius:var(--radius);margin-top:16px;overflow:hidden;border:1px solid var(--gray-mid);}
-  .scorm-report-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--burgundy);color:var(--white);}
-  .scorm-report-header h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0;}
-  .scorm-report-header .scorm-progress{font-size:13px;font-weight:700;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:12px;}
-  .scorm-report-header .scorm-progress.complete{background:var(--green);color:var(--white);}
-  .scorm-report-body{padding:16px;}
-  .scorm-last-page{font-size:12px;color:#888;margin-bottom:12px;}
-  .scorm-last-page strong{color:var(--gray);}
-  .scorm-all-done{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--green-bg);border-radius:var(--radius);color:var(--green);font-weight:600;font-size:13px;}
-  .scorm-incomplete-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy);margin-bottom:8px;}
-  .scorm-incomplete-list{display:flex;flex-direction:column;gap:6px;}
-  .scorm-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--red-bg);border-radius:var(--radius);font-size:13px;color:var(--red);}
-  .scorm-item-icon{font-size:14px;flex-shrink:0;}
-  .scorm-item-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#e57373;min-width:70px;}
-  .scorm-item-label{flex:1;color:var(--gray);}
-  .scorm-no-data{font-size:13px;color:#999;font-style:italic;padding:8px 0;}
+
+  .module-type-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-right:6px;}
+  .type-scorm{background:#e8eaf6;color:#3949ab;}
+  .type-test{background:#fff8e1;color:#f57f17;}
+  .type-ilt{background:#e8f5e9;color:#2e7d32;}
+  .type-video{background:#fce4ec;color:#c62828;}
+  .type-other{background:var(--slate-bg);color:#78909c;}
+  .score-pass{color:var(--green);font-weight:700;}
+  .score-fail{color:var(--red);font-weight:700;}
 
   .action-bar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:20px;background:var(--gray-light);border-radius:var(--radius);margin-top:20px;}
   .status-bar{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-top:12px;display:none;}
@@ -129,10 +116,95 @@
 <script>
 const STATE={workerUrl:'',authToken:'',connected:false,allUsers:null,selectedUser:null,userCourses:[],courseDetails:{}};
 
-// Module filters
-const INCLUDE_PATTERNS=[/knowledge\s*check/i,/knowledge\s*assessment/i,/live\s*session/i,/instructor[\s-]*led[\s-]*session/i,/self[\s-]*study/i];
-const EXCLUDE_PATTERNS=[/week\s*one/i,/required/i,/program\s*review/i];
-function shouldIncludeUnit(name){if(!name)return false;const matchesInclude=INCLUDE_PATTERNS.some(p=>p.test(name));const matchesExclude=EXCLUDE_PATTERNS.some(p=>p.test(name));return matchesInclude&&!matchesExclude;}
+// Course IDs where survey modules should be shown
+const SURVEY_COURSE_IDS = [131, 138, 141];
+
+// Module type helpers
+function getUnitType(u){
+  const t=(u.type||'').trim();
+  if(t==='SCORM | xAPI | cmi5'||t==='SCORM'||t==='xAPI'||t==='cmi5')return'scorm';
+  if(t==='Test')return'test';
+  if(t==='Assignment')return'assignment';
+  if(t==='Instructor-led training')return'ilt';
+  if(t==='Video'||t==='YouTube'||t==='Vimeo')return'video';
+  if(t==='Survey')return'survey';
+  return'other';
+}
+// Module config: keyed by moduleId — {include: bool, order: number|null}
+// Generated from clear-course-modules.csv
+const MODULE_CONFIG = {
+2348:{include:true,order:1},2349:{include:false,order:null},
+2528:{include:true,order:null},2532:{include:false,order:null},
+2324:{include:true,order:1},2325:{include:true,order:2},2328:{include:true,order:3},2329:{include:true,order:4},2332:{include:true,order:5},2333:{include:true,order:6},2336:{include:false,order:null},
+2655:{include:true,order:1},2656:{include:true,order:2},2657:{include:true,order:3},2661:{include:false,order:null},2926:{include:true,order:4},2662:{include:true,order:5},
+2116:{include:true,order:1},2117:{include:true,order:2},2120:{include:true,order:3},2121:{include:true,order:4},2124:{include:true,order:5},2125:{include:true,order:6},2128:{include:true,order:7},2129:{include:true,order:8},2132:{include:true,order:9},2133:{include:true,order:10},2393:{include:false,order:null},2136:{include:true,order:11},2137:{include:true,order:12},2140:{include:false,order:null},2141:{include:true,order:13},2142:{include:true,order:14},2145:{include:true,order:15},2146:{include:true,order:16},2149:{include:true,order:17},2150:{include:true,order:18},2153:{include:true,order:19},2154:{include:true,order:20},2250:{include:true,order:21},2251:{include:true,order:22},2252:{include:true,order:23},2253:{include:true,order:24},2157:{include:false,order:null},2158:{include:false,order:null},2391:{include:true,order:25},
+2256:{include:true,order:1},
+2401:{include:true,order:1},2402:{include:false,order:null},
+2605:{include:true,order:1},2395:{include:false,order:null},
+2545:{include:true,order:1},2546:{include:false,order:null},
+2540:{include:true,order:1},2541:{include:false,order:null},
+2723:{include:true,order:1},2724:{include:true,order:2},3025:{include:true,order:3},3026:{include:true,order:4},2728:{include:false,order:null},
+2197:{include:true,order:1},2198:{include:true,order:2},2199:{include:true,order:3},2210:{include:true,order:4},2211:{include:true,order:5},2212:{include:true,order:6},2226:{include:false,order:null},2216:{include:false,order:null},
+2299:{include:true,order:1},2300:{include:true,order:2},2301:{include:true,order:3},2284:{include:true,order:4},2283:{include:true,order:6},2286:{include:true,order:8},2285:{include:true,order:10},2289:{include:true,order:5},2290:{include:true,order:7},2291:{include:true,order:9},2292:{include:true,order:11},2686:{include:true,order:12},2687:{include:true,order:13},2697:{include:true,order:14},2702:{include:true,order:15},2298:{include:false,order:null},
+2689:{include:true,order:1},2690:{include:true,order:2},2691:{include:true,order:3},2692:{include:true,order:4},2947:{include:true,order:5},2950:{include:true,order:6},2951:{include:true,order:7},2955:{include:true,order:8},2694:{include:false,order:null},
+3014:{include:false,order:null},3016:{include:false,order:null},
+2227:{include:true,order:1},2235:{include:true,order:2},2228:{include:true,order:3},2236:{include:true,order:4},2229:{include:true,order:5},2237:{include:true,order:6},2230:{include:true,order:7},2238:{include:true,order:8},2231:{include:true,order:9},2239:{include:true,order:10},2234:{include:false,order:null},
+2585:{include:true,order:1},2586:{include:true,order:2},2587:{include:true,order:3},2588:{include:true,order:4},2589:{include:true,order:5},2590:{include:false,order:null},2591:{include:false,order:null},
+2523:{include:true,order:1},2524:{include:false,order:null},
+2338:{include:true,order:1},2337:{include:true,order:2},2339:{include:true,order:3},2340:{include:true,order:4},2341:{include:true,order:5},2344:{include:false,order:null},
+2606:{include:true,order:3},2607:{include:true,order:4},2612:{include:true,order:5},2608:{include:true,order:6},2609:{include:true,order:7},2613:{include:true,order:8},2610:{include:true,order:9},2611:{include:true,order:10},2614:{include:true,order:11},2615:{include:true,order:12},2624:{include:true,order:1},2625:{include:true,order:2},2626:{include:false,order:null},
+2957:{include:true,order:1},
+2258:{include:true,order:1},2259:{include:true,order:2},2260:{include:true,order:3},2266:{include:false,order:null},2759:{include:true,order:4},2521:{include:true,order:5},
+2052:{include:true,order:1},2050:{include:true,order:2},2056:{include:true,order:3},2054:{include:true,order:4},2058:{include:true,order:5},2059:{include:true,order:6},2067:{include:true,order:7},2065:{include:true,order:8},2072:{include:true,order:9},2070:{include:true,order:10},2241:{include:false,order:null},2074:{include:true,order:11},2075:{include:true,order:12},2081:{include:false,order:null},2078:{include:true,order:13},2082:{include:true,order:14},2085:{include:true,order:15},2086:{include:true,order:16},2089:{include:true,order:17},2094:{include:true,order:18},2091:{include:true,order:19},2095:{include:true,order:20},2245:{include:true,order:21},2244:{include:true,order:22},2246:{include:true,order:23},2247:{include:true,order:24},2097:{include:false,order:null},2098:{include:false,order:null},2384:{include:true,order:25},
+2254:{include:true,order:1},
+2406:{include:true,order:1},2407:{include:true,order:2},2408:{include:false,order:null},2410:{include:true,order:3},2411:{include:true,order:4},2412:{include:false,order:null},2414:{include:true,order:5},2415:{include:true,order:6},2416:{include:false,order:null},2418:{include:true,order:7},2419:{include:true,order:8},2420:{include:false,order:null},2422:{include:true,order:9},2424:{include:true,order:10},2425:{include:false,order:null},2427:{include:false,order:null},2429:{include:true,order:11},2430:{include:true,order:12},2431:{include:false,order:null},2433:{include:false,order:null},2434:{include:true,order:13},2435:{include:true,order:14},2436:{include:false,order:null},2438:{include:true,order:15},2439:{include:true,order:16},2440:{include:false,order:null},2442:{include:true,order:17},2443:{include:true,order:18},2444:{include:false,order:null},2446:{include:true,order:19},2447:{include:true,order:20},2448:{include:false,order:null},2455:{include:false,order:null},2456:{include:false,order:null},2458:{include:true,order:21},2459:{include:true,order:22},2460:{include:true,order:23},2461:{include:true,order:24},2457:{include:true,order:25},
+2464:{include:true,order:1},2465:{include:true,order:2},2466:{include:false,order:null},2468:{include:true,order:3},2469:{include:true,order:4},2470:{include:false,order:null},2472:{include:true,order:5},2473:{include:true,order:6},2474:{include:false,order:null},2476:{include:true,order:7},2477:{include:true,order:8},2478:{include:false,order:null},2480:{include:true,order:9},2482:{include:true,order:10},2483:{include:false,order:null},2485:{include:false,order:null},2487:{include:true,order:11},2488:{include:true,order:12},2489:{include:false,order:null},2491:{include:false,order:null},2492:{include:true,order:13},2493:{include:true,order:14},2494:{include:false,order:null},2496:{include:true,order:15},2497:{include:true,order:16},2498:{include:false,order:null},2500:{include:true,order:17},2501:{include:true,order:18},2502:{include:false,order:null},2504:{include:true,order:19},2505:{include:true,order:20},2506:{include:false,order:null},2517:{include:true,order:21},2518:{include:true,order:22},2519:{include:true,order:23},2520:{include:true,order:24},2513:{include:false,order:null},2515:{include:false,order:null},2516:{include:true,order:25},
+2871:{include:true,order:1},2872:{include:true,order:2},2875:{include:true,order:3},2873:{include:true,order:4},2874:{include:true,order:5},2877:{include:true,order:6},2878:{include:true,order:7},2879:{include:true,order:8},2880:{include:true,order:9},2881:{include:true,order:10},
+2765:{include:true,order:1},2766:{include:true,order:2},2767:{include:false,order:null},2768:{include:true,order:3},2769:{include:true,order:4},2770:{include:false,order:null},2771:{include:false,order:null},2772:{include:true,order:5},2773:{include:true,order:6},2774:{include:false,order:null},2775:{include:true,order:7},2776:{include:true,order:8},2777:{include:false,order:null},2781:{include:true,order:9},2780:{include:true,order:10},2779:{include:false,order:null},2784:{include:true,order:11},2785:{include:true,order:12},2787:{include:false,order:null},2789:{include:true,order:13},
+2270:{include:true,order:1},2271:{include:true,order:2},2272:{include:true,order:3},2925:{include:true,order:4},2281:{include:false,order:null},
+2165:{include:true,order:1},2174:{include:true,order:2},2175:{include:true,order:4},2191:{include:false,order:null},2192:{include:false,order:null},2170:{include:true,order:6},2166:{include:true,order:7},2176:{include:true,order:8},2172:{include:true,order:10},2167:{include:true,order:11},2177:{include:true,order:12},2178:{include:true,order:14},2173:{include:true,order:16},2186:{include:true,order:3},2187:{include:true,order:5},2188:{include:true,order:9},2189:{include:true,order:13},2190:{include:true,order:15},2179:{include:false,order:null},2184:{include:false,order:null},
+2886:{include:true,order:1},
+3401:{include:true,order:1},
+3306:{include:true,order:1},3325:{include:true,order:2},3326:{include:true,order:3},3309:{include:true,order:4},3310:{include:true,order:5},3311:{include:true,order:6},3314:{include:true,order:7},3327:{include:true,order:8},3316:{include:true,order:9},3319:{include:true,order:10},3328:{include:true,order:11},3329:{include:true,order:12},3322:{include:true,order:13},
+3017:{include:true,order:14},
+2109:{include:true,order:1},
+2632:{include:true,order:1},
+2368:{include:true,order:1},
+2634:{include:true,order:1},
+3652:{include:true,order:1},3654:{include:true,order:2},3655:{include:true,order:3},3657:{include:true,order:4},3659:{include:true,order:5},3660:{include:true,order:6},3661:{include:true,order:7},3663:{include:true,order:8},3665:{include:true,order:9},3666:{include:true,order:10},3667:{include:true,order:11},3669:{include:true,order:12},
+3630:{include:false,order:null},3633:{include:false,order:null},3641:{include:false,order:null},3637:{include:false,order:null},3626:{include:false,order:null},3639:{include:false,order:null},3635:{include:false,order:null},3627:{include:false,order:null},3628:{include:false,order:null},3629:{include:false,order:null},3645:{include:false,order:null},3648:{include:false,order:null},3650:{include:false,order:null},3643:{include:false,order:null},3562:{include:false,order:null},3649:{include:false,order:null},
+3737:{include:false,order:null},
+2746:{include:false,order:null},2758:{include:false,order:null},2936:{include:false,order:null},3340:{include:false,order:null},3463:{include:false,order:null},3701:{include:false,order:null},3703:{include:false,order:null},
+2571:{include:true,order:1},2679:{include:true,order:2},2353:{include:true,order:3},2561:{include:false,order:null},2678:{include:true,order:4},2717:{include:true,order:5},2354:{include:true,order:6},2562:{include:false,order:null},2684:{include:true,order:7},2680:{include:true,order:8},2355:{include:true,order:9},2563:{include:false,order:null},2685:{include:true,order:10},2564:{include:false,order:null},
+2319:{include:true,order:1},2320:{include:true,order:2},2321:{include:true,order:3},2322:{include:false,order:null},
+3732:{include:true,order:1},3733:{include:true,order:2},3736:{include:true,order:3},
+};
+
+function shouldShowUnit(u){
+  const id=Number(u.id);
+  const cfg=MODULE_CONFIG[id];
+  // If in config, use include flag. If not in config, fall back to type-based logic for unknown/new modules.
+  if(cfg!==undefined) return cfg.include;
+  const type=getUnitType(u);
+  return['scorm','test','assignment','ilt','video'].includes(type);
+}
+function getModuleOrder(u){
+  const cfg=MODULE_CONFIG[Number(u.id)];
+  return(cfg&&cfg.order!=null)?cfg.order:Infinity;
+}
+function unitTypeBadge(type, rawType){
+  const t=(rawType||'').toLowerCase().trim();
+  const map={
+    scorm:['type-scorm', t==='xapi'?'xAPI':t==='cmi5'?'cmi5':'SCORM'],
+    test:['type-test','Test'],
+    assignment:['type-test','Assignment'],
+    ilt:['type-ilt','ILT'],
+    video:['type-video','Video'],
+    survey:['type-other','Survey']
+  };
+  const [cls,label]=map[type]||['type-other','Module'];
+  return`<span class="module-type-badge ${cls}">${label}</span>`;
+}
 
 // API
 async function apiCall(path){const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+path,{headers:{'X-Auth-Token':STATE.authToken}});if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t);}return r.json();}
@@ -167,75 +239,6 @@ async function doSearch(){
   }catch(e){el.innerHTML='<p style="color:var(--red);">Error: '+esc(e.message)+'</p>';}
 }
 
-// ── SCORM Progress Report (fetched from Cloudflare KV) ────────────────────
-const SCORM_ITEM_META = {
-  'Page':            { icon: '📄' },
-  'Tab':             { icon: '🗂️' },
-  'Accordion':       { icon: '📖' },
-  'Thumbnail':       { icon: '🖼️' },
-  'Scenario':        { icon: '🎭' },
-  'Knowledge Check': { icon: '❓' },
-  'Reflection':      { icon: '✍️' },
-};
-
-function getItemMeta(label) {
-  const colon = label.indexOf(':');
-  if (colon === -1) return { icon: '⚠️', type: '', itemLabel: label };
-  const type = label.substring(0, colon).trim();
-  const itemLabel = label.substring(colon + 1).trim();
-  const meta = SCORM_ITEM_META[type] || { icon: '⚠️' };
-  return { icon: meta.icon, type, itemLabel };
-}
-
-async function fetchScormReports(userId) {
-  try {
-    const r = await fetch(
-      STATE.workerUrl.replace(/\/+$/, '') + '/scorm/getall?user_id=' + userId,
-      { headers: { 'X-Auth-Token': STATE.authToken } }
-    );
-    const data = await r.json();
-    return data.found ? data.records : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function buildScormReportHtml(record) {
-  const support = record.support;
-  const isComplete = support.incomplete && support.incomplete.length === 0;
-
-  let html = '<div class="scorm-report">';
-
-  // Header
-  html += `<div class="scorm-report-header">
-    <h4>📊 Interactive Progress — ${esc(record.module_name)}</h4>
-    <span class="scorm-progress${isComplete ? ' complete' : ''}">${esc(support.progress)}</span>
-  </div>`;
-
-  html += '<div class="scorm-report-body">';
-  html += `<p class="scorm-last-page">Last page seen: <strong>${esc(support.lastPageSeen || '—')}</strong> &nbsp;·&nbsp; <span style="color:#aaa;font-size:11px;">Saved: ${esc(new Date(record.saved_at).toLocaleString())}</span></p>`;
-
-  if (isComplete) {
-    html += '<div class="scorm-all-done">✅ All interactive elements completed — nothing is blocking this learner.</div>';
-  } else {
-    const items = support.incomplete || [];
-    html += `<div class="scorm-incomplete-label">Not yet completed (${items.length} remaining)</div>`;
-    html += '<div class="scorm-incomplete-list">';
-    items.forEach(label => {
-      const { icon, type, itemLabel } = getItemMeta(label);
-      html += `<div class="scorm-item">
-        <span class="scorm-item-icon">${icon}</span>
-        <span class="scorm-item-type">${esc(type)}</span>
-        <span class="scorm-item-label">${esc(itemLabel)}</span>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  html += '</div></div>';
-  return html;
-}
-
 // Load user detail
 async function loadUser(userId){
   const panel=document.getElementById('panelUser');panel.classList.remove('hidden');
@@ -265,12 +268,6 @@ async function loadUser(userId){
     STATE.userCourses=courses;
     if(courses.length===0){document.getElementById('courseCards').innerHTML='<p style="color:#888;">This user is not enrolled in any courses.</p>';setupMarkCourse([]);panel.scrollIntoView({behavior:'smooth'});return;}
 
-    // Fetch SCORM progress records from KV for this user
-    const scormRecords = await fetchScormReports(userId);
-    // Index by module_id for easy lookup
-    const scormByModule = {};
-    scormRecords.forEach(r => { scormByModule[r.module_id] = r; });
-
     let html='';
     STATE.courseDetails={};
     for(let i=0;i<courses.length;i++){
@@ -279,93 +276,43 @@ async function loadUser(userId){
         const status=await apiCall('/v1/getuserstatusincourse/course_id:'+c.id+',user_id:'+userId);
         STATE.courseDetails[c.id]=status;
         const units=status.units||[];
-        const filteredUnits=units.filter(u=>shouldIncludeUnit(u.name));
-        const testUnits=units.filter(u=>u.type&&u.type.toLowerCase()==='test');
+
+        // Filter and sort by configured order
+        const displayUnits=units
+          .filter(u=>shouldShowUnit(u))
+          .sort((a,b)=>getModuleOrder(a)-getModuleOrder(b));
 
         const completionStatus=c.completion_status_formatted||c.completion_status||status.completion_status||'Not Started';
         const completionPct=c.completion_percentage||status.completion_percentage||'0';
         const enrolledDate=c.enrolled_on||c.enrolled_on_timestamp||status.enrolled_on||'';
         const dateStr=enrolledDate?'<span style="font-size:12px;color:#888;margin-left:12px;">Enrolled: '+esc(enrolledDate)+'</span>':'';
 
-        html+='<div class="course-card"><div class="course-card-header" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span class="cc-name">'+esc(c.name)+dateStr+'</span><span class="cc-status">'+statusBadge(normalizeStatus(completionStatus))+' '+esc(completionPct)+'%</span></div>';
+        html+='<div class="course-card"><div class="course-card-header" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span class="cc-name">'+esc(c.name)+dateStr+'</span><span class="cc-status">'+statusBadge(normalizeStatus(completionStatus))+' <span style="font-size:12px;color:#666;margin-left:4px;">'+esc(completionPct)+'%</span></span></div>';
         html+='<div class="course-card-body">';
 
-        // Module table
-        if(filteredUnits.length>0){
-          html+='<table class="module-table"><thead><tr><th style="width:65%;">Module</th><th>Status</th></tr></thead><tbody>';
-          filteredUnits.forEach(u=>{
+        if(displayUnits.length>0){
+          html+='<table class="module-table"><thead><tr><th style="width:55%;">Module</th><th>Type</th><th>Status</th><th>Score</th></tr></thead><tbody>';
+          for(const u of displayUnits){
+            const type=getUnitType(u);
             const s=normalizeStatus(u.completion_status_formatted||u.completion_status||'Not Started');
-            html+='<tr><td>'+esc(u.name)+'</td><td>'+statusBadge(s)+'</td></tr>';
-          });
+            // Completion % for SCORM units
+            const unitPct=(u.completion_percentage!==undefined&&u.completion_percentage!==null&&u.completion_percentage!=='')?' <span style="font-size:11px;color:#888;">('+u.completion_percentage+'%)</span>':'';
+            let scoreCell='<span style="color:#bbb;font-size:12px;">—</span>';
+            if(type==='test'||type==='assignment'){
+              try{
+                const ta=await apiCall('/v1/gettestanswers/test_id:'+u.id+',user_id:'+userId);
+                if(ta.score!==undefined&&ta.score!==null&&ta.score!==''){
+                  const pct=parseFloat(ta.score);
+                  const cls=pct>=70?'score-pass':'score-fail';
+                  scoreCell='<span class="'+cls+'">'+pct.toFixed(1)+'%</span>';
+                }
+              }catch(te){}
+            }
+            html+='<tr><td>'+esc(u.name)+'</td><td>'+unitTypeBadge(type,u.type)+'</td><td>'+statusBadge(s)+unitPct+'</td><td>'+scoreCell+'</td></tr>';
+          }
           html+='</tbody></table>';
         }else{
-          html+='<p style="font-size:13px;color:#888;margin-bottom:12px;">No matching modules in this course.</p>';
-        }
-
-        // SCORM progress reports from KV — match by unit id only
-        // Log unit ids for debugging
-        console.log('Course:', c.name, '| Unit IDs:', units.map(u => u.id));
-        units.forEach(u => {
-          const record = scormByModule[String(u.id)];
-          console.log('Checking unit', u.id, '→', record ? 'FOUND' : 'not found');
-          if (record) {
-            const reportId = 'scorm-report-' + u.id;
-            const isComplete = record.support.incomplete && record.support.incomplete.length === 0;
-            const progressLabel = record.support.progress;
-            const headerBg = isComplete ? '#2e7d32' : 'var(--burgundy)';
-
-            html += `<div class="scorm-report">
-              <div class="scorm-report-header" onclick="this.nextElementSibling.classList.toggle('open')" style="cursor:pointer;background:${headerBg};">
-                <h4>📊 ${esc(record.module_name)}</h4>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <span class="scorm-progress${isComplete ? ' complete' : ''}">${esc(progressLabel)}</span>
-                  <span style="font-size:11px;opacity:0.7;">▼</span>
-                </div>
-              </div>
-              <div class="course-card-body" id="${reportId}">
-                <div class="scorm-report-body">`;
-
-            html += `<p class="scorm-last-page">Last page seen: <strong>${esc(record.support.lastPageSeen || '—')}</strong> &nbsp;·&nbsp; <span style="color:#aaa;font-size:11px;">Saved: ${esc(new Date(record.saved_at).toLocaleString())}</span></p>`;
-
-            if (isComplete) {
-              html += '<div class="scorm-all-done">✅ All interactive elements completed — nothing is blocking this learner.</div>';
-            } else {
-              const items = record.support.incomplete || [];
-              html += `<div class="scorm-incomplete-label">Not yet completed (${items.length} remaining)</div>`;
-              html += '<div class="scorm-incomplete-list">';
-              items.forEach(label => {
-                const { icon, type, itemLabel } = getItemMeta(label);
-                html += `<div class="scorm-item">
-                  <span class="scorm-item-icon">${icon}</span>
-                  <span class="scorm-item-type">${esc(type)}</span>
-                  <span class="scorm-item-label">${esc(itemLabel)}</span>
-                </div>`;
-              });
-              html += '</div>';
-            }
-
-            html += `</div></div></div>`;
-          }
-        });
-
-        // Exam scores
-        if(testUnits.length>0){
-          html+='<div class="exam-card"><h4>&#128221; Exam Scores</h4>';
-          for(const tu of testUnits){
-            let scoreText='Not taken';let scoreClass='';
-            try{
-              const ta=await apiCall('/v1/gettestanswers/test_id:'+tu.id+',user_id:'+userId);
-              if(ta.score!==undefined&&ta.score!==null&&ta.score!==''){
-                const pct=parseFloat(ta.score);
-                scoreText=pct.toFixed(1)+'%';
-                scoreClass=pct>=70?'pass':'fail';
-              }else if(ta.completion_status){
-                scoreText=ta.completion_status;
-              }
-            }catch(te){scoreText='Not taken';}
-            html+='<div class="exam-row"><span>'+esc(tu.name)+'</span><span class="exam-score '+scoreClass+'">'+scoreText+'</span></div>';
-          }
-          html+='</div>';
+          html+='<p style="font-size:13px;color:#888;">No SCORM, test, assignment, ILT, or video modules found in this course.</p>';
         }
 
         html+='</div></div>';
