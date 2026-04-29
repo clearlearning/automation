@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCORM Suspend Data Reader — CLEAR Learning</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --burgundy: #64092C;
+    --burgundy-light: #8a1040;
+    --burgundy-pale: #f9f0f3;
+    --gold: #DDA838;
+    --gold-light: #f5e4b0;
+    --charcoal: #484848;
+    --blue: #084D78;
+    --success: #2a7d4f;
+    --success-bg: #eaf7ed;
+    --danger: #c0392b;
+    --danger-bg: #fdf0ef;
+    --warning: #b7680a;
+    --warning-bg: #fef8ec;
+    --neutral: #6b7280;
+    --border: #e5e0e2;
+    --surface: #fafafa;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: #f4f1f2;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--burgundy);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-logo {
+    width: 36px;
+    height: 36px;
+    background: var(--gold);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--burgundy);
+    letter-spacing: -.5px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: .01em;
+  }
+
+  .header-sub {
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 73px);
+  }
+
+  .sidebar {
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sidebar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.6;
+    width: 100%;
+    height: 280px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    resize: vertical;
+    color: var(--charcoal);
+    background: var(--surface);
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  textarea:focus { border-color: var(--burgundy); }
+  textarea::placeholder { color: #bbb; }
+
+  .btn-parse {
+    background: var(--burgundy);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 20px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    transition: background .15s;
+  }
+
+  .btn-parse:hover { background: var(--burgundy-light); }
+
+  .btn-clear {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    transition: all .15s;
+  }
+
+  .btn-clear:hover { border-color: var(--burgundy); color: var(--burgundy); }
+
+  .error-msg {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #f5c6c2;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    display: none;
+  }
+
+  .quick-guide {
+    background: var(--burgundy-pale);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .quick-guide ol {
+    font-size: 12px;
+    color: var(--black);
+    line-height: 1.6;
+    margin-bottom: 6px;
+    margin-left: 10px;
+  }
+
+  .quick-guide li {
+    padding-bottom: 10px;
+    padding-left: 5px;
+  }
+
+  .quick-guide p:last-child { margin-bottom: 0; }
+
+  .quick-guide strong { font-weight: 600; color: #64092c; }
+
+  .main {
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px;
+    color: var(--text-muted);
+    text-align: center;
+    gap: 12px;
+  }
+
+  .empty-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+
+  .empty-state h3 { font-size: 16px; font-weight: 500; color: var(--charcoal); }
+  .empty-state p { font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+  .results { display: none; }
+
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+
+  .metric-card.highlight { border-left: 3px solid var(--burgundy); }
+
+  .metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -.02em;
+  }
+
+  .metric-value.good { color: var(--success); }
+  .metric-value.warn { color: var(--warning); }
+  .metric-value.bad { color: var(--danger); }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    margin-top: 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .cat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .cat-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+
+  .cat-count {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .bar-track {
+    height: 5px;
+    background: #ede8ea;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--success);
+    transition: width .4s ease;
+  }
+
+  .bar-fill.warn { background: var(--gold); }
+  .bar-fill.bad { background: var(--danger); }
+
+  .incomplete-section { margin-top: 4px; }
+
+  .group-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #faf8f9;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .group-header:hover { background: var(--burgundy-pale); }
+
+  .group-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--charcoal);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .group-badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-radius: 20px;
+    padding: 1px 8px;
+    font-weight: 400;
+  }
+
+  .group-toggle {
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: transform .2s;
+  }
+
+  .group-toggle.open { transform: rotate(180deg); }
+
+  .group-items {
+    display: none;
+    padding: 8px 0;
+  }
+
+  .group-items.open { display: block; }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 16px;
+    font-size: 13px;
+    color: var(--charcoal);
+    border-bottom: 1px solid #f5f0f2;
+  }
+
+  .todo-item:last-child { border-bottom: none; }
+
+  .todo-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--danger);
+    flex-shrink: 0;
+  }
+
+  .all-done {
+    background: var(--success-bg);
+    border: 1px solid #b8e6ce;
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: var(--success);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .timestamp {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">CL</div>
+  <div>
+    <div class="header-title">SCORM Suspend Data Reader</div>
+    <div class="header-sub">CLEAR Learning — Learner progress diagnostics</div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div>
+      <div class="sidebar-label">Suspend data JSON</div>
+      <textarea id="input" placeholder='{"_resume":{...},"_support":{"progress":"78%","incomplete":[...]}}'></textarea>
+    </div>
+
+    <div id="error-msg" class="error-msg"></div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn-parse" onclick="parse()">Parse data</button>
+      <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
+
+    <div class="quick-guide">
+      <h4 style="padding-bottom: 6px;">How to use:</h4>
+      <ol>
+        <li>In <strong>TALENTLMS</strong>, under the <strong>ADMINISTRATOR</strong> role, hover over the <strong>GO TO</strong> menu and select <strong>REPORTS</strong>.</li>
+        <li>Select <strong>SCORM REPORTS</strong> from the menu on the right.</li>
+        <li>Select the appropriate module from the list. Use the <STRONG>SEARCH</STRONG> bar at the bottom of the list as needed. Next, locate the appropriate user record and scroll to the right.</li>
+        <li> Click on the <STRONG>MAGNIFYING GLASS</STRONG> icon that pops up when you hover over the <strong>OPTIONS</strong> column.</li>
+        <li>At the bottom of the pop up window will be a section labeled <strong>SUSPEND DATA</strong>. Copy  all contents in that section and paste above.</li>
+        <li>Click the <strong>PARSE DATA</strong> button to view the progress report for the module and user selected.</li>
+  </ol>
+    </div>
+  </div>
+
+  <div class="main" id="main">
+    <div class="empty-state" id="empty">
+      <div class="empty-icon">📋</div>
+      <h3>No data loaded</h3>
+      <p>Paste a learner's suspend data JSON into the panel on the left and click Parse.</p>
+    </div>
+
+    <div class="results" id="results"></div>
+  </div>
+</div>
+
+<script>
+const TOTALS = {
+  slides:6, gallery1:8, gallery2:6, gallery3:6,
+  hotspots:10, tabs:4, dragDrop:6, accordions:9,
+  questions:8, questionsChecked:8, videos:1
+};
+
+const CAT_LABELS = {
+  slides: 'Pages visited',
+  gallery1: 'CE requirements cards',
+  gallery2: 'CE compliance cards',
+  gallery3: 'Quality indicator cards',
+  hotspots: 'Hotspots',
+  tabs: 'Tabs',
+  dragDrop: 'Drag & drop items',
+  accordions: 'Accordions',
+  questions: 'Questions answered',
+  questionsChecked: 'Questions submitted',
+  videos: 'Videos'
+};
+
+function pct(n, t) { return t === 0 ? 100 : Math.round((n / t) * 100); }
+function barClass(p) { return p >= 100 ? '' : p >= 50 ? 'warn' : 'bad'; }
+function metricClass(p) { return p >= 100 ? 'good' : p >= 50 ? 'warn' : 'bad'; }
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('empty').style.display = 'flex';
+}
+
+function toggleGroup(id) {
+  const items = document.getElementById('items-' + id);
+  const toggle = document.getElementById('toggle-' + id);
+  items.classList.toggle('open');
+  toggle.classList.toggle('open');
+  toggle.textContent = items.classList.contains('open') ? '▲' : '▼';
+}
+
+function parse() {
+  const raw = document.getElementById('input').value.trim();
+  const errEl = document.getElementById('error-msg');
+  errEl.style.display = 'none';
+
+  if (!raw) { errEl.textContent = 'Nothing to parse — paste JSON first.'; errEl.style.display = 'block'; return; }
+
+  let data;
+  try { data = JSON.parse(raw); }
+  catch(e) { errEl.textContent = 'Invalid JSON. Check for missing brackets, quotes, or trailing commas.'; errEl.style.display = 'block'; return; }
+
+  const resume = data._resume || data;
+  const support = data._support || {};
+  const progress = support.progress || '—';
+  const incomplete = support.incomplete || [];
+  const pctNum = parseInt(progress) || 0;
+  const now = new Date().toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+
+  // Metrics row
+  let html = `
+    <div class="metrics-row">
+      <div class="metric-card highlight">
+        <div class="metric-label">Overall progress</div>
+        <div class="metric-value ${metricClass(pctNum)}">${progress}</div>
+        <div class="timestamp">Parsed ${now}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Incomplete items</div>
+        <div class="metric-value ${incomplete.length === 0 ? 'good' : 'bad'}">${incomplete.length}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">To reach 100%</div>
+        <div class="metric-value ${pctNum >= 100 ? 'good' : 'warn'}">${Math.max(0, 100 - pctNum)}%</div>
+      </div>
+    </div>`;
+
+  // Category breakdown
+  html += '<div class="section-title">Category breakdown</div><div class="category-grid">';
+  for (const [key, label] of Object.entries(CAT_LABELS)) {
+    if (!(key in resume)) continue;
+    const done = Array.isArray(resume[key]) ? resume[key].length : 0;
+    const total = TOTALS[key] || 0;
+    const p = pct(done, total);
+    html += `<div class="cat-card">
+      <div class="cat-header">
+        <div class="cat-name">${label}</div>
+        <div class="cat-count">${done}/${total}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${barClass(p)}" style="width:${Math.min(p,100)}%"></div></div>
+    </div>`;
+  }
+  html += '</div>';
+
+  // Incomplete grouped list
+  html += '<div class="section-title">What still needs to be done</div><div class="incomplete-section">';
+
+  if (incomplete.length === 0) {
+    html += '<div class="all-done">✓ All required interactions are complete</div>';
+  } else {
+    const groups = {};
+    incomplete.forEach(item => {
+      const colon = item.indexOf(':');
+      const prefix = colon > -1 ? item.substring(0, colon).trim() : 'Other';
+      const detail = colon > -1 ? item.substring(colon + 1).trim() : item;
+      if (!groups[prefix]) groups[prefix] = [];
+      groups[prefix].push(detail);
+    });
+
+    let gi = 0;
+    for (const [group, items] of Object.entries(groups)) {
+      const id = 'g' + gi++;
+      html += `<div class="group-block">
+        <div class="group-header" onclick="toggleGroup('${id}')">
+          <div class="group-name">
+            ${group}
+            <span class="group-badge">${items.length} remaining</span>
+          </div>
+          <span class="group-toggle" id="toggle-${id}">▼</span>
+        </div>
+        <div class="group-items" id="items-${id}">`;
+      items.forEach(item => {
+        html += `<div class="todo-item"><div class="todo-dot"></div>${item}</div>`;
+      });
+      html += '</div></div>';
+    }
+  }
+
+  html += '</div>';
+
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = html;
+  resultsEl.style.display = 'block';
+  document.getElementById('empty').style.display = 'none';
+}
+</script>
+</body>
+</html>
