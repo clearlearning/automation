@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLEAR Learning – NCIT Standard Release Status Report</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+:root {
+  --burgundy:#64092c; --burgundy-light:#8a1e4a; --burgundy-faint:rgba(100,9,44,0.06);
+  --gold:#dda838; --gold-light:#f0c96a; --gold-faint:rgba(221,168,56,0.12);
+  --blue:#084d78; --blue-light:#0a6ba8; --blue-faint:rgba(8,77,120,0.07);
+  --gray:#484848; --gray-light:#f4f4f5; --gray-mid:#e0e0e0; --white:#ffffff;
+  --green:#2e7d32; --green-bg:#e8f5e9; --red:#c62828; --red-bg:#ffebee;
+  --amber:#f57f17; --amber-bg:#fff8e1;
+  --radius:6px; --radius-lg:10px;
+  --shadow:0 2px 8px rgba(0,0,0,0.07); --shadow-lg:0 4px 20px rgba(0,0,0,0.11);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Open Sans',sans-serif;color:var(--gray);background:var(--gray-light);min-height:100vh;}
+h1,h2,h3,h4{font-family:'Trebuchet MS','Open Sans',sans-serif;}
+
+/* ── Header ── */
+.header{background:var(--burgundy);color:var(--white);padding:0;box-shadow:var(--shadow-lg);position:sticky;top:0;z-index:50;}
+.header-inner{max-width:1300px;margin:0 auto;padding:18px 32px;display:flex;align-items:center;gap:16px;}
+.header-logo{width:44px;height:44px;flex-shrink:0;}
+.header-text h1{font-size:20px;font-weight:700;line-height:1.2;}
+.header-text p{font-size:12px;opacity:0.75;margin-top:2px;}
+.gold-bar{height:4px;background:var(--gold);}
+
+/* ── Layout ── */
+.main{max-width:1300px;margin:0 auto;padding:28px 32px 60px;}
+.panel{background:var(--white);border-radius:var(--radius-lg);padding:28px 32px;box-shadow:var(--shadow);margin-bottom:24px;}
+.panel-title{font-size:16px;color:var(--blue);margin-bottom:20px;display:flex;align-items:center;gap:8px;font-weight:700;}
+.section{border:1px solid var(--gray-mid);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;}
+.section-title{font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.4px;}
+
+/* ── Forms ── */
+.form-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;}
+.form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px;}
+.form-group label{font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;}
+.form-group input,.form-group select{padding:10px 13px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:13px;font-family:'Open Sans',sans-serif;transition:border-color 0.2s,box-shadow 0.2s;background:var(--white);}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1);}
+.form-group input:disabled,.form-group select:disabled{background:#f5f5f5;color:#aaa;cursor:not-allowed;}
+.inline-note{font-size:11px;color:#999;margin-top:2px;line-height:1.4;}
+
+/* ── Search Select ── */
+.search-select{position:relative;}
+.search-select input{width:100%;}
+.search-select .dropdown{position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--white);border:1.5px solid var(--blue);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:240px;overflow-y:auto;box-shadow:var(--shadow-lg);display:none;}
+.search-select .dropdown.open{display:block;}
+.search-select .dropdown .opt{padding:9px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-light);}
+.search-select .dropdown .opt:hover{background:#e3f2fd;}
+.search-select .dropdown .no-match{padding:9px 13px;font-size:13px;color:#999;font-style:italic;}
+
+/* ── Buttons ── */
+.btn{padding:10px 22px;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;font-family:'Open Sans',sans-serif;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:7px;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-primary{background:var(--blue);color:var(--white);}
+.btn-primary:not(:disabled):hover{background:var(--blue-light);box-shadow:var(--shadow);}
+.btn-burgundy{background:var(--burgundy);color:var(--white);}
+.btn-burgundy:not(:disabled):hover{background:var(--burgundy-light);box-shadow:var(--shadow);}
+.btn-gold{background:var(--gold);color:var(--burgundy);}
+.btn-gold:not(:disabled):hover{background:var(--gold-light);}
+.btn-secondary{background:var(--white);color:var(--blue);border:1.5px solid var(--blue);}
+.btn-secondary:not(:disabled):hover{background:var(--blue-faint);}
+.btn-sm{padding:7px 14px;font-size:12px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center;}
+
+/* ── Connection status ── */
+.conn-status{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:var(--radius);font-size:12px;font-weight:600;}
+.conn-status.connected{background:var(--green-bg);color:var(--green);}
+.conn-status.disconnected{background:var(--red-bg);color:var(--red);}
+.conn-status.loading{background:var(--amber-bg);color:var(--amber);}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.dot.green{background:var(--green);}
+.dot.red{background:var(--red);}
+.dot.amber{background:var(--amber);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+
+/* ── Progress ── */
+.prog-wrap{height:8px;background:var(--gray-mid);border-radius:4px;overflow:hidden;margin:12px 0 6px;}
+.prog-fill{height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s ease;}
+.prog-text{font-size:12px;color:#888;}
+
+/* ── Summary cards ── */
+.summary-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.s-card{flex:1;min-width:110px;background:var(--gray-light);border-radius:var(--radius);padding:14px 16px;text-align:center;}
+.s-card .s-lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#888;margin-bottom:4px;font-weight:700;}
+.s-card .s-val{font-size:26px;font-weight:700;color:var(--blue);}
+.s-card.complete .s-val{color:var(--green);}
+.s-card.incomplete .s-val{color:var(--red);}
+.s-card.pct .s-val{color:var(--burgundy);}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--gray-mid);border-radius:var(--radius);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--blue);color:var(--white);padding:10px 13px;text-align:left;font-weight:700;font-size:11px;white-space:nowrap;}
+tbody td{padding:9px 13px;border-bottom:1px solid var(--gray-mid);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:nth-child(even){background:#fafafa;}
+tbody tr:hover{background:rgba(8,77,120,0.03);}
+.sort-th{cursor:pointer;user-select:none;}
+.sort-th:hover{background:var(--blue-light);}
+.sort-arrow{margin-left:4px;opacity:0.6;font-size:10px;}
+tbody tr.excluded{opacity:0.38;background:#f9f9f9 !important;}
+tbody tr.excluded td{text-decoration:line-through;color:#aaa;}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;}
+.badge-complete{background:var(--green-bg);color:var(--green);}
+.badge-incomplete{background:var(--red-bg);color:var(--red);}
+.badge-notstarted{background:#eceff1;color:#607d8b;}
+.badge-inprogress{background:var(--amber-bg);color:var(--amber);}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.filter-bar input[type="text"]{padding:8px 12px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:13px;font-family:'Open Sans',sans-serif;min-width:220px;}
+.filter-bar input[type="text"]:focus{outline:none;border-color:var(--blue);}
+.filter-toggle{display:flex;gap:0;}
+.filter-toggle button{padding:7px 14px;border:1.5px solid var(--gray-mid);background:var(--white);font-size:12px;font-weight:700;font-family:'Open Sans',sans-serif;cursor:pointer;transition:all 0.15s;}
+.filter-toggle button:first-child{border-radius:var(--radius) 0 0 var(--radius);}
+.filter-toggle button:last-child{border-radius:0 var(--radius) var(--radius) 0;border-left:none;}
+.filter-toggle button.active{background:var(--blue);color:var(--white);border-color:var(--blue);}
+
+/* ── SR course mapping info ── */
+.sr-info{background:var(--gold-faint);border-left:3px solid var(--gold);border-radius:0 var(--radius) var(--radius) 0;padding:10px 14px;font-size:12px;color:var(--gray);line-height:1.5;margin-bottom:16px;}
+.sr-info strong{color:var(--burgundy);}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;gap:2px;margin-bottom:16px;border-bottom:2px solid var(--gray-mid);}
+.tab-btn{padding:9px 18px;font-size:13px;font-weight:700;font-family:'Open Sans',sans-serif;border:none;background:none;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-btn:hover:not(.active){color:var(--gray);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ── Misc ── */
+.hidden{display:none !important;}
+.divider{border:none;border-top:1px solid var(--gray-mid);margin:20px 0;}
+.info-banner{background:var(--blue-faint);border-left:3px solid var(--blue);border-radius:0 var(--radius) var(--radius) 0;padding:10px 14px;font-size:12px;color:var(--gray);line-height:1.5;margin-bottom:16px;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:768px){.main{padding:16px;}.panel{padding:16px;}.header-inner{padding:14px 16px;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR" class="header-logo">
+    <div class="header-text">
+      <h1>NCIT Standard Release Status Report</h1>
+      <p>Track Standard Release completion by cohort and generate reminder emails</p>
+    </div>
+  </div>
+  <div class="gold-bar"></div>
+</div>
+
+<div class="main">
+
+  <!-- ── SETUP PANEL ── -->
+  <div class="panel" id="panelSetup">
+    <div class="panel-title">&#9881;&#65039; Setup &amp; Connection</div>
+
+    <div class="section">
+      <div class="section-title">1. API Connection</div>
+      <div class="form-row">
+        <div class="form-group" style="flex:2;">
+          <label>Worker URL</label>
+          <input type="text" id="workerUrl" value="https://clear-lms-proxy.avance.workers.dev">
+          <span class="inline-note">Pre-configured. Do not change unless instructed.</span>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Auth Token</label>
+          <input type="password" id="authToken" placeholder="Enter access token">
+        </div>
+        <div class="form-group" style="flex:0 0 auto;">
+          <label>&nbsp;</label>
+          <button class="btn btn-sm btn-secondary" id="connectBtn">Test Connection</button>
+        </div>
+      </div>
+      <div class="conn-status disconnected" id="connStatus"><span class="dot red"></span> Not connected</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">2. Select Cohort</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Program</label>
+          <select id="courseSelect" disabled>
+            <option value="">— Connect to API first —</option>
+            <option value="161">NCIT – Basic</option>
+            <option value="162">NCIT – Specialized</option>
+            <option value="181">NCIT – Applied Investigative Techniques</option>
+            <option value="148">NCIT – Basic (Canadian)</option>
+            <option value="127">NCIT – Basic (US Online)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cohort / Group</label>
+          <div class="search-select">
+            <input type="text" id="groupInput" placeholder="Select a program first" disabled>
+            <div class="dropdown" id="groupDropdown"></div>
+          </div>
+          <input type="hidden" id="groupValue">
+        </div>
+      </div>
+      <div id="srCourseInfo" class="sr-info hidden"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="loadBtn" disabled>&#128100; Load Cohort Data</button>
+    </div>
+    <div class="prog-wrap hidden" id="progWrap"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <p class="prog-text hidden" id="progText"></p>
+  </div>
+
+  <!-- ── RESULTS PANEL ── -->
+  <div class="panel hidden" id="panelResults">
+    <div class="panel-title">&#128203; Cohort Report</div>
+
+    <!-- Summary cards -->
+    <div class="summary-strip" id="summaryStrip"></div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="tabAll">All Learners</button>
+      <button class="tab-btn" data-tab="tabIncomplete">Incomplete / Not Started</button>
+      <button class="tab-btn" data-tab="tabComplete">Completed</button>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="&#128269; Search by name or email...">
+      <span id="filteredCount" style="font-size:12px;color:#888;"></span>
+    </div>
+
+    <!-- Tab panes -->
+    <div class="tab-pane active" id="tabAll">
+      <div class="tbl-wrap"><table id="tblAll"><thead></thead><tbody></tbody></table></div>
+    </div>
+    <div class="tab-pane" id="tabIncomplete">
+      <div class="tbl-wrap"><table id="tblIncomplete"><thead></thead><tbody></tbody></table></div>
+    </div>
+    <div class="tab-pane" id="tabComplete">
+      <div class="tbl-wrap"><table id="tblComplete"><thead></thead><tbody></tbody></table></div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Export section -->
+    <div class="section">
+      <div class="section-title">&#9993; Generate Standard Release Reminder Emails</div>
+      <div class="info-banner" id="exportInfo"></div>
+      <div class="form-row" style="align-items:flex-start;">
+        <div class="form-group">
+          <label>Program Start Date</label>
+          <input type="text" id="startDate" placeholder="e.g., May 4, 2026">
+          <span class="inline-note">Used in the email body and deadline language.</span>
+        </div>
+        <div class="form-group">
+          <label>Deadline Preview</label>
+          <input type="text" id="deadlinePreview" readonly style="background:#f5f5f5;color:#484848;" value="prior to checking in on [start date]">
+          <span class="inline-note">Automatically generated from the start date above.</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-burgundy" id="exportEmailsBtn" disabled>&#9993; Export Reminder Emails (ZIP)</button>
+        <button class="btn btn-secondary btn-sm" id="exportCsvBtn" disabled>&#8595; Export CSV</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ─────────────────────────────────────────────────
+// HARDCODED COURSE + SR CONFIG
+// courseId: the main program course selected in the dropdown
+// srCourseId: the Standard Release course to check completion in
+// srTestUnitId: the specific unit (test) whose completion status we read
+// ─────────────────────────────────────────────────
+const COURSE_CONFIG = {
+  '161': { srCourseName:'NCIT Basic In-Person Program - Standard Release',     srCourseId:'161', srTestUnitId:'2632', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:161' },
+  '162': { srCourseName:'NCIT Specialized In-Person Program - Standard Release', srCourseId:'162', srTestUnitId:'2634', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:162' },
+  '181': { srCourseName:'NCIT AIT In-Person Program - Standard Release',        srCourseId:'181', srTestUnitId:'3017', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:181' },
+  '148': { srCourseName:'NCIT Specialized Online Program - Standard Release',   srCourseId:'148', srTestUnitId:'2368', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:148' },
+  '127': { srCourseName:'NCIT Basic Online Program - Standard Release',         srCourseId:'127', srTestUnitId:'2109', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:127' },
+};
+const COURSE_NAMES = {}; // populated at connect time with real names from TalentLMS
+
+// ─────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────
+const S = {
+  workerUrl: '', authToken: '', connected: false,
+  groups: [],
+  selectedCourseId: null, selectedGroup: null,
+  learners: [],
+  excluded: new Set(),
+  currentTab: 'tabAll',
+  sortCol: 'lastName', sortDir: 1,
+};
+
+// ─────────────────────────────────────────────────
+// API
+// ─────────────────────────────────────────────────
+async function api(path) {
+  const r = await fetch(S.workerUrl.replace(/\/+$/, '') + path, {
+    headers: { 'X-Auth-Token': S.authToken }
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error('API ' + r.status + ': ' + t); }
+  return r.json();
+}
+
+// ─────────────────────────────────────────────────
+// CONNECTION
+// ─────────────────────────────────────────────────
+document.getElementById('connectBtn').addEventListener('click', doConnect);
+
+(function autoConnect() {
+  const u = localStorage.getItem('clear_worker_url') || 'https://clear-lms-proxy.avance.workers.dev';
+  const t = localStorage.getItem('clear_auth_token');
+  if (u) document.getElementById('workerUrl').value = u;
+  if (t) { document.getElementById('authToken').value = t; setTimeout(doConnect, 200); }
+})();
+
+async function doConnect() {
+  const url = document.getElementById('workerUrl').value.trim();
+  const token = document.getElementById('authToken').value.trim();
+  if (!url || !token) { setConn('disconnected', 'Enter Auth Token and click Test Connection'); return; }
+  S.workerUrl = url; S.authToken = token;
+  setConn('loading', 'Connecting...');
+  try {
+    const info = await api('/v1/siteinfo');
+    S.connected = true;
+    setConn('connected', 'Connected to ' + (info.site_name || info.domain || 'TalentLMS'));
+    localStorage.setItem('clear_worker_url', url);
+    localStorage.setItem('clear_auth_token', token);
+    await loadCourses();
+  } catch (e) {
+    S.connected = false;
+    setConn('disconnected', 'Connection failed: ' + e.message);
+  }
+}
+
+function setConn(status, text) {
+  const el = document.getElementById('connStatus');
+  el.className = 'conn-status ' + status;
+  const dot = status === 'connected' ? 'green' : status === 'loading' ? 'amber' : 'red';
+  el.innerHTML = '<span class="dot ' + dot + '"></span> ' + esc(text);
+}
+
+// ─────────────────────────────────────────────────
+// SEARCH-SELECT HELPER
+// ─────────────────────────────────────────────────
+function setupSearchSelect(inputId, dropdownId, hiddenId, items, onSelect) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  const hidden = document.getElementById(hiddenId);
+  input.disabled = false;
+  input.placeholder = items.length > 0 ? 'Type to search...' : 'No items available';
+  input.value = ''; hidden.value = '';
+
+  function renderOpts(filter) {
+    const f = filter ? items.filter(it => it.label.toLowerCase().includes(filter.toLowerCase())) : items;
+    if (f.length === 0) {
+      dropdown.innerHTML = '<div class="no-match">No matches</div>';
+    } else {
+      dropdown.innerHTML = f.map(it => '<div class="opt" data-val="' + it.value + '">' + esc(it.label) + '</div>').join('');
+    }
+    dropdown.querySelectorAll('.opt').forEach(opt => {
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        input.value = opt.textContent;
+        hidden.value = opt.dataset.val;
+        dropdown.classList.remove('open');
+        if (onSelect) onSelect(opt.dataset.val, opt.textContent);
+      });
+    });
+  }
+  input.addEventListener('focus', () => { renderOpts(input.value); dropdown.classList.add('open'); });
+  input.addEventListener('input', () => { hidden.value = ''; renderOpts(input.value); dropdown.classList.add('open'); if (onSelect) onSelect('', ''); });
+  input.addEventListener('blur', () => { setTimeout(() => dropdown.classList.remove('open'), 150); });
+  renderOpts('');
+}
+
+// ─────────────────────────────────────────────────
+// COURSES & GROUPS
+// ─────────────────────────────────────────────────
+async function loadCourses() {
+  const sel = document.getElementById('courseSelect');
+  try {
+    const allCourses = await api('/v1/courses');
+    // Store real names for the 5 known IDs
+    allCourses.forEach(c => { if (COURSE_CONFIG[String(c.id)]) COURSE_NAMES[String(c.id)] = c.name; });
+  } catch (e) {
+    // Non-fatal — fall back to hardcoded labels below
+  }
+  // Populate select with real names where available
+  const order = ['161','162','181','148','127'];
+  sel.innerHTML = '<option value="">— Select a program —</option>' +
+    order.map(id => '<option value="' + id + '">' + esc(COURSE_NAMES[id] || COURSE_CONFIG[id].srCourseName.replace(' - Standard Release','')) + '</option>').join('');
+  sel.disabled = false;
+  sel.addEventListener('change', onCourseSelect);
+}
+
+async function onCourseSelect() {
+  const courseId = document.getElementById('courseSelect').value;
+  S.selectedCourseId = courseId || null;
+  document.getElementById('srCourseInfo').classList.add('hidden');
+  document.getElementById('groupInput').disabled = true;
+  document.getElementById('groupInput').value = '';
+  document.getElementById('groupValue').value = '';
+  updateLoadBtn();
+  if (!courseId) return;
+
+  // Show SR info from hardcoded config
+  const cfg = COURSE_CONFIG[courseId];
+  if (cfg) {
+    const displayName = COURSE_NAMES[courseId] || cfg.srCourseName.replace(' - Standard Release','');
+    const infoEl = document.getElementById('srCourseInfo');
+    infoEl.innerHTML = '&#128279; <strong>' + esc(displayName) + '</strong> &mdash; checking: <strong>' + esc(cfg.srCourseName) + '</strong> (unit ' + cfg.srTestUnitId + ')';
+    infoEl.classList.remove('hidden');
+  }
+
+  // Load groups
+  try {
+    const allGroups = await api('/v1/groups');
+    S.groups = allGroups;
+    setupSearchSelect('groupInput', 'groupDropdown', 'groupValue', allGroups.map(g => ({ value: String(g.id), label: g.name })), onGroupSelect);
+  } catch (e) {
+    setConn('disconnected', 'Failed to load groups: ' + e.message);
+  }
+}
+
+function onGroupSelect(groupId) {
+  S.selectedGroup = S.groups.find(g => String(g.id) === groupId) || null;
+  updateLoadBtn();
+}
+
+function updateLoadBtn() {
+  const ok = S.connected && document.getElementById('courseSelect').value && document.getElementById('groupValue').value;
+  document.getElementById('loadBtn').disabled = !ok;
+}
+
+// ─────────────────────────────────────────────────
+// LOAD COHORT DATA
+// ─────────────────────────────────────────────────
+document.getElementById('loadBtn').addEventListener('click', loadCohort);
+
+async function loadCohort() {
+  const courseId = document.getElementById('courseSelect').value;
+  const groupId = document.getElementById('groupValue').value;
+  if (!courseId || !groupId) return;
+
+  const cfg = COURSE_CONFIG[courseId];
+  if (!cfg) { alert('No configuration found for this course.'); return; }
+
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Loading...';
+  showProg(true);
+
+  try {
+    setProgText('Fetching cohort members...'); setProgPct(5);
+    const gd = await api('/v1/groups/id:' + groupId);
+    const memberIds = (gd.users || []).map(u => u.user_id || u.id);
+    if (memberIds.length === 0) throw new Error('No users found in this cohort.');
+
+    S.learners = [];
+    S.excluded = new Set();
+    for (let i = 0; i < memberIds.length; i++) {
+      const userId = memberIds[i];
+      setProgText('Loading learner ' + (i + 1) + ' of ' + memberIds.length + '...'); setProgPct(10 + Math.round((i / memberIds.length) * 85));
+      try {
+        const [ui, srStatus] = await Promise.all([
+          api('/v1/users/id:' + userId),
+          api('/v1/getuserstatusincourse/course_id:' + cfg.srCourseId + ',user_id:' + userId).catch(() => null)
+        ]);
+
+        // Find the specific test unit status
+        let srTestStatus = 'Not Started';
+
+        if (srStatus) {
+          if (srStatus.units) {
+            const testUnit = srStatus.units.find(u => String(u.id) === String(cfg.srTestUnitId));
+            if (testUnit) {
+              srTestStatus = normalizeStatus(testUnit.completion_status_formatted || testUnit.completion_status || 'Not Started');
+            }
+          }
+        }
+
+        S.learners.push({
+          userId,
+          firstName: ui.first_name || '',
+          lastName: ui.last_name || '',
+          email: ui.email || '',
+          srTestStatus,
+        });
+      } catch (ue) { console.warn('Skipped user ' + userId + ':', ue.message); }
+    }
+
+    setProgPct(100);
+    setProgText('Loaded ' + S.learners.length + ' learners.');
+
+    renderResults();
+    document.getElementById('panelResults').classList.remove('hidden');
+    document.getElementById('panelResults').scrollIntoView({ behavior: 'smooth' });
+
+  } catch (e) {
+    alert('Error loading cohort: ' + e.message);
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '&#128100; Load Cohort Data';
+}
+
+// ─────────────────────────────────────────────────
+// NORMALIZE STATUS
+// ─────────────────────────────────────────────────
+function normalizeStatus(raw) {
+  const l = (raw || '').toLowerCase().trim();
+  if (l === 'completed' || l === 'complete' || l === 'passed') return 'Completed';
+  if (l === 'failed') return 'Failed';
+  if (l === 'incomplete' || l === 'in progress' || l === 'in_progress') return 'In Progress';
+  return 'Not Started';
+}
+
+function statusBadge(s) {
+  switch (s) {
+    case 'Completed': return '<span class="badge badge-complete">&#10003; Completed</span>';
+    case 'In Progress': return '<span class="badge badge-inprogress">&#9679; In Progress</span>';
+    case 'Failed': return '<span class="badge badge-incomplete">&#10007; Failed</span>';
+    default: return '<span class="badge badge-notstarted">&#8212; Not Started</span>';
+  }
+}
+
+function isComplete(l) { return l.srTestStatus === 'Completed'; }
+
+// ─────────────────────────────────────────────────
+// RENDER RESULTS
+// ─────────────────────────────────────────────────
+function renderResults() {
+  const cfg = COURSE_CONFIG[S.selectedCourseId] || {};
+  const included = S.learners.filter(l => !S.excluded.has(l.userId));
+  const total = included.length;
+  const completed = included.filter(isComplete).length;
+  const incomplete = total - completed;
+  const pct = total > 0 ? Math.round(completed / total * 100) : 0;
+  const excluded = S.excluded.size;
+  document.getElementById('summaryStrip').innerHTML =
+    '<div class="s-card"><div class="s-lbl">Total Learners</div><div class="s-val">' + (S.learners.length) + '</div></div>' +
+    '<div class="s-card complete"><div class="s-lbl">SR Completed</div><div class="s-val">' + completed + '</div></div>' +
+    '<div class="s-card incomplete"><div class="s-lbl">Not Completed</div><div class="s-val">' + incomplete + '</div></div>' +
+    '<div class="s-card pct"><div class="s-lbl">Completion Rate</div><div class="s-val">' + pct + '%</div></div>' +
+    (excluded > 0 ? '<div class="s-card"><div class="s-lbl">Excluded</div><div class="s-val" style="color:#888;">' + excluded + '</div></div>' : '');
+
+  document.getElementById('exportInfo').innerHTML = cfg.srCourseName
+    ? incomplete + ' active learner(s) have not completed the test in <strong>' + esc(cfg.srCourseName) + '</strong>.'
+    : 'No Standard Release configuration found for this course.';
+  document.getElementById('exportEmailsBtn').disabled = incomplete === 0;
+  document.getElementById('exportCsvBtn').disabled = false;
+
+  buildAllTables();
+}
+
+// ─────────────────────────────────────────────────
+// BUILD TABLES
+// ─────────────────────────────────────────────────
+function buildAllTables() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = S.learners.filter(l =>
+    (l.firstName + ' ' + l.lastName + ' ' + l.email).toLowerCase().includes(search)
+  );
+
+  const sorted = [...filtered].sort((a, b) => {
+    const av = a[S.sortCol] || '';
+    const bv = b[S.sortCol] || '';
+    return S.sortDir * av.localeCompare(bv);
+  });
+
+  document.getElementById('filteredCount').textContent = filtered.length + ' of ' + S.learners.length + ' shown';
+
+  const activeSorted = sorted.filter(l => !S.excluded.has(l.userId));
+  const incomplete = sorted.filter(l => !isComplete(l));   // include excluded so they can be re-checked
+  const complete = sorted.filter(isComplete);               // include excluded so they can be re-checked
+
+  buildTable('tblAll', sorted);
+  buildTable('tblIncomplete', incomplete);
+  buildTable('tblComplete', complete);
+}
+
+function buildTable(tableId, rows) {
+  const t = document.getElementById(tableId);
+  const cols = [
+    { key: 'lastName',     label: 'Last Name' },
+    { key: 'firstName',    label: 'First Name' },
+    { key: 'email',        label: 'Email' },
+    { key: 'srTestStatus', label: 'Standard Release Completed' },
+  ];
+
+  t.querySelector('thead').innerHTML = '<tr><th style="width:36px;"><input type="checkbox" id="selAll_' + tableId + '" title="Select all / deselect all" checked></th>' + cols.map(c => {
+    const arrow = S.sortCol === c.key ? (S.sortDir === 1 ? ' &#9650;' : ' &#9660;') : '';
+    return '<th class="sort-th" data-col="' + c.key + '">' + c.label + '<span class="sort-arrow">' + arrow + '</span></th>';
+  }).join('') + '</tr>';
+
+  // Select-all checkbox — toggles all rows currently in this table view
+  const selAll = t.querySelector('#selAll_' + tableId);
+  selAll.checked = rows.every(l => !S.excluded.has(l.userId));
+  selAll.indeterminate = !selAll.checked && rows.some(l => !S.excluded.has(l.userId));
+  selAll.addEventListener('change', () => {
+    rows.forEach(l => { if (selAll.checked) S.excluded.delete(l.userId); else S.excluded.add(l.userId); });
+    renderResults();
+  });
+
+  t.querySelectorAll('thead th.sort-th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (S.sortCol === col) { S.sortDir *= -1; } else { S.sortCol = col; S.sortDir = 1; }
+      buildAllTables();
+    });
+  });
+
+  if (rows.length === 0) {
+    t.querySelector('tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px;">No learners in this view.</td></tr>';
+    return;
+  }
+
+  t.querySelector('tbody').innerHTML = rows.map(l => {
+    const isExcluded = S.excluded.has(l.userId);
+    return '<tr class="' + (isExcluded ? 'excluded' : '') + '">' +
+      '<td><input type="checkbox" class="learner-cb" data-uid="' + esc(l.userId) + '" ' + (isExcluded ? '' : 'checked') + ' title="Include/exclude from reports"></td>' +
+      '<td>' + esc(l.lastName) + '</td>' +
+      '<td>' + esc(l.firstName) + '</td>' +
+      '<td>' + esc(l.email) + '</td>' +
+      '<td>' + statusBadge(l.srTestStatus) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  t.querySelectorAll('.learner-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const uid = cb.dataset.uid;
+      if (cb.checked) S.excluded.delete(uid); else S.excluded.add(uid);
+      renderResults();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    S.currentTab = btn.dataset.tab;
+  });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', buildAllTables);
+
+// Live deadline preview
+document.getElementById('startDate').addEventListener('input', function() {
+  const d = this.value.trim();
+  document.getElementById('deadlinePreview').value = d ? 'prior to checking in on ' + d : 'prior to checking in on [start date]';
+});
+
+// ─────────────────────────────────────────────────
+// EXPORT CSV
+// ─────────────────────────────────────────────────
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  const rows = S.learners.slice().sort((a, b) => a.lastName.localeCompare(b.lastName));
+  let csv = '"First Name","Last Name","Email","Standard Release Completed","Included"\n';
+  rows.forEach(l => {
+    csv += [l.firstName, l.lastName, l.email, l.srTestStatus, S.excluded.has(l.userId) ? 'No' : 'Yes'].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',') + '\n';
+  });
+  const cfgCsv = COURSE_CONFIG[S.selectedCourseId] || {};
+  const safeLabel = (cfgCsv.label || 'Cohort').replace(/[^a-z0-9]/gi, '_').substring(0, 40);
+  dlFile(csv, 'SR_Status_' + safeLabel + '.csv', 'text/csv');
+});
+
+// ─────────────────────────────────────────────────
+// EXPORT REMINDER EMAILS (ZIP)
+// ─────────────────────────────────────────────────
+document.getElementById('exportEmailsBtn').addEventListener('click', async () => {
+  const incomplete = S.learners.filter(l => !isComplete(l) && !S.excluded.has(l.userId));
+  if (incomplete.length === 0) { alert('All learners have completed the Standard Release.'); return; }
+
+  const startDate = document.getElementById('startDate').value.trim() || 'your program start date';
+  const deadline = startDate !== 'your program start date' ? 'prior to checking in on ' + startDate : 'prior to checking in on the first day of your program';
+  const cfg = COURSE_CONFIG[S.selectedCourseId] || {};
+  const srName = cfg.srCourseName || 'NCIT Standard Release';
+  const portalUrl = cfg.portalUrl || 'https://portal.clearhq.org';
+  const displayCourse = COURSE_NAMES[S.selectedCourseId] || cfg.srCourseName.replace(' - Standard Release','');
+
+  const btn = document.getElementById('exportEmailsBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating ZIP...';
+
+  try {
+    const zip = new JSZip();
+    incomplete.forEach(l => {
+      const html = buildReminderEmail(l.firstName, displayCourse, srName, startDate, deadline, portalUrl);
+      zip.file('StandardRelease_' + (l.email || 'unknown') + '.html', html);
+    });
+    // manifest
+    zip.file('_manifest.json', JSON.stringify(incomplete.map(l => ({
+      email: l.email, firstName: l.firstName, lastName: l.lastName,
+      file: 'StandardRelease_' + l.email + '.html',
+      srStatus: l.srTestStatus
+    })), null, 2));
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const safeCourseName = (cfg.label || 'Cohort').replace(/[^a-z0-9]/gi, '_').substring(0, 40);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'StandardRelease_Emails_' + safeCourseName + '.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Error generating ZIP: ' + e.message); console.error(e);
+  }
+
+  btn.disabled = false; btn.innerHTML = '&#9993; Export Reminder Emails (ZIP)';
+});
+
+// ─────────────────────────────────────────────────
+// BUILD REMINDER EMAIL HTML
+// ─────────────────────────────────────────────────
+function buildReminderEmail(firstName, course, releaseName, startDate, deadline, portalUrl) {
+  const F = "font-family:'Open Sans',Arial,Helvetica,sans-serif;";
+  const FH = "font-family:'Trebuchet MS',Arial,Helvetica,sans-serif;";
+  return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><!--[if gte mso 9]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]--><style type="text/css">body,table,td,p,a{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;}table,td{mso-table-lspace:0pt;mso-table-rspace:0pt;}img{-ms-interpolation-mode:bicubic;border:0;outline:none;text-decoration:none;}body{margin:0;padding:0;width:100%!important;-webkit-font-smoothing:antialiased;}#outlook a{padding:0;}.ReadMsgBody{width:100%;}.ExternalClass{width:100%;}.ExternalClass,.ExternalClass p,.ExternalClass span,.ExternalClass font,.ExternalClass td,.ExternalClass div{line-height:100%;}</style></head><body style="margin:0;padding:0;background-color:#ffffff;">'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#64092c;"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:24px 36px;"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td width="74" valign="middle" style="padding-right:18px;"><!--[if mso]><table cellpadding="0" cellspacing="0" border="0"><tr><td width="56" height="56"><![endif]--><img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR" width="56" height="56" style="display:block;width:56px;height:56px;border:0;"/><!--[if mso]></td></tr></table><![endif]--></td><td valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + FH + 'font-size:20px;font-weight:700;color:#ffffff;line-height:24px;mso-line-height-rule:exactly;">Action Required: Complete the Standard Release</td></tr><tr><td style="' + F + 'font-size:12px;color:rgba(255,255,255,0.7);line-height:16px;mso-line-height-rule:exactly;padding-top:3px;">CLEAR Learning Portal</td></tr></table></td></tr></table></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="height:4px;background-color:#dda838;font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:32px 36px 28px;">'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:16px;color:#333333;line-height:24px;mso-line-height-rule:exactly;padding-bottom:16px;">Hello <strong>' + esc(firstName) + '</strong>,</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:20px;">We are so excited to welcome you to the <strong>' + esc(course) + '</strong> program starting <strong>' + esc(startDate) + '</strong>! We can&rsquo;t wait to see you there.</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#fdf4e7;border-left:4px solid #dda838;margin-bottom:20px;"><tr><td style="padding:14px 18px;' + F + 'font-size:14px;color:#484848;line-height:22px;mso-line-height-rule:exactly;">Our records show you have not yet completed the <strong>' + esc(releaseName) + '</strong>. We kindly ask that you complete it <strong style="color:#64092c;">' + esc(deadline) + '</strong> &mdash; it only takes a few minutes and is required before you may attend your first session.</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:10px;"><strong>Here&rsquo;s how to complete it:</strong></td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:24px;"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">1.&nbsp;&nbsp;Click the button below. If prompted, log in with your portal credentials &mdash; you&rsquo;ll be taken directly to the Standard Release course.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">2.&nbsp;&nbsp;In the content section, click the link for the Standard Release.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">3.&nbsp;&nbsp;Click <strong>Start Test</strong> and answer the few questions.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-left:8px;">4.&nbsp;&nbsp;On the last question, click <strong>Submit Test</strong>. That&rsquo;s it &mdash; you&rsquo;re all set!</td></tr></table>'
+    + '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px;"><tr><td style="background-color:#64092c;border-radius:6px;padding:12px 28px;"><a href="' + portalUrl + '" style="' + FH + 'font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;display:block;white-space:nowrap;">Complete the Standard Release &rarr;</a></td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:28px;">If you believe you have already completed this requirement or have any questions, please reply to this email or contact us at <a href="mailto:clearlearning@clearhq.org" style="color:#084d78;">clearlearning@clearhq.org</a>.</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:21px;mso-line-height-rule:exactly;padding-bottom:20px;">Thank you for your time,</td></tr></table>'
+    + '<table border="0" cellspacing="0" cellpadding="3" role="presentation" style="width:100%;max-width:620px;"><tbody>'
+    + '<tr><td rowspan="3" valign="top" width="110" style="text-align:center;"><a href="https://www.clearhq.org" target="_blank" rel="noopener noreferrer"><img src="https://assets-002.noviams.com/novi-file-uploads/clear/TalentLMS/Email_CLEAR_Logo.png" alt="CLEAR Logo" width="100" style="display:block;width:100px;border:0;"/></a></td><td colspan="3" valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:12px;padding:3px;"><strong style="color:#64092c;font-weight:700;font-size:16px;">CLEAR Learning Staff</strong></td></tr></table></td></tr>'
+    + '<tr><td colspan="3" valign="top"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:12px;padding:3px;line-height:18px;mso-line-height-rule:exactly;"><a href="https://www.clearhq.org" target="_blank" rel="noopener noreferrer" style="color:#084d78;">www.clearhq.org</a><br/>Council on Licensure, Enforcement and Regulation</td></tr><tr><td style="' + F + 'font-size:12px;padding:3px;line-height:18px;mso-line-height-rule:exactly;"><strong style="color:#64092c;font-weight:700;">Phone</strong>: 859.269.1401<br/><strong style="color:#64092c;font-weight:700;">Email</strong>: <a href="mailto:clearlearning@clearhq.org" style="color:#084d78;">clearlearning@clearhq.org</a></td></tr><tr><td style="' + F + 'font-size:12px;padding:3px;line-height:18px;mso-line-height-rule:exactly;">108 Wind Haven Dr., Ste. A, Nicholasville, KY 40356</td></tr></table></td></tr>'
+    + '<tr><td colspan="3" valign="middle"><table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:12px;padding:3px;"><i style="color:#64092c;">Promoting Regulatory Excellence</i></td></tr></table></td></tr>'
+    + '</tbody></table>'
+    + '</td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr></table></body></html>';
+}
+
+// ─────────────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────────────
+function showProg(s) {
+  document.getElementById('progWrap').classList.toggle('hidden', !s);
+  document.getElementById('progText').classList.toggle('hidden', !s);
+}
+function setProgPct(p) { document.getElementById('progFill').style.width = p + '%'; }
+function setProgText(t) { document.getElementById('progText').textContent = t; }
+function esc(s) { if (s === null || s === undefined) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function dlFile(content, filename, mimeType) { const blob = new Blob([content], { type: mimeType }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+</script>
+</body>
+</html>
