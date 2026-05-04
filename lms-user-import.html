@@ -58,6 +58,13 @@
   .course-chip .remove{cursor:pointer;font-weight:700;font-size:14px;line-height:1;color:var(--red);}
   .progress-wrap{height:8px;background:var(--gray-mid);border-radius:4px;overflow:hidden;margin:12px 0 8px;}.progress-fill{height:100%;background:var(--blue);border-radius:4px;transition:width 0.4s ease;}.progress-text{font-size:12px;color:#888;}
   .hidden{display:none!important;}
+  .mode-tabs{display:flex;gap:0;margin-bottom:16px;border:1.5px solid var(--blue);border-radius:var(--radius);overflow:hidden;}
+  .mode-tab{flex:1;padding:10px 18px;font-size:13px;font-weight:600;font-family:'Open Sans',sans-serif;border:none;background:var(--white);color:var(--blue);cursor:pointer;transition:all 0.2s;text-align:center;}
+  .mode-tab:first-child{border-right:1.5px solid var(--blue);}
+  .mode-tab.active{background:var(--blue);color:var(--white);}
+  .mode-tab:hover:not(.active){background:rgba(8,77,120,0.07);}
+  .existing-group-info{background:#e3f2fd;border:1px solid #90caf9;border-radius:var(--radius);padding:12px 16px;font-size:13px;color:#1565c0;margin-top:8px;display:none;}
+  .existing-group-info.visible{display:block;}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}
   @media(max-width:768px){.header{padding:16px;}.main{padding:16px;}.panel{padding:16px;}.form-row{flex-direction:column;}}
 </style>
@@ -108,11 +115,39 @@
     </div>
     <div class="panel-section">
       <h3>3. Group &amp; Course Configuration</h3>
-      <div class="form-row">
-        <div class="form-group"><label>Group Name</label><input type="text" id="groupName" placeholder="e.g., NCITB US Spring 2026"></div>
-        <div class="form-group"><label>Group Description</label><input type="text" id="groupDesc" placeholder="e.g., Spring 2026 NCIT Basic US Cohort"></div>
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="modeNewBtn" onclick="setMode('new')">&#10133; Create New Cohort</button>
+        <button class="mode-tab" id="modeExistingBtn" onclick="setMode('existing')">&#128101; Add to Existing Cohort</button>
       </div>
-      <div class="form-row">
+
+      <!-- NEW COHORT fields -->
+      <div id="newCohortFields">
+        <div class="form-row">
+          <div class="form-group"><label>Group Name</label><input type="text" id="groupName" placeholder="e.g., NCITB US Spring 2026"></div>
+          <div class="form-group"><label>Group Description</label><input type="text" id="groupDesc" placeholder="e.g., Spring 2026 NCIT Basic US Cohort"></div>
+        </div>
+      </div>
+
+      <!-- EXISTING COHORT fields -->
+      <div id="existingCohortFields" class="hidden">
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label>Search Existing Group</label>
+            <div class="search-select">
+              <input type="text" id="existingGroupInput" placeholder="Connect to API to load groups" disabled>
+              <div class="dropdown" id="existingGroupDropdown"></div>
+            </div>
+            <span class="inline-note">Search by name and select the cohort to add users to.</span>
+          </div>
+          <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label>
+            <button class="btn btn-sm btn-secondary" id="refreshGroupsBtn" onclick="loadGroups()" disabled>&#8635; Refresh</button>
+          </div>
+        </div>
+        <div class="existing-group-info" id="existingGroupInfo"></div>
+      </div>
+
+      <!-- Course assignment: only shown in new cohort mode -->
+      <div id="courseSelectionSection" class="form-row" style="margin-top:12px;">
         <div class="form-group"><label>Add Courses to Group</label>
           <div class="search-select"><input type="text" id="courseSearchInput" placeholder="Connect to API to load courses" disabled><div class="dropdown" id="courseSearchDropdown"></div></div>
           <span class="inline-note">Search and select courses. Each selected course will be assigned to the group.</span>
@@ -127,8 +162,13 @@
     <div class="table-wrap" id="previewTable"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
       <button class="btn btn-gold" id="exportXlsxBtn">&#128229; Export Import XLSX</button>
-      <button class="btn btn-burgundy" id="apiUploadBtn">&#9889; Upload Users</button>
-      <button class="btn btn-primary" id="apiCohortBtn" disabled>&#128101; Add Users to Cohort</button>
+      <!-- New cohort buttons -->
+      <span id="newCohortBtns">
+        <button class="btn btn-burgundy" id="apiUploadBtn" style="margin-right:10px;">&#9889; Upload Users</button>
+        <button class="btn btn-primary" id="apiCohortBtn" disabled>&#128101; Add Users to Cohort</button>
+      </span>
+      <!-- Existing cohort button -->
+      <button class="btn btn-burgundy hidden" id="apiAddExistingBtn">&#9889; Create Users &amp; Add to Cohort</button>
     </div>
     <div class="progress-wrap hidden" id="apiProgressWrap"><div class="progress-fill" id="apiProgressFill" style="width:0%"></div></div>
     <p class="progress-text hidden" id="apiProgressText"></p>
@@ -136,7 +176,7 @@
   </div>
 </div>
 <script>
-const STATE={workerUrl:'',authToken:'',connected:false,courses:[],selectedCourses:[],attendees:[],importUsers:[],groupKey:''};
+const STATE={workerUrl:'',authToken:'',connected:false,courses:[],selectedCourses:[],attendees:[],importUsers:[],selectedUsers:new Set(),groupKey:''};
 const US_STATES='AL,AK,AZ,AR,CA,CO,CT,DE,FL,GA,HI,ID,IL,IN,IA,KS,KY,LA,ME,MD,MA,MI,MN,MS,MO,MT,NE,NV,NH,NJ,NM,NY,NC,ND,OH,OK,OR,PA,RI,SC,SD,TN,TX,UT,VT,VA,WA,WV,WI,WY,DC,PR,VI,GU,AS,MP'.split(',');
 const CA_PROVS='AB,BC,MB,NB,NL,NS,NT,NU,ON,PE,QC,SK,YT'.split(',');
 function inferCountry(st,existing){if(existing&&existing.trim())return existing.trim();const s=(st||'').toUpperCase().trim();if(US_STATES.includes(s))return'United States';if(CA_PROVS.includes(s))return'Canada';return'';}
@@ -147,7 +187,7 @@ function genGroupKey(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr
 async function apiCall(path,opts){const o=opts||{};const h=Object.assign({'X-Auth-Token':STATE.authToken},o.headers||{});const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+path,{...o,headers:h});if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t);}return r.json();}
 async function apiPost(path,body){return apiCall(path,{method:'POST',headers:{'X-Auth-Token':STATE.authToken,'Content-Type':'application/x-www-form-urlencoded'},body});}
 function setCon(s,t){const el=document.getElementById('connectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
-async function doConnect(){const url=document.getElementById('workerUrl').value.trim();const tok=document.getElementById('authToken').value.trim();if(!url||!tok){setCon('disconnected','Enter Auth Token and click Test Connection');return;}STATE.workerUrl=url;STATE.authToken=tok;setCon('loading','Connecting...');try{const info=await apiCall('/v1/siteinfo');STATE.connected=true;setCon('connected','Connected to '+(info.site_name||info.domain||'TalentLMS'));localStorage.setItem('clear_worker_url',url);localStorage.setItem('clear_auth_token',tok);await loadCourses();}catch(e){STATE.connected=false;setCon('disconnected','Connection failed: '+e.message);}}
+async function doConnect(){const url=document.getElementById('workerUrl').value.trim();const tok=document.getElementById('authToken').value.trim();if(!url||!tok){setCon('disconnected','Enter Auth Token and click Test Connection');return;}STATE.workerUrl=url;STATE.authToken=tok;setCon('loading','Connecting...');try{const info=await apiCall('/v1/siteinfo');STATE.connected=true;setCon('connected','Connected to '+(info.site_name||info.domain||'TalentLMS'));localStorage.setItem('clear_worker_url',url);localStorage.setItem('clear_auth_token',tok);await loadCourses();loadGroups();}catch(e){STATE.connected=false;setCon('disconnected','Connection failed: '+e.message);}}
 document.getElementById('connectBtn').addEventListener('click',doConnect);
 (function(){const u=localStorage.getItem('clear_worker_url')||'https://clear-lms-proxy.avance.workers.dev';const t=localStorage.getItem('clear_auth_token');if(u)document.getElementById('workerUrl').value=u;if(t){document.getElementById('authToken').value=t;setTimeout(doConnect,200);}})();
 
@@ -258,6 +298,7 @@ document.getElementById('noviPullBtn').addEventListener('click',async()=>{
       return{email,firstName:fn,lastName:ln,company:co,jobTitle:jt,city,state:st,zip,country:cn};
     });
     STATE.importUsers=STATE.attendees.filter(u=>u.email).map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
+    STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
     setNoviPullStatus('Loaded <strong>'+STATE.importUsers.length+'</strong> attendee(s) from Novi.','success');
     setFS('','');
     renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
@@ -285,6 +326,7 @@ STATE.attendees=data.filter(r=>r.some(c=>c&&c.trim())).map(r=>{
   return{email,firstName:fn,lastName:fl,company:co,state:st,country:cn,jobTitle:jt};
 });
 STATE.importUsers=STATE.attendees.filter(a=>a.email).map(a=>{const pw=genPw();return{...a,password:pw,status:'active',language:'en'};});
+STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
 const tot=STATE.importUsers.length;
 setFS('Loaded <strong>'+tot+'</strong> attendee(s) to import.','success');
 renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
@@ -292,28 +334,63 @@ renderSummary();renderPreview();document.getElementById('panelResults').classLis
 
 function parseCSV(t){const rows=[];let row=[],f='',q=false;if(t.charCodeAt(0)===0xFEFF)t=t.substring(1);for(let i=0;i<t.length;i++){const c=t[i],n=t[i+1];if(q){if(c==='"'&&n==='"'){f+='"';i++;}else if(c==='"')q=false;else f+=c;}else{if(c==='"')q=true;else if(c===','){row.push(f);f='';}else if(c==='\n'||(c==='\r'&&n==='\n')){row.push(f);f='';rows.push(row);row=[];if(c==='\r')i++;}else if(c==='\r'){row.push(f);f='';rows.push(row);row=[];}else f+=c;}}if(f||row.length)rows.push([...row,f]);return rows;}
 
-function renderSummary(){const el=document.getElementById('summaryRow');const cs=[...new Set(STATE.importUsers.map(u=>u.country).filter(Boolean))];
-el.innerHTML='<div class="summary-card"><div class="lbl">Users to Import</div><div class="val">'+STATE.importUsers.length+'</div></div><div class="summary-card"><div class="lbl">Courses Selected</div><div class="val">'+STATE.selectedCourses.length+'</div></div><div class="summary-card"><div class="lbl">Countries</div><div class="val">'+cs.length+'</div></div><div class="summary-card"><div class="lbl">Group</div><div class="val" style="font-size:14px;">'+esc(document.getElementById('groupName').value||'(auto-generated)')+'</div></div>';}
+function getSelectedUsers(){return STATE.importUsers.filter((_,i)=>STATE.selectedUsers.has(i));}
 
-function renderPreview(){const el=document.getElementById('previewTable');let h='<table><thead><tr><th>#</th><th>Email (Login)</th><th>First Name</th><th>Last Name</th><th>Organization</th><th>Title</th><th>State</th><th>Country</th><th>Password</th></tr></thead><tbody>';
-STATE.importUsers.forEach((u,i)=>{h+='<tr><td>'+(i+1)+'</td><td>'+esc(u.email)+'</td><td>'+esc(u.firstName)+'</td><td>'+esc(u.lastName)+'</td><td>'+esc(u.company)+'</td><td>'+esc(u.jobTitle)+'</td><td>'+esc(u.state)+'</td><td>'+esc(u.country)+'</td><td style="font-family:monospace;font-size:11px;">'+esc(u.password)+'</td></tr>';});
-h+='</tbody></table>';el.innerHTML=h;}
+function renderSummary(){
+  const el=document.getElementById('summaryRow');
+  const sel=STATE.selectedUsers.size;
+  const cs=[...new Set(STATE.importUsers.map(u=>u.country).filter(Boolean))];
+  el.innerHTML='<div class="summary-card"><div class="lbl">Total Loaded</div><div class="val">'+STATE.importUsers.length+'</div></div>'
+    +'<div class="summary-card"><div class="lbl">Selected to Process</div><div class="val" id="selCount" style="color:var(--burgundy);">'+sel+'</div></div>'
+    +(STATE.mode!=='existing'?'<div class="summary-card"><div class="lbl">Courses Selected</div><div class="val">'+STATE.selectedCourses.length+'</div></div>':'')
+    +'<div class="summary-card"><div class="lbl">Countries</div><div class="val">'+cs.length+'</div></div>'
+    +(STATE.mode!=='existing'?'<div class="summary-card"><div class="lbl">Group</div><div class="val" style="font-size:14px;">'+esc(document.getElementById('groupName').value||'(auto-generated)')+'</div></div>':'');
+}
+
+function renderPreview(){
+  const el=document.getElementById('previewTable');
+  const allChecked=STATE.selectedUsers.size===STATE.importUsers.length;
+  let h='<table><thead><tr>'
+    +'<th style="width:36px;text-align:center;"><input type="checkbox" id="chkAll" title="Select / deselect all" '+(allChecked?'checked':'')+'></th>'
+    +'<th>#</th><th>Email (Login)</th><th>First Name</th><th>Last Name</th><th>Organization</th><th>Title</th><th>State</th><th>Country</th><th>Password</th>'
+    +'</tr></thead><tbody>';
+  STATE.importUsers.forEach((u,i)=>{
+    const chk=STATE.selectedUsers.has(i);
+    h+='<tr style="'+(chk?'':'opacity:0.45;')+'"><td style="text-align:center;"><input type="checkbox" class="row-chk" data-i="'+i+'" '+(chk?'checked':'')+'></td>'
+      +'<td>'+(i+1)+'</td><td>'+esc(u.email)+'</td><td>'+esc(u.firstName)+'</td><td>'+esc(u.lastName)+'</td>'
+      +'<td>'+esc(u.company)+'</td><td>'+esc(u.jobTitle)+'</td><td>'+esc(u.state)+'</td><td>'+esc(u.country)+'</td>'
+      +'<td style="font-family:monospace;font-size:11px;">'+esc(u.password)+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+  // Select-all
+  document.getElementById('chkAll').addEventListener('change',function(){
+    if(this.checked)STATE.importUsers.forEach((_,i)=>STATE.selectedUsers.add(i));
+    else STATE.selectedUsers.clear();
+    renderPreview();renderSummary();
+  });
+  // Row checkboxes
+  el.querySelectorAll('.row-chk').forEach(cb=>{
+    cb.addEventListener('change',function(){
+      const i=parseInt(this.dataset.i);
+      if(this.checked)STATE.selectedUsers.add(i);else STATE.selectedUsers.delete(i);
+      renderPreview();renderSummary();
+    });
+  });
+}
 
 // Export XLSX - 3 tabs: Users, Groups (with Key), Course-to-groups
 document.getElementById('exportXlsxBtn').addEventListener('click',()=>{
-if(STATE.importUsers.length===0){alert('No users to export.');return;}
+const users=getSelectedUsers();
+if(users.length===0){alert('No users selected to export.');return;}
 const gn=document.getElementById('groupName').value.trim(),gd=document.getElementById('groupDesc').value.trim();
 if(!gn){alert('Please enter a Group Name.');return;}
-// Generate group key if not already set
 if(!STATE.groupKey)STATE.groupKey=genGroupKey();
 const wb=XLSX.utils.book_new();
-// Users tab
 const uh=['Login','Firstname','Lastname','Email','Status','Language','custom_field: Organization','custom_field: Title','custom_field: State/Province','custom_field: Country','custom_field: Temporary Password','Password '];
-const ud=[uh];STATE.importUsers.forEach(u=>{ud.push([u.email,u.firstName,u.lastName,u.email,u.status,u.language,u.company,u.jobTitle,u.state,u.country,u.password,u.password]);});
+const ud=[uh];users.forEach(u=>{ud.push([u.email,u.firstName,u.lastName,u.email,u.status,u.language,u.company,u.jobTitle,u.state,u.country,u.password,u.password]);});
 const ws1=XLSX.utils.aoa_to_sheet(ud);ws1['!cols']=uh.map(h=>({wch:Math.max(h.length+2,16)}));XLSX.utils.book_append_sheet(wb,ws1,'Users');
-// Groups tab (with Key column)
 const ws2=XLSX.utils.aoa_to_sheet([['Group','Description','Key'],[gn,gd,STATE.groupKey]]);ws2['!cols']=[{wch:30},{wch:50},{wch:14}];XLSX.utils.book_append_sheet(wb,ws2,'Groups');
-// Course-to-groups tab
 const ctg=[['Coursetogroups','Group']];STATE.selectedCourses.forEach(c=>{ctg.push([c.name,gn]);});
 const ws3=XLSX.utils.aoa_to_sheet(ctg);ws3['!cols']=[{wch:50},{wch:30}];XLSX.utils.book_append_sheet(wb,ws3,'Course-to-groups');
 XLSX.writeFile(wb,'TalentLMS_Import_'+gn.replace(/\s+/g,'_')+'.xlsx');
@@ -323,28 +400,25 @@ XLSX.writeFile(wb,'TalentLMS_Import_'+gn.replace(/\s+/g,'_')+'.xlsx');
 // Step 1: Upload Users - create users, group, assign courses
 // ============================================================
 document.getElementById('apiUploadBtn').addEventListener('click',async()=>{
-if(STATE.importUsers.length===0){alert('No users to upload.');return;}
+const users=getSelectedUsers();
+if(users.length===0){alert('No users selected to upload.');return;}
 if(!STATE.connected){alert('Connect to the API first.');return;}
 const gn=document.getElementById('groupName').value.trim(),gd=document.getElementById('groupDesc').value.trim();
 if(!gn){alert('Please enter a Group Name.');return;}
-// Generate group key
 if(!STATE.groupKey)STATE.groupKey=genGroupKey();
 const btn=document.getElementById('apiUploadBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Uploading...';
 const pw=document.getElementById('apiProgressWrap'),pf=document.getElementById('apiProgressFill'),pt=document.getElementById('apiProgressText');
 pw.classList.remove('hidden');pt.classList.remove('hidden');
-const total=STATE.importUsers.length+1+STATE.selectedCourses.length;let step=0;
+const total=users.length+1+STATE.selectedCourses.length;let step=0;
 function prog(m){step++;pf.style.width=Math.round(step/total*100)+'%';pt.textContent=m;}
 const res={created:0,existing:0,failed:0,errors:[]};
 try{
-// Create users
-for(let i=0;i<STATE.importUsers.length;i++){const u=STATE.importUsers[i];prog('Creating user '+(i+1)+'/'+STATE.importUsers.length+'...');
+for(let i=0;i<users.length;i++){const u=users[i];prog('Creating user '+(i+1)+'/'+users.length+'...');
 try{const p=new URLSearchParams();p.set('first_name',u.firstName);p.set('last_name',u.lastName);p.set('email',u.email);p.set('login',u.email);p.set('password',u.password);p.set('custom_field_11',u.password);p.set('language',u.language);await apiPost('/v1/usersignup',p.toString());res.created++;}
 catch(e){if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;else{res.failed++;res.errors.push(u.email+': '+e.message);}}}
-// Create group with key
 prog('Creating group...');
 try{const p=new URLSearchParams();p.set('name',gn);if(gd)p.set('description',gd);p.set('key',STATE.groupKey);const g=await apiPost('/v1/creategroup',p.toString());STATE.groupId=g.id||'';}
 catch(e){try{const gs=await apiCall('/v1/groups');const ex=gs.find(g=>g.name.toLowerCase()===gn.toLowerCase());if(ex){STATE.groupId=ex.id||'';STATE.groupKey=ex.key||STATE.groupKey;}else throw e;}catch(e2){setApiSt('Failed to create group: '+e.message,'error');btn.disabled=false;btn.innerHTML='&#9889; Upload Users';return;}}
-// Add courses to group
 for(let i=0;i<STATE.selectedCourses.length;i++){const c=STATE.selectedCourses[i];prog('Adding course to group...');
 try{const p=new URLSearchParams();p.set('course_id',c.id);p.set('group_id',STATE.groupId);await apiPost('/v1/addcoursetogroup',p.toString());}
 catch(e){if(!e.message.includes('already'))res.errors.push('Course '+c.name+': '+e.message);}}
@@ -353,7 +427,6 @@ if(res.existing>0)msg+=res.existing+' already existed. ';if(res.failed>0)msg+=re
 msg+='Group "'+esc(gn)+'" and course assignments processed.';
 msg+='<br><strong>Next step:</strong> Click "Add Users to Cohort" to assign users to the group.';
 if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}else setApiSt(msg,'success');
-// Enable the cohort button
 document.getElementById('apiCohortBtn').disabled=false;
 }catch(e){setApiSt('Upload error: '+e.message,'error');console.error(e);}
 btn.disabled=false;btn.innerHTML='&#9889; Upload Users';});
@@ -362,7 +435,8 @@ btn.disabled=false;btn.innerHTML='&#9889; Upload Users';});
 // Step 2: Add Users to Cohort - assign users to group
 // ============================================================
 document.getElementById('apiCohortBtn').addEventListener('click',async()=>{
-if(STATE.importUsers.length===0){alert('No users to assign.');return;}
+const users=getSelectedUsers();
+if(users.length===0){alert('No users selected to assign.');return;}
 if(!STATE.connected){alert('Connect to the API first.');return;}
 const gn=document.getElementById('groupName').value.trim();
 if(!gn){alert('Please enter a Group Name.');return;}
@@ -370,17 +444,15 @@ if(!STATE.groupKey){alert('Please run "Upload Users" first to create the group.'
 const btn=document.getElementById('apiCohortBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Adding to cohort...';
 const pw=document.getElementById('apiProgressWrap'),pf=document.getElementById('apiProgressFill'),pt=document.getElementById('apiProgressText');
 pw.classList.remove('hidden');pt.classList.remove('hidden');pf.style.width='0%';
-const total=STATE.importUsers.length;let step=0;
+const total=users.length;let step=0;
 function prog(m){step++;pf.style.width=Math.round(step/total*100)+'%';pt.textContent=m;}
 const res={added:0,errors:[]};
 try{
-// Look up group key if we don't have the ID
 if(!STATE.groupId){
   try{const gs=await apiCall('/v1/groups');const ex=gs.find(g=>g.name.toLowerCase()===gn.toLowerCase());if(ex){STATE.groupId=ex.id||'';STATE.groupKey=ex.key||STATE.groupKey;}}catch(e){}}
-for(let i=0;i<STATE.importUsers.length;i++){const u=STATE.importUsers[i];prog('Adding user '+(i+1)+'/'+STATE.importUsers.length+' to cohort...');
+for(let i=0;i<users.length;i++){const u=users[i];prog('Adding user '+(i+1)+'/'+users.length+' to cohort...');
 try{const p=new URLSearchParams();p.set('user_login',u.email);p.set('group_key',STATE.groupKey);await apiPost('/v1/addusertogroup',p.toString());res.added++;}
 catch(e){
-  // If user_login doesn't work, try looking up user_id
   if(e.message.includes('invalid_request')||e.message.includes('400')){
     try{
       let uid=null;
@@ -390,7 +462,7 @@ catch(e){
       else{res.errors.push(u.email+': Could not find user');}
     }catch(e2){if(!e2.message.includes('already'))res.errors.push(u.email+': '+e2.message);}
   }else if(!e.message.includes('already')){res.errors.push(u.email+': '+e.message);}
-  else{res.added++;}// already in group counts as success
+  else{res.added++;}
 }}
 let msg='<strong>Cohort assignment complete.</strong> '+res.added+' user(s) added to group "'+esc(gn)+'".';
 if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}else setApiSt(msg,'success');
@@ -399,6 +471,134 @@ btn.disabled=false;btn.innerHTML='&#128101; Add Users to Cohort';});
 
 function setApiSt(m,t){const el=document.getElementById('apiStatus');el.className='status-bar'+(t?' '+t:'');el.innerHTML=m;}
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ============================================================
+// Mode switching: new cohort vs existing cohort
+// ============================================================
+STATE.mode='new';
+STATE.groups=[];
+STATE.existingGroupId='';
+STATE.existingGroupKey='';
+STATE.existingGroupName='';
+
+function setMode(m){
+  STATE.mode=m;
+  document.getElementById('modeNewBtn').classList.toggle('active',m==='new');
+  document.getElementById('modeExistingBtn').classList.toggle('active',m==='existing');
+  document.getElementById('newCohortFields').classList.toggle('hidden',m!=='new');
+  document.getElementById('existingCohortFields').classList.toggle('hidden',m!=='existing');
+  document.getElementById('courseSelectionSection').classList.toggle('hidden',m!=='new');
+  document.getElementById('selectedCourses').classList.toggle('hidden',m!=='new');
+  document.getElementById('newCohortBtns').classList.toggle('hidden',m!=='new');
+  document.getElementById('apiAddExistingBtn').classList.toggle('hidden',m!=='existing');
+  document.getElementById('exportXlsxBtn').classList.toggle('hidden',m!=='new');
+  if(m==='existing'){
+    STATE.existingGroupId='';STATE.existingGroupKey='';STATE.existingGroupName='';
+    document.getElementById('existingGroupInfo').classList.remove('visible');
+    if(STATE.connected&&STATE.groups.length===0)loadGroups();
+    if(STATE.connected)document.getElementById('refreshGroupsBtn').disabled=false;
+  }
+}
+
+// Load groups from API
+async function loadGroups(){
+  if(!STATE.connected)return;
+  try{
+    STATE.groups=await apiCall('/v1/groups');
+    setupExistingGroupSearch();
+    document.getElementById('refreshGroupsBtn').disabled=false;
+  }catch(e){console.error('Failed to load groups:',e);}
+}
+
+function setupExistingGroupSearch(){
+  const inp=document.getElementById('existingGroupInput');
+  const dd=document.getElementById('existingGroupDropdown');
+  inp.disabled=false;inp.placeholder='Type to search groups...';
+  function rend(f){
+    const m=f?STATE.groups.filter(g=>g.name.toLowerCase().includes(f.toLowerCase())):STATE.groups;
+    dd.innerHTML=m.length===0?'<div class="no-match">No matches</div>':
+      m.slice(0,40).map(g=>'<div class="opt" data-id="'+g.id+'" data-key="'+esc(g.key||'')+'" data-name="'+esc(g.name)+'">'+esc(g.name)+'</div>').join('');
+    dd.querySelectorAll('.opt').forEach(o=>{
+      o.addEventListener('mousedown',e=>{
+        e.preventDefault();
+        STATE.existingGroupId=o.dataset.id;
+        STATE.existingGroupKey=o.dataset.key;
+        STATE.existingGroupName=o.dataset.name;
+        inp.value=o.dataset.name;
+        dd.classList.remove('open');
+        const info=document.getElementById('existingGroupInfo');
+        info.innerHTML='&#10003; Selected: <strong>'+esc(STATE.existingGroupName)+'</strong> &nbsp;&mdash;&nbsp; Group ID: '+esc(STATE.existingGroupId)+'<br><span style="font-size:12px;opacity:0.85;">Users added to this group will be automatically enrolled in its already-assigned courses.</span>';
+        info.classList.add('visible');
+      });
+    });
+  }
+  inp.addEventListener('focus',()=>{rend(inp.value);dd.classList.add('open');});
+  inp.addEventListener('input',()=>{rend(inp.value);dd.classList.add('open');});
+  inp.addEventListener('blur',()=>{setTimeout(()=>dd.classList.remove('open'),150);});
+  rend('');
+}
+
+// ============================================================
+// Existing cohort: create users then add to group
+// ============================================================
+document.getElementById('apiAddExistingBtn').addEventListener('click',async()=>{
+  const users=getSelectedUsers();
+  if(users.length===0){alert('No users selected to process.');return;}
+  if(!STATE.connected){alert('Connect to the API first.');return;}
+  if(!STATE.existingGroupId||!STATE.existingGroupKey){alert('Please select an existing group first.');return;}
+  const btn=document.getElementById('apiAddExistingBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
+  const pw=document.getElementById('apiProgressWrap'),pf=document.getElementById('apiProgressFill'),pt=document.getElementById('apiProgressText');
+  pw.classList.remove('hidden');pt.classList.remove('hidden');pf.style.width='0%';
+  const total=users.length*2;let step=0;
+  function prog(m){step++;pf.style.width=Math.round(step/total*100)+'%';pt.textContent=m;}
+  const res={created:0,existing:0,failed:0,added:0,errors:[]};
+  try{
+    for(let i=0;i<users.length;i++){
+      const u=users[i];
+      prog('Creating user '+(i+1)+'/'+users.length+'...');
+      try{
+        const p=new URLSearchParams();
+        p.set('first_name',u.firstName);p.set('last_name',u.lastName);
+        p.set('email',u.email);p.set('login',u.email);
+        p.set('password',u.password);p.set('custom_field_11',u.password);
+        p.set('language',u.language);
+        await apiPost('/v1/usersignup',p.toString());res.created++;
+      }catch(e){
+        if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;
+        else{res.failed++;res.errors.push(u.email+': '+e.message);}
+      }
+    }
+    for(let i=0;i<users.length;i++){
+      const u=users[i];
+      prog('Adding user '+(i+1)+'/'+users.length+' to cohort...');
+      try{
+        const p=new URLSearchParams();p.set('user_login',u.email);p.set('group_key',STATE.existingGroupKey);
+        await apiPost('/v1/addusertogroup',p.toString());res.added++;
+      }catch(e){
+        if(e.message.includes('already')){res.added++;}
+        else if(e.message.includes('invalid_request')||e.message.includes('400')){
+          try{
+            let uid=null;
+            try{const ui=await apiCall('/v1/users/email:'+u.email);uid=ui.id;}catch(e2){}
+            if(!uid){try{const ui=await apiCall('/v1/users/username:'+u.email);uid=ui.id;}catch(e2){}}
+            if(uid){
+              const p2=new URLSearchParams();p2.set('user_id',uid);p2.set('group_key',STATE.existingGroupKey);
+              await apiPost('/v1/addusertogroup',p2.toString());res.added++;
+            }else{res.errors.push(u.email+': Could not find user to add to group');}
+          }catch(e2){if(!e2.message.includes('already'))res.errors.push(u.email+': '+e2.message);else res.added++;}
+        }else{res.errors.push(u.email+': '+e.message);}
+      }
+    }
+    let msg='<strong>Done.</strong> '+res.created+' user(s) created';
+    if(res.existing>0)msg+=', '+res.existing+' already existed';
+    if(res.failed>0)msg+=', '+res.failed+' failed to create';
+    msg+='. <strong>'+res.added+'</strong> user(s) added to <strong>'+esc(STATE.existingGroupName)+'</strong> — they are now enrolled in the cohort\'s assigned courses.';
+    if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}
+    else setApiSt(msg,'success');
+  }catch(e){setApiSt('Error: '+e.message,'error');console.error(e);}
+  btn.disabled=false;btn.innerHTML='&#9889; Create Users &amp; Add to Cohort';
+});
 </script>
 </body>
 </html>
