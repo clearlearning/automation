@@ -159,6 +159,13 @@
   <div class="panel hidden" id="panelResults">
     <h2>&#128203; Import Preview</h2>
     <div class="summary-row" id="summaryRow"></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:220px;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;font-size:14px;">&#128269;</span>
+        <input type="text" id="previewFilter" placeholder="Filter by name or email..." style="width:100%;padding:9px 12px 9px 32px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:13px;font-family:'Open Sans',sans-serif;" oninput="renderPreview()">
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="document.getElementById('previewFilter').value='';renderPreview();" title="Clear filter">&#10005; Clear</button>
+    </div>
     <div class="table-wrap" id="previewTable"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
       <button class="btn btn-gold" id="exportXlsxBtn">&#128229; Export Import XLSX</button>
@@ -176,7 +183,7 @@
   </div>
 </div>
 <script>
-const STATE={workerUrl:'',authToken:'',connected:false,courses:[],selectedCourses:[],attendees:[],importUsers:[],selectedUsers:new Set(),groupKey:''};
+const STATE={workerUrl:'',authToken:'',connected:false,courses:[],selectedCourses:[],attendees:[],importUsers:[],selectedUsers:new Set(),groupKey:'',sortCol:'',sortDir:1};
 const US_STATES='AL,AK,AZ,AR,CA,CO,CT,DE,FL,GA,HI,ID,IL,IN,IA,KS,KY,LA,ME,MD,MA,MI,MN,MS,MO,MT,NE,NV,NH,NJ,NM,NY,NC,ND,OH,OK,OR,PA,RI,SC,SD,TN,TX,UT,VT,VA,WA,WV,WI,WY,DC,PR,VI,GU,AS,MP'.split(',');
 const CA_PROVS='AB,BC,MB,NB,NL,NS,NT,NU,ON,PE,QC,SK,YT'.split(',');
 function inferCountry(st,existing){if(existing&&existing.trim())return existing.trim();const s=(st||'').toUpperCase().trim();if(US_STATES.includes(s))return'United States';if(CA_PROVS.includes(s))return'Canada';return'';}
@@ -295,10 +302,12 @@ document.getElementById('noviPullBtn').addEventListener('click',async()=>{
       const st=(a.State||a.StateProvince||'').trim();
       const zip=(a.ZipCode||a.PostalCode||'').trim();
       const cn=inferCountry(st,(a.Country||'').trim());
-      return{email,firstName:fn,lastName:ln,company:co,jobTitle:jt,city,state:st,zip,country:cn};
+      return{email,firstName:fn,lastName:ln,company:co,jobTitle:jt,city,state:st,zip,country:cn,
+        registrationDate:(a.RegistrationDate||a.RegisteredDate||a.CreatedDate||a.DateRegistered||a.DateAdded||'').toString().trim()};
     });
     STATE.importUsers=STATE.attendees.filter(u=>u.email).map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
     STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
+    STATE.sortCol='';STATE.sortDir=1;
     setNoviPullStatus('Loaded <strong>'+STATE.importUsers.length+'</strong> attendee(s) from Novi.','success');
     setFS('','');
     renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
@@ -327,6 +336,7 @@ STATE.attendees=data.filter(r=>r.some(c=>c&&c.trim())).map(r=>{
 });
 STATE.importUsers=STATE.attendees.filter(a=>a.email).map(a=>{const pw=genPw();return{...a,password:pw,status:'active',language:'en'};});
 STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
+STATE.sortCol='';STATE.sortDir=1;
 const tot=STATE.importUsers.length;
 setFS('Loaded <strong>'+tot+'</strong> attendee(s) to import.','success');
 renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
@@ -347,29 +357,72 @@ function renderSummary(){
     +(STATE.mode!=='existing'?'<div class="summary-card"><div class="lbl">Group</div><div class="val" style="font-size:14px;">'+esc(document.getElementById('groupName').value||'(auto-generated)')+'</div></div>':'');
 }
 
+function sortBy(col){
+  if(STATE.sortCol===col)STATE.sortDir*=-1;
+  else{STATE.sortCol=col;STATE.sortDir=1;}
+  renderPreview();
+}
+
+function parseRegDate(s){if(!s)return 0;const d=new Date(s);return isNaN(d)?0:d.getTime();}
+
 function renderPreview(){
   const el=document.getElementById('previewTable');
-  const allChecked=STATE.selectedUsers.size===STATE.importUsers.length;
+  const filterVal=(document.getElementById('previewFilter')||{}).value||'';
+  const filt=filterVal.toLowerCase().trim();
+  const showDate=STATE.mode==='existing';
+
+  // Filter by name/email
+  let indexed=STATE.importUsers.map((u,i)=>({u,i}));
+  if(filt)indexed=indexed.filter(({u})=>(u.firstName+' '+u.lastName+' '+u.email).toLowerCase().includes(filt));
+
+  // Sort
+  if(STATE.sortCol){
+    indexed.sort((a,b)=>{
+      let av,bv;
+      if(STATE.sortCol==='regDate'){av=parseRegDate(a.u.registrationDate);bv=parseRegDate(b.u.registrationDate);}
+      else if(STATE.sortCol==='name'){av=(a.u.lastName+a.u.firstName).toLowerCase();bv=(b.u.lastName+b.u.firstName).toLowerCase();}
+      else if(STATE.sortCol==='email'){av=a.u.email.toLowerCase();bv=b.u.email.toLowerCase();}
+      if(av<bv)return -STATE.sortDir;if(av>bv)return STATE.sortDir;return 0;
+    });
+  }
+
+  const allFilteredChecked=indexed.length>0&&indexed.every(({i})=>STATE.selectedUsers.has(i));
+  const arrow=col=>STATE.sortCol===col?(STATE.sortDir===1?' ▲':' ▼'):'';
+  const thStyle='cursor:pointer;user-select:none;white-space:nowrap;';
+
   let h='<table><thead><tr>'
-    +'<th style="width:36px;text-align:center;"><input type="checkbox" id="chkAll" title="Select / deselect all" '+(allChecked?'checked':'')+'></th>'
-    +'<th>#</th><th>Email (Login)</th><th>First Name</th><th>Last Name</th><th>Organization</th><th>Title</th><th>State</th><th>Country</th><th>Password</th>'
+    +'<th style="width:36px;text-align:center;"><input type="checkbox" id="chkAll" title="Select / deselect all" '+(allFilteredChecked?'checked':'')+'></th>'
+    +'<th>#</th>'
+    +'<th style="'+thStyle+'" onclick="sortBy(\'name\')">Name'+arrow('name')+'</th>'
+    +'<th style="'+thStyle+'" onclick="sortBy(\'email\')">Email'+arrow('email')+'</th>'
+    +'<th>Organization</th><th>Title</th><th>State</th><th>Country</th>'
+    +(showDate?'<th style="'+thStyle+'" onclick="sortBy(\'regDate\')">Registered'+arrow('regDate')+'</th>':'')
+    +'<th>Password</th>'
     +'</tr></thead><tbody>';
-  STATE.importUsers.forEach((u,i)=>{
+
+  indexed.forEach(({u,i},rowNum)=>{
     const chk=STATE.selectedUsers.has(i);
+    // Format reg date for display
+    let regDisplay='—';
+    if(u.registrationDate){const d=new Date(u.registrationDate);if(!isNaN(d))regDisplay=d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
     h+='<tr style="'+(chk?'':'opacity:0.45;')+'"><td style="text-align:center;"><input type="checkbox" class="row-chk" data-i="'+i+'" '+(chk?'checked':'')+'></td>'
-      +'<td>'+(i+1)+'</td><td>'+esc(u.email)+'</td><td>'+esc(u.firstName)+'</td><td>'+esc(u.lastName)+'</td>'
+      +'<td>'+(rowNum+1)+'</td>'
+      +'<td>'+esc(u.firstName)+' '+esc(u.lastName)+'</td>'
+      +'<td>'+esc(u.email)+'</td>'
       +'<td>'+esc(u.company)+'</td><td>'+esc(u.jobTitle)+'</td><td>'+esc(u.state)+'</td><td>'+esc(u.country)+'</td>'
-      +'<td style="font-family:monospace;font-size:11px;">'+esc(u.password)+'</td></tr>';
+      +(showDate?'<td style="white-space:nowrap;font-size:12px;">'+esc(regDisplay)+'</td>':'')
+      +'<td style="font-family:monospace;font-size:11px;">'+esc(u.password)+'</td>'
+      +'</tr>';
   });
   h+='</tbody></table>';
   el.innerHTML=h;
-  // Select-all
+
+  // Select-all (operates on filtered set)
   document.getElementById('chkAll').addEventListener('change',function(){
-    if(this.checked)STATE.importUsers.forEach((_,i)=>STATE.selectedUsers.add(i));
-    else STATE.selectedUsers.clear();
+    if(this.checked)indexed.forEach(({i})=>STATE.selectedUsers.add(i));
+    else indexed.forEach(({i})=>STATE.selectedUsers.delete(i));
     renderPreview();renderSummary();
   });
-  // Row checkboxes
   el.querySelectorAll('.row-chk').forEach(cb=>{
     cb.addEventListener('change',function(){
       const i=parseInt(this.dataset.i);
