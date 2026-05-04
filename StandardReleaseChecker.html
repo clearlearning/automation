@@ -153,7 +153,7 @@ tbody tr.excluded td{text-decoration:line-through;color:#aaa;}
     <img src="https://assets-002.noviams.com/novi-file-uploads/clear/logos/ClearLogo.png" alt="CLEAR" class="header-logo">
     <div class="header-text">
       <h1>NCIT Standard Release Status Report</h1>
-      <p>Track Standard Release completion by cohort and generate reminder emails</p>
+      <p>Track Standard Release completion and generate email reminders</p>
     </div>
   </div>
   <div class="gold-bar"></div>
@@ -192,11 +192,11 @@ tbody tr.excluded td{text-decoration:line-through;color:#aaa;}
           <label>Program</label>
           <select id="courseSelect" disabled>
             <option value="">— Connect to API first —</option>
-            <option value="161">NCIT – Basic</option>
-            <option value="162">NCIT – Specialized</option>
-            <option value="181">NCIT – Applied Investigative Techniques</option>
-            <option value="148">NCIT – Basic (Canadian)</option>
-            <option value="127">NCIT – Basic (US Online)</option>
+            <option value="161">NCIT – Basic IPT</option>
+            <option value="162">NCIT – Specialized IPT</option>
+            <option value="181">NCIT – Applied Investigative Techniques IPT</option>
+            <option value="148">NCIT – Specialized VT</option>
+            <option value="127">NCIT – Basic VT</option>
           </select>
         </div>
         <div class="form-group">
@@ -262,9 +262,9 @@ tbody tr.excluded td{text-decoration:line-through;color:#aaa;}
           <span class="inline-note">Used in the email body and deadline language.</span>
         </div>
         <div class="form-group">
-          <label>Deadline Preview</label>
+          <label>Deadline Language</label>
           <input type="text" id="deadlinePreview" readonly style="background:#f5f5f5;color:#484848;" value="prior to checking in on [start date]">
-          <span class="inline-note">Automatically generated from the start date above.</span>
+          <span class="inline-note" id="deadlineNote">In-person: prior to checking in on [date] &nbsp;|&nbsp; Online: before your program starts on [date]</span>
         </div>
       </div>
       <div class="btn-row">
@@ -284,11 +284,11 @@ tbody tr.excluded td{text-decoration:line-through;color:#aaa;}
 // srTestUnitId: the specific unit (test) whose completion status we read
 // ─────────────────────────────────────────────────
 const COURSE_CONFIG = {
-  '161': { srCourseName:'NCIT Basic In-Person Program - Standard Release',     srCourseId:'161', srTestUnitId:'2632', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:161' },
-  '162': { srCourseName:'NCIT Specialized In-Person Program - Standard Release', srCourseId:'162', srTestUnitId:'2634', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:162' },
-  '181': { srCourseName:'NCIT AIT In-Person Program - Standard Release',        srCourseId:'181', srTestUnitId:'3017', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:181' },
-  '148': { srCourseName:'NCIT Specialized Online Program - Standard Release',   srCourseId:'148', srTestUnitId:'2368', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:148' },
-  '127': { srCourseName:'NCIT Basic Online Program - Standard Release',         srCourseId:'127', srTestUnitId:'2109', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:127' },
+  '161': { srCourseName:'NCIT Basic In-Person Program - Standard Release',      srCourseId:'161', srTestUnitId:'2632', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:161', inPerson:true  },
+  '162': { srCourseName:'NCIT Specialized In-Person Program - Standard Release', srCourseId:'162', srTestUnitId:'2634', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:162', inPerson:true  },
+  '181': { srCourseName:'NCIT AIT In-Person Program - Standard Release',         srCourseId:'181', srTestUnitId:'3017', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:181', inPerson:true  },
+  '148': { srCourseName:'NCIT Specialized Online Program - Standard Release',    srCourseId:'148', srTestUnitId:'2368', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:148', inPerson:false },
+  '127': { srCourseName:'NCIT Basic Online Program - Standard Release',          srCourseId:'127', srTestUnitId:'2109', portalUrl:'https://portal.clearhq.org/learner/courseinfo/id:127', inPerson:false },
 };
 const COURSE_NAMES = {}; // populated at connect time with real names from TalentLMS
 
@@ -416,6 +416,7 @@ async function onCourseSelect() {
   document.getElementById('groupInput').value = '';
   document.getElementById('groupValue').value = '';
   updateLoadBtn();
+  updateDeadlinePreview();
   if (!courseId) return;
 
   // Show SR info from hardcoded config
@@ -482,14 +483,26 @@ async function loadCohort() {
           api('/v1/getuserstatusincourse/course_id:' + cfg.srCourseId + ',user_id:' + userId).catch(() => null)
         ]);
 
-        // Find the specific test unit status
+        // Find the specific test unit status and completion date
         let srTestStatus = 'Not Started';
+        let srCompletedDate = '';
 
-        if (srStatus) {
-          if (srStatus.units) {
-            const testUnit = srStatus.units.find(u => String(u.id) === String(cfg.srTestUnitId));
-            if (testUnit) {
-              srTestStatus = normalizeStatus(testUnit.completion_status_formatted || testUnit.completion_status || 'Not Started');
+        if (srStatus && srStatus.units) {
+          const testUnit = srStatus.units.find(u => String(u.id) === String(cfg.srTestUnitId));
+          if (testUnit) {
+            srTestStatus = normalizeStatus(testUnit.completion_status_formatted || testUnit.completion_status || 'Not Started');
+            // TalentLMS may return completed_on, completion_date, or similar
+            const raw = testUnit.completed_on || testUnit.completion_date || testUnit.last_accessed || '';
+            if (raw && srTestStatus === 'Completed') {
+              // Format as readable date if it's a timestamp or ISO string
+              try {
+                const d = new Date(typeof raw === 'number' ? raw * 1000 : raw);
+                if (!isNaN(d)) {
+                  srCompletedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                } else {
+                  srCompletedDate = raw;
+                }
+              } catch { srCompletedDate = raw; }
             }
           }
         }
@@ -500,6 +513,7 @@ async function loadCohort() {
           lastName: ui.last_name || '',
           email: ui.email || '',
           srTestStatus,
+          srCompletedDate,
         });
       } catch (ue) { console.warn('Skipped user ' + userId + ':', ue.message); }
     }
@@ -598,10 +612,11 @@ function buildAllTables() {
 function buildTable(tableId, rows) {
   const t = document.getElementById(tableId);
   const cols = [
-    { key: 'lastName',     label: 'Last Name' },
-    { key: 'firstName',    label: 'First Name' },
-    { key: 'email',        label: 'Email' },
-    { key: 'srTestStatus', label: 'Standard Release Completed' },
+    { key: 'lastName',        label: 'Last Name' },
+    { key: 'firstName',       label: 'First Name' },
+    { key: 'email',           label: 'Email' },
+    { key: 'srTestStatus',    label: 'Standard Release Completed' },
+    { key: 'srCompletedDate', label: 'Date Completed' },
   ];
 
   t.querySelector('thead').innerHTML = '<tr><th style="width:36px;"><input type="checkbox" id="selAll_' + tableId + '" title="Select all / deselect all" checked></th>' + cols.map(c => {
@@ -627,7 +642,7 @@ function buildTable(tableId, rows) {
   });
 
   if (rows.length === 0) {
-    t.querySelector('tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px;">No learners in this view.</td></tr>';
+    t.querySelector('tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px;">No learners in this view.</td></tr>';
     return;
   }
 
@@ -639,6 +654,7 @@ function buildTable(tableId, rows) {
       '<td>' + esc(l.firstName) + '</td>' +
       '<td>' + esc(l.email) + '</td>' +
       '<td>' + statusBadge(l.srTestStatus) + '</td>' +
+      '<td style="color:#666;">' + (l.srCompletedDate || '—') + '</td>' +
       '</tr>';
   }).join('');
 
@@ -668,19 +684,29 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('searchInput').addEventListener('input', buildAllTables);
 
 // Live deadline preview
-document.getElementById('startDate').addEventListener('input', function() {
-  const d = this.value.trim();
-  document.getElementById('deadlinePreview').value = d ? 'prior to checking in on ' + d : 'prior to checking in on [start date]';
-});
+document.getElementById('startDate').addEventListener('input', updateDeadlinePreview);
+
+function updateDeadlinePreview() {
+  const d = document.getElementById('startDate').value.trim();
+  const cfg = COURSE_CONFIG[S.selectedCourseId] || {};
+  const deadline = d ? getDeadline(cfg.inPerson, d) : (cfg.inPerson !== false ? 'prior to checking in on [start date]' : 'before your program starts on [start date]');
+  document.getElementById('deadlinePreview').value = deadline;
+}
+
+function getDeadline(inPerson, date) {
+  return inPerson !== false
+    ? 'prior to checking in on ' + date
+    : 'before your program starts on ' + date;
+}
 
 // ─────────────────────────────────────────────────
 // EXPORT CSV
 // ─────────────────────────────────────────────────
 document.getElementById('exportCsvBtn').addEventListener('click', () => {
-  const rows = S.learners.slice().sort((a, b) => a.lastName.localeCompare(b.lastName));
-  let csv = '"First Name","Last Name","Email","Standard Release Completed","Included"\n';
+  const rows = S.learners.filter(l => !S.excluded.has(l.userId)).sort((a, b) => a.lastName.localeCompare(b.lastName));
+  let csv = '"First Name","Last Name","Email","Standard Release Completed","Date Completed"\n';
   rows.forEach(l => {
-    csv += [l.firstName, l.lastName, l.email, l.srTestStatus, S.excluded.has(l.userId) ? 'No' : 'Yes'].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',') + '\n';
+    csv += [l.firstName, l.lastName, l.email, l.srTestStatus, l.srCompletedDate || ''].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',') + '\n';
   });
   const cfgCsv = COURSE_CONFIG[S.selectedCourseId] || {};
   const safeLabel = (cfgCsv.label || 'Cohort').replace(/[^a-z0-9]/gi, '_').substring(0, 40);
@@ -695,11 +721,12 @@ document.getElementById('exportEmailsBtn').addEventListener('click', async () =>
   if (incomplete.length === 0) { alert('All learners have completed the Standard Release.'); return; }
 
   const startDate = document.getElementById('startDate').value.trim() || 'your program start date';
-  const deadline = startDate !== 'your program start date' ? 'prior to checking in on ' + startDate : 'prior to checking in on the first day of your program';
   const cfg = COURSE_CONFIG[S.selectedCourseId] || {};
+  const deadline = getDeadline(cfg.inPerson, startDate);
   const srName = cfg.srCourseName || 'NCIT Standard Release';
   const portalUrl = cfg.portalUrl || 'https://portal.clearhq.org';
   const displayCourse = COURSE_NAMES[S.selectedCourseId] || cfg.srCourseName.replace(' - Standard Release','');
+  const programLabel = {'161':'Basic','162':'Specialized','181':'Applied Investigative Techniques','148':'Specialized','127':'Basic'}[S.selectedCourseId] || displayCourse;
 
   const btn = document.getElementById('exportEmailsBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating ZIP...';
@@ -707,7 +734,7 @@ document.getElementById('exportEmailsBtn').addEventListener('click', async () =>
   try {
     const zip = new JSZip();
     incomplete.forEach(l => {
-      const html = buildReminderEmail(l.firstName, displayCourse, srName, startDate, deadline, portalUrl);
+      const html = buildReminderEmail(l.firstName, programLabel, srName, startDate, deadline, portalUrl);
       zip.file('StandardRelease_' + (l.email || 'unknown') + '.html', html);
     });
     // manifest
@@ -742,10 +769,10 @@ function buildReminderEmail(firstName, course, releaseName, startDate, deadline,
     + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="height:4px;background-color:#dda838;font-size:1px;line-height:1px;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>'
     + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td align="center"><!--[if mso]><table width="680" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]--><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:680px;"><tr><td style="padding:32px 36px 28px;">'
     + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:16px;color:#333333;line-height:24px;mso-line-height-rule:exactly;padding-bottom:16px;">Hello <strong>' + esc(firstName) + '</strong>,</td></tr></table>'
-    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:20px;">We are so excited to welcome you to the <strong>' + esc(course) + '</strong> program starting <strong>' + esc(startDate) + '</strong>! We can&rsquo;t wait to see you there.</td></tr></table>'
-    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#fdf4e7;border-left:4px solid #dda838;margin-bottom:20px;"><tr><td style="padding:14px 18px;' + F + 'font-size:14px;color:#484848;line-height:22px;mso-line-height-rule:exactly;">Our records show you have not yet completed the <strong>' + esc(releaseName) + '</strong>. We kindly ask that you complete it <strong style="color:#64092c;">' + esc(deadline) + '</strong> &mdash; it only takes a few minutes and is required before you may attend your first session.</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:20px;">We are excited to welcome you to the <strong>National Certified Investigator &amp; Inspector Training &ndash; ' + esc(course) + ' Program</strong> starting <strong>' + esc(startDate) + '</strong>.</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#fdf4e7;border-left:4px solid #dda838;margin-bottom:20px;"><tr><td style="padding:14px 18px;' + F + 'font-size:14px;color:#484848;line-height:22px;mso-line-height-rule:exactly;">Our records indicate you have not yet completed the Standard Release for this program. We kindly ask that you complete it <strong style="color:#64092c;">' + esc(deadline) + '</strong> &mdash; it only takes a few minutes and is required before you may attend your first session.</td></tr></table>'
     + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:10px;"><strong>Here&rsquo;s how to complete it:</strong></td></tr></table>'
-    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:24px;"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">1.&nbsp;&nbsp;Click the button below. If prompted, log in with your portal credentials &mdash; you&rsquo;ll be taken directly to the Standard Release course.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">2.&nbsp;&nbsp;In the content section, click the link for the Standard Release.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">3.&nbsp;&nbsp;Click <strong>Start Test</strong> and answer the few questions.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-left:8px;">4.&nbsp;&nbsp;On the last question, click <strong>Submit Test</strong>. That&rsquo;s it &mdash; you&rsquo;re all set!</td></tr></table>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:24px;"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">1.&nbsp;&nbsp;Click the button below. If prompted, log in with your portal credentials &mdash; you&rsquo;ll be taken directly to <strong>' + esc(releaseName) + '</strong>.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">2.&nbsp;&nbsp;Open the link in the content section.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:8px;padding-left:8px;">3.&nbsp;&nbsp;Click <strong>Start Test</strong> and answer the few questions.</td></tr><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-left:8px;">4.&nbsp;&nbsp;On the last question, click <strong>Submit Test</strong>. That&rsquo;s it &mdash; you&rsquo;re all set!</td></tr></table>'
     + '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px;"><tr><td style="background-color:#64092c;border-radius:6px;padding:12px 28px;"><a href="' + portalUrl + '" style="' + FH + 'font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;display:block;white-space:nowrap;">Complete the Standard Release &rarr;</a></td></tr></table>'
     + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:28px;">If you believe you have already completed this requirement or have any questions, please reply to this email or contact us at <a href="mailto:clearlearning@clearhq.org" style="color:#084d78;">clearlearning@clearhq.org</a>.</td></tr></table>'
     + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="' + F + 'font-size:14px;color:#484848;line-height:21px;mso-line-height-rule:exactly;padding-bottom:20px;">Thank you for your time,</td></tr></table>'
