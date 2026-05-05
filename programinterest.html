@@ -292,18 +292,18 @@ const PROGRAMS = [
 
 // Short display names
 const PROG_SHORT = {
-  'Board Member Training - Introduction to Regulatory Governance': 'BMT - Introduction',
-  'Board Member Training - Advanced Concepts in Regulatory Governance': 'BMT - Advanced Concepts',
-  'Board Chair Training - Getting the Most From Your Board, Skills for Effective Chairing': 'Board Chair Training',
-  'Executive Leadership Program for Regulators': 'Executive Leadership',
-  'Skills for the Regulatory Administrator - Staffing a Board': 'Regulatory Administrator',
-  'NCIT Basic Program (US and Canadian versions available)': 'NCIT Basic',
-  'NCIT Applied Investigative Techniques Program': 'NCIT Applied (AIT)',
-  'NCIT Specialized Program': 'NCIT Specialized',
-  'NCIT Workshops - Drug Diversion Investigations': 'Workshop - Drug Diversion',
-  'NCIT Workshops - Investigating Reports of Sexual Misconduct': 'Workshop - Sexual Misconduct',
-  'NCIT Workshops - Communications and the Art of Persuasion': 'Workshop - Communications',
-  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator': 'Workshop - Ethics'
+  'Board Member Training - Introduction to Regulatory Governance': 'BMT - IRG',
+  'Board Member Training - Advanced Concepts in Regulatory Governance': 'BMT - ACRG',
+  'Board Chair Training - Getting the Most From Your Board, Skills for Effective Chairing': 'BCT',
+  'Executive Leadership Program for Regulators': 'ELPR',
+  'Skills for the Regulatory Administrator - Staffing a Board': 'SRA SAB',
+  'NCIT Basic Program (US and Canadian versions available)': 'NCIT B',
+  'NCIT Applied Investigative Techniques Program': 'NCIT AIT',
+  'NCIT Specialized Program': 'NCIT S',
+  'NCIT Workshops - Drug Diversion Investigations': 'NCIT W DDI',
+  'NCIT Workshops - Investigating Reports of Sexual Misconduct': 'NCIT W IRSM',
+  'NCIT Workshops - Communications and the Art of Persuasion': 'NCIT W COMMS',
+  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator': 'NCIT W ETHICS'
 };
 
 // ─── Program Custom Variable → Canonical Name Map ────────────────────────────
@@ -710,7 +710,7 @@ function renderStats(){
   const uniqueProgs=new Set(filteredData.flatMap(r=>r.allPrograms)).size;
   const states=new Set(filteredData.map(r=>r.state).filter(Boolean)).size;
   $('statGrid').innerHTML=`
-    <div class="stat-card burgundy"><div class="stat-val">${total}</div><div class="stat-lbl">Total Registrations</div></div>
+    <div class="stat-card burgundy"><div class="stat-val">${total}</div><div class="stat-lbl">Total Responses</div></div>
     <div class="stat-card gold"><div class="stat-val">${fromEmail}</div><div class="stat-lbl">Email Campaign</div></div>
     <div class="stat-card blue"><div class="stat-val">${fromWeb}</div><div class="stat-lbl">Website</div></div>
     <div class="stat-card green"><div class="stat-val">${uniqueProgs}</div><div class="stat-lbl">Programs Requested</div></div>
