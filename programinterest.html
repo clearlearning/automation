@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program Interest Dashboard | CLEAR Learning</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+:root{
+  --burgundy:#64092c;--burgundy-light:#8a1e4a;--burgundy-faint:#fdf0f4;
+  --gold:#dda838;--gold-faint:#fdf6e3;--gold-dark:#b8860b;
+  --blue:#084d78;--blue-light:#0a6191;--blue-faint:#e8f4fb;
+  --charcoal:#484848;--light-bg:#f7f5f2;--white:#fff;
+  --border:#e0dcd6;--text:#333;--text-light:#6b6b6b;
+  --success:#2e7d4f;--success-faint:#f0f9f4;
+  --shadow:0 2px 12px rgba(100,9,44,.08);--shadow-lg:0 8px 32px rgba(100,9,44,.12);
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Open Sans',sans-serif;background:var(--light-bg);color:var(--text);min-height:100vh}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--burgundy),var(--burgundy-light));color:#fff;padding:18px 40px;display:flex;align-items:center;gap:20px;box-shadow:0 4px 20px rgba(100,9,44,.25)}
+.header img{width:72px;height:auto;padding:6px;background:#fff;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header h1{font-size:20px;font-weight:700}
+.header p{font-size:12px;opacity:.8;margin-top:2px}
+.header .spacer{flex:1}
+.hdr-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;transition:.15s}
+.hdr-btn:hover{background:rgba(255,255,255,.2)}
+
+.container{max-width:1400px;margin:0 auto;padding:28px 40px 60px}
+
+/* CONFIG */
+.cfg{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px;margin-bottom:24px;border-left:4px solid var(--gold)}
+.cfg h2{font-size:15px;font-weight:700;color:var(--burgundy);margin-bottom:6px}
+.cfg p{font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.6}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.cfg label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:4px}
+.cfg input{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit}
+.cfg input:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 3px rgba(221,168,56,.15)}
+
+/* STATUS */
+.status-bar{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 22px;margin-bottom:22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.s-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.s-dot{width:9px;height:9px;border-radius:50%;background:#ccc;flex-shrink:0}
+.s-dot.loading{background:var(--gold);animation:pulse 1s infinite}
+.s-dot.ok{background:var(--success)}
+.s-dot.err{background:#c62828}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.s-label{font-weight:700;color:var(--charcoal)}
+.s-meta{color:var(--text-light);font-size:12px}
+.bar-spacer{flex:1}
+
+/* SUMMARY CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;border-top:3px solid var(--border)}
+.stat-card.burgundy{border-top-color:var(--burgundy)}
+.stat-card.gold{border-top-color:var(--gold)}
+.stat-card.blue{border-top-color:var(--blue)}
+.stat-card.green{border-top-color:var(--success)}
+.stat-val{font-size:26px;font-weight:700;color:var(--burgundy);line-height:1}
+.stat-lbl{font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-top:5px}
+
+/* TABS */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:0}
+.tab{padding:11px 22px;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;border-bottom:0;background:0 0;color:var(--text-light);font-family:inherit;transition:.15s;position:relative}
+.tab:hover{background:#f0ede8;color:var(--charcoal)}
+.tab.active{background:#fff;color:var(--burgundy);border-color:var(--border)}
+.tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:3px;background:#fff}
+.tc{display:none}.tc.active{display:block}
+.tab-body{background:#fff;border-radius:0 var(--radius) var(--radius) var(--radius);box-shadow:var(--shadow);padding:28px 32px;margin-bottom:24px}
+
+/* FILTERS */
+.filter-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.fl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:4px}
+.fi{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:#fff}
+.fi:focus{outline:0;border-color:var(--gold)}
+.filter-actions{display:flex;gap:10px;align-items:center;padding-top:12px;border-top:1px solid var(--border)}
+.fcount{font-size:12px;color:var(--text-light);margin-left:auto}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;border:0;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-p{background:var(--burgundy);color:#fff}.btn-p:hover{background:var(--burgundy-light)}
+.btn-s{background:#fff;color:var(--charcoal);border:1px solid var(--border)}.btn-s:hover{border-color:var(--charcoal)}
+.btn-e{background:var(--blue);color:#fff}.btn-e:hover{background:var(--blue-light)}
+.btn-g{background:var(--gold);color:#fff}.btn-g:hover{background:var(--gold-dark)}
+
+/* SECTION TITLES */
+.sec-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-light);padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:16px;margin-top:28px}
+.sec-title:first-child{margin-top:0}
+
+/* PROGRAM INTEREST BARS */
+.prog-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.prog-row{display:flex;align-items:center;gap:12px}
+.prog-name{flex:0 0 380px;font-size:13px;font-weight:600;color:var(--charcoal);text-align:right;line-height:1.3}
+.prog-track{flex:1;height:28px;background:#f0ede8;border-radius:4px;overflow:hidden;position:relative}
+.prog-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 10px;transition:width .5s ease;min-width:4px;position:relative}
+.prog-fill-email{background:var(--burgundy)}
+.prog-fill-web{background:var(--blue)}
+.prog-fill-both{background:linear-gradient(90deg,var(--burgundy) 50%,var(--blue) 50%)}
+.prog-count{flex:0 0 80px;font-size:12px;font-weight:700;color:var(--text-light);white-space:nowrap}
+.prog-pct{flex:0 0 50px;font-size:12px;color:var(--text-light);text-align:right}
+
+/* STACKED BAR */
+.stacked-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.stacked-name{flex:0 0 380px;font-size:13px;font-weight:600;color:var(--charcoal);text-align:right;line-height:1.3}
+.stacked-track{flex:1;height:26px;background:#f0ede8;border-radius:4px;overflow:hidden;display:flex}
+.seg-email{background:var(--burgundy);height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:0;transition:width .5s}
+.seg-web{background:var(--blue);height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:0;transition:width .5s}
+.seg-web-primary{background:var(--gold);height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:0;transition:width .5s}
+.stacked-total{flex:0 0 80px;font-size:12px;font-weight:700;color:var(--text)}
+
+/* LEGEND */
+.legend{display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--charcoal)}
+.leg-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0}
+
+/* SOURCE BREAKDOWN */
+.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.source-card{background:var(--light-bg);border-radius:var(--radius);padding:20px 24px;border:1px solid var(--border)}
+.source-card h3{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.source-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
+.source-tag.email{background:var(--burgundy)}
+.source-tag.web{background:var(--blue)}
+
+/* RESPONDENT TABLE */
+.resp-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--burgundy);color:#fff;padding:9px 12px;text-align:left;font-weight:700;font-size:11px;white-space:nowrap;position:sticky;top:0;z-index:2}
+tbody tr{border-bottom:1px solid #f0ede8;cursor:pointer;transition:background .1s}
+tbody tr:hover{background:var(--gold-faint)}
+tbody td{padding:9px 12px;vertical-align:top}
+td.name{font-weight:600;color:var(--burgundy)}
+td.prog-tags{max-width:400px}
+.ptag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;margin:2px 3px 2px 0;background:#f0ede8;color:var(--charcoal)}
+.ptag.primary{background:var(--burgundy-faint);color:var(--burgundy);border:1px solid #e8c4d0}
+.source-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;color:#fff}
+.source-badge.email{background:var(--burgundy)}
+.source-badge.web{background:var(--blue)}
+
+/* GEOGRAPHIC */
+.geo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:24px}
+.geo-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.geo-place{font-size:13px;font-weight:700;color:var(--charcoal)}
+.geo-count{font-size:22px;font-weight:700;color:var(--burgundy);margin:4px 0 2px}
+.geo-pct{font-size:11px;color:var(--text-light)}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;margin-bottom:14px;align-items:center}
+.search-input{flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit}
+.search-input:focus{outline:0;border-color:var(--gold)}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 4px;font-size:12px}
+.page-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;font-size:12px;color:var(--text);transition:.12s}
+.page-btn:hover{border-color:var(--burgundy);color:var(--burgundy)}
+.page-btn.active{background:var(--burgundy);color:#fff;border-color:var(--burgundy)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* STATES */
+.spinner-wrap{text-align:center;padding:48px}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--burgundy);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--text-light)}
+.empty .icon{font-size:36px;margin-bottom:10px}
+.hidden{display:none!important}
+
+/* EXPORT BAR */
+.export-bar{display:flex;gap:10px;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--border);margin-top:20px}
+
+@media(max-width:900px){
+  .container{padding:20px}.header{padding:16px 20px}
+  .prog-name,.stacked-name{flex:0 0 200px}
+  .source-grid{grid-template-columns:1fr}
+  .cfg-grid{grid-template-columns:1fr}
+}
+@media print{
+  .header{padding:12px 20px}.cfg,.status-bar,.tabs,.filter-row,.filter-actions,.search-bar,.pagination,.export-bar,.hdr-btn,.btn{display:none!important}
+  .tc{display:block!important}.tab-body{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" alt="CLEAR Learning">
+  <div>
+    <h1>Program Interest Dashboard</h1>
+    <p>Email Campaign &amp; Website Interest Registrations · Demand Planning Tool</p>
+  </div>
+  <div class="spacer"></div>
+  <button class="hdr-btn" onclick="resetConfig()">⚙ Settings</button>
+</div>
+
+<div class="container">
+
+  <!-- CONFIG -->
+  <div class="cfg hidden" id="cfgPanel">
+    <h2>Connect to Proxy</h2>
+    <p>Enter your Cloudflare Worker URL and auth token to load interest registration data.</p>
+    <div class="cfg-grid">
+      <div style="grid-column:1/-1">
+        <label>Worker Proxy URL</label>
+        <input type="text" id="cfgProxy" placeholder="https://clear-lms-proxy.avance.workers.dev">
+      </div>
+      <div style="grid-column:1/-1">
+        <label>Auth Token</label>
+        <input type="password" id="cfgToken" placeholder="your-auth-token">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-p" onclick="saveConfig()">Save &amp; Load Data</button>
+      <button class="btn btn-s" onclick="$('cfgPanel').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-bar hidden" id="statusBar">
+    <div class="s-item"><div class="s-dot" id="dotEmail"></div><span class="s-label">Email Campaign</span><span class="s-meta" id="metaEmail">—</span></div>
+    <div class="s-item"><div class="s-dot" id="dotWeb"></div><span class="s-label">Website</span><span class="s-meta" id="metaWeb">—</span></div>
+    <div class="bar-spacer"></div>
+    <button class="hdr-btn" style="color:var(--charcoal);border-color:var(--border);background:#fff" onclick="reloadData()">↺ Refresh</button>
+  </div>
+
+  <!-- UNMATCHED STATES NOTICE -->
+  <div id="unmatchedNotice" class="hidden" style="background:#fff8e1;border:1px solid var(--gold);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;font-size:12px;color:var(--charcoal);line-height:1.6"></div>
+
+  <!-- MAIN -->
+  <div class="hidden" id="main">
+
+    <!-- STAT CARDS -->
+    <div class="stat-grid" id="statGrid"></div>
+
+    <!-- FILTERS -->
+    <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 28px;margin-bottom:0">
+      <div style="font-size:14px;font-weight:700;color:var(--burgundy);margin-bottom:14px">Filters</div>
+      <div class="filter-row" id="filterRow"></div>
+      <div class="filter-actions">
+        <button class="btn btn-p" onclick="applyFilters()">Apply</button>
+        <button class="btn btn-s" onclick="resetFilters()">Reset</button>
+        <span class="fcount" id="fcount"></span>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div style="margin-top:24px">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('demand')">📊 Program Demand</button>
+        <button class="tab" onclick="switchTab('geo')">🌎 Geographic</button>
+        <button class="tab" onclick="switchTab('respondents')">👥 Respondents</button>
+      </div>
+
+      <!-- DEMAND TAB -->
+      <div class="tc active tab-body" id="tc-demand">
+        <div id="demandContent"></div>
+      </div>
+
+      <!-- GEO TAB -->
+      <div class="tc tab-body" id="tc-geo">
+        <div id="geoContent"></div>
+      </div>
+
+      <!-- RESPONDENTS TAB -->
+      <div class="tc tab-body" id="tc-respondents">
+        <div id="respondentsContent"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── Survey / Question IDs ────────────────────────────────────────────────────
+const SURVEY_EMAIL = '527282996';
+const SURVEY_WEB   = '422329735';
+
+// Program choices (same in both surveys, keyed by canonical name)
+const PROGRAMS = [
+  'Board Member Training - Introduction to Regulatory Governance',
+  'Board Member Training - Advanced Concepts in Regulatory Governance',
+  'Board Chair Training - Getting the Most From Your Board, Skills for Effective Chairing',
+  'Executive Leadership Program for Regulators',
+  'Skills for the Regulatory Administrator - Staffing a Board',
+  'NCIT Basic Program (US and Canadian versions available)',
+  'NCIT Applied Investigative Techniques Program',
+  'NCIT Specialized Program',
+  'NCIT Workshops - Drug Diversion Investigations',
+  'NCIT Workshops - Investigating Reports of Sexual Misconduct',
+  'NCIT Workshops - Communications and the Art of Persuasion',
+  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
+];
+
+// Short display names
+const PROG_SHORT = {
+  'Board Member Training - Introduction to Regulatory Governance': 'BMT - Introduction',
+  'Board Member Training - Advanced Concepts in Regulatory Governance': 'BMT - Advanced Concepts',
+  'Board Chair Training - Getting the Most From Your Board, Skills for Effective Chairing': 'Board Chair Training',
+  'Executive Leadership Program for Regulators': 'Executive Leadership',
+  'Skills for the Regulatory Administrator - Staffing a Board': 'Regulatory Administrator',
+  'NCIT Basic Program (US and Canadian versions available)': 'NCIT Basic',
+  'NCIT Applied Investigative Techniques Program': 'NCIT Applied (AIT)',
+  'NCIT Specialized Program': 'NCIT Specialized',
+  'NCIT Workshops - Drug Diversion Investigations': 'Workshop - Drug Diversion',
+  'NCIT Workshops - Investigating Reports of Sexual Misconduct': 'Workshop - Sexual Misconduct',
+  'NCIT Workshops - Communications and the Art of Persuasion': 'Workshop - Communications',
+  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator': 'Workshop - Ethics'
+};
+
+// ─── Program Custom Variable → Canonical Name Map ────────────────────────────
+const PROGRAM_CV_MAP={
+  'irg webinar':                    'Board Member Training - Introduction to Regulatory Governance',
+  'acrg':                           'Board Member Training - Advanced Concepts in Regulatory Governance',
+  'bct skills for effective chairing':'Board Chair Training - Getting the Most From Your Board, Skills for Effective Chairing',
+  'elpr':                           'Executive Leadership Program for Regulators',
+  'sra staffing a board':           'Skills for the Regulatory Administrator - Staffing a Board',
+  'ncit b':                         'NCIT Basic Program (US and Canadian versions available)',
+  'ncit ait':                       'NCIT Applied Investigative Techniques Program',
+  'ncit s':                         'NCIT Specialized Program',
+  'ncit w drug diversion':          'NCIT Workshops - Drug Diversion Investigations',
+  'ncit w irsm':                    'NCIT Workshops - Investigating Reports of Sexual Misconduct',
+  'ncit w communication':           'NCIT Workshops - Communications and the Art of Persuasion',
+  'ncit w ethics':                  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
+};
+
+function resolveProgram(raw){
+  if(!raw)return'';
+  const match=PROGRAM_CV_MAP[raw.trim().toLowerCase()];
+  return match||raw.trim();
+}
+
+// ─── State/Province Lookup ────────────────────────────────────────────────────
+// Each entry: [abbreviation, full name, ...common variants/misspellings]
+const STATE_LOOKUP=[
+  ['AB','Alberta','Alta'],
+  ['AK','Alaska'],
+  ['AL','Alabama','Alabam'],
+  ['AR','Arkansas','Arkansa'],
+  ['AS','American Samoa'],
+  ['AZ','Arizona','Ariz'],
+  ['BC','British Columbia','Brit Columbia','BC Canada'],
+  ['CA','California','Calif','Cal'],
+  ['CO','Colorado','Colo'],
+  ['CT','Connecticut','Conn','Conneticut','Connecticutt'],
+  ['DC','District of Columbia','Washington DC','Washington D.C.','D.C.'],
+  ['DE','Delaware'],
+  ['FL','Florida','Fla'],
+  ['FM','Federated States of Micronesia','Micronesia'],
+  ['GA','Georgia'],
+  ['GU','Guam'],
+  ['HI','Hawaii'],
+  ['IA','Iowa'],
+  ['ID','Idaho'],
+  ['IL','Illinois','Ill'],
+  ['IN','Indiana','Ind'],
+  ['KS','Kansas','Kans'],
+  ['KY','Kentucky','Kentuckey','Kentuky','Kentukcy','Kentucke'],
+  ['LA','Louisiana','Louisianna','Lousiana'],
+  ['MA','Massachusetts','Mass','Massachusets','Massachussetts','Massachsetts'],
+  ['MB','Manitoba'],
+  ['MD','Maryland'],
+  ['ME','Maine'],
+  ['MH','Marshall Islands'],
+  ['MI','Michigan','Mich'],
+  ['MN','Minnesota','Minn'],
+  ['MO','Missouri','Miss'],
+  ['MP','Northern Mariana Islands','Mariana Islands'],
+  ['MS','Mississippi','Missisippi','Mississipi'],
+  ['MT','Montana','Mont'],
+  ['NB','New Brunswick'],
+  ['NC','North Carolina','N Carolina','N. Carolina'],
+  ['ND','North Dakota','N Dakota','N. Dakota'],
+  ['NE','Nebraska','Nebr'],
+  ['NH','New Hampshire','N Hampshire','N. Hampshire'],
+  ['NJ','New Jersey','N Jersey','N. Jersey'],
+  ['NL','Newfoundland','Newfoundland and Labrador','Newfoundland & Labrador'],
+  ['NM','New Mexico','N Mexico','N. Mexico'],
+  ['NS','Nova Scotia'],
+  ['NT','Northwest Territories','NWT'],
+  ['NU','Nunavut'],
+  ['NV','Nevada','Nev'],
+  ['NY','New York','N York','N. York'],
+  ['OH','Ohio'],
+  ['OK','Oklahoma','Okla'],
+  ['ON','Ontario','Ont'],
+  ['OR','Oregon','Ore'],
+  ['PA','Pennsylvania','Penn','Penna','Pennslyvania','Pennsylvaina'],
+  ['PE','Prince Edward Island','PEI'],
+  ['PR','Puerto Rico'],
+  ['PW','Palau'],
+  ['QC','Quebec','Québec','Quebe'],
+  ['RI','Rhode Island','R Island','R. Island'],
+  ['SC','South Carolina','S Carolina','S. Carolina'],
+  ['SD','South Dakota','S Dakota','S. Dakota'],
+  ['SK','Saskatchewan','Saskatchwan'],
+  ['TN','Tennessee','Tenessee','Tennesse','Tennesee'],
+  ['TX','Texas','Tex'],
+  ['UT','Utah'],
+  ['VA','Virginia','Virgina'],
+  ['VI','Virgin Islands','US Virgin Islands'],
+  ['VT','Vermont'],
+  ['WA','Washington','Wash'],
+  ['WI','Wisconsin','Wisc','Wis'],
+  ['WV','West Virginia','W Virginia','W. Virginia'],
+  ['WY','Wyoming','Wyo'],
+  ['YT','Yukon','Yukon Territory']
+];
+
+// Build fast lookup maps
+const STATE_BY_ABBR={};   // 'ky' → 'KY'
+const STATE_BY_NAME={};   // 'kentucky' → 'KY'
+STATE_LOOKUP.forEach(([abbr,...names])=>{
+  STATE_BY_ABBR[abbr.toLowerCase()]=abbr;
+  names.forEach(n=>{ STATE_BY_NAME[n.toLowerCase()]=abbr; });
+});
+
+// Levenshtein distance for fuzzy matching
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+// Unmatched values collected during load for display
+let unmatchedStates=new Set();
+
+function normalizeState(raw){
+  if(!raw)return'';
+  const s=raw.trim();
+  if(!s)return'';
+  const sl=s.toLowerCase();
+
+  // 1. Exact abbreviation match
+  if(STATE_BY_ABBR[sl])return STATE_BY_ABBR[sl];
+
+  // 2. Exact full-name/variant match
+  if(STATE_BY_NAME[sl])return STATE_BY_NAME[sl];
+
+  // 3. Fuzzy match against all known names — find closest
+  let bestAbbr='',bestDist=Infinity,bestLen=0;
+  STATE_LOOKUP.forEach(([abbr,...names])=>{
+    names.forEach(n=>{
+      const nl=n.toLowerCase();
+      // Only fuzzy-match if lengths are within 40% of each other
+      if(Math.abs(sl.length-nl.length)>Math.max(sl.length,nl.length)*0.4)return;
+      const dist=levenshtein(sl,nl);
+      // Accept if distance ≤ 3 and better than current best
+      if(dist<=3&&(dist<bestDist||(dist===bestDist&&n.length>bestLen))){
+        bestDist=dist;bestAbbr=abbr;bestLen=n.length;
+      }
+    });
+  });
+
+  if(bestAbbr)return bestAbbr;
+
+  // Could not match — track for display
+  unmatchedStates.add(s);
+  return s; // return original so data isn't lost
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let PROXY='', TOKEN='';
+let emailData=[], webData=[], allData=[], filteredData=[];
+let emailQMap={}, webQMap={};
+let currentTab='demand', currentPage=1;
+const PAGE_SIZE=30;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  PROXY = localStorage.getItem('pi_proxy')||'';
+  TOKEN = localStorage.getItem('pi_token')||'';
+  if(PROXY&&TOKEN){ loadData(); }
+  else{ $('cfgPanel').classList.remove('hidden'); }
+});
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+function saveConfig(){
+  PROXY=$('cfgProxy').value.trim().replace(/\/$/,'');
+  TOKEN=$('cfgToken').value.trim();
+  if(!PROXY||!TOKEN){alert('Please enter both fields.');return;}
+  localStorage.setItem('pi_proxy',PROXY);
+  localStorage.setItem('pi_token',TOKEN);
+  $('cfgPanel').classList.add('hidden');
+  loadData();
+}
+function resetConfig(){
+  $('cfgProxy').value=PROXY;$('cfgToken').value=TOKEN;
+  $('cfgPanel').classList.remove('hidden');
+}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function smFetch(path){
+  const res=await fetch(`${PROXY}/surveymonkey${path}`,{headers:{'X-Auth-Token':TOKEN}});
+  if(!res.ok)throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+async function fetchAll(surveyId){
+  let page=1,all=[];
+  while(true){
+    const d=await smFetch(`/surveys/${surveyId}/responses/bulk?per_page=100&page=${page}&sort_by=date_modified&sort_order=DESC`);
+    const batch=d.data||[];all=[...all,...batch];
+    if(batch.length<100)break;page++;
+  }
+  return all;
+}
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
+async function loadData(){
+  $('statusBar').classList.remove('hidden');
+  $('main').classList.add('hidden');
+  unmatchedStates=new Set();
+  setStatus('Email','loading','Loading…');
+  setStatus('Web','loading','Loading…');
+
+  const [ed,wd,er,wr]=await Promise.allSettled([
+    smFetch(`/surveys/${SURVEY_EMAIL}/details`),
+    smFetch(`/surveys/${SURVEY_WEB}/details`),
+    fetchAll(SURVEY_EMAIL),
+    fetchAll(SURVEY_WEB)
+  ]);
+
+  if(ed.status==='fulfilled'&&er.status==='fulfilled'){
+    emailQMap=buildQMap(ed.value);
+    emailData=er.value.filter(r=>r.response_status==='completed').map(r=>normalize(r,'email'));
+    setStatus('Email','ok',`${emailData.length} responses`);
+  }else{emailData=[];setStatus('Email','err','Failed');}
+
+  if(wd.status==='fulfilled'&&wr.status==='fulfilled'){
+    webQMap=buildQMap(wd.value);
+    webData=wr.value.filter(r=>r.response_status==='completed').map(r=>normalize(r,'web'));
+    setStatus('Web','ok',`${webData.length} responses`);
+  }else{webData=[];setStatus('Web','err','Failed');}
+
+  allData=[...emailData,...webData];
+  filteredData=[...allData];
+  if(allData.length){buildUI();renderAll();}
+
+  // Show unmatched state notice if any
+  const un=$('unmatchedNotice');
+  if(unmatchedStates.size){
+    un.innerHTML=`⚠️ <strong>${unmatchedStates.size} state/province value${unmatchedStates.size>1?'s':''} could not be automatically matched:</strong> ${[...unmatchedStates].map(s=>`<code style="background:#f0ede8;padding:1px 5px;border-radius:3px">${esc(s)}</code>`).join(', ')} — shown as-is in the data.`;
+    un.classList.remove('hidden');
+  } else {
+    un.classList.add('hidden');
+  }
+}
+
+async function reloadData(){
+  emailData=[];webData=[];allData=[];filteredData=[];
+  $('main').classList.add('hidden');
+  await loadData();
+}
+
+function setStatus(type,state,meta){
+  const dot=$(type==='Email'?'dotEmail':'dotWeb');
+  const m=$(type==='Email'?'metaEmail':'metaWeb');
+  dot.className='s-dot '+(state==='loading'?'loading':state==='ok'?'ok':'err');
+  m.textContent=meta;
+}
+
+// ─── Question Map ─────────────────────────────────────────────────────────────
+function buildQMap(details){
+  const map={};
+  (details.pages||[]).forEach(p=>(p.questions||[]).forEach(q=>{
+    map[q.id]={
+      heading:q.headings?.[0]?.heading||'',
+      family:q.family,
+      rows:Object.fromEntries((q.answers?.rows||[]).map(r=>[r.id,r.text])),
+      choices:Object.fromEntries((q.answers?.choices||[]).map(c=>[c.id,c.text]))
+    };
+  }));
+  return map;
+}
+
+// ─── Normalize Response ───────────────────────────────────────────────────────
+function normalize(r,source){
+  const cv=r.custom_variables||{};
+  const qMap=source==='email'?emailQMap:webQMap;
+
+  // Demographics
+  let firstName='',lastName='',email='',agency='',city='',state='',country='',zip='';
+
+  // Programs selected (checkbox question)
+  const programs=[];
+  // Primary program (website only — from custom variable)
+  const primaryProgram=resolveProgram(cv.Program||cv.program||'');
+
+  (r.pages||[]).forEach(page=>{
+    (page.questions||[]).forEach(rq=>{
+      const qInfo=qMap[rq.id];
+      if(!qInfo)return;
+
+      // Name
+      if(qInfo.family==='demographic'&&qInfo.heading.includes('Name')){
+        (rq.answers||[]).forEach(a=>{
+          const rowText=(a.row_id&&qInfo.rows[a.row_id])||'';
+          if(/first/i.test(rowText))firstName=a.text||'';
+          if(/last/i.test(rowText))lastName=a.text||'';
+        });
+      }
+      // Email
+      if(qInfo.family==='demographic'&&qInfo.heading.toLowerCase().includes('email')){
+        (rq.answers||[]).forEach(a=>{email=a.text||'';});
+      }
+      // Agency/location
+      if(qInfo.family==='demographic'&&qInfo.heading.includes('Agency')){
+        (rq.answers||[]).forEach(a=>{
+          const rowText=(a.row_id&&qInfo.rows[a.row_id])||'';
+          if(/agency/i.test(rowText))agency=a.text||'';
+          if(/city/i.test(rowText))city=a.text||'';
+          if(/state/i.test(rowText))state=normalizeState(a.text||'');
+          if(/country/i.test(rowText))country=a.text||'';
+          if(/zip|postal/i.test(rowText))zip=a.text||'';
+        });
+      }
+      // Programs (multiple choice checkbox)
+      if(qInfo.family==='multiple_choice'){
+        (rq.answers||[]).forEach(a=>{
+          const choiceText=(a.choice_id&&qInfo.choices[a.choice_id])||'';
+          if(choiceText)programs.push(choiceText);
+        });
+      }
+    });
+  });
+
+  const name=[firstName,lastName].filter(Boolean).join(' ');
+  let d=null;
+  const raw=r.date_modified||r.date_created;
+  if(raw){d=new Date(raw);if(isNaN(d))d=null;}
+
+  // Combine: primary program + selected programs, deduped
+  const allPrograms=[...new Set([
+    ...(primaryProgram?[primaryProgram]:[]),
+    ...programs
+  ])];
+
+  return{
+    id:r.id,source,name,email,agency,city,state,country,zip,
+    primaryProgram,programs,allPrograms,
+    date:d,
+    dateStr:d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''
+  };
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+function buildUI(){
+  // Filters
+  const states=uq(allData.map(r=>r.state).filter(Boolean));
+  const countries=uq(allData.map(r=>r.country).filter(Boolean));
+  const fr=$('filterRow');
+  fr.innerHTML=`
+    <div><label class="fl">Source</label><select class="fi" id="fSource"><option value="">All</option><option value="email">Email Campaign</option><option value="web">Website</option></select></div>
+    <div><label class="fl">State/Province</label><select class="fi" id="fState"><option value="">All</option>${states.map(s=>`<option>${esc(s)}</option>`).join('')}</select></div>
+    <div><label class="fl">Country</label><select class="fi" id="fCountry"><option value="">All</option>${countries.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
+    <div><label class="fl">Program Interest</label><select class="fi" id="fProgram"><option value="">All</option>${PROGRAMS.map(p=>`<option value="${esc(p)}">${esc(PROG_SHORT[p]||p)}</option>`).join('')}</select></div>
+    <div><label class="fl">Date From</label><input type="date" class="fi" id="fDateFrom"></div>
+    <div><label class="fl">Date To</label><input type="date" class="fi" id="fDateTo"></div>`;
+  $('main').classList.remove('hidden');
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function applyFilters(){
+  const src=$('fSource')?.value||'';
+  const state=$('fState')?.value||'';
+  const country=$('fCountry')?.value||'';
+  const prog=$('fProgram')?.value||'';
+  const df=$('fDateFrom')?.value;
+  const dt=$('fDateTo')?.value;
+
+  filteredData=allData.filter(r=>{
+    if(src&&r.source!==src)return false;
+    if(state&&r.state!==state)return false;
+    if(country&&r.country!==country)return false;
+    if(prog&&!r.allPrograms.includes(prog))return false;
+    if(df&&r.date&&r.date<new Date(df+'T00:00:00'))return false;
+    if(dt&&r.date&&r.date>new Date(dt+'T23:59:59'))return false;
+    return true;
+  });
+  $('fcount').textContent=`${filteredData.length} of ${allData.length} registrations`;
+  currentPage=1;renderAll();
+}
+
+function resetFilters(){
+  ['fSource','fState','fCountry','fProgram'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  ['fDateFrom','fDateTo'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  filteredData=[...allData];$('fcount').textContent='';currentPage=1;renderAll();
+}
+
+// ─── Render All ───────────────────────────────────────────────────────────────
+function renderAll(){
+  renderStats();
+  if(currentTab==='demand')renderDemand();
+  else if(currentTab==='geo')renderGeo();
+  else renderRespondents();
+}
+
+function switchTab(t){
+  currentTab=t;currentPage=1;
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['demand','geo','respondents'][i]===t));
+  document.querySelectorAll('.tc').forEach((el,i)=>el.classList.toggle('active',['demand','geo','respondents'][i]===t));
+  renderAll();
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const total=filteredData.length;
+  const fromEmail=filteredData.filter(r=>r.source==='email').length;
+  const fromWeb=filteredData.filter(r=>r.source==='web').length;
+  const uniqueProgs=new Set(filteredData.flatMap(r=>r.allPrograms)).size;
+  const states=new Set(filteredData.map(r=>r.state).filter(Boolean)).size;
+  $('statGrid').innerHTML=`
+    <div class="stat-card burgundy"><div class="stat-val">${total}</div><div class="stat-lbl">Total Registrations</div></div>
+    <div class="stat-card gold"><div class="stat-val">${fromEmail}</div><div class="stat-lbl">Email Campaign</div></div>
+    <div class="stat-card blue"><div class="stat-val">${fromWeb}</div><div class="stat-lbl">Website</div></div>
+    <div class="stat-card green"><div class="stat-val">${uniqueProgs}</div><div class="stat-lbl">Programs Requested</div></div>
+    <div class="stat-card" style="border-top-color:var(--charcoal)"><div class="stat-val">${states}</div><div class="stat-lbl">States/Provinces</div></div>`;
+}
+
+// ─── Demand Tab ───────────────────────────────────────────────────────────────
+function renderDemand(){
+  const d=$('demandContent');
+  if(!filteredData.length){d.innerHTML=`<div class="empty"><div class="icon">📭</div><p>No data matches your filters.</p></div>`;return;}
+
+  // Count by program, split by source
+  const counts={};
+  PROGRAMS.forEach(p=>{counts[p]={email:0,web:0,webPrimary:0,total:0}});
+
+  filteredData.forEach(r=>{
+    r.allPrograms.forEach(p=>{
+      if(!counts[p])counts[p]={email:0,web:0,webPrimary:0,total:0};
+      if(r.source==='email')counts[p].email++;
+      else counts[p].web++;
+      if(r.source==='web'&&r.primaryProgram===p)counts[p].webPrimary++;
+      counts[p].total++;
+    });
+  });
+
+  const sorted=Object.entries(counts).filter(([,v])=>v.total>0).sort((a,b)=>b[1].total-a[1].total);
+  const maxCount=sorted[0]?.[1]?.total||1;
+
+  let html=`
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--burgundy)"></div>Email Campaign</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Website (Additional Interest)</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--gold)"></div>Website (Primary/Landing Interest)</div>
+    </div>
+    <div class="sec-title">Program Interest — All Sources Combined</div>
+    <div class="prog-list">`;
+
+  sorted.forEach(([prog,c])=>{
+    const emailW=Math.round((c.email/maxCount)*100);
+    const webW=Math.round((c.web/maxCount)*100);
+    const totalW=Math.round((c.total/maxCount)*100);
+    const pct=Math.round((c.total/filteredData.length)*100);
+    const short=PROG_SHORT[prog]||prog;
+    html+=`<div class="stacked-row">
+      <div class="stacked-name" title="${esc(prog)}">${esc(short)}</div>
+      <div class="stacked-track" style="max-width:600px">
+        <div class="seg-email" style="width:${Math.round(c.email/maxCount*100)}%">${c.email>0?c.email:''}</div>
+        <div class="seg-web" style="width:${Math.round(c.web/maxCount*100)}%">${c.web>0?c.web:''}</div>
+      </div>
+      <div class="stacked-total">${c.total} <span style="color:var(--text-light);font-weight:400">(${pct}%)</span></div>
+    </div>`;
+  });
+
+  html+=`</div>`;
+
+  // Website primary interest breakdown (what people were looking at when they signed up)
+  const webPrimary=filteredData.filter(r=>r.source==='web'&&r.primaryProgram);
+  if(webPrimary.length){
+    const primCounts={};
+    webPrimary.forEach(r=>{
+      const p=r.primaryProgram;
+      primCounts[p]=(primCounts[p]||0)+1;
+    });
+    const primSorted=Object.entries(primCounts).sort((a,b)=>b[1]-a[1]);
+    const primMax=primSorted[0]?.[1]||1;
+
+    html+=`<div class="sec-title" style="margin-top:32px">Website Landing Program (Primary Interest at Time of Registration)</div>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:16px">This shows which program page the registrant was viewing when they signed up — their most immediate interest.</p>
+    <div class="prog-list">`;
+    primSorted.forEach(([p,c])=>{
+      const short=PROG_SHORT[p]||p;
+      const pct=Math.round((c/webPrimary.length)*100);
+      html+=`<div class="stacked-row">
+        <div class="stacked-name" title="${esc(p)}">${esc(short)}</div>
+        <div class="stacked-track" style="max-width:600px">
+          <div class="seg-web-primary" style="width:${Math.round(c/primMax*100)}%">${c}</div>
+        </div>
+        <div class="stacked-total">${c} <span style="color:var(--text-light);font-weight:400">(${pct}%)</span></div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // Source comparison cards
+  html+=`<div class="sec-title" style="margin-top:32px">By Source</div>
+  <div class="source-grid">`;
+
+  ['email','web'].forEach(src=>{
+    const srcData=filteredData.filter(r=>r.source===src);
+    if(!srcData.length)return;
+    const sc={};srcData.forEach(r=>r.allPrograms.forEach(p=>{sc[p]=(sc[p]||0)+1}));
+    const ss=Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const sm2=ss[0]?.[1]||1;
+    html+=`<div class="source-card">
+      <h3><span class="source-tag ${src}">${src==='email'?'Email Campaign':'Website'}</span> Top Programs (${srcData.length} registrations)</h3>`;
+    ss.forEach(([p,c])=>{
+      const short=PROG_SHORT[p]||p;
+      html+=`<div class="stacked-row" style="margin-bottom:6px">
+        <div class="stacked-name" style="flex:0 0 200px;font-size:12px" title="${esc(p)}">${esc(short)}</div>
+        <div class="stacked-track"><div class="${src==='email'?'seg-email':'seg-web'}" style="width:${Math.round(c/sm2*100)}%">${c}</div></div>
+        <div class="stacked-total" style="font-size:12px">${c}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+
+  html+=`</div>
+  <div class="export-bar">
+    <button class="btn btn-e" onclick="exportDemandCSV()">⬇ Export Demand CSV</button>
+  </div>`;
+
+  d.innerHTML=html;
+}
+
+// ─── Geographic Tab ───────────────────────────────────────────────────────────
+function renderGeo(){
+  const d=$('geoContent');
+  if(!filteredData.length){d.innerHTML=`<div class="empty"><div class="icon">🌎</div><p>No data.</p></div>`;return;}
+
+  const stateCounts={},countryCounts={},cityCounts={};
+  filteredData.forEach(r=>{
+    if(r.state)stateCounts[r.state]=(stateCounts[r.state]||0)+1;
+    if(r.country)countryCounts[r.country]=(countryCounts[r.country]||0)+1;
+    if(r.city&&r.state)cityCounts[`${r.city}, ${r.state}`]=(cityCounts[`${r.city}, ${r.state}`]||0)+1;
+  });
+
+  const byState=Object.entries(stateCounts).sort((a,b)=>b[1]-a[1]);
+  const byCountry=Object.entries(countryCounts).sort((a,b)=>b[1]-a[1]);
+  const byCity=Object.entries(cityCounts).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const total=filteredData.length;
+
+  let html=`<div class="sec-title">By Country</div><div class="geo-grid">`;
+  byCountry.forEach(([c,n])=>{html+=`<div class="geo-card"><div class="geo-place">${esc(c)}</div><div class="geo-count">${n}</div><div class="geo-pct">${Math.round(n/total*100)}% of registrations</div></div>`;});
+  html+=`</div><div class="sec-title">By State/Province (Top 20)</div><div class="geo-grid">`;
+  byState.slice(0,20).forEach(([s,n])=>{html+=`<div class="geo-card"><div class="geo-place">${esc(s)}</div><div class="geo-count">${n}</div><div class="geo-pct">${Math.round(n/total*100)}%</div></div>`;});
+  html+=`</div><div class="sec-title">By City (Top 20)</div><div class="geo-grid">`;
+  byCity.forEach(([c,n])=>{html+=`<div class="geo-card"><div class="geo-place">${esc(c)}</div><div class="geo-count">${n}</div><div class="geo-pct">${Math.round(n/total*100)}%</div></div>`;});
+  html+=`</div><div class="export-bar"><button class="btn btn-e" onclick="exportGeoCSV()">⬇ Export Geographic CSV</button></div>`;
+
+  d.innerHTML=html;
+}
+
+// ─── Respondents Tab ──────────────────────────────────────────────────────────
+function renderRespondents(){
+  const d=$('respondentsContent');
+  if(!filteredData.length){d.innerHTML=`<div class="empty"><div class="icon">👥</div><p>No data.</p></div>`;return;}
+
+  let search='';
+  const searchEl=document.getElementById('respSearch');
+  if(searchEl)search=searchEl.value.toLowerCase();
+
+  let data=filteredData;
+  if(search){data=data.filter(r=>[r.name,r.email,r.agency,r.city,r.state].join(' ').toLowerCase().includes(search));}
+
+  const start=(currentPage-1)*PAGE_SIZE;
+  const pageData=data.slice(start,start+PAGE_SIZE);
+  const totalPages=Math.ceil(data.length/PAGE_SIZE);
+
+  let html=`<div class="search-bar">
+    <input type="text" class="search-input" id="respSearch" placeholder="Search name, email, agency…" value="${esc(search)}" oninput="currentPage=1;renderRespondents()">
+    <span style="font-size:12px;color:var(--text-light)">${data.length} registrants</span>
+  </div>
+  <div class="resp-wrap"><table><thead><tr>
+    <th>Name</th><th>Email</th><th>Agency</th><th>Location</th><th>Source</th>
+    <th>Primary Program</th><th>All Interests</th><th>Date</th>
+  </tr></thead><tbody>`;
+
+  pageData.forEach(r=>{
+    const loc=[r.city,r.state,r.country].filter(Boolean).join(', ');
+    const progs=r.allPrograms.map(p=>`<span class="ptag${p===r.primaryProgram?' primary':''}">${esc(PROG_SHORT[p]||p)}</span>`).join('');
+    html+=`<tr>
+      <td class="name">${esc(r.name||'—')}</td>
+      <td style="font-size:11px;color:var(--text-light)">${esc(r.email||'—')}</td>
+      <td style="font-size:12px">${esc(r.agency||'—')}</td>
+      <td style="font-size:11px;color:var(--text-light)">${esc(loc||'—')}</td>
+      <td><span class="source-badge ${r.source}">${r.source==='email'?'Email':'Web'}</span></td>
+      <td style="font-size:11px">${r.primaryProgram?`<span class="ptag primary">${esc(PROG_SHORT[r.primaryProgram]||r.primaryProgram)}</span>`:'—'}</td>
+      <td class="prog-tags">${progs||'—'}</td>
+      <td style="font-size:11px;color:var(--text-light);white-space:nowrap">${r.dateStr||'—'}</td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table></div>`;
+
+  if(totalPages>1){
+    html+='<div class="pagination">';
+    html+=`<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    for(let p=1;p<=totalPages;p++){
+      if(totalPages<=7||p===1||p===totalPages||Math.abs(p-currentPage)<=1)
+        html+=`<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+      else if(Math.abs(p-currentPage)===2)html+=`<span style="padding:0 2px">…</span>`;
+    }
+    html+=`<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    html+='</div>';
+  }
+
+  html+=`<div class="export-bar"><button class="btn btn-e" onclick="exportRespondentsCSV()">⬇ Export Respondents CSV</button></div>`;
+  d.innerHTML=html;
+}
+
+function goPage(p){currentPage=p;renderRespondents();document.querySelector('.content')?.scrollTo(0,0);}
+
+// ─── Exports ──────────────────────────────────────────────────────────────────
+function exportDemandCSV(){
+  const counts={};
+  PROGRAMS.forEach(p=>{counts[p]={email:0,web:0,webPrimary:0,total:0}});
+  filteredData.forEach(r=>{
+    r.allPrograms.forEach(p=>{
+      if(!counts[p])counts[p]={email:0,web:0,webPrimary:0,total:0};
+      if(r.source==='email')counts[p].email++;else counts[p].web++;
+      if(r.source==='web'&&r.primaryProgram===p)counts[p].webPrimary++;
+      counts[p].total++;
+    });
+  });
+  const rows=[['Program','Email Campaign','Website','Website Primary','Total','% of Registrants']];
+  Object.entries(counts).sort((a,b)=>b[1].total-a[1].total).forEach(([p,c])=>{
+    rows.push([p,c.email,c.web,c.webPrimary,c.total,filteredData.length?Math.round(c.total/filteredData.length*100)+'%':'0%']);
+  });
+  dlCSV(rows,'program-demand-'+dateStamp()+'.csv');
+}
+
+function exportGeoCSV(){
+  const rows=[['Name','Email','Agency','City','State','Country','Zip','Source','Date',...PROGRAMS.map(p=>PROG_SHORT[p]||p)]];
+  filteredData.forEach(r=>{
+    rows.push([r.name,r.email,r.agency,r.city,r.state,r.country,r.zip,r.source,r.dateStr,...PROGRAMS.map(p=>r.allPrograms.includes(p)?'Yes':'')]);
+  });
+  dlCSV(rows,'geographic-'+dateStamp()+'.csv');
+}
+
+function exportRespondentsCSV(){
+  const rows=[['Name','Email','Agency','City','State','Country','Zip','Source','Primary Program','All Programs','Date']];
+  filteredData.forEach(r=>{
+    rows.push([r.name,r.email,r.agency,r.city,r.state,r.country,r.zip,r.source,r.primaryProgram,r.allPrograms.join('; '),r.dateStr]);
+  });
+  dlCSV(rows,'registrants-'+dateStamp()+'.csv');
+}
+
+function dlCSV(rows,fname){
+  const csv=rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=fname;a.click();
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function uq(a){return[...new Set(a)].sort()}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function $(id){return document.getElementById(id)}
+function dateStamp(){return new Date().toISOString().slice(0,10)}
+</script>
+</body>
+</html>
