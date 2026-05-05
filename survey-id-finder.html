@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Survey ID Finder | CLEAR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+:root{--burgundy:#64092c;--gold:#dda838;--border:#e0dcd6;--bg:#f7f5f2;--text:#333;--muted:#6b6b6b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px}
+.card{background:white;border-radius:12px;box-shadow:0 2px 12px rgba(100,9,44,.1);padding:32px;width:100%;max-width:640px}
+h1{font-size:18px;font-weight:700;color:var(--burgundy);margin-bottom:4px}
+p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:14px}
+input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(221,168,56,.15)}
+button{background:var(--burgundy);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;width:100%}
+button:hover{background:#8a1e4a}
+#results{margin-top:24px}
+.survey-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;gap:12px}
+.survey-row:hover{background:#fdf6e3;border-color:var(--gold)}
+.s-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.s-id{font-family:monospace;font-size:13px;background:#f0ede8;padding:4px 10px;border-radius:6px;color:var(--burgundy);font-weight:700;white-space:nowrap}
+.copy-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;width:auto}
+.copy-btn:hover{border-color:var(--burgundy);color:var(--burgundy)}
+.error{color:#c62828;font-size:13px;padding:12px;background:#fce1ec;border-radius:8px}
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--burgundy);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Survey ID Finder</h1>
+  <p>Enter your proxy URL and auth token to list all your SurveyMonkey surveys with their numeric IDs. Copy the IDs you need into the Evaluation Dashboard settings.</p>
+
+  <label>Worker Proxy URL</label>
+  <input type="text" id="proxy" placeholder="https://clear-lms-proxy.avance.workers.dev">
+
+  <label>Auth Token</label>
+  <input type="password" id="token" placeholder="your-auth-token">
+
+  <button onclick="load()">List My Surveys</button>
+
+  <div id="results"></div>
+</div>
+<script>
+async function load(){
+  const proxy = document.getElementById('proxy').value.trim().replace(/\/$/,'');
+  const token = document.getElementById('token').value.trim();
+  if(!proxy||!token){alert('Please fill in both fields.');return;}
+
+  const r = document.getElementById('results');
+  r.innerHTML = '<p style="margin-top:16px"><span class="spinner"></span>Loading…</p>';
+
+  try {
+    const res = await fetch(`${proxy}/surveymonkey/surveys?per_page=100&sort_by=date_modified&sort_order=DESC`, {
+      headers:{'X-Auth-Token':token}
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const surveys = data.data || [];
+
+    if(!surveys.length){r.innerHTML='<p style="margin-top:16px;color:var(--muted)">No surveys found.</p>';return;}
+
+    r.innerHTML = `<p style="margin-top:16px;margin-bottom:12px;font-size:12px;color:var(--muted)">${surveys.length} surveys found — click Copy to grab the ID</p>` +
+      surveys.map(s=>`
+        <div class="survey-row">
+          <span class="s-name">${esc(s.title)}</span>
+          <span class="s-id">${s.id}</span>
+          <button class="copy-btn" onclick="copyId('${s.id}', this)">Copy</button>
+        </div>`).join('');
+  } catch(e) {
+    r.innerHTML = `<div class="error">Failed to load: ${e.message}</div>`;
+  }
+}
+
+function copyId(id, btn){
+  navigator.clipboard.writeText(id).then(()=>{
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy', 2000);
+  });
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>
