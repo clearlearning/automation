@@ -1598,21 +1598,39 @@ function updateFailedStudents(){
     return;
   }
 
+  const config=EXAM_CONFIG[STATE.examType];
+  const isSpecialized=config&&config.hasTopics;
   const hasExclusions=STATE.excludedQuestions.size>0;
 
-  // Students who attempted the exam (have a date) and scored below 70%
   STATE.failedStudents=STATE.reportData.filter(r=>{
-    if(!r.dateOfExam||r.dateOfExam.trim()==='') return false; // didn't attempt
-    const score=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
-    return score>0 && score<70; // scored between 1% and <70%
+    if(!r.dateOfExam||r.dateOfExam.trim()==='') return false;
+    if(isSpecialized){
+      // For specialized: failed if ANY section is below 70%
+      const aisScore=r.aisAdjusted?r.aisAdjScoreNum:r.aisScoreNum;
+      const aiaScore=r.aiaAdjusted?r.aiaAdjScoreNum:r.aiaScoreNum;
+      const irdScore=r.irdAdjusted?r.irdAdjScoreNum:r.irdScoreNum;
+      return (aisScore!==null&&aisScore<70)||(aiaScore!==null&&aiaScore<70)||(irdScore!==null&&irdScore<70);
+    }else{
+      const score=hasExclusions?r.adjustedScoreNum:r.totalScoreNum;
+      return score>0&&score<70;
+    }
   });
 
-  // Add the effective score to each failed student for display
   STATE.failedStudents.forEach(s=>{
     s._effectiveScore=hasExclusions?s.adjustedScoreNum:s.totalScoreNum;
+    if(isSpecialized){
+      const failedSections=[];
+      const aisScore=s.aisAdjusted?s.aisAdjScoreNum:s.aisScoreNum;
+      const aiaScore=s.aiaAdjusted?s.aiaAdjScoreNum:s.aiaScoreNum;
+      const irdScore=s.irdAdjusted?s.irdAdjScoreNum:s.irdScoreNum;
+      if(aisScore!==null&&aisScore<70) failedSections.push({key:'AIS',label:'Advanced Interviewing Skills',score:aisScore});
+      if(aiaScore!==null&&aiaScore<70) failedSections.push({key:'AIA',label:'Analytical/Investigative Analysis',score:aiaScore});
+      if(irdScore!==null&&irdScore<70) failedSections.push({key:'IRD',label:'Investigative Report Development',score:irdScore});
+      s._failedSections=failedSections;
+      s._specializedRetakeFee=failedSections.length===1?'$50.00':failedSections.length===2?'$75.00':'$100.00';
+    }
   });
 
-  // Initialize all as selected
   STATE.failedSelected.clear();
   STATE.failedStudents.forEach((_,i)=>STATE.failedSelected.add(i));
 
@@ -1623,7 +1641,7 @@ function updateFailedStudents(){
     summaryEl.innerHTML='';
     document.getElementById('generateFailedBtn').disabled=true;
   }else{
-    summaryEl.innerHTML='<strong>'+STATE.failedStudents.length+'</strong> student(s) attempted the exam and did not achieve a passing score.';
+    summaryEl.innerHTML='<strong>'+STATE.failedStudents.length+'</strong> student(s) attempted the exam and did not achieve a passing score in all sections.';
     document.getElementById('generateFailedBtn').disabled=false;
   }
 }
@@ -1648,12 +1666,17 @@ function renderFailedPreview(){
   const idx=Math.min(STATE.currentFailedPreview,students.length-1);
   STATE.currentFailedPreview=idx;
   const s=students[idx];
-  document.getElementById('failedPreviewCount').innerHTML=(idx+1)+' of '+students.length+' &mdash; '+esc(s.firstName)+' '+esc(s.lastName)+' ('+parseFloat(s._effectiveScore).toFixed(1)+'%)';
+  const config=EXAM_CONFIG[STATE.examType];
+  const isSpecialized=config&&config.hasTopics;
+  let navInfo=(idx+1)+' of '+students.length+' &mdash; '+esc(s.firstName)+' '+esc(s.lastName);
+  if(isSpecialized&&s._failedSections&&s._failedSections.length>0){
+    navInfo+=' &mdash; Failed: '+s._failedSections.map(f=>f.key+' ('+f.score.toFixed(1)+'%)').join(', ');
+  }else{
+    navInfo+=' ('+parseFloat(s._effectiveScore).toFixed(1)+'%)';
+  }
+  document.getElementById('failedPreviewCount').innerHTML=navInfo;
   document.getElementById('failedPreviewFrame').innerHTML=buildFailedEmailHtml(s,false);
 }
-
-document.getElementById('failedPrevBtn').addEventListener('click',()=>{if(STATE.currentFailedPreview>0){STATE.currentFailedPreview--;renderFailedPreview();}});
-document.getElementById('failedNextBtn').addEventListener('click',()=>{const students=getSelectedFailedStudents();if(STATE.currentFailedPreview<students.length-1){STATE.currentFailedPreview++;renderFailedPreview();}});
 
 document.getElementById('failedCopyBtn').addEventListener('click',()=>{
   const frame=document.getElementById('failedPreviewFrame');
@@ -1736,33 +1759,59 @@ function buildReminderEmailHtml(student,wrapDoc){
 // ============================================================
 function buildFailedEmailHtml(student,wrapDoc){
   const F="font-family:'Open Sans',Arial,Helvetica,sans-serif;";
+  const config=EXAM_CONFIG[STATE.examType];
+  const isSpecialized=config&&config.hasTopics;
   const programName=document.getElementById('failedProgramName').value||'NCIT Program';
-  const feeAmount=document.getElementById('failedRetakeFee').value||'$100.00';
   const contactEmail=document.getElementById('failedContactEmail').value||'clearlearning@clearhq.org';
   const duration=document.getElementById('failedRetakeDuration').value||'7 days';
-  const bodyTemplate=document.getElementById('failedBody').value;
-
-  let bodyText=bodyTemplate
-    .replace(/\{programName\}/g,programName)
-    .replace(/\{feeAmount\}/g,feeAmount)
-    .replace(/\{contactEmail\}/g,contactEmail)
-    .replace(/\{duration\}/g,duration);
-
-  const bodyLines=bodyText.split('\n').filter(l=>l.trim());
 
   let bodyHtml='';
-  bodyLines.forEach(line=>{
-    let lineHtml=esc(line);
-    // Bold key values
-    lineHtml=lineHtml.split(esc(programName)).join('<strong>'+esc(programName)+'</strong>');
-    lineHtml=lineHtml.split(esc(feeAmount)).join('<strong style="color:#64092c;">'+esc(feeAmount)+'</strong>');
-    lineHtml=lineHtml.split(esc(duration)).join('<strong>'+esc(duration)+'</strong>');
-    // Convert contact email references to mailto links
+
+  if(isSpecialized&&student._failedSections&&student._failedSections.length>0){
+    const failedSections=student._failedSections;
+    const retakeFee=student._specializedRetakeFee||'$50.00';
+    const sectionCount=failedSections.length;
+    const sectionListText=failedSections.map(s=>s.label+' ('+s.score.toFixed(1)+'%)').join(', ');
+    const sectionNames=failedSections.map(s=>s.label);
+    let sectionPhrase='';
+    if(sectionNames.length===1) sectionPhrase=sectionNames[0];
+    else if(sectionNames.length===2) sectionPhrase=sectionNames[0]+' and '+sectionNames[1];
+    else sectionPhrase=sectionNames.slice(0,-1).join(', ')+', and '+sectionNames[sectionNames.length-1];
     const safeEmail=esc(contactEmail);
-    const mailtoLink='<a href="mailto:'+encodeURI(contactEmail)+'?subject='+encodeURIComponent('NCIT Exam Retake Request')+'" style="color:#084d78;">'+safeEmail+'</a>';
-    lineHtml=lineHtml.split(safeEmail).join(mailtoLink);
-    bodyHtml+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+lineHtml+'</td></tr></table>';
-  });
+    const mailtoLink='<a href="mailto:'+encodeURI(contactEmail)+'?subject='+encodeURIComponent('NCIT Specialized Exam Retake Request')+'" style="color:#084d78;">'+safeEmail+'</a>';
+
+    const paras=[
+      'Thank you for your effort in completing the <strong>'+esc(programName)+'</strong>. After a thorough review of all exam results, we regret to inform you that your score did not meet the 70% passing threshold required for certification in the following section'+(sectionCount>1?'s':'')+':',
+      '<strong style="color:#64092c;">'+esc(sectionListText)+'</strong>',
+      'We understand this may be disappointing, and we want to ensure you are aware of the options available to you.',
+      'If you would like to retake the exam, a retake fee of <strong style="color:#64092c;">'+esc(retakeFee)+'</strong> applies for the '+sectionCount+' section'+(sectionCount>1?'s':'')+' you need to retake (<strong>'+esc(sectionPhrase)+'</strong>). To begin the retake process, please contact us at '+mailtoLink+' to submit your request. Our team will issue an invoice for the retake fee, and once payment has been received, you will be granted an additional <strong>'+esc(duration)+'</strong> of access to the exam.',
+      'After completing your retake, please notify us at '+mailtoLink+' so we can process your results. Please allow 3–5 business days from the time we receive your notification for results to be reviewed and finalized.',
+      'If you have any questions about the retake process or would like to discuss your options, please do not hesitate to reach out. We are here to support you.'
+    ];
+    paras.forEach(p=>{
+      bodyHtml+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+p+'</td></tr></table>';
+    });
+  }else{
+    // Basic exam path — original logic unchanged
+    const feeAmount=document.getElementById('failedRetakeFee').value||'$100.00';
+    const bodyTemplate=document.getElementById('failedBody').value;
+    let bodyText=bodyTemplate
+      .replace(/\{programName\}/g,programName)
+      .replace(/\{feeAmount\}/g,feeAmount)
+      .replace(/\{contactEmail\}/g,contactEmail)
+      .replace(/\{duration\}/g,duration);
+    const bodyLines=bodyText.split('\n').filter(l=>l.trim());
+    bodyLines.forEach(line=>{
+      let lineHtml=esc(line);
+      lineHtml=lineHtml.split(esc(programName)).join('<strong>'+esc(programName)+'</strong>');
+      lineHtml=lineHtml.split(esc(feeAmount)).join('<strong style="color:#64092c;">'+esc(feeAmount)+'</strong>');
+      lineHtml=lineHtml.split(esc(duration)).join('<strong>'+esc(duration)+'</strong>');
+      const safeEmail=esc(contactEmail);
+      const mailtoLink='<a href="mailto:'+encodeURI(contactEmail)+'?subject='+encodeURIComponent('NCIT Exam Retake Request')+'" style="color:#084d78;">'+safeEmail+'</a>';
+      lineHtml=lineHtml.split(safeEmail).join(mailtoLink);
+      bodyHtml+='<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td style="'+F+'font-size:14px;color:#484848;line-height:23px;mso-line-height-rule:exactly;padding-bottom:16px;">'+lineHtml+'</td></tr></table>';
+    });
+  }
 
   return buildEmailShell(student,'Exam Results Notification',bodyHtml,wrapDoc);
 }
@@ -1784,9 +1833,9 @@ document.getElementById('exportReminderPABtn').addEventListener('click',async()=
     students.forEach(s=>{
       const fullHtml=buildReminderEmailHtml(s,true);
       const safeEmail=(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_');
-      folder.file('ExamReminder_'+safeEmail+'.html',fullHtml);
+      folder.file('ExamFail_'+safeEmail+'.html',fullHtml);
     });
-    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,file:'ExamReminder_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
+    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,file:'ExamFail_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
     folder.file('_manifest.json',JSON.stringify(manifest,null,2));
     const blob=await zip.generateAsync({type:'blob'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ExamReminderEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
@@ -1803,25 +1852,22 @@ document.getElementById('exportReminderPABtn').addEventListener('click',async()=
 document.getElementById('exportFailedPABtn').addEventListener('click',async()=>{
   const students=getSelectedFailedStudents();
   if(students.length===0){alert('No failed exam emails to export.');return;}
-
   const btn=document.getElementById('exportFailedPABtn');
   btn.disabled=true;btn.innerHTML='&#10060; Generating ZIP...';
-
   try{
-    const zip=new JSZip();const folder=zip.folder('ExamReminderEmails');
+    const zip=new JSZip();const folder=zip.folder('ExamFailEmails');
     students.forEach(s=>{
       const fullHtml=buildFailedEmailHtml(s,true);
       const safeEmail=(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_');
-      folder.file('ExamReminder_'+safeEmail+'.html',fullHtml);
+      folder.file('ExamFail_'+safeEmail+'.html',fullHtml);
     });
-    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,score:parseFloat(s._effectiveScore).toFixed(1),file:'ExamReminder_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
+    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,score:parseFloat(s._effectiveScore).toFixed(1),file:'ExamFail_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
     folder.file('_manifest.json',JSON.stringify(manifest,null,2));
     const blob=await zip.generateAsync({type:'blob'});
-    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ExamReminderEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ExamFailEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
     setFailedStatus('Exported '+students.length+' exam result notification(s) to ZIP file.','success');
   }catch(err){alert('Error generating ZIP: '+err.message);console.error(err);}
-
   btn.disabled=false;btn.innerHTML='&#10060; Export Emails for Power Automate';
 });
 </script>
