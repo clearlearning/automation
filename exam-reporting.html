@@ -490,7 +490,7 @@ const EXAM_CONFIG = {
   specialized: { label:'NCIT Specialized Final Exam', formCode:'NCITS', totalQuestions:60, removeQuestions:[], hasTopics:true, topics:{ AIS:[1,20], AIA:[21,40], IRD:[41,60] } }
 };
 
-const COURSE_PATTERNS = { 'canadian':'canadian', 'ncitbcan':'canadian', 'ncit basic can':'canadian', 'us':'us', 'ncitbus':'us', 'ncit basic us':'us', 'basic online':'us', 'specialized':'specialized', 'ncits':'specialized', 'ncit specialized':'specialized' };
+const COURSE_PATTERNS = { 'canadian':'canadian', 'ncitbcan':'canadian', 'ncit basic can':'canadian', 'canadian ncit - basic in-person':'canadian', 'canadian ncit basic in-person':'canadian', 'us':'us', 'ncitbus':'us', 'ncit basic us':'us', 'basic online':'us', 'ncit - basic in-person':'us', 'ncit basic in-person':'us', 'specialized':'specialized', 'ncits':'specialized', 'ncit specialized':'specialized', 'ncit - specialized in-person':'specialized', 'ncit specialized in-person':'specialized' };
 
 // ============================================================
 // API Connection
@@ -1398,26 +1398,41 @@ document.getElementById('noviPullBtn').addEventListener('click',async()=>{
   if(!STATE.reportData||STATE.reportData.length===0){setNoviPullStatus('Pull exam data first before importing payment data.','error');return;}
   const btn=document.getElementById('noviPullBtn');
   btn.disabled=true;btn.textContent='Pulling...';
-  setNoviPullStatus('Fetching attendees from Novi...','info');
+  setNoviPullStatus('Fetching registrations from Novi...','info');
   try{
-    let allAttendees=[];let offset=0;const pageSize=200;
+    let allRegistrations=[];let offset=0;const pageSize=200;
     while(true){
-      const res=await noviCall('/api/attendees?eventId='+eventId+'&pageSize='+pageSize+'&offset='+offset);
+      const res=await noviCall('/api/registrations?eventId='+eventId+'&pageSize='+pageSize+'&offset='+offset);
       const page=Array.isArray(res)?res:(res.Results||[]);
-      allAttendees=allAttendees.concat(page);
+      allRegistrations=allRegistrations.concat(page);
       if(page.length<pageSize)break;
       offset+=pageSize;
     }
-    // build email map — exclude @clearhq.org
+// Build email → payment status map from nested attendees
     const paymentMap=new Map();
-    allAttendees.forEach(a=>{
-      const email=String(a.Email||'').toLowerCase().trim();
-      if(!email||email.endsWith('@clearhq.org'))return;
-      if(a.Cancelled){paymentMap.set(email,'Cancelled');}
-      else if(a.PricePaid>0){paymentMap.set(email,'Yes');}
-      else{paymentMap.set(email,'No');}
+    allRegistrations.forEach(reg=>{
+      const ps=String(reg.PaymentStatus||'').trim();
+      const hasSalesReceipt=!!reg.QBSalesReceiptID;
+      const balanceMatch=ps.match(/\$([0-9,]+\.?\d*)/);
+      const balance=balanceMatch?parseFloat(balanceMatch[1].replace(/,/g,'')):null;
+      let paid;
+      if(hasSalesReceipt){
+        paid=balance===0||balance===null?'Yes':'No';
+      }else{
+        if(ps==='Unpaid'){paid='No';}
+        else if(balance===0){paid='Yes';}
+        else if(balance>0){paid='No';}
+        else{paid='Yes';}
+      }
+      (reg.Attendees||[]).forEach(a=>{
+        const email=String(a.Email||'').toLowerCase().trim();
+        if(!email||email.endsWith('@clearhq.org'))return;
+        if(!paymentMap.has(email)||paid==='No'){
+          paymentMap.set(email,paid);
+        }
+      });
     });
-    // match against report
+        // Match against report
     let matched=0,unmatched=0;
     const unmatchedNames=[];
     STATE.reportData.forEach((r,i)=>{
@@ -1425,7 +1440,6 @@ document.getElementById('noviPullBtn').addEventListener('click',async()=>{
       if(paymentMap.has(email)){
         r.paid=paymentMap.get(email);
         matched++;
-        // update cell live
         const cell=document.querySelector('#reportTable tbody tr:nth-child('+(i+1)+') td[data-field="paid"]');
         if(cell)cell.textContent=r.paid;
       }else{
@@ -1433,7 +1447,7 @@ document.getElementById('noviPullBtn').addEventListener('click',async()=>{
         unmatchedNames.push(r.firstName+' '+r.lastName);
       }
     });
-    let msg='<strong>'+matched+'</strong> student(s) matched and updated.';
+let msg='<strong>'+matched+'</strong> student(s) matched and updated.';
     if(unmatched>0)msg+=' <strong>'+unmatched+'</strong> student(s) had no matching Novi record: '+unmatchedNames.join(', ')+'.';
     setNoviPullStatus(msg,matched>0?'success':'error');
   }catch(err){
