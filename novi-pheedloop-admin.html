@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novi → PheedLoop Event Sync Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burgundy: #64092C;
+    --burgundy-dark: #4a0620;
+    --burgundy-light: #8a1040;
+    --gold: #DDA838;
+    --gold-light: #f0c65a;
+    --charcoal: #484848;
+    --bg: #f5f2ee;
+    --card: #ffffff;
+    --border: #e2dbd4;
+    --text-muted: #8a7e76;
+    --success: #2d6a4f;
+    --success-bg: #d8f3dc;
+    --error: #c0392b;
+    --error-bg: #fde8e6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--burgundy);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    box-shadow: 0 2px 8px rgba(100,9,44,0.3);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-logo {
+    width: 36px;
+    height: 36px;
+    background: var(--gold);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--burgundy);
+    font-weight: 600;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+  }
+  .header-subtitle {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.75rem;
+    margin-top: 1px;
+  }
+  .header-status {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background 0.3s;
+  }
+  .status-dot.connected { background: #52c97a; }
+
+  /* Auth screen */
+  .auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 64px);
+    padding: 40px 20px;
+  }
+  .auth-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    text-align: center;
+  }
+  .auth-card h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--burgundy);
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+  .auth-card p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+  }
+  .lock-icon {
+    width: 48px;
+    height: 48px;
+    background: #fdf0f4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 1.4rem;
+  }
+
+  /* Main layout */
+  .main { display: none; padding: 36px 40px; max-width: 1100px; margin: 0 auto; }
+  .main.visible { display: block; }
+
+  .page-header {
+    margin-bottom: 28px;
+  }
+  .page-header h1 {
+    font-family: 'Playfair Display', serif;
+    color: var(--burgundy);
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+  .page-header p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--burgundy);
+    font-size: 1.05rem;
+  }
+  .card-count {
+    background: var(--gold);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Form */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 14px;
+    align-items: end;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--burgundy);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  input[type="text"], input[type="password"] {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    background: #faf8f6;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--burgundy);
+    background: #fff;
+  }
+  .input-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--burgundy);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--burgundy-light); }
+  .btn-primary:disabled { background: #bbb; cursor: not-allowed; }
+  .btn-danger {
+    background: transparent;
+    color: var(--error);
+    border: 1px solid #f5c6c2;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+  .btn-danger:hover { background: var(--error-bg); }
+  .btn-sm {
+    padding: 7px 16px;
+    font-size: 0.8rem;
+  }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--burgundy);
+    color: #fff;
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #faf8f6; }
+  .mono {
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: var(--burgundy);
+    background: #fdf0f4;
+    padding: 3px 7px;
+    border-radius: 4px;
+  }
+  .event-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    color: #084D78;
+    background: #e8f2f8;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .empty-icon { font-size: 2rem; margin-bottom: 10px; }
+  .empty-state p { font-size: 0.875rem; }
+
+  /* Alerts */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .alert.visible { display: block; }
+  .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #b7dfc3; }
+  .alert-error { background: var(--error-bg); color: var(--error); border: 1px solid #f5c6c2; }
+
+  /* Credentials bar */
+  .creds-bar {
+    background: #fff8ee;
+    border: 1px solid #f0d9a0;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.82rem;
+    color: #7a5c00;
+  }
+  .creds-bar strong { font-weight: 600; }
+  .creds-bar a {
+    color: var(--burgundy);
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: auto;
+    font-size: 0.8rem;
+  }
+  .creds-bar a:hover { text-decoration: underline; }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .novi-id-col { max-width: 240px; }
+
+  @media (max-width: 700px) {
+    .main { padding: 20px 16px; }
+    .header { padding: 0 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">C</div>
+    <div>
+      <div class="header-title">Novi → PheedLoop Sync</div>
+      <div class="header-subtitle">Event Mapping Admin</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Not connected</span>
+  </div>
+</div>
+
+<!-- Auth Screen -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="lock-icon">🔐</div>
+    <h2>Admin Access</h2>
+    <p>Enter your Worker URL and admin secret to manage event mappings.</p>
+    <div class="form-group" style="margin-bottom:14px;text-align:left">
+      <label>Worker URL</label>
+      <input type="text" id="workerUrl" value="https://novi-pheedloop-worker.avance.workers.dev" placeholder="https://your-worker.workers.dev" />
+    </div>
+    <div class="form-group" style="margin-bottom:20px;text-align:left">
+      <label>Admin Secret</label>
+      <input type="password" id="adminSecret" placeholder="Your admin secret" onkeydown="if(event.key==='Enter')connect()" />
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="connect()" id="connectBtn">Connect</button>
+    <div class="alert alert-error" id="authError" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- Main UI -->
+<div class="main" id="mainUI">
+
+  <div class="page-header">
+    <h1>Event Sync Mappings</h1>
+    <p>Control which Novi events sync registrations to PheedLoop. Each mapping links a Novi event to its PheedLoop counterpart.</p>
+  </div>
+
+  <div class="creds-bar">
+    <span>⚡ Connected to <strong id="connectedUrl"></strong></span>
+    <a href="#" onclick="disconnect()">Disconnect</a>
+  </div>
+
+  <div id="addAlert" class="alert"></div>
+
+  <!-- Add Mapping -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Add Event Mapping</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Novi Event ID</label>
+        <input type="text" id="newNoviId" placeholder="e.g. d4b6ec10-8726-498c-8ba6-5f900ecad1b0" />
+        <div class="input-hint">GUID from Novi admin or API registration response</div>
+      </div>
+      <div class="form-group">
+        <label>PheedLoop Event Code</label>
+        <input type="text" id="newPlCode" placeholder="e.g. CLEAR2026AEC" />
+        <div class="input-hint">Found in PheedLoop event settings or URL</div>
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" onclick="addMapping()" id="addBtn">Add Mapping</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Mappings -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Active Event Mappings</div>
+      <span class="card-count" id="mappingCount">0 events</span>
+    </div>
+    <div class="table-wrap" id="mappingsTable">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>No event mappings yet. Add one above to get started.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let WORKER_URL = '';
+  let ADMIN_SECRET = '';
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+
+  async function connect() {
+    const url = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+    const secret = document.getElementById('adminSecret').value.trim();
+    const btn = document.getElementById('connectBtn');
+    const errEl = document.getElementById('authError');
+
+    if (!url || !secret) {
+      showAuthError('Please enter both the Worker URL and admin secret.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Connecting...';
+    errEl.className = 'alert';
+
+    try {
+      const res = await fetch(`${url}/admin/events`, {
+        headers: { 'X-Admin-Secret': secret }
+      });
+
+      if (res.status === 401) {
+        showAuthError('Invalid admin secret. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Connect';
+        return;
+      }
+
+      if (!res.ok) {
+        showAuthError(`Worker returned ${res.status}. Check the URL and try again.`);
+        btn.disabled = false;
+        btn.textContent = 'Connect';
+        return;
+      }
+
+      WORKER_URL = url;
+      ADMIN_SECRET = secret;
+
+      // Save to localStorage for convenience
+      localStorage.setItem('npl_worker_url', url);
+      localStorage.setItem('npl_admin_secret', secret);
+
+      const data = await res.json();
+      showMain(data);
+
+    } catch (e) {
+      showAuthError(`Could not reach Worker: ${e.message}`);
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+    }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.className = 'alert alert-error visible';
+  }
+
+  function showMain(mappings) {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('mainUI').classList.add('visible');
+    document.getElementById('connectedUrl').textContent = WORKER_URL;
+    document.getElementById('statusDot').classList.add('connected');
+    document.getElementById('statusText').textContent = 'Connected';
+    renderMappings(mappings);
+  }
+
+  function disconnect() {
+    WORKER_URL = '';
+    ADMIN_SECRET = '';
+    localStorage.removeItem('npl_worker_url');
+    localStorage.removeItem('npl_admin_secret');
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('mainUI').classList.remove('visible');
+    document.getElementById('adminSecret').value = '';
+    document.getElementById('connectBtn').disabled = false;
+    document.getElementById('connectBtn').textContent = 'Connect';
+    document.getElementById('statusDot').classList.remove('connected');
+    document.getElementById('statusText').textContent = 'Not connected';
+  }
+
+  // ── Mappings ──────────────────────────────────────────────────────────────
+
+  async function loadMappings() {
+    const res = await fetch(`${WORKER_URL}/admin/events`, {
+      headers: { 'X-Admin-Secret': ADMIN_SECRET }
+    });
+    return res.json();
+  }
+
+  function renderMappings(mappings) {
+    const count = document.getElementById('mappingCount');
+    const table = document.getElementById('mappingsTable');
+
+    count.textContent = `${mappings.length} event${mappings.length !== 1 ? 's' : ''}`;
+
+    if (!mappings.length) {
+      table.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No event mappings yet. Add one above to get started.</p>
+        </div>`;
+      return;
+    }
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Novi Event ID</th>
+            <th>PheedLoop Event Code</th>
+            <th style="width:100px">Action</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    mappings.forEach(m => {
+      html += `
+        <tr>
+          <td class="novi-id-col"><span class="mono">${m.noviEventId}</span></td>
+          <td><span class="event-code">${m.pheedloopEventCode}</span></td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="removeMapping('${m.noviEventId}', '${m.pheedloopEventCode}')">
+              Remove
+            </button>
+          </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    table.innerHTML = html;
+  }
+
+  async function addMapping() {
+    const noviId = document.getElementById('newNoviId').value.trim();
+    const plCode = document.getElementById('newPlCode').value.trim().toUpperCase();
+    const btn = document.getElementById('addBtn');
+    const alertEl = document.getElementById('addAlert');
+
+    alertEl.className = 'alert';
+
+    if (!noviId || !plCode) {
+      showAddAlert('Both fields are required.', 'error');
+      return;
+    }
+
+    // Basic GUID validation
+    const guidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!guidPattern.test(noviId)) {
+      showAddAlert('Novi Event ID should be a GUID (e.g. d4b6ec10-8726-498c-8ba6-5f900ecad1b0).', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Adding...';
+
+    try {
+      const res = await fetch(`${WORKER_URL}/admin/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Secret': ADMIN_SECRET
+        },
+        body: JSON.stringify({ noviEventId: noviId, pheedloopEventCode: plCode })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAddAlert(data.error || 'Failed to add mapping.', 'error');
+      } else {
+        document.getElementById('newNoviId').value = '';
+        document.getElementById('newPlCode').value = '';
+        showAddAlert(`✓ Mapping added — Novi event will now sync to PheedLoop event <strong>${plCode}</strong>.`, 'success');
+        const mappings = await loadMappings();
+        renderMappings(mappings);
+      }
+    } catch (e) {
+      showAddAlert(`Error: ${e.message}`, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Add Mapping';
+  }
+
+  async function removeMapping(noviId, plCode) {
+    if (!confirm(`Remove mapping for PheedLoop event ${plCode}?\n\nNew registrations for this Novi event will no longer sync to PheedLoop.`)) return;
+
+    try {
+      const res = await fetch(`${WORKER_URL}/admin/events/${noviId}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Secret': ADMIN_SECRET }
+      });
+
+      if (res.ok) {
+        showAddAlert(`Mapping for <strong>${plCode}</strong> removed.`, 'success');
+        const mappings = await loadMappings();
+        renderMappings(mappings);
+      } else {
+        showAddAlert('Failed to remove mapping.', 'error');
+      }
+    } catch (e) {
+      showAddAlert(`Error: ${e.message}`, 'error');
+    }
+  }
+
+  function showAddAlert(msg, type) {
+    const el = document.getElementById('addAlert');
+    el.innerHTML = msg;
+    el.className = `alert alert-${type} visible`;
+    setTimeout(() => { el.className = 'alert'; }, 6000);
+  }
+
+  // ── Auto-connect from localStorage ───────────────────────────────────────
+  window.addEventListener('load', () => {
+    const savedUrl = localStorage.getItem('npl_worker_url');
+    const savedSecret = localStorage.getItem('npl_admin_secret');
+    if (savedUrl) document.getElementById('workerUrl').value = savedUrl;
+    if (savedSecret) document.getElementById('adminSecret').value = savedSecret;
+  });
+</script>
+</body>
+</html>
