@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SCORM Suspend Data Reader — CLEAR Learning</title>
+ <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -535,23 +536,6 @@ function parse() {
         <div class="metric-value ${pctNum >= 100 ? 'good' : 'warn'}">${Math.max(0, 100 - pctNum)}%</div>
       </div>
     </div>`;
-
-  // Category breakdown
-  html += '<div class="section-title">Category breakdown</div><div class="category-grid">';
-  for (const [key, label] of Object.entries(CAT_LABELS)) {
-    if (!(key in resume)) continue;
-    const done = Array.isArray(resume[key]) ? resume[key].length : 0;
-    const total = TOTALS[key] || 0;
-    const p = pct(done, total);
-    html += `<div class="cat-card">
-      <div class="cat-header">
-        <div class="cat-name">${label}</div>
-        <div class="cat-count">${done}/${total}</div>
-      </div>
-      <div class="bar-track"><div class="bar-fill ${barClass(p)}" style="width:${Math.min(p,100)}%"></div></div>
-    </div>`;
-  }
-  html += '</div>';
 
   // Incomplete grouped list
   html += '<div class="section-title">What still needs to be done</div><div class="incomplete-section">';
