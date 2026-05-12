@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novi → PheedLoop Backfill</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burgundy: #64092C;
+    --burgundy-light: #8a1040;
+    --gold: #DDA838;
+    --charcoal: #484848;
+    --bg: #f5f2ee;
+    --card: #ffffff;
+    --border: #e2dbd4;
+    --text-muted: #8a7e76;
+    --success: #2d6a4f;
+    --success-bg: #d8f3dc;
+    --error: #c0392b;
+    --error-bg: #fde8e6;
+    --warning-bg: #fff8ee;
+    --warning-border: #f0d9a0;
+    --blue: #084D78;
+    --blue-bg: #e8f2f8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans 3', sans-serif; background: var(--bg); color: var(--charcoal); min-height: 100vh; }
+
+  .header {
+    background: var(--burgundy);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 64px;
+    box-shadow: 0 2px 8px rgba(100,9,44,0.3);
+  }
+  .header-logo { width: 36px; height: 36px; background: var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--burgundy); font-weight: 600; }
+  .header-title { font-family: 'Playfair Display', serif; color: #fff; font-size: 1.1rem; }
+  .header-subtitle { color: rgba(255,255,255,0.55); font-size: 0.75rem; margin-top: 1px; }
+
+  .main { max-width: 1000px; margin: 0 auto; padding: 36px 40px; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-family: 'Playfair Display', serif; color: var(--burgundy); font-size: 1.6rem; margin-bottom: 4px; }
+  .page-header p { color: var(--text-muted); font-size: 0.875rem; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .card-title { font-family: 'Playfair Display', serif; color: var(--burgundy); font-size: 1.05rem; margin-bottom: 20px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 0.75rem; font-weight: 600; color: var(--burgundy); text-transform: uppercase; letter-spacing: 0.06em; }
+  input[type="text"], input[type="password"] { padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Source Sans 3', sans-serif; font-size: 0.9rem; color: var(--charcoal); background: #faf8f6; transition: border-color 0.2s; }
+  input:focus { outline: none; border-color: var(--burgundy); background: #fff; }
+  .input-hint { font-size: 0.72rem; color: var(--text-muted); }
+
+  .btn { padding: 10px 22px; border: none; border-radius: 6px; font-family: 'Source Sans 3', sans-serif; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-primary { background: var(--burgundy); color: #fff; }
+  .btn-primary:hover { background: var(--burgundy-light); }
+  .btn-primary:disabled { background: #bbb; cursor: not-allowed; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: #c49430; }
+  .btn-gold:disabled { background: #bbb; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+  .alert { padding: 12px 16px; border-radius: 6px; font-size: 0.875rem; margin-bottom: 16px; display: none; }
+  .alert.visible { display: block; }
+  .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #b7dfc3; }
+  .alert-error { background: var(--error-bg); color: var(--error); border: 1px solid #f5c6c2; }
+  .alert-warning { background: var(--warning-bg); color: #7a5c00; border: 1px solid var(--warning-border); }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-box { background: #faf8f6; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .stat-number { font-size: 1.6rem; font-weight: 700; color: var(--burgundy); line-height: 1; }
+  .stat-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+  .stat-box.success .stat-number { color: var(--success); }
+  .stat-box.warning .stat-number { color: #7a5c00; }
+  .stat-box.error .stat-number { color: var(--error); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead th { background: var(--burgundy); color: #fff; text-align: left; padding: 9px 14px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #faf8f6; }
+
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge-synced { background: var(--success-bg); color: var(--success); }
+  .badge-will_sync { background: #e8f2f8; color: var(--blue); }
+  .badge-already_in_pheedloop { background: #f0f0f0; color: #888; }
+  .badge-skipped_cancelled { background: var(--error-bg); color: var(--error); }
+  .badge-skipped_no_email { background: var(--warning-bg); color: #7a5c00; }
+  .badge-error { background: var(--error-bg); color: var(--error); }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .progress-bar-wrap { background: #e8e0d8; border-radius: 4px; height: 8px; margin: 12px 0; overflow: hidden; display: none; }
+  .progress-bar-wrap.visible { display: block; }
+  .progress-bar { height: 100%; background: var(--burgundy); border-radius: 4px; transition: width 0.3s; width: 0%; }
+
+  #resultsSection { display: none; }
+  #resultsSection.visible { display: block; }
+
+  .filter-row { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+  .filter-row input { flex: 1; padding: 8px 12px; font-size: 0.85rem; }
+  .filter-row select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Source Sans 3', sans-serif; font-size: 0.85rem; background: #faf8f6; }
+
+  @media (max-width: 700px) {
+    .main { padding: 20px 16px; }
+    .header { padding: 0 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">C</div>
+  <div>
+    <div class="header-title">Novi → PheedLoop Backfill</div>
+    <div class="header-subtitle">Sync existing registrations to PheedLoop</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-header">
+    <h1>Registration Backfill</h1>
+    <p>Use this tool to sync existing Novi registrations to PheedLoop for events that were set up before the automatic sync was active. Preview first, then sync.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Connection & Event</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Worker URL</label>
+        <input type="text" id="workerUrl" value="https://novi-pheedloop-worker.avance.workers.dev" />
+      </div>
+      <div class="form-group">
+        <label>Admin Secret</label>
+        <input type="password" id="adminSecret" placeholder="Your admin secret" />
+      </div>
+      <div class="form-group">
+        <label>Novi Event ID</label>
+        <input type="text" id="noviEventId" placeholder="e.g. d4b6ec10-8726-498c-8ba6-5f900ecad1b0" />
+        <div class="input-hint">GUID from Novi admin or registration API response</div>
+      </div>
+      <div class="form-group">
+        <label>PheedLoop Event Code</label>
+        <input type="text" id="plEventCode" placeholder="e.g. EVENMCCYMPDXS" />
+        <div class="input-hint">Found in PheedLoop event settings</div>
+      </div>
+    </div>
+    <div id="formAlert" class="alert"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runPreview()" id="previewBtn">Preview Registrations</button>
+      <button class="btn btn-gold" onclick="runSync()" id="syncBtn" disabled>Sync to PheedLoop</button>
+      <span id="progressText" style="font-size:0.82rem;color:var(--text-muted);display:none"></span>
+    </div>
+    <div class="progress-bar-wrap" id="progressWrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <div id="resultsSection">
+    <div class="card">
+      <div class="card-title" id="resultsTitle">Results</div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="filter-row">
+        <input type="text" id="filterInput" placeholder="Filter by name or email..." oninput="filterTable()" />
+        <select id="filterStatus" onchange="filterTable()">
+          <option value="">All statuses</option>
+          <option value="will_sync">Will sync</option>
+          <option value="synced">Synced</option>
+          <option value="already_in_pheedloop">Already in PheedLoop</option>
+          <option value="skipped_cancelled">Cancelled</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto" id="tableWrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let lastResults = null;
+
+  function getInputs() {
+    return {
+      workerUrl: document.getElementById('workerUrl').value.trim().replace(/\/$/, ''),
+      adminSecret: document.getElementById('adminSecret').value.trim(),
+      noviEventId: document.getElementById('noviEventId').value.trim(),
+      plEventCode: document.getElementById('plEventCode').value.trim().toUpperCase(),
+    };
+  }
+
+  function validate() {
+    const { workerUrl, adminSecret, noviEventId, plEventCode } = getInputs();
+    if (!workerUrl || !adminSecret || !noviEventId || !plEventCode) {
+      showAlert('Please fill in all fields.', 'error');
+      return false;
+    }
+    const guidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!guidPattern.test(noviEventId)) {
+      showAlert('Novi Event ID should be a GUID.', 'error');
+      return false;
+    }
+    return true;
+  }
+
+  async function runPreview() {
+    if (!validate()) return;
+    const { workerUrl, adminSecret, noviEventId, plEventCode } = getInputs();
+    const btn = document.getElementById('previewBtn');
+    const syncBtn = document.getElementById('syncBtn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Loading registrations...';
+    syncBtn.disabled = true;
+    showAlert('', '');
+    setProgress(0, 'Fetching registrations from Novi...');
+
+    try {
+      const res = await fetch(`${workerUrl}/admin/backfill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+        body: JSON.stringify({ noviEventId, pheedloopEventCode: plEventCode, dryRun: true })
+      });
+
+      const data = await res.json();
+      if (!res.ok) { showAlert(data.error || 'Preview failed.', 'error'); return; }
+
+      lastResults = data;
+      renderResults(data, true);
+      syncBtn.disabled = false;
+      showAlert(`Preview complete — ${data.synced} registrations ready to sync.`, 'success');
+
+    } catch (e) {
+      showAlert(`Error: ${e.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Preview Registrations';
+      hideProgress();
+    }
+  }
+
+  async function runSync() {
+    if (!validate()) return;
+    if (!confirm(`This will sync ${lastResults?.synced || 'all eligible'} registrations to PheedLoop. Already-synced attendees will be skipped. Continue?`)) return;
+
+    const { workerUrl, adminSecret, noviEventId, plEventCode } = getInputs();
+    const btn = document.getElementById('syncBtn');
+    const previewBtn = document.getElementById('previewBtn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Syncing...';
+    previewBtn.disabled = true;
+    setProgress(10, 'Syncing registrations to PheedLoop...');
+
+    try {
+      const res = await fetch(`${workerUrl}/admin/backfill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+        body: JSON.stringify({ noviEventId, pheedloopEventCode: plEventCode, dryRun: false })
+      });
+
+      const data = await res.json();
+      if (!res.ok) { showAlert(data.error || 'Sync failed.', 'error'); return; }
+
+      lastResults = data;
+      renderResults(data, false);
+      showAlert(`Sync complete — ${data.synced} attendees added to PheedLoop.${data.errors ? ` ${data.errors} errors.` : ''}`, data.errors ? 'warning' : 'success');
+
+    } catch (e) {
+      showAlert(`Error: ${e.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sync to PheedLoop';
+      previewBtn.disabled = false;
+      hideProgress();
+    }
+  }
+
+  function renderResults(data, isDryRun) {
+    document.getElementById('resultsSection').classList.add('visible');
+    document.getElementById('resultsTitle').textContent = isDryRun ? 'Preview Results' : 'Sync Results';
+
+    // Stats
+    const stats = [
+      { label: 'Total Registrations', value: data.total, cls: '' },
+      { label: isDryRun ? 'Will Sync' : 'Synced', value: data.synced, cls: 'success' },
+      { label: 'Already in PheedLoop', value: data.skipped_already_in_pheedloop, cls: 'warning' },
+      { label: 'Cancelled', value: data.skipped_cancelled, cls: '' },
+      { label: 'Errors', value: data.errors, cls: data.errors ? 'error' : '' },
+    ];
+
+    document.getElementById('statsGrid').innerHTML = stats.map(s => `
+      <div class="stat-box ${s.cls}">
+        <div class="stat-number">${s.value}</div>
+        <div class="stat-label">${s.label}</div>
+      </div>`).join('');
+
+    renderTable(data.attendees);
+  }
+
+  function renderTable(attendees) {
+    if (!attendees || !attendees.length) {
+      document.getElementById('tableWrap').innerHTML = '<p style="color:var(--text-muted);padding:20px 0;text-align:center">No attendees to display.</p>';
+      return;
+    }
+
+    let html = `<table><thead><tr>
+      <th>Name</th><th>Email</th><th>Ticket</th><th>Status</th>
+    </tr></thead><tbody>`;
+
+    attendees.forEach(a => {
+      html += `<tr data-name="${(a.name||'').toLowerCase()}" data-email="${(a.email||'').toLowerCase()}" data-status="${a.status}">
+        <td>${a.name || '—'}</td>
+        <td>${a.email || '—'}</td>
+        <td>${a.ticket || '—'}</td>
+        <td><span class="badge badge-${a.status}">${a.status.replace(/_/g,' ')}</span></td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tableWrap').innerHTML = html;
+  }
+
+  function filterTable() {
+    const q = document.getElementById('filterInput').value.toLowerCase();
+    const status = document.getElementById('filterStatus').value;
+    document.querySelectorAll('#tableWrap tbody tr').forEach(row => {
+      const matchText = !q || row.dataset.name.includes(q) || row.dataset.email.includes(q);
+      const matchStatus = !status || row.dataset.status === status;
+      row.style.display = matchText && matchStatus ? '' : 'none';
+    });
+  }
+
+  function showAlert(msg, type) {
+    const el = document.getElementById('formAlert');
+    el.textContent = msg;
+    el.className = msg ? `alert alert-${type} visible` : 'alert';
+  }
+
+  function setProgress(pct, text) {
+    document.getElementById('progressWrap').classList.add('visible');
+    document.getElementById('progressBar').style.width = pct + '%';
+    const pt = document.getElementById('progressText');
+    pt.textContent = text;
+    pt.style.display = 'inline';
+  }
+
+  function hideProgress() {
+    document.getElementById('progressWrap').classList.remove('visible');
+    document.getElementById('progressText').style.display = 'none';
+  }
+
+  // Auto-fill from localStorage
+  window.addEventListener('load', () => {
+    const savedUrl = localStorage.getItem('npl_worker_url');
+    const savedSecret = localStorage.getItem('npl_admin_secret');
+    if (savedUrl) document.getElementById('workerUrl').value = savedUrl;
+    if (savedSecret) document.getElementById('adminSecret').value = savedSecret;
+  });
+</script>
+</body>
+</html>
