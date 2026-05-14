@@ -169,6 +169,7 @@
     <div class="table-wrap" id="previewTable"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
       <button class="btn btn-gold" id="exportXlsxBtn">&#128229; Export Import XLSX</button>
+      <button class="btn btn-secondary" id="participantListBtn" onclick="exportParticipantPDF()">&#128101; Participant List PDF</button>
       <!-- New cohort buttons -->
       <span id="newCohortBtns">
         <button class="btn btn-burgundy" id="apiUploadBtn" style="margin-right:10px;">&#9889; Upload Users</button>
@@ -285,13 +286,11 @@ document.getElementById('noviPullBtn').addEventListener('click',async()=>{
       if(page.length<pageSize)break;
       offset+=pageSize;
     }
-    // Exclude @clearhq.org and cancelled
     const valid=allAttendees.filter(a=>{
       const email=String(a.Email||'').toLowerCase().trim();
       return email&&!email.endsWith('@clearhq.org')&&!a.Cancelled;
     });
     if(!valid.length){setNoviPullStatus('No eligible attendees found for this event.','error');btn.disabled=false;btn.textContent='Pull Attendees';return;}
-    // Map attendee fields to user object
     STATE.attendees=valid.map(a=>{
       const email=String(a.Email||'').toLowerCase().trim();
       const fn=(a.FirstName||'').trim();
@@ -371,11 +370,9 @@ function renderPreview(){
   const filt=filterVal.toLowerCase().trim();
   const showDate=STATE.mode==='existing';
 
-  // Filter by name/email
   let indexed=STATE.importUsers.map((u,i)=>({u,i}));
   if(filt)indexed=indexed.filter(({u})=>(u.firstName+' '+u.lastName+' '+u.email).toLowerCase().includes(filt));
 
-  // Sort
   if(STATE.sortCol){
     indexed.sort((a,b)=>{
       let av,bv;
@@ -402,7 +399,6 @@ function renderPreview(){
 
   indexed.forEach(({u,i},rowNum)=>{
     const chk=STATE.selectedUsers.has(i);
-    // Format reg date for display
     let regDisplay='—';
     if(u.registrationDate){const d=new Date(u.registrationDate);if(!isNaN(d))regDisplay=d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
     h+='<tr style="'+(chk?'':'opacity:0.45;')+'"><td style="text-align:center;"><input type="checkbox" class="row-chk" data-i="'+i+'" '+(chk?'checked':'')+'></td>'
@@ -417,7 +413,6 @@ function renderPreview(){
   h+='</tbody></table>';
   el.innerHTML=h;
 
-  // Select-all (operates on filtered set)
   document.getElementById('chkAll').addEventListener('change',function(){
     if(this.checked)indexed.forEach(({i})=>STATE.selectedUsers.add(i));
     else indexed.forEach(({i})=>STATE.selectedUsers.delete(i));
@@ -432,7 +427,193 @@ function renderPreview(){
   });
 }
 
-// Export XLSX - 3 tabs: Users, Groups (with Key), Course-to-groups
+// ============================================================
+// PARTICIPANT LIST PDF
+// ============================================================
+function exportParticipantPDF(){
+  const users=getSelectedUsers();
+  if(!users.length){alert('No users selected.');return;}
+
+  // Determine cohort name label
+  let cohortName='';
+  if(STATE.mode==='existing'){
+    cohortName=STATE.existingGroupName||'';
+  } else {
+    cohortName=document.getElementById('groupName').value.trim();
+  }
+  if(!cohortName){
+    cohortName=prompt('Enter the cohort/program name for the participant list:','');
+    if(!cohortName)return;
+  }
+
+  // Sort alphabetically by last name, first name
+  const sorted=[...users].sort((a,b)=>{
+    const la=(a.lastName+a.firstName).toLowerCase();
+    const lb=(b.lastName+b.firstName).toLowerCase();
+    return la<lb?-1:la>lb?1:0;
+  });
+
+  const generated=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const count=sorted.length;
+
+  // Build table rows
+  const trs=sorted.map((u,i)=>{
+    const rowBg=i%2===0?'#ffffff':'#faf8f6';
+    return '<tr style="background:'+rowBg+';">'
+      +'<td style="padding:7pt 10pt;border-bottom:0.5pt solid #e0d6d0;vertical-align:top;line-height:1.4;">'+esc(u.firstName)+' '+esc(u.lastName)+'</td>'
+      +'<td style="padding:7pt 10pt;border-bottom:0.5pt solid #e0d6d0;vertical-align:top;line-height:1.4;color:#484848;">'+esc(u.company||'—')+'</td>'
+      +'<td style="padding:7pt 10pt;border-bottom:0.5pt solid #e0d6d0;vertical-align:top;line-height:1.4;color:#484848;">'+esc(u.jobTitle||'—')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  const safe=('Participant_List_'+cohortName).replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+
+  const html=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${esc(cohortName)} — Participant List</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap');
+  @page { size: portrait; margin: 0.65in 0.7in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', 'Trebuchet MS', Arial, sans-serif; font-size: 10pt; color: #484848; background: #fff; }
+
+  /* ── Header bar ── */
+  .doc-header {
+    border-bottom: 4px solid #64092c;
+    padding-bottom: 10pt;
+    margin-bottom: 6pt;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .doc-title {
+    font-size: 17pt;
+    font-weight: 800;
+    color: #64092c;
+    line-height: 1.15;
+    letter-spacing: -0.3pt;
+  }
+  .doc-subtitle {
+    font-size: 10pt;
+    color: #484848;
+    margin-top: 3pt;
+    font-weight: 600;
+  }
+  .doc-meta {
+    text-align: right;
+    font-size: 8pt;
+    color: #7a6b62;
+    line-height: 1.6;
+  }
+
+  /* ── Gold accent rule ── */
+  .gold-rule {
+    height: 3pt;
+    background: #dda838;
+    margin-bottom: 14pt;
+    border-radius: 2pt;
+  }
+
+  /* ── Summary line ── */
+  .doc-summary {
+    font-size: 9pt;
+    color: #7a6b62;
+    margin-bottom: 12pt;
+    font-style: italic;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    page-break-inside: auto;
+  }
+  thead { display: table-header-group; }
+  th {
+    background: #64092c;
+    color: #ffffff;
+    padding: 7pt 10pt;
+    text-align: left;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.4pt;
+    text-transform: uppercase;
+    border: none;
+  }
+  th:first-child { border-radius: 0; }
+  tbody tr { page-break-inside: avoid; }
+
+  /* ── Footer note ── */
+  .doc-footer {
+    margin-top: 14pt;
+    font-size: 7.5pt;
+    color: #aaa;
+    border-top: 0.5pt solid #e0d6d0;
+    padding-top: 6pt;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div>
+    <div class="doc-title">Participant List</div>
+    <div class="doc-subtitle">${esc(cohortName)}</div>
+  </div>
+  <div class="doc-meta">
+    CLEAR Learning<br>
+    For Instructor Use Only<br>
+    Generated ${esc(generated)}
+  </div>
+</div>
+
+<div class="gold-rule"></div>
+
+<div class="doc-summary">${count} participant${count!==1?'s':''} enrolled</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:32%;">Name</th>
+      <th style="width:38%;">Agency / Organization</th>
+      <th style="width:30%;">Job Title</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${trs}
+  </tbody>
+</table>
+
+<div class="doc-footer">
+  <span>CLEAR &mdash; Council on Licensure, Enforcement and Regulation</span>
+  <span>Confidential &mdash; For instructor use only. Do not distribute.</span>
+</div>
+
+<script>
+  window.onload = function() {
+    document.title = ${JSON.stringify(safe)};
+    window.print();
+  };
+<\/script>
+</body>
+</html>`;
+
+  const win=window.open('','_blank');
+  if(!win){alert('Pop-up blocked. Please allow pop-ups for this tool.');return;}
+  win.document.write(html);
+  win.document.close();
+}
+
+// Export XLSX
 document.getElementById('exportXlsxBtn').addEventListener('click',()=>{
 const users=getSelectedUsers();
 if(users.length===0){alert('No users selected to export.');return;}
@@ -450,7 +631,7 @@ XLSX.writeFile(wb,'TalentLMS_Import_'+gn.replace(/\s+/g,'_')+'.xlsx');
 });
 
 // ============================================================
-// Step 1: Upload Users - create users, group, assign courses
+// Step 1: Upload Users
 // ============================================================
 document.getElementById('apiUploadBtn').addEventListener('click',async()=>{
 const users=getSelectedUsers();
@@ -485,7 +666,7 @@ document.getElementById('apiCohortBtn').disabled=false;
 btn.disabled=false;btn.innerHTML='&#9889; Upload Users';});
 
 // ============================================================
-// Step 2: Add Users to Cohort - assign users to group
+// Step 2: Add Users to Cohort
 // ============================================================
 document.getElementById('apiCohortBtn').addEventListener('click',async()=>{
 const users=getSelectedUsers();
@@ -526,7 +707,7 @@ function setApiSt(m,t){const el=document.getElementById('apiStatus');el.classNam
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ============================================================
-// Mode switching: new cohort vs existing cohort
+// Mode switching
 // ============================================================
 STATE.mode='new';
 STATE.groups=[];
@@ -553,7 +734,6 @@ function setMode(m){
   }
 }
 
-// Load groups from API
 async function loadGroups(){
   if(!STATE.connected)return;
   try{
