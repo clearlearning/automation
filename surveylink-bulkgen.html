@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bulk Survey Link Generator</title>
+  <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2rem);
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --shadow-md: 0 10px 30px rgba(0,0,0,.08);
+      --color-border: #d4d1ca;
+      --color-text: #28251d;
+      --color-muted: #6f6d67;
+      --color-primary: #64092c;
+      --color-primary-hover: #500720;
+      --color-primary-soft: #efcfdb;
+      --color-secondary: #ffd98d;
+      --color-secondary-hover: #dda838;
+      --color-secondary-soft: #fff7e7;
+      --color-label: #484848;
+      --color-label-hover: #383838;
+      --color-label-soft: #efefef;
+      --color-success: #2e6b3b;
+      --color-success-soft: #deeddc;
+      --color-warning: #8b5a14;
+      --color-warning-soft: #f5ead7;
+      --color-error: #8b1a1a;
+      --color-error-soft: #f5dddd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      font-family: 'Satoshi', Arial, sans-serif;
+      font-size: var(--text-base); color: var(--color-text);
+      background: linear-gradient(180deg, #f7f6f2 0%, #efede7 100%);
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: var(--space-8) var(--space-4); }
+    .hero { margin-bottom: var(--space-8); }
+    h1 { margin: 0 0 var(--space-3); font-size: var(--text-xl); line-height: 1.1; }
+    .hero p { margin: 0 0 var(--space-3); color: var(--color-muted); max-width: 80ch; }
+    .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); align-items: start; margin-bottom: var(--space-6); }
+    .card { background: rgba(251,251,249,.92); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); box-shadow: var(--shadow-md); }
+    .card-full { grid-column: 1 / -1; }
+    .card h2 { margin: 0 0 var(--space-2); font-size: var(--text-lg); display: flex; align-items: center; gap: var(--space-3); }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--color-primary); color: white; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+    .card-desc { color: var(--color-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); }
+    .field { display: grid; gap: 0.4rem; margin-bottom: var(--space-4); }
+    label { font-size: var(--text-sm); font-weight: 700; }
+    input, textarea { width: 100%; padding: 0.8rem 0.9rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: white; font: inherit; }
+    textarea { resize: vertical; min-height: 120px; font-family: 'Courier New', monospace; font-size: 0.85rem; }
+    input:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--color-primary) 45%, white); outline-offset: 1px; border-color: var(--color-primary); }
+    .hint { color: var(--color-muted); font-size: var(--text-sm); }
+    code { background: #f0efea; padding: 0.1rem 0.35rem; border-radius: 0.35rem; font-family: 'Courier New', monospace; font-size: 0.875em; }
+    .placeholder-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+    .chip { background: var(--color-label-soft); color: var(--color-label-hover); border: 1px solid color-mix(in srgb, var(--color-label) 25%, white); border-radius: 999px; padding: 0.3rem 0.75rem; font-size: var(--text-sm); font-weight: 700; }
+    .chip.unmatched { background: var(--color-warning-soft); color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 25%, white); }
+    .chip.matched { background: var(--color-success-soft); color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 25%, white); }
+    .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+    button { border: 0; border-radius: 20px; padding: 0.4rem 1.2rem; font: inherit; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--color-primary); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+    .btn-secondary { background: white; border: 1px solid var(--color-label); color: black; }
+    .btn-secondary:hover:not(:disabled) { background: var(--color-label-soft); }
+    .btn-sm { padding: 0.4rem 0.85rem; font-size: var(--text-sm); }
+    .upload-zone { border: 2px dashed var(--color-border); border-radius: var(--radius-md); background: white; padding: var(--space-6); text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--color-primary); background: var(--color-primary-soft); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; padding: 0; border: none; }
+    .upload-icon { font-size: 2rem; margin-bottom: var(--space-2); }
+    .upload-zone p { margin: 0; color: var(--color-muted); font-size: var(--text-sm); }
+    .upload-zone .filename { font-weight: 700; color: var(--color-primary); font-size: var(--text-sm); margin-top: var(--space-2); }
+    .divider { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) 0; color: var(--color-muted); font-size: var(--text-sm); }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
+.preview-table-wrap { overflow-x: auto; overflow-y: auto; max-height: 260px; border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-top: var(--space-3); }
+.preview-table-wrap th { position: sticky; top: 0; z-index: 1; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    th { background: #f0efea; padding: 0.6rem 0.85rem; text-align: left; font-weight: 700; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+    th.matched-col { background: var(--color-label-soft); color: var(--color-label); }
+    th.label-col { background: var(--color-label-soft); color: var(--color-label-hover); }
+    td { padding: 0.55rem 0.85rem; border-bottom: 1px solid #edecea; vertical-align: top; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #fafaf8; }
+    .status { margin-top: var(--space-4); padding: 0.85rem 1rem; border-radius: var(--radius-md); font-size: var(--text-sm); display: none; }
+    .status.show { display: block; }
+    .status.success { background: var(--color-success-soft); color: var(--color-success); border: 1px solid color-mix(in srgb, var(--color-success) 25%, white); }
+    .status.notice { background: var(--color-warning-soft); color: var(--color-warning); border: 1px solid color-mix(in srgb, var(--color-warning) 25%, white); }
+    .status.error { background: var(--color-error-soft); color: var(--color-error); border: 1px solid color-mix(in srgb, var(--color-error) 25%, white); }
+    .output-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .output-count { font-size: var(--text-sm); color: var(--color-muted); }
+    .link-list { display: grid; gap: var(--space-3); }
+    .link-item { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: start; }
+    .link-main { min-width: 0; }
+    .link-label { font-weight: 700; font-size: var(--text-sm); color: var(--color-primary-hover); margin-bottom: 0.25rem; }
+    .link-url { font-family: 'Courier New', monospace; font-size: 0.78rem; color: var(--color-muted); word-break: break-all; line-height: 1.5; margin-bottom: var(--space-3); }
+    .link-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .link-copy-btn.copied { background: var(--color-success-soft); color: var(--color-success); }
+    .link-qr-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+    .link-qr-box { width: 96px; height: 96px; background: white; border: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .link-qr-box canvas, .link-qr-box img { display: block; max-width: 100%; height: auto; }
+    .empty-state { text-align: center; padding: var(--space-8); color: var(--color-muted); }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: var(--space-3); }
+    .starter-box { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+    @media (max-width: 860px) {
+      .step-grid { grid-template-columns: 1fr; }
+      .card-full { grid-column: 1; }
+      .link-item { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <h1>Bulk Survey Link Generator</h1>
+    <p>Enter a base URL with placeholder variables, upload or paste a data table, then generate a unique survey link and QR code for every row.</p>
+    <p>Placeholders can use any bracket style: <code>{name}</code>, <code>[name]</code>, or <code>&lt;name&gt;</code>. The placeholder name must exactly match a column header in your data.</p>
+  </section>
+
+  <div class="step-grid">
+
+    <div class="card">
+      <h2><span class="step-badge">1</span> Base URL &amp; Placeholders</h2>
+      <p class="card-desc">Paste your base URL. Wrap variable names in <code>{curly}</code>, <code>[square]</code>, or <code>&lt;angle&gt;</code> brackets — whichever your survey tool uses.</p>
+      <div class="field">
+        <label for="baseUrl">Base URL with placeholders</label>
+        <input type="text" id="baseUrl" placeholder="https://www.surveymonkey.com/r/XXXXXXX?course=[course]&Cohort=[Cohort]" />
+      </div>
+      <div id="placeholderDisplay" style="display:none;">
+        <div class="hint" style="margin-bottom:0.4rem;">Detected placeholders:</div>
+        <div class="placeholder-chips" id="placeholderChips"></div>
+        <div class="starter-box">
+          <p class="hint" style="margin:0 0 var(--space-3);">Download a starter spreadsheet pre-populated with the right column headers — including a <strong>Label</strong> column as the first column. Fill it in, then upload or paste it in Step 2.</p>
+          <button class="btn-secondary" id="downloadStarterBtn" type="button">⬇ Download starter spreadsheet</button>
+        </div>
+      </div>
+      <div id="step1Status" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-badge">2</span> Upload or Paste Data</h2>
+      <p class="card-desc">Upload an Excel or CSV file, or paste tab- or comma-separated data. <strong>First row must be headers.</strong> The <strong>first column</strong> is used as the link label and QR filename.</p>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.tsv" />
+        <div class="upload-icon">📂</div>
+        <p>Drop an Excel or CSV file here, or click to browse</p>
+        <div class="filename" id="uploadedFilename"></div>
+      </div>
+      <div class="divider">or paste data</div>
+      <div class="field">
+        <label for="pasteArea">Paste tab- or comma-separated data (with header row)</label>
+        <textarea id="pasteArea" placeholder="Label&#9;course&#9;Cohort&#10;Alice&#9;REG101&#9;Spring2025&#10;Bob&#9;NCITB&#9;Fall2025"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" id="loadDataBtn" type="button">Load data</button>
+        <button class="btn-secondary" id="clearDataBtn" type="button">Clear</button>
+      </div>
+      <div id="step2Status" class="status"></div>
+    </div>
+
+    <div class="card card-full" id="step3Card" style="display:none;">
+      <h2><span class="step-badge">3</span> Preview &amp; Column Mapping</h2>
+      <p class="card-desc" id="mappingDesc"></p>
+      <div id="previewTableWrap"></div>
+      <div id="step3Status" class="status"></div>
+    </div>
+
+  </div>
+
+  <div class="card" id="generateCard" style="display:none; margin-bottom: var(--space-6);">
+    <div class="actions">
+      <button class="btn-primary" id="generateBtn" type="button">⚡ Generate links &amp; QR codes</button>
+    </div>
+  </div>
+
+  <div class="card" id="outputCard" style="display:none;">
+    <div class="output-header">
+      <h2 style="margin:0;"><span class="step-badge">4</span> Generated Links</h2>
+      <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;">
+        <span class="output-count" id="outputCount"></span>
+        <button class="btn-secondary btn-sm" id="copyAllBtn" type="button">Copy all links</button>
+        <button class="btn-secondary btn-sm" id="downloadAllQrBtn" type="button">⬇ Download all QR codes</button>
+        <button class="btn-primary btn-sm" id="exportBtn" type="button">Export to Excel</button>
+      </div>
+    </div>
+    <div id="linkList" class="link-list"></div>
+    <div id="outputStatus" class="status"></div>
+  </div>
+
+</main>
+<script>
+  let parsedRows = [], parsedHeaders = [], generatedLinks = [];
+
+  // Detect placeholders in {curly}, [square], or <angle> brackets
+  function getPlaceholders(url) {
+    const re = /\{([^}]+)\}|\[([^\]]+)\]|<([^>]+)>/g;
+    const out = []; let m;
+    while ((m = re.exec(url)) !== null) {
+      const n = m[1] || m[2] || m[3];
+      if (!out.includes(n)) out.push(n);
+    }
+    return out;
+  }
+
+  // Resolve a placeholder token to its row value, or null if blank
+  function resolvePlaceholder(key, row) {
+    const val = row[key];
+    if (val === undefined || val === null || String(val).trim() === '') return null;
+    return String(val).trim();
+  }
+
+  // Build URL properly: split base into origin+path and query string,
+  // evaluate each query param's value tokens, and only include params
+  // that end up with a non-empty value.
+  function buildUrl(base, row) {
+    const qMark = base.indexOf('?');
+    if (qMark === -1) return base; // no query string — nothing to substitute
+
+    const baseNoQuery = base.slice(0, qMark);
+    const queryStr = base.slice(qMark + 1);
+
+    // Split on & but be careful: each param may contain placeholder brackets
+    const paramParts = queryStr.split('&');
+    const resolvedParams = [];
+
+    for (const part of paramParts) {
+      const eqIdx = part.indexOf('=');
+      if (eqIdx === -1) { resolvedParams.push(part); continue; } // no value, pass through
+
+      const paramKey = part.slice(0, eqIdx);
+      const paramVal = part.slice(eqIdx + 1);
+
+      // Resolve any placeholders inside the value
+      const resolved = paramVal.replace(/\{([^}]+)\}|\[([^\]]+)\]|<([^>]+)>/g, (_, c, s, a) => {
+        const key = c || s || a;
+        const v = resolvePlaceholder(key, row);
+        return v !== null ? encodeURIComponent(v) : '\x00EMPTY\x00';
+      });
+
+      // If any placeholder came back empty, drop the whole param
+      if (resolved.includes('\x00EMPTY\x00')) continue;
+
+      // If the value had no placeholders but is literally empty, drop it too
+      if (resolved.trim() === '') continue;
+
+      resolvedParams.push(`${paramKey}=${resolved}`);
+    }
+
+    return resolvedParams.length ? `${baseNoQuery}?${resolvedParams.join('&')}` : baseNoQuery;
+  }
+
+  function toFilename(str) {
+    return String(str).replace(/[^a-zA-Z0-9_\-. ]/g, '_').replace(/\s+/g, '_').slice(0, 80);
+  }
+
+  function showStatus(el, msg, type) { el.textContent = msg; el.className = `status show ${type}`; }
+  function clearStatus(el) { el.textContent = ''; el.className = 'status'; }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── Step 1 ────────────────────────────────────────────────────────────────
+  const baseUrlInput = document.getElementById('baseUrl');
+  const step1Status  = document.getElementById('step1Status');
+
+  baseUrlInput.addEventListener('input', () => {
+    const phs = getPlaceholders(baseUrlInput.value.trim());
+    clearStatus(step1Status);
+    document.getElementById('placeholderDisplay').style.display = phs.length ? 'block' : 'none';
+    if (phs.length) { renderChips(phs, parsedHeaders); if (parsedHeaders.length) refreshMapping(); }
+  });
+
+  function renderChips(phs, headers) {
+    const el = document.getElementById('placeholderChips');
+    el.innerHTML = '';
+    phs.forEach(p => {
+      const c = document.createElement('span');
+      c.className = 'chip' + (headers.length === 0 ? '' : headers.includes(p) ? ' matched' : ' unmatched');
+      c.textContent = p;
+      el.appendChild(c);
+    });
+  }
+
+  document.getElementById('downloadStarterBtn').addEventListener('click', () => {
+    const phs = getPlaceholders(baseUrlInput.value.trim());
+    if (!phs.length) return;
+    const headers = ['Label', ...phs];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    ws['!cols'] = headers.map(() => ({ wch: 24 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Link Data');
+    XLSX.writeFile(wb, 'survey-link-data.xlsx');
+    showStatus(step1Status, '✓ Starter spreadsheet downloaded. Fill it in and upload in Step 2.', 'success');
+  });
+
+  // ── Step 2 ────────────────────────────────────────────────────────────────
+  const step2Status = document.getElementById('step2Status');
+  const uploadZone  = document.getElementById('uploadZone');
+  const fileInput   = document.getElementById('fileInput');
+  const pasteArea   = document.getElementById('pasteArea');
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+  function handleFile(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    document.getElementById('uploadedFilename').textContent = file.name;
+    pasteArea.value = '';
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        if (ext === 'csv' || ext === 'tsv') {
+          processText(e.target.result, ext === 'tsv' ? '\t' : ',');
+        } else {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+          if (!rows.length) { showStatus(step2Status, 'File appears to be empty.', 'error'); return; }
+          setData(rows);
+        }
+      } catch (err) { showStatus(step2Status, 'Could not read file: ' + err.message, 'error'); }
+    };
+    ext === 'csv' || ext === 'tsv' ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById('loadDataBtn').addEventListener('click', () => {
+    const text = pasteArea.value.trim();
+    if (!text) { showStatus(step2Status, 'Nothing to load — paste some data first.', 'notice'); return; }
+    const first = text.split('\n')[0];
+    processText(text, (first.match(/\t/g)||[]).length >= (first.match(/,/g)||[]).length ? '\t' : ',');
+  });
+
+  document.getElementById('clearDataBtn').addEventListener('click', () => {
+    pasteArea.value = ''; fileInput.value = '';
+    document.getElementById('uploadedFilename').textContent = '';
+    parsedRows = []; parsedHeaders = [];
+    ['step3Card','generateCard','outputCard'].forEach(id => document.getElementById(id).style.display = 'none');
+    renderChips(getPlaceholders(baseUrlInput.value.trim()), []);
+    clearStatus(step2Status);
+  });
+
+  function processText(text, delim) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { showStatus(step2Status, 'Need at least a header row and one data row.', 'error'); return; }
+    const headers = lines[0].split(delim).map(h => h.trim().replace(/^"|"$/g, ''));
+    const rows = lines.slice(1).map(line => {
+      const cells = line.split(delim).map(c => c.trim().replace(/^"|"$/g, ''));
+      const obj = {}; headers.forEach((h, i) => { obj[h] = cells[i] || ''; }); return obj;
+    });
+    setData(rows, headers);
+  }
+
+  function setData(rows, headers) {
+    if (!headers) headers = Object.keys(rows[0]);
+    parsedHeaders = headers; parsedRows = rows;
+    showStatus(step2Status, `✓ Loaded ${rows.length} row${rows.length !== 1 ? 's' : ''} with ${headers.length} column${headers.length !== 1 ? 's' : ''}.`, 'success');
+    renderPreview(); refreshMapping();
+    renderChips(getPlaceholders(baseUrlInput.value.trim()), parsedHeaders);
+  }
+
+  // ── Step 3 ────────────────────────────────────────────────────────────────
+  function renderPreview() {
+    document.getElementById('step3Card').style.display = 'block';
+    const phs = getPlaceholders(baseUrlInput.value.trim());
+    const preview = parsedRows;
+    let html = '<div class="preview-table-wrap"><table><thead><tr>';
+    parsedHeaders.forEach((h, i) => {
+      const cls = i === 0 ? 'label-col' : phs.includes(h) ? 'matched-col' : '';
+      html += `<th class="${cls}">${esc(h)}${i === 0 ? ' <small style="font-weight:400;opacity:0.7;">(label)</small>' : ''}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    preview.forEach(row => { html += '<tr>' + parsedHeaders.map(h => `<td title="${esc(row[h]||'')}">${esc(row[h]||'')}</td>`).join('') + '</tr>'; });
+    html += '</tbody></table></div>';
+    html += `<p class="hint" style="margin-top:var(--space-2);">${parsedRows.length} rows loaded.</p>`;
+    document.getElementById('previewTableWrap').innerHTML = html;
+    document.getElementById('generateCard').style.display = 'block';
+  }
+
+  function refreshMapping() {
+    if (!parsedHeaders.length) return;
+    const phs = getPlaceholders(baseUrlInput.value.trim());
+    const matched = phs.filter(p => parsedHeaders.includes(p));
+    const unmatched = phs.filter(p => !parsedHeaders.includes(p));
+    document.getElementById('mappingDesc').innerHTML =
+      `First column (<strong>${esc(parsedHeaders[0])}</strong>) will be used as the link label and QR filename.` +
+      (phs.length ? ` <strong>${matched.length}/${phs.length}</strong> placeholder${phs.length !== 1 ? 's' : ''} matched to columns.` : '');
+    const s = document.getElementById('step3Status');
+    unmatched.length
+      ? showStatus(s, `⚠ No matching column for: ${unmatched.join(', ')} — those parameters will be omitted from the URL.`, 'notice')
+      : clearStatus(s);
+  }
+
+  // ── Generate ──────────────────────────────────────────────────────────────
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    const base = baseUrlInput.value.trim();
+    if (!base) { showStatus(step1Status, 'Please enter a base URL first.', 'error'); return; }
+    if (!parsedRows.length) { showStatus(step2Status, 'No data loaded yet.', 'error'); return; }
+    generatedLinks = parsedRows.map(row => ({
+      label: String(row[parsedHeaders[0]] || '').trim() || '(unlabeled)',
+      url: buildUrl(base, row)
+    }));
+    renderLinks();
+    document.getElementById('outputCard').style.display = 'block';
+    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  function renderLinks() {
+    const list = document.getElementById('linkList');
+    document.getElementById('outputCount').textContent = `${generatedLinks.length} link${generatedLinks.length !== 1 ? 's' : ''} generated`;
+    list.innerHTML = '';
+
+    generatedLinks.forEach((item, idx) => {
+      const el = document.createElement('div');
+      el.className = 'link-item';
+      el.innerHTML = `
+        <div class="link-main">
+          <div class="link-label">${esc(item.label)}</div>
+          <div class="link-url">${esc(item.url)}</div>
+          <div class="link-actions">
+            <button class="btn-secondary btn-sm link-copy-btn" data-idx="${idx}" type="button">Copy link</button>
+            <button class="btn-secondary btn-sm link-dl-qr-btn" data-idx="${idx}" type="button">⬇ QR</button>
+          </div>
+        </div>
+        <div class="link-qr-wrap">
+          <div class="link-qr-box" id="qr-box-${idx}"></div>
+        </div>`;
+      list.appendChild(el);
+
+      new QRCode(document.getElementById(`qr-box-${idx}`), {
+        text: item.url, width: 92, height: 92,
+        colorDark: '#111111', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    });
+
+    list.querySelectorAll('.link-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = generatedLinks[+btn.dataset.idx];
+        navigator.clipboard.writeText(item.url).then(() => {
+          const orig = btn.textContent; btn.textContent = 'Copied!'; btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+        }).catch(() => showStatus(document.getElementById('outputStatus'), 'Copy failed.', 'notice'));
+      });
+    });
+
+    list.querySelectorAll('.link-dl-qr-btn').forEach(btn => {
+      btn.addEventListener('click', () => downloadQr(generatedLinks[+btn.dataset.idx]));
+    });
+  }
+
+  function renderQrOffscreen(url, size, cb) {
+    const div = document.createElement('div');
+    Object.assign(div.style, { position: 'absolute', left: '-9999px', top: '-9999px' });
+    document.body.appendChild(div);
+    new QRCode(div, { text: url, width: size, height: size, colorDark: '#111111', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    setTimeout(() => { cb(div); document.body.removeChild(div); }, 200);
+  }
+
+  function getDataUrlFromQrDiv(div) {
+    const canvas = div.querySelector('canvas');
+    if (canvas) return canvas.toDataURL('image/png');
+    const img = div.querySelector('img');
+    return img ? img.src : null;
+  }
+
+  function downloadQr(item) {
+    renderQrOffscreen(item.url, 400, div => {
+      const dataUrl = getDataUrlFromQrDiv(div);
+      if (!dataUrl) { showStatus(document.getElementById('outputStatus'), 'QR render failed.', 'error'); return; }
+      const a = document.createElement('a');
+      a.href = dataUrl; a.download = `QR_${toFilename(item.label)}.png`; a.click();
+    });
+  }
+
+  // ── Download All QRs as ZIP ───────────────────────────────────────────────
+  document.getElementById('downloadAllQrBtn').addEventListener('click', async () => {
+    if (!generatedLinks.length) return;
+    const btn = document.getElementById('downloadAllQrBtn');
+    const outputStatus = document.getElementById('outputStatus');
+    btn.disabled = true; btn.textContent = 'Preparing zip…';
+
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder('QR_Codes');
+      const usedNames = {};
+
+      await Promise.all(generatedLinks.map(item => new Promise(resolve => {
+        renderQrOffscreen(item.url, 400, div => {
+          let base = `QR_${toFilename(item.label)}`;
+          if (usedNames[base]) { usedNames[base]++; base += `_${usedNames[base]}`; } else { usedNames[base] = 1; }
+          const filename = base + '.png';
+          const canvas = div.querySelector('canvas');
+          if (canvas) {
+            canvas.toBlob(blob => { folder.file(filename, blob); resolve(); }, 'image/png');
+          } else {
+            const img = div.querySelector('img');
+            if (img && img.src) { folder.file(filename, img.src.split(',')[1], { base64: true }); }
+            resolve();
+          }
+        });
+      })));
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'QR_Codes.zip'; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      showStatus(outputStatus, `✓ Downloaded ${generatedLinks.length} QR codes as QR_Codes.zip`, 'success');
+    } catch (err) {
+      showStatus(document.getElementById('outputStatus'), 'ZIP generation failed: ' + err.message, 'error');
+    }
+    btn.disabled = false; btn.textContent = '⬇ Download all QR codes';
+  });
+
+  // ── Copy All ──────────────────────────────────────────────────────────────
+  document.getElementById('copyAllBtn').addEventListener('click', () => {
+    const text = generatedLinks.map(l => `${l.label}\t${l.url}`).join('\n');
+    navigator.clipboard.writeText(text)
+      .then(() => showStatus(document.getElementById('outputStatus'), `✓ Copied all ${generatedLinks.length} links (label + URL, tab-separated).`, 'success'))
+      .catch(() => showStatus(document.getElementById('outputStatus'), 'Copy failed.', 'notice'));
+  });
+
+  // ── Export to Excel ───────────────────────────────────────────────────────
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    if (!generatedLinks.length) return;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([['Link Name','URL'], ...generatedLinks.map(l => [l.label, l.url])]);
+    ws['!cols'] = [{ wch: 40 }, { wch: 120 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Generated Links');
+    XLSX.writeFile(wb, 'generated-survey-links.xlsx');
+    showStatus(document.getElementById('outputStatus'), '✓ Excel file downloaded.', 'success');
+  });
+</script>
+</body>
+</html>
