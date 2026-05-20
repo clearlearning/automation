@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLEAR Membership Renewal Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Trebuchet+MS&display=swap');
+:root{
+  --burg:#64092C;--burg-dk:#4a0620;--burg-lt:#8a1040;
+  --gold:#DDA838;--gold-lt:#f0c05a;--blue:#084D78;
+  --cream:#FAF7F2;--cream-dk:#F0EBE1;
+  --ahd:#1a6b3a;--ahd-bg:#e8f5ee;
+  --bhd:#b01c1c;--bhd-bg:#fdeaea;
+  --new:#084D78;--new-bg:#e3eef6;
+  --warn:#8a5a00;--warn-bg:#fef9e7;
+  --border:#DDD5C8;--text:#2a2a2a;--muted:#777;
+  --shadow:0 2px 12px rgba(100,9,44,.08);--r:6px;
+  --font-body:'Open Sans',sans-serif;
+  --font-head:'Trebuchet MS','Open Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--cream);color:var(--text);min-height:100vh;font-size:15px}
+h1,h2,h3,.ct,.kl{font-family:var(--font-head)}
+.hdr{background:var(--burg);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hdr h1{font-family:var(--font-head);font-size:17px;color:#fff;letter-spacing:.01em}
+.hdr-r{font-size:11px;color:rgba(255,255,255,.6);text-align:right;line-height:1.6}
+.dot{display:inline-block;width:7px;height:7px;background:var(--gold);border-radius:50%;margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.cfg{background:var(--burg-dk);padding:7px 28px;display:flex;align-items:center;gap:12px;font-size:12px;color:rgba(255,255,255,.7);flex-wrap:wrap}
+.cfg input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:4px 10px;border-radius:4px;font-family:var(--font-body);font-size:11px}
+.cfg input:focus{outline:none;border-color:rgba(255,255,255,.5)}
+.cfg .iw{width:260px}.cfg .it{width:170px}
+.btn-g{background:var(--gold);color:var(--burg-dk);border:none;padding:4px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--font-head)}
+.btn-g:hover{background:var(--gold-lt)}
+.btn-o{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+.btn-o:hover{background:rgba(255,255,255,.1)}
+.tabs{background:#fff;border-bottom:2px solid var(--border);padding:0 28px;display:flex}
+.tab{padding:13px 20px;border:none;background:none;cursor:pointer;font-family:var(--font-head);font-size:13px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap}
+.tab:hover{color:var(--burg)}.tab.on{color:var(--burg);border-bottom-color:var(--burg)}
+.main{padding:24px 28px;max-width:1400px;margin:0 auto}
+.panel{display:none}.panel.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border-top:3px solid var(--border)}
+.kpi.bur{border-top-color:var(--burg)}.kpi.gld{border-top-color:var(--gold)}
+.kpi.ahd{border-top-color:var(--ahd)}.kpi.bhd{border-top-color:var(--bhd)}
+.kpi.new{border-top-color:var(--new)}.kpi.warn{border-top-color:var(--gold)}
+.kl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.kv{font-size:30px;line-height:1;font-weight:700}
+.ks{font-size:12px;color:var(--muted);margin-top:5px}
+.kd{font-size:13px;font-weight:700;margin-top:4px}
+.kd.ahd{color:var(--ahd)}.kd.bhd{color:var(--bhd)}.kd.neu{color:var(--muted)}
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.ch{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--cream);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ct{font-size:14px;color:var(--burg);font-weight:700}
+.cs{font-size:11px;color:var(--muted);margin-top:2px}
+.cb{padding:18px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:960px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g3{grid-template-columns:1fr}}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{padding:8px 11px;font-size:11px;font-weight:700;font-family:var(--font-head);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);background:var(--cream);white-space:nowrap}
+.tbl th.ahd-h{background:var(--ahd-bg);color:var(--ahd)}
+.tbl th.bhd-h{background:var(--bhd-bg);color:var(--bhd)}
+.tbl th.new-h{background:var(--new-bg);color:var(--new)}
+.tbl th.warn-h{background:var(--warn-bg);color:var(--warn)}
+.tbl td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:14px;font-weight:400}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--burg-dk)}
+.tbl tr.expandable{cursor:pointer}
+.tbl tr.expandable:hover td{background:#f5eff3}
+.tbl tr.exp-detail td{background:#fdf8fb;padding:0}
+.exp-inner{padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;border-top:1px solid var(--border)}
+.exp-field{font-size:12px}
+.exp-label{font-weight:700;font-family:var(--font-head);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.exp-val{color:var(--text)}
+.num{text-align:center;font-size:12px}
+.ts{overflow-x:auto}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--font-head)}
+.pill.ahd{background:var(--ahd-bg);color:var(--ahd)}
+.pill.bhd{background:var(--bhd-bg);color:var(--bhd)}
+.pill.new{background:var(--new-bg);color:var(--new)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.neu{background:var(--cream-dk);color:var(--muted)}
+.pill.gld{background:#fdf3dc;color:#8a5a00}
+.stabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap}
+.stab{padding:6px 15px;border-radius:20px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--font-head);color:var(--muted);transition:.15s}
+.stab.on{background:var(--burg);color:#fff;border-color:var(--burg)}
+.stab:hover:not(.on){border-color:var(--burg);color:var(--burg)}
+.sp{display:none}.sp.on{display:block}
+.bw{background:var(--cream-dk);border-radius:4px;height:8px;overflow:hidden;margin-top:4px}
+.bf{height:100%;border-radius:4px;transition:width .6s}
+.filters{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filters input,.filters select{border:1px solid var(--border);border-radius:4px;padding:6px 11px;font-size:13px;font-family:var(--font-body);background:#fff;color:var(--text)}
+.filters input{width:220px}
+.fc{font-size:12px;color:var(--muted);margin-left:auto}
+.ctrls{display:flex;gap:14px;align-items:flex-end;margin-bottom:22px;background:#fff;padding:16px 20px;border-radius:var(--r);box-shadow:var(--shadow);flex-wrap:wrap}
+.cg{display:flex;flex-direction:column;gap:4px}
+.cg label{font-size:11px;font-weight:700;font-family:var(--font-head);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.cg select{border:1px solid var(--border);border-radius:4px;padding:7px 11px;font-size:13px;font-family:var(--font-body);min-width:160px;background:#fff;color:var(--text)}
+.btn-p{background:var(--burg);color:#fff;padding:8px 18px;border-radius:var(--r);border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font-head)}
+.btn-p:hover{background:var(--burg-lt)}
+.dp{color:var(--ahd);font-weight:700}.dn{color:var(--bhd);font-weight:700}.dz{color:var(--muted)}
+.rbar{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.rlbl{font-size:13px;min-width:220px;flex-shrink:0}
+.rtrk{flex:1;background:var(--cream-dk);border-radius:4px;height:22px;overflow:hidden}
+.rfil{height:100%;background:var(--burg);border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .5s}
+.rflbl{font-size:11px;color:#fff;font-weight:700;white-space:nowrap}
+.rcnt{font-size:12px;color:var(--muted);min-width:40px;text-align:right}
+.alert{padding:11px 15px;border-radius:var(--r);font-size:13px;margin-bottom:14px;border-left:3px solid}
+.alert.info{background:#e3eef6;color:var(--new);border-color:var(--new)}
+.alert.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--gold)}
+.alert.err{background:var(--bhd-bg);color:var(--bhd);border-color:var(--bhd)}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--burg);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.pw{margin:16px auto 0;max-width:420px}
+.pb{height:6px;background:var(--cream-dk);border-radius:3px;overflow:hidden}
+.pf{height:100%;background:var(--burg);border-radius:3px;transition:width .3s}
+.pl{font-size:12px;color:var(--muted);margin-top:6px;text-align:left}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;font-family:var(--font-head)}
+.badge.live{background:var(--ahd-bg);color:var(--ahd)}
+.badge.count-only{background:var(--cream-dk);color:var(--muted)}
+.badge.full{background:var(--new-bg);color:var(--new)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}
+.leg-i{display:flex;align-items:center;gap:5px}
+.leg-d{width:10px;height:10px;border-radius:2px}
+/* Fin cards */
+.fin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:8px}
+.fin-card{background:var(--cream);border-radius:var(--r);padding:14px 16px;border:1px solid var(--border)}
+.fin-lbl{font-size:11px;font-weight:700;font-family:var(--font-head);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
+.fin-val{font-size:22px;font-weight:700;color:var(--text)}
+.fin-sub{font-size:11px;color:var(--muted);margin-top:3px}
+/* Date picker row */
+.date-pick-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.date-pick-row label{font-size:12px;font-weight:700;font-family:var(--font-head);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.date-pick-row select{border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:13px;font-family:var(--font-body);background:#fff;color:var(--text)}
+.footer{text-align:center;padding:22px;font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <h1>CLEAR Membership Renewal Dashboard</h1>
+  <div class="hdr-r">
+    <div><span class="dot"></span>Live Novi data · Historical database</div>
+    <div id="rl">Not yet loaded</div>
+  </div>
+</header>
+
+<div class="cfg">
+  <span>Worker:</span><input id="cw" class="iw" placeholder="https://your-worker.workers.dev">
+  <span>Token:</span><input id="ct" class="it" type="password" placeholder="auth-token">
+  <button class="btn-g" onclick="saveLoad()">Save &amp; Load</button>
+  <button class="btn-o" onclick="clearCfg()">Clear</button>
+  <span id="cst" style="font-size:11px;margin-left:4px"></span>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="goTab('cur',this)">Current Status</button>
+  <button class="tab" onclick="goTab('hist',this)">Historical Comparison</button>
+  <button class="tab" onclick="goTab('survey',this)">Non-Renewal Survey</button>
+  <button class="tab" onclick="goTab('mbrs',this)">Member List</button>
+</div>
+
+<div class="main">
+
+<!-- TAB: Current Status -->
+<div id="panel-cur" class="panel on">
+  <div id="cur-load" class="loading">
+    <span class="spin"></span>&nbsp; Connecting to Novi…
+    <div class="pw"><div class="pb"><div class="pf" id="pf" style="width:0"></div></div><div class="pl" id="pl">Fetching group membership lists…</div></div>
+  </div>
+  <div id="cur-err" style="display:none"></div>
+  <div id="cur-ok" style="display:none">
+    <div class="kpis" id="kpis"></div>
+    <div class="stabs">
+      <button class="stab on" onclick="goSub('cur','ov',this)">Overview</button>
+      <button class="stab" onclick="goSub('cur','fin',this)">Financial</button>
+      <button class="stab" onclick="goSub('cur','lv',this)">By Level</button>
+      <button class="stab" onclick="goSub('cur','ct',this)">By Country</button>
+      <button class="stab" onclick="goSub('cur','pc',this)">Renewal Pace</button>
+    </div>
+
+    <!-- Overview -->
+    <div id="cur-sp-ov" class="sp on">
+      <div class="g2">
+        <div class="card">
+          <div class="ch">
+            <div><div class="ct">Current Year vs Selected Date</div><div class="cs" id="pace-lbl"></div></div>
+            <span class="badge live">LIVE</span>
+          </div>
+          <div class="cb">
+            <div class="date-pick-row">
+              <label>Compare to:</label>
+              <select id="cmp-date-sel" onchange="renderOverviewTable()"></select>
+              <span id="cmp-date-badge"></span>
+            </div>
+            <div class="ts"><table class="tbl" id="ov-tbl"></table></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">Cycle at a Glance</div></div>
+          <div class="cb" id="glance-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial -->
+    <div id="cur-sp-fin" class="sp">
+      <div class="card">
+        <div class="ch"><div class="ct">Financial Summary</div><div class="cs">Estimated dues based on membership level rates · Open/overdue balances live from Novi</div></div>
+        <div class="cb" id="fin-body"></div>
+      </div>
+    </div>
+
+    <!-- By Level (live Novi) -->
+    <div id="cur-sp-lv" class="sp">
+      <div class="card">
+        <div class="ch">
+          <div><div class="ct">By Membership Level</div><div class="cs">All four groups · live from Novi</div></div>
+          <div class="legend">
+            <span class="leg-i"><span class="leg-d" style="background:var(--ahd)"></span>Renewed</span>
+            <span class="leg-i"><span class="leg-d" style="background:var(--gold)"></span>Pending</span>
+            <span class="leg-i"><span class="leg-d" style="background:var(--bhd)"></span>Non-Renewing</span>
+            <span class="leg-i"><span class="leg-d" style="background:var(--new)"></span>New</span>
+          </div>
+        </div>
+        <div class="cb ts"><table class="tbl" id="lv-tbl"></table></div>
+      </div>
+      <!-- Historical level snapshot for comparison -->
+      <div class="card" style="margin-top:0">
+        <div class="ch">
+          <div><div class="ct">Historical Level Snapshot</div><div class="cs">From the Historical Comparison database</div></div>
+          <div class="date-pick-row" style="margin:0">
+            <label>Date:</label>
+            <select id="hist-lv-date" onchange="renderHistLvTable()"></select>
+          </div>
+        </div>
+        <div class="cb ts"><table class="tbl" id="hist-lv-tbl"></table></div>
+      </div>
+    </div>
+
+    <!-- By Country -->
+    <div id="cur-sp-ct" class="sp">
+      <div class="card">
+        <div class="ch">
+          <div><div class="ct">By Country</div><div class="cs">All four groups · live from Novi</div></div>
+          <div class="legend">
+            <span class="leg-i"><span class="leg-d" style="background:var(--ahd)"></span>Renewed</span>
+            <span class="leg-i"><span class="leg-d" style="background:var(--gold)"></span>Pending</span>
+            <span class="leg-i"><span class="leg-d" style="background:var(--bhd)"></span>Non-Renewing</span>
+            <span class="leg-i"><span class="leg-d" style="background:var(--new)"></span>New</span>
+          </div>
+        </div>
+        <div class="cb ts"><table class="tbl" id="ct-tbl"></table></div>
+      </div>
+    </div>
+
+    <!-- Pace -->
+    <div id="cur-sp-pc" class="sp">
+      <div class="card">
+        <div class="ch"><div class="ct">Historical Renewal Pace — All Years</div><div class="cs">Weekly meeting snapshots + live current count</div></div>
+        <div class="cb ts"><table class="tbl" id="pc-tbl"></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Historical -->
+<div id="panel-hist" class="panel">
+  <div class="ctrls">
+    <div class="cg"><label>Date A</label><select id="sel-a"></select></div>
+    <div class="cg"><label>Date B</label><select id="sel-b"></select></div>
+    <div class="cg"><label>View</label>
+      <select id="sel-v">
+        <option value="lv">By Membership Level</option>
+        <option value="ct">By Country</option>
+        <option value="rv">Revenue</option>
+        <option value="tr">Renewal Trend</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="runCmp()">Compare</button>
+    <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="hm"></div>
+  </div>
+  <div id="hr"></div>
+</div>
+
+<!-- TAB: Survey -->
+<div id="panel-survey" class="panel">
+  <div id="sv-load" style="display:none" class="loading"><span class="spin"></span>&nbsp; Loading SurveyMonkey…</div>
+  <div id="sv-body"><div class="alert info">Survey loads after worker config is saved. Survey ID: 421477764</div></div>
+</div>
+
+<!-- TAB: Members -->
+<div id="panel-mbrs" class="panel">
+  <div id="mb-load" style="display:none" class="loading"><span class="spin"></span>&nbsp; Loading members…</div>
+  <div id="mb-err" style="display:none"></div>
+  <div id="mb-ok" style="display:none">
+    <div class="filters">
+      <input id="ms" placeholder="Search org name…" oninput="fmbr()">
+      <select id="ml" onchange="fmbr()"><option value="">All Levels</option></select>
+      <select id="mc" onchange="fmbr()"><option value="">All Countries</option></select>
+      <select id="mst" onchange="fmbr()">
+        <option value="">All Statuses</option>
+        <option value="renewed">Renewed</option>
+        <option value="pending">Pending</option>
+        <option value="non-renewing">Non-Renewing</option>
+        <option value="new">New Member</option>
+      </select>
+      <span class="fc" id="mct"></span>
+      <button class="btn-g" onclick="exportXlsx()" style="padding:6px 14px;font-size:12px">&#8595; Export to Excel</button>
+    </div>
+    <div class="card">
+      <div class="cb ts" style="padding:0">
+        <table class="tbl">
+          <thead><tr>
+            <th></th>
+            <th>Organization</th><th>Level</th><th>Country</th>
+            <th>Expires</th><th>Status</th>
+          </tr></thead>
+          <tbody id="mb-tb"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="footer">CLEAR Membership Renewal Dashboard · Novi AMS (live) + Historical database · v4.0</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DUES RATE TABLE (from Member_Dues.xlsx)
+// Maps EffectiveMemberType.Name → annual dues amount
+// ═══════════════════════════════════════════
+// DUES_RATES: keyed to exact values from CustomFields["Regular/Associate Membership Level"]
+// and EffectiveMemberType.Name. All variants included.
+const DUES_RATES = {
+  // Regular Organizational — Agency sub-levels (from CustomField)
+  'Agency responsible for 20+ Regulated Entities/Professions': 2980,
+  'Agency responsible for 10-19 Regulated Entities/Professions': 1790,
+  'Agency responsible for 9 Regulated Entities/Professions': 1730,
+  'Agency responsible for 8 Regulated Entities/Professions': 1540,
+  'Agency responsible for 7 Regulated Entities/Professions': 1345,
+  'Agency responsible for 6 Regulated Entities/Professions': 1155,
+  'Agency responsible for 5 Regulated Entities/Professions': 960,
+  'Agency responsible for 4 Regulated Entities/Professions': 770,
+  'Agency responsible for 3 Regulated Entities/Professions': 575,
+  'Agency responsible for 2 Regulated Entities/Professions': 385,
+  // Shorter variants
+  'Agency for 20+': 2980, 'Agency for 10-19': 1790,
+  'Agency for 9': 1730, 'Agency for 8': 1540, 'Agency for 7': 1345,
+  'Agency for 6': 1155, 'Agency for 5': 960, 'Agency for 4': 770,
+  'Agency for 3': 575, 'Agency for 2': 385,
+  // Regular Organizational — other sub-levels
+  'Associations of Agencies or Organizations': 525,
+  'Association of Agencies or Organizations': 525,
+  'Associations of Agencies': 525,
+  'Other Government Agencies': 525,
+  'Other Govt. Agencies': 525,
+  'Individual Agency/Regulatory Organization': 260,
+  'Individual Agency/Reg Org': 260,
+  'Individual Agency': 260,
+  // Regular Individual
+  'Individual (employee of a government agency/organization)': 225,
+  'Individual (employee of govt. agency/organization)': 225,
+  'Individual (employee)': 225,
+  'Regular Individual Member': 225,
+  'Regular - Individual Member': 225,
+  // Associate Organizational
+  'State/Provincial Professional Association': 525,
+  'State or Provincial Professional Association': 525,
+  'State/Provincial': 525,
+  'National Professional Association/Certifying Organization': 525,
+  'National Professional Assoc.': 525,
+  'National Professional Association': 525,
+  'Other Organizations/Vendors': 895,
+  'Other Orgs/Vendors': 895,
+  // Associate Individual
+  'Associate Individual Member': 225,
+  'Associate - Individual Member': 225,
+  'Associate Individuals': 225,
+  'Associate Individual': 225,
+};
+
+function getDues(level) {
+  if (!level) return null;
+  // Direct match
+  if (DUES_RATES[level] != null) return DUES_RATES[level];
+  // Partial match
+  for (const [key, val] of Object.entries(DUES_RATES)) {
+    if (level.toLowerCase().includes(key.toLowerCase()) ||
+        key.toLowerCase().includes(level.toLowerCase())) return val;
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════
+// HISTORICAL DATA (full dataset from workbook)
+// ═══════════════════════════════════════════
+const HIST = {"raw":[{"date":"2023-05-11","cur_yr":"23-24","day":41,"renewed":25,"new_members":null,"nonrenew":null,"total_going_in":null},{"date":"2023-05-18","cur_yr":"23-24","day":48,"renewed":30,"new_members":null,"nonrenew":null,"total_going_in":null},{"date":"2023-08-02","cur_yr":"23-24","day":124,"renewed":270,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-08-10","cur_yr":"23-24","day":132,"renewed":277,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-08-17","cur_yr":"23-24","day":139,"renewed":282,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-08-24","cur_yr":"23-24","day":146,"renewed":289,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-09-07","cur_yr":"23-24","day":160,"renewed":300,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-09-14","cur_yr":"23-24","day":167,"renewed":310,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-09-21","cur_yr":"23-24","day":174,"renewed":318,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-09-28","cur_yr":"23-24","day":181,"renewed":325,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-10-05","cur_yr":"23-24","day":188,"renewed":330,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-10-12","cur_yr":"23-24","day":195,"renewed":336,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-10-19","cur_yr":"23-24","day":202,"renewed":341,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-10-26","cur_yr":"23-24","day":209,"renewed":346,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2023-11-02","cur_yr":"23-24","day":216,"renewed":352,"new_members":null,"nonrenew":null,"total_going_in":522},{"date":"2024-06-13","cur_yr":"24-25","day":74,"renewed":235,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-06-27","cur_yr":"24-25","day":88,"renewed":250,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-07-09","cur_yr":"24-25","day":100,"renewed":265,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-07-18","cur_yr":"24-25","day":109,"renewed":272,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-07-25","cur_yr":"24-25","day":116,"renewed":278,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-08-01","cur_yr":"24-25","day":123,"renewed":285,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-08-07","cur_yr":"24-25","day":129,"renewed":291,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-08-15","cur_yr":"24-25","day":137,"renewed":298,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-08-22","cur_yr":"24-25","day":144,"renewed":304,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-09-05","cur_yr":"24-25","day":158,"renewed":315,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-09-19","cur_yr":"24-25","day":172,"renewed":323,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-10-02","cur_yr":"24-25","day":185,"renewed":335,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-10-09","cur_yr":"24-25","day":192,"renewed":341,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-10-17","cur_yr":"24-25","day":200,"renewed":348,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-10-24","cur_yr":"24-25","day":207,"renewed":354,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2024-10-30","cur_yr":"24-25","day":213,"renewed":360,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-06-11","cur_yr":"25-26","day":72,"renewed":235,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-06-24","cur_yr":"25-26","day":85,"renewed":248,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-07-09","cur_yr":"25-26","day":100,"renewed":261,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-07-23","cur_yr":"25-26","day":114,"renewed":273,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-08-06","cur_yr":"25-26","day":128,"renewed":285,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-08-20","cur_yr":"25-26","day":142,"renewed":295,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-09-03","cur_yr":"25-26","day":156,"renewed":305,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-09-17","cur_yr":"25-26","day":170,"renewed":315,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-10-01","cur_yr":"25-26","day":184,"renewed":325,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-10-09","cur_yr":"25-26","day":192,"renewed":332,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-10-22","cur_yr":"25-26","day":205,"renewed":340,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-11-03","cur_yr":"25-26","day":217,"renewed":350,"new_members":null,"nonrenew":null,"total_going_in":553},{"date":"2025-11-24","cur_yr":"25-26","day":238,"renewed":465,"new_members":58,"nonrenew":null,"total_going_in":553},{"date":"2026-01-22","cur_yr":"25-26","day":297,"renewed":464,"new_members":58,"nonrenew":null,"total_going_in":553},{"date":"2026-02-11","cur_yr":"25-26","day":317,"renewed":464,"new_members":58,"nonrenew":null,"total_going_in":553},{"date":"2026-03-11","cur_yr":"25-26","day":345,"renewed":465,"new_members":61,"nonrenew":null,"total_going_in":553},{"date":"2026-05-21","cur_yr":"26-27","day":51,"renewed":160,"new_members":8,"nonrenew":4,"total_going_in":525}],"levels":[{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 20+","renewed":23,"total":23,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 10-19","renewed":5,"total":5,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 2","renewed":21,"total":25,"pct":0.84},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 3","renewed":2,"total":2,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 4","renewed":4,"total":4,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 5","renewed":3,"total":3,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 6","renewed":1,"total":1,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 7","renewed":2,"total":2,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Agency for 9","renewed":1,"total":1,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Associations of Agencies","renewed":20,"total":23,"pct":0.87},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Individual (employee)","renewed":13,"total":23,"pct":0.57},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Individual Agency","renewed":233,"total":267,"pct":0.87},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"National Professional Assoc.","renewed":32,"total":36,"pct":0.89},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Other Govt. Agencies","renewed":16,"total":16,"pct":1.0},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Other Individuals","renewed":38,"total":54,"pct":0.7},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"Other Orgs/Vendors","renewed":25,"total":28,"pct":0.89},{"date":"2023-03-01","yr":"22-23","source":"FY Spreadsheet","level":"State/Provincial","renewed":10,"total":12,"pct":0.83},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 20+","renewed":22,"total":24,"pct":0.917},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 10-19","renewed":4,"total":5,"pct":0.8},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 2","renewed":25,"total":24,"pct":1.042},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 3","renewed":4,"total":5,"pct":0.8},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 4","renewed":5,"total":5,"pct":1.0},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 5","renewed":4,"total":3,"pct":1.333},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 6","renewed":2,"total":2,"pct":1.0},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 7","renewed":2,"total":2,"pct":1.0},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Agency for 9","renewed":1,"total":1,"pct":1.0},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Associations of Agencies","renewed":23,"total":25,"pct":0.92},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Individual (employee)","renewed":13,"total":26,"pct":0.5},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Individual Agency","renewed":236,"total":251,"pct":0.94},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"National Professional Assoc.","renewed":29,"total":33,"pct":0.879},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Other Govt. Agencies","renewed":16,"total":20,"pct":0.8},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Other Individuals","renewed":41,"total":58,"pct":0.707},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"Other Orgs/Vendors","renewed":27,"total":27,"pct":1.0},{"date":"2024-03-01","yr":"23-24","source":"FY Spreadsheet","level":"State/Provincial","renewed":10,"total":11,"pct":0.909},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 20+","renewed":22,"total":25,"pct":0.88},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 10-19","renewed":5,"total":5,"pct":1.0},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 2","renewed":28,"total":31,"pct":0.903},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 3","renewed":5,"total":8,"pct":0.625},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 4","renewed":5,"total":6,"pct":0.833},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 5","renewed":4,"total":4,"pct":1.0},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 6","renewed":3,"total":3,"pct":1.0},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 7","renewed":2,"total":2,"pct":1.0},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Agency for 9","renewed":2,"total":1,"pct":2.0},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Associations of Agencies","renewed":21,"total":23,"pct":0.913},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Individual (employee)","renewed":16,"total":30,"pct":0.533},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Individual Agency","renewed":236,"total":259,"pct":0.911},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"National Professional Assoc.","renewed":25,"total":30,"pct":0.833},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Other Govt. Agencies","renewed":19,"total":19,"pct":1.0},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Other Individuals","renewed":49,"total":63,"pct":0.778},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"Other Orgs/Vendors","renewed":29,"total":33,"pct":0.879},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","level":"State/Provincial","renewed":10,"total":11,"pct":0.909},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 20+","renewed":23,"total":24,"pct":0.96},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 10-19","renewed":5,"total":5,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 2","renewed":28,"total":33,"pct":0.85},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 3","renewed":8,"total":6,"pct":1.33},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 4","renewed":5,"total":5,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 5","renewed":5,"total":5,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 6","renewed":3,"total":3,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 7","renewed":2,"total":2,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Agency for 9","renewed":3,"total":3,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Associations of Agencies","renewed":19,"total":23,"pct":0.83},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Individual (employee)","renewed":20,"total":33,"pct":0.61},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Individual Agency","renewed":223,"total":258,"pct":0.86},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"National Professional Assoc.","renewed":23,"total":25,"pct":0.92},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Other Govt. Agencies","renewed":18,"total":27,"pct":0.67},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Other Individuals","renewed":40,"total":60,"pct":0.67},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"Other Orgs/Vendors","renewed":26,"total":30,"pct":0.87},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","level":"State/Provincial","renewed":11,"total":11,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 20+","renewed":22,"total":24,"pct":0.917},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 10-19","renewed":5,"total":5,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 2","renewed":29,"total":33,"pct":0.879},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 3","renewed":8,"total":6,"pct":1.333},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 4","renewed":5,"total":5,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 5","renewed":5,"total":5,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 6","renewed":3,"total":3,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 7","renewed":2,"total":2,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Agency for 9","renewed":3,"total":3,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Associations of Agencies","renewed":20,"total":23,"pct":0.87},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Individual (employee)","renewed":20,"total":33,"pct":0.606},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Individual Agency","renewed":226,"total":258,"pct":0.876},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"National Professional Assoc.","renewed":23,"total":25,"pct":0.92},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Other Govt. Agencies","renewed":18,"total":27,"pct":0.667},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Other Individuals","renewed":39,"total":60,"pct":0.65},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"Other Orgs/Vendors","renewed":26,"total":30,"pct":0.867},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","level":"State/Provincial","renewed":11,"total":11,"pct":1.0},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 20+","renewed":6,"total":23,"pct":0.26},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 10-19","renewed":4,"total":6,"pct":0.67},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 2","renewed":9,"total":34,"pct":0.26},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 3","renewed":2,"total":9,"pct":0.22},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 4","renewed":0,"total":5,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 5","renewed":0,"total":6,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 6","renewed":1,"total":3,"pct":0.33},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 7","renewed":0,"total":2,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Agency for 9","renewed":1,"total":3,"pct":0.33},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Associations of Agencies","renewed":9,"total":21,"pct":0.43},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Individual (employee)","renewed":6,"total":25,"pct":0.24},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Individual Agency","renewed":90,"total":242,"pct":0.37},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"National Professional Assoc.","renewed":10,"total":25,"pct":0.4},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Other Govt. Agencies","renewed":4,"total":20,"pct":0.2},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Other Individuals","renewed":7,"total":62,"pct":0.24},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"Other Orgs/Vendors","renewed":6,"total":29,"pct":0.55},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","level":"State/Provincial","renewed":5,"total":11,"pct":0.45}],"countries":[{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"Australia","renewed":11,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"Canada","renewed":168,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"Ireland","renewed":9,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"New Zealand","renewed":9,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"Scotland","renewed":1,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"United Arab Emirates","renewed":1,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"United Kingdom","renewed":8,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"United States","renewed":273,"total":null,"pct":null},{"date":"2025-03-19","yr":"24-25","source":"FY Spreadsheet","country":"Wales","renewed":1,"total":null,"pct":null},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Australia","renewed":10,"total":11,"pct":0.91},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Canada","renewed":158,"total":191,"pct":0.83},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Ghana","renewed":0,"total":1,"pct":null},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Guam","renewed":1,"total":1,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Ireland","renewed":7,"total":9,"pct":0.78},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"New Zealand","renewed":11,"total":12,"pct":0.92},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Northern Mariana Islands","renewed":1,"total":1,"pct":1.0},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Scotland","renewed":0,"total":1,"pct":null},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"United Arab Emirates","renewed":0,"total":1,"pct":null},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"United Kingdom","renewed":6,"total":8,"pct":0.75},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"United States","renewed":267,"total":317,"pct":0.84},{"date":"2025-11-24","yr":"25-26","source":"Agenda Image","country":"Wales","renewed":1,"total":1,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Australia","renewed":10,"total":11,"pct":0.909},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Canada","renewed":157,"total":191,"pct":0.822},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Ghana","renewed":0,"total":1,"pct":null},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Guam","renewed":1,"total":1,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Ireland","renewed":7,"total":9,"pct":0.778},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"New Zealand","renewed":11,"total":12,"pct":0.917},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Northern Mariana Islands","renewed":1,"total":1,"pct":1.0},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Scotland","renewed":0,"total":1,"pct":null},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"United Arab Emirates","renewed":0,"total":1,"pct":null},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"United Kingdom","renewed":6,"total":8,"pct":0.75},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"United States","renewed":271,"total":317,"pct":0.855},{"date":"2026-03-11","yr":"25-26","source":"FY Spreadsheet","country":"Wales","renewed":1,"total":1,"pct":1.0},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Australia","renewed":4,"total":11,"pct":0.364},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Canada","renewed":61,"total":172,"pct":0.355},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Guam","renewed":0,"total":1,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Ireland","renewed":1,"total":7,"pct":0.143},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"New Zealand","renewed":6,"total":16,"pct":0.375},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Northern Mariana Islands","renewed":0,"total":1,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Saudi Arabia","renewed":0,"total":1,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"United Kingdom","renewed":0,"total":9,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"United States","renewed":87,"total":306,"pct":0.284},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Virgin Islands","renewed":0,"total":1,"pct":null},{"date":"2026-05-21","yr":"26-27","source":"Agenda Table","country":"Wales","renewed":0,"total":1,"pct":null}],"revenue":[{"date":"2023-03-01","yr":"22-23","item":"Agency for 20+","revenue":65895,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Agency for 10-19","revenue":8600,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"2-9 (subtotal)","revenue":20340,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Associations of Agencies","revenue":10100,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Regular - Individual Member","revenue":2795,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Individual Agency/Reg Org","revenue":58000,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"National Prof Assoc/Cert","revenue":16160,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Other Govt. Agencies","revenue":8080,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Associate - Individual Member","revenue":8170,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Other Orgs/Vendors","revenue":21500,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"State/Provincial Prof Assoc","revenue":5050,"rt":"Level"},{"date":"2023-03-01","yr":"22-23","item":"Total Renewal","revenue":224690,"rt":"Summary"},{"date":"2023-03-01","yr":"22-23","item":"New Member Revenue","revenue":25830,"rt":"Summary"},{"date":"2023-03-01","yr":"22-23","item":"Total Revenue","revenue":250920,"rt":"Summary"},{"date":"2023-03-01","yr":"22-23","item":"Budget","revenue":253000,"rt":"Summary"},{"date":"2023-03-01","yr":"22-23","item":"Difference","revenue":-2080,"rt":"Summary"},{"date":"2024-03-01","yr":"23-24","item":"Agency for 20+","revenue":65560,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Agency for 10-19","revenue":7160,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"2-9 (subtotal)","revenue":26030,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Associations of Agencies","revenue":12075,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Regular - Individual Member","revenue":2925,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Individual Agency/Reg Org","revenue":61360,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"National Prof Assoc/Cert","revenue":15225,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Other Govt. Agencies","revenue":8400,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Associate - Individual Member","revenue":9225,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Other Orgs/Vendors","revenue":24165,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"State/Provincial Prof Assoc","revenue":5250,"rt":"Level"},{"date":"2024-03-01","yr":"23-24","item":"Total Renewal","revenue":237375,"rt":"Summary"},{"date":"2024-03-01","yr":"23-24","item":"New Member Revenue","revenue":40015,"rt":"Summary"},{"date":"2024-03-01","yr":"23-24","item":"Total Revenue","revenue":277390,"rt":"Summary"},{"date":"2024-03-01","yr":"23-24","item":"Budget","revenue":263120,"rt":"Summary"},{"date":"2024-03-01","yr":"23-24","item":"Difference","revenue":14200,"rt":"Summary"},{"date":"2025-03-19","yr":"24-25","item":"Agency for 20+","revenue":65560,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Agency for 10-19","revenue":8950,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"2-9 (subtotal)","revenue":30580,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Associations of Agencies","revenue":11025,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Regular - Individual Member","revenue":3600,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Individual Agency/Reg Org","revenue":61360,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"National Prof Assoc/Cert","revenue":13125,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Other Govt. Agencies","revenue":9975,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Associate - Individual Member","revenue":11025,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Other Orgs/Vendors","revenue":25955,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"State/Provincial Prof Assoc","revenue":5250,"rt":"Level"},{"date":"2025-03-19","yr":"24-25","item":"Total Renewal","revenue":246405,"rt":"Summary"},{"date":"2025-03-19","yr":"24-25","item":"New Member Revenue","revenue":29840,"rt":"Summary"},{"date":"2025-03-19","yr":"24-25","item":"Total Revenue","revenue":276245,"rt":"Summary"},{"date":"2025-03-19","yr":"24-25","item":"Budget","revenue":277000,"rt":"Summary"},{"date":"2025-03-19","yr":"24-25","item":"Difference","revenue":-755,"rt":"Summary"},{"date":"2025-11-24","yr":"25-26","item":"Agency for 20+","revenue":68540,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Agency for 10-19","revenue":8950,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"2-9 (subtotal)","revenue":34930,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Associations of Agencies","revenue":9975,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Regular - Individual Member","revenue":4500,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Individual Agency/Reg Org","revenue":57980,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"National Prof Assoc/Cert","revenue":12075,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Other Govt. Agencies","revenue":9450,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Associate - Individual Member","revenue":9000,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Other Orgs/Vendors","revenue":23270,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"State/Provincial Prof Assoc","revenue":5775,"rt":"Level"},{"date":"2025-11-24","yr":"25-26","item":"Total Renewal","revenue":244445,"rt":"Summary"},{"date":"2025-11-24","yr":"25-26","item":"New Member Revenue","revenue":20845,"rt":"Summary"},{"date":"2025-11-24","yr":"25-26","item":"Total Revenue","revenue":265290,"rt":"Summary"},{"date":"2025-11-24","yr":"25-26","item":"Budget","revenue":262500,"rt":"Summary"},{"date":"2025-11-24","yr":"25-26","item":"Difference","revenue":2790,"rt":"Summary"},{"date":"2026-03-11","yr":"25-26","item":"Agency for 20+","revenue":65560,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Agency for 10-19","revenue":8950,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"2-9 (subtotal)","revenue":35315,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Associations of Agencies","revenue":10500,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Regular - Individual Member","revenue":4500,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Individual Agency/Reg Org","revenue":58760,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"National Prof Assoc/Cert","revenue":12075,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Other Govt. Agencies","revenue":9450,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Associate - Individual Member","revenue":8775,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Other Orgs/Vendors","revenue":23270,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"State/Provincial Prof Assoc","revenue":5775,"rt":"Level"},{"date":"2026-03-11","yr":"25-26","item":"Total Renewal","revenue":242930,"rt":"Summary"},{"date":"2026-03-11","yr":"25-26","item":"New Member Revenue","revenue":24000,"rt":"Summary"},{"date":"2026-03-11","yr":"25-26","item":"Total Revenue","revenue":266930,"rt":"Summary"},{"date":"2026-03-11","yr":"25-26","item":"Budget","revenue":262500,"rt":"Summary"},{"date":"2026-03-11","yr":"25-26","item":"Difference","revenue":4430,"rt":"Summary"},{"date":"2026-05-21","yr":"26-27","item":"Agency for 20+","revenue":17880,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Agency for 10-19","revenue":7160,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"2-9 (subtotal)","revenue":7435,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Associations of Agencies","revenue":4725,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Regular - Individual Member","revenue":1350,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Individual Agency/Reg Org","revenue":23400,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"National Prof Assoc/Cert","revenue":5250,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Other Govt. Agencies","revenue":2100,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Associate - Individual Member","revenue":1575,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Other Orgs/Vendors","revenue":5370,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"State/Provincial Prof Assoc","revenue":2625,"rt":"Level"},{"date":"2026-05-21","yr":"26-27","item":"Total Renewal","revenue":78870,"rt":"Summary"},{"date":"2026-05-21","yr":"26-27","item":"New Member Revenue","revenue":4420,"rt":"Summary"},{"date":"2026-05-21","yr":"26-27","item":"Total Revenue","revenue":162160,"rt":"Summary"},{"date":"2026-05-21","yr":"26-27","item":"Budget","revenue":275975,"rt":"Summary"},{"date":"2026-05-21","yr":"26-27","item":"Difference","revenue":-113815,"rt":"Summary"}],"date_meta":[{"date":"2023-05-11","yr":"23-24","day":41,"detail":false},{"date":"2023-05-18","yr":"23-24","day":48,"detail":false},{"date":"2023-08-02","yr":"23-24","day":124,"detail":false},{"date":"2023-08-10","yr":"23-24","day":132,"detail":false},{"date":"2023-08-17","yr":"23-24","day":139,"detail":false},{"date":"2023-08-24","yr":"23-24","day":146,"detail":false},{"date":"2023-09-07","yr":"23-24","day":160,"detail":false},{"date":"2023-09-14","yr":"23-24","day":167,"detail":false},{"date":"2023-09-21","yr":"23-24","day":174,"detail":false},{"date":"2023-09-28","yr":"23-24","day":181,"detail":false},{"date":"2023-10-05","yr":"23-24","day":188,"detail":false},{"date":"2023-10-12","yr":"23-24","day":195,"detail":false},{"date":"2023-10-19","yr":"23-24","day":202,"detail":false},{"date":"2023-10-26","yr":"23-24","day":209,"detail":false},{"date":"2023-11-02","yr":"23-24","day":216,"detail":false},{"date":"2024-06-13","yr":"24-25","day":74,"detail":false},{"date":"2024-06-27","yr":"24-25","day":88,"detail":false},{"date":"2024-07-09","yr":"24-25","day":100,"detail":false},{"date":"2024-07-18","yr":"24-25","day":109,"detail":false},{"date":"2024-07-25","yr":"24-25","day":116,"detail":false},{"date":"2024-08-01","yr":"24-25","day":123,"detail":false},{"date":"2024-08-07","yr":"24-25","day":129,"detail":false},{"date":"2024-08-15","yr":"24-25","day":137,"detail":false},{"date":"2024-08-22","yr":"24-25","day":144,"detail":false},{"date":"2024-09-05","yr":"24-25","day":158,"detail":false},{"date":"2024-09-19","yr":"24-25","day":172,"detail":false},{"date":"2024-10-02","yr":"24-25","day":185,"detail":false},{"date":"2024-10-09","yr":"24-25","day":192,"detail":false},{"date":"2024-10-17","yr":"24-25","day":200,"detail":false},{"date":"2024-10-24","yr":"24-25","day":207,"detail":false},{"date":"2024-10-30","yr":"24-25","day":213,"detail":false},{"date":"2025-06-11","yr":"25-26","day":72,"detail":false},{"date":"2025-06-24","yr":"25-26","day":85,"detail":false},{"date":"2025-07-09","yr":"25-26","day":100,"detail":false},{"date":"2025-07-23","yr":"25-26","day":114,"detail":false},{"date":"2025-08-06","yr":"25-26","day":128,"detail":false},{"date":"2025-08-20","yr":"25-26","day":142,"detail":false},{"date":"2025-09-03","yr":"25-26","day":156,"detail":false},{"date":"2025-09-17","yr":"25-26","day":170,"detail":false},{"date":"2025-10-01","yr":"25-26","day":184,"detail":false},{"date":"2025-10-09","yr":"25-26","day":192,"detail":false},{"date":"2025-10-22","yr":"25-26","day":205,"detail":false},{"date":"2025-11-03","yr":"25-26","day":217,"detail":false},{"date":"2025-11-24","yr":"25-26","day":238,"detail":true},{"date":"2026-01-22","yr":"25-26","day":297,"detail":false},{"date":"2026-02-11","yr":"25-26","day":317,"detail":false},{"date":"2026-03-11","yr":"25-26","day":345,"detail":true},{"date":"2026-05-21","yr":"26-27","day":51,"detail":true}]};
+
+// ═══════════════════════════════════════════
+// NOVI GROUP IDs
+// ═══════════════════════════════════════════
+const GROUPS = {
+  renewed:     '26c2c3ad-1029-4601-b1e2-acc217f9c6d5',
+  pending:     'f1e53583-6754-488c-b48a-afe947482c44',
+  nonrenewing: '1aa9cbe6-a963-4434-86ca-0b1d96a3c610',
+  new:         '18159f5c-eef5-43be-ab2e-f2b8a9e31164',
+};
+const SM_ID = '421477764';
+
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const gW = () => localStorage.getItem('clear_worker_url') || '';
+const gT = () => localStorage.getItem('clear_auth_token') || '';
+function saveLoad() {
+  const w=document.getElementById('cw').value.trim(), t=document.getElementById('ct').value.trim();
+  if(w) localStorage.setItem('clear_worker_url',w);
+  if(t) localStorage.setItem('clear_auth_token',t);
+  const s=document.getElementById('cst'); s.textContent='✓ Saved'; s.style.color='#1a6b3a';
+  loadAll();
+}
+function clearCfg() {
+  ['clear_worker_url','clear_auth_token'].forEach(k=>localStorage.removeItem(k));
+  ['cw','ct'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cst').textContent='Cleared';
+}
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+const $N = n => n==null?'—':n.toLocaleString();
+const $P = p => p==null?'—':(p*100).toFixed(1)+'%';
+const $D = n => n==null?'—':(n>0?'+':'')+n.toLocaleString();
+const $M = n => n==null?'—':'$'+Math.abs(n).toLocaleString();
+const $MC = n => n==null?'—':'$'+n.toLocaleString();
+
+function dayInCycle(ds) {
+  // Cycle: July 1 (Day 1) – June 30 (Day 365/366)
+  const d=new Date(ds+'T00:00:00');
+  let jul1=new Date(d.getFullYear(),6,1); // July = month 6
+  if(d<jul1) jul1=new Date(d.getFullYear()-1,6,1);
+  return Math.round((d-jul1)/86400000)+1;
+}
+function renewalYr(ds) {
+  // Cycle July 1 – June 30: Jul–Dec = YY-(YY+1), Jan–Jun = (YY-1)-YY
+  const d=new Date(ds+'T00:00:00');
+  const jul1=new Date(d.getFullYear(),6,1);
+  if(d<jul1) return `${String(d.getFullYear()-1).slice(2)}-${String(d.getFullYear()).slice(2)}`;
+  return `${String(d.getFullYear()).slice(2)}-${String(d.getFullYear()+1).slice(2)}`;
+}
+function priorYr(yr) {
+  const [a,b]=yr.split('-').map(s=>parseInt('20'+s));
+  return `${String(a-1).slice(2)}-${String(b-1).slice(2)}`;
+}
+function pctPill(p) {
+  if(p==null) return '—';
+  const c=p>=0.9?'ahd':p<0.75?'bhd':'neu';
+  return `<span class="pill ${c}">${$P(p)}</span>`;
+}
+function groupBy(arr,fn) { return arr.reduce((m,x)=>{const k=fn(x)||'—';(m[k]=m[k]||[]).push(x);return m;},{}); }
+
+// ═══════════════════════════════════════════
+// TAB / SUBTAB
+// ═══════════════════════════════════════════
+function goTab(name,btn) {
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('panel-'+name).classList.add('on');
+  if(name==='hist') initHistCtrls();
+  if(name==='survey'&&gW()) loadSurvey();
+  if(name==='mbrs'&&!noviLoaded&&gW()) loadMbrsTab();
+}
+function goSub(tab,sub,btn) {
+  const p=document.getElementById('panel-'+tab);
+  p.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));
+  p.querySelectorAll('.sp').forEach(s=>s.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(`${tab}-sp-${sub}`).classList.add('on');
+}
+
+// ═══════════════════════════════════════════
+// NOVI API
+// ═══════════════════════════════════════════
+let noviData   = {renewed:[],pending:[],nonrenewing:[],new:[]};
+let noviLoaded = false;
+let totalSteps=0, doneSteps=0;
+
+async function noviReq(path) {
+  const r=await fetch(gW()+'/novi'+path,{headers:{'X-Auth-Token':gT()}});
+  if(!r.ok) throw new Error(`Novi ${r.status} on ${path}`);
+  return r.json();
+}
+function setProgress(done,total,label) {
+  const pct=total>0?Math.round(done/total*100):0;
+  const pf=document.getElementById('pf'), pl=document.getElementById('pl');
+  if(pf) pf.style.width=pct+'%';
+  if(pl) pl.textContent=label;
+}
+
+async function fetchGroupFromList(list,label) {
+  // Primary members only: UniqueID === DuesPayerUniqueID
+  list=list.filter(m=>m.UniqueID===m.DuesPayerUniqueID);
+  const BATCH=5;
+  const details=[];
+  for(let i=0;i<list.length;i+=BATCH) {
+    const batch=list.slice(i,i+BATCH);
+    const results=await Promise.all(batch.map(m=>
+      noviReq(`/api/members/${m.UniqueID}`).catch(()=>({
+        _fallback:true,UniqueID:m.UniqueID,Name:m.Name,ParentMemberName:m.Name,
+        BillingAddress:{CountryFullName:'—'},EffectiveMemberType:{Name:'—'},
+        MembershipExpires:null,Email:null,Phone:null,OpenDuesBalance:0,OverdueDuesBalance:0,
+      }))
+    ));
+    details.push(...results);
+    if(i+BATCH<list.length) await new Promise(r=>setTimeout(r,200));
+    doneSteps+=batch.length;
+    setProgress(doneSteps,totalSteps,`Loading ${label}… ${details.length} / ${list.length}`);
+  }
+  return details.map(m=>{
+    // Level: read from CustomFields first (the actual dues rule),
+    // fall back to EffectiveMemberType.Name for display grouping
+    const cf = m.CustomFields || {};
+    const regularLevel  = cf['Regular Membership Level']?.Value || null;
+    const associateLevel = cf['Associate Membership Level']?.Value || null;
+    const memberTypeGroup = m.EffectiveMemberType?.Name || '—';
+    // Determine the specific dues-rule level
+    let level = regularLevel || associateLevel || memberTypeGroup;
+    // Normalize known variants
+    const LEVEL_NORM = {
+      'Individual Agency/Regulatory Organization': 'Individual Agency/Regulatory Organization',
+      'Associations of Agencies or Organizations': 'Associations of Agencies or Organizations',
+      'Other Government Agencies': 'Other Government Agencies',
+      'State or Provincial Professional Association': 'State/Provincial Professional Association',
+      'State/Provincial Professional Association': 'State/Provincial Professional Association',
+      'National Professional Association/Certifying Organization': 'National Professional Association/Certifying Organization',
+      'Other Organizations/Vendors': 'Other Organizations/Vendors',
+    };
+    level = LEVEL_NORM[level] || level;
+    return {
+      name:      m.ParentMemberName||m.Name||'(Unknown)',
+      level,
+      levelGroup: memberTypeGroup,
+      country:   m.BillingAddress?.CountryFullName||'—',
+      expires:   m.MembershipExpires?m.MembershipExpires.slice(0,10):null,
+      email:     m.Email||m.AccountEmail||null,
+      phone:     m.Phone||null,
+      openBal:   m.OpenDuesBalance||0,
+      overBal:   m.OverdueDuesBalance||0,
+      uid:       m.UniqueID,
+      primaryContactId: m.PrimaryContactUniqueId||null,
+      fallback:  !!m._fallback,
+    };
+  });
+}
+
+async function loadAll() {
+  if(!gW()){showErr('<div class="alert warn">Enter your worker URL and token above, then click Save &amp; Load.</div>');return;}
+  showLoading('Fetching group membership lists…');
+  try {
+    const [rList,pList,nList,wList]=await Promise.all([
+      noviReq(`/api/groups/${GROUPS.renewed}/members?pageSize=1000&offset=0`),
+      noviReq(`/api/groups/${GROUPS.pending}/members?pageSize=1000&offset=0`),
+      noviReq(`/api/groups/${GROUPS.nonrenewing}/members?pageSize=1000&offset=0`),
+      noviReq(`/api/groups/${GROUPS.new}/members?pageSize=1000&offset=0`),
+    ]);
+    const rPrimary=rList.filter(m=>m.UniqueID===m.DuesPayerUniqueID);
+    const pPrimary=pList.filter(m=>m.UniqueID===m.DuesPayerUniqueID);
+    const nPrimary=nList.filter(m=>m.UniqueID===m.DuesPayerUniqueID);
+    const wPrimary=wList.filter(m=>m.UniqueID===m.DuesPayerUniqueID);
+    totalSteps=rPrimary.length+pPrimary.length+nPrimary.length+wPrimary.length;
+    doneSteps=0;
+    setProgress(0,totalSteps,`Fetching details for ${totalSteps} primary members across 4 groups…`);
+    const [renewed,pending,nonrenewing,newMbrs]=await Promise.all([
+      fetchGroupFromList(rList,'renewed'),
+      fetchGroupFromList(pList,'pending'),
+      fetchGroupFromList(nList,'non-renewing'),
+      fetchGroupFromList(wList,'new members'),
+    ]);
+    noviData={renewed,pending,nonrenewing,new:newMbrs};
+    noviLoaded=true;
+    document.getElementById('rl').textContent='Last refreshed: '+new Date().toLocaleTimeString();
+    renderCurrentTab();
+  } catch(e) {
+    showErr(`<div class="alert err"><strong>Could not load Novi data:</strong> ${e.message}</div>
+      <div class="alert info">Historical Comparison tab is still available.</div>`);
+  }
+}
+
+function showLoading(msg){
+  document.getElementById('cur-load').style.display='block';
+  document.getElementById('cur-ok').style.display='none';
+  document.getElementById('cur-err').style.display='none';
+  setProgress(0,1,msg);
+}
+function showErr(html){
+  document.getElementById('cur-load').style.display='none';
+  document.getElementById('cur-ok').style.display='none';
+  const e=document.getElementById('cur-err'); e.style.display='block'; e.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// RENDER CURRENT STATUS TAB
+// ═══════════════════════════════════════════
+function renderCurrentTab() {
+  document.getElementById('cur-load').style.display='none';
+  document.getElementById('cur-err').style.display='none';
+  document.getElementById('cur-ok').style.display='block';
+
+  const {renewed,pending,nonrenewing}=noviData;
+  const newMbrs=noviData.new;
+  const nR=renewed.length, nP=pending.length, nN=nonrenewing.length, nW=newMbrs.length;
+  const nTotal=nR+nP+nN;
+  const renewRate=nTotal>0?nR/nTotal:null;
+
+  const today=new Date().toISOString().slice(0,10);
+  const curYr=renewalYr(today);
+  const todayDay=dayInCycle(today);
+  const pYr=priorYr(curYr);
+
+  // Find closest historical date for auto-select
+  const pYrRows=HIST.raw.filter(r=>r.cur_yr===pYr);
+  let closestDate=null, closestDelta=999;
+  pYrRows.forEach(r=>{const d=Math.abs(r.day-todayDay);if(d<closestDelta){closestDelta=d;closestDate=r.date;}});
+
+  // KPI row
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi bur"><div class="kl">Total Going In</div><div class="kv">${$N(nTotal)}</div><div class="ks">Renewed + Pending + Non-renewing</div></div>
+    <div class="kpi ahd"><div class="kl">Renewed</div><div class="kv">${$N(nR)}</div><div class="ks">${renewRate!=null?$P(renewRate):' —'} of total going in</div></div>
+    <div class="kpi warn"><div class="kl">Pending</div><div class="kv">${$N(nP)}</div><div class="ks">Not yet renewed</div></div>
+    <div class="kpi bhd"><div class="kl">Non-Renewing</div><div class="kv">${$N(nN)}</div><div class="ks">Confirmed not renewing</div></div>
+    <div class="kpi new"><div class="kl">New Members</div><div class="kv">${$N(nW)}</div><div class="ks">Joined this cycle</div></div>`;
+
+  document.getElementById('pace-lbl').textContent=
+    `${curYr} · Day ${todayDay} of cycle`;
+
+  // Populate comparison date picker with ALL 48 historical dates
+  const sel=document.getElementById('cmp-date-sel');
+  sel.innerHTML='';
+  HIST.date_meta.forEach(dm=>{
+    const opt=document.createElement('option');
+    opt.value=dm.date;
+    opt.textContent=`${dm.date} — ${dm.yr}, Day ${dm.day}${dm.detail?' ★':''}`;
+    if(dm.date===closestDate) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  // Put ★ note
+  sel.title='★ = has full level/country detail';
+
+  renderOverviewTable();
+
+  // Cycle at a glance
+  document.getElementById('glance-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div><div class="kl" style="margin-bottom:4px">Today</div><div style="font-size:22px;font-weight:700">${today}</div><div style="font-size:12px;color:var(--muted)">Day ${todayDay} of cycle · ${curYr}</div></div>
+      <div><div class="kl" style="margin-bottom:4px">Cycle Close</div><div style="font-size:22px;font-weight:700">June 30, ${parseInt('20'+curYr.split('-')[1])}</div><div style="font-size:12px;color:var(--muted)">${Math.max(0,Math.round((new Date(parseInt('20'+curYr.split('-')[1]),5,30)-new Date())/86400000))} days remaining</div></div>
+      <div><div class="kl" style="margin-bottom:4px">Renewal Rate</div><div style="font-size:22px;font-weight:700;color:var(--ahd)">${renewRate!=null?$P(renewRate):'—'}</div><div style="font-size:12px;color:var(--muted)">${$N(nR)} of ${$N(nTotal)} renewed</div></div>
+      <div><div class="kl" style="margin-bottom:4px">At Risk</div><div style="font-size:22px;font-weight:700;color:var(--bhd)">${$N(nN)}</div><div style="font-size:12px;color:var(--muted)">Confirmed non-renewing</div></div>
+    </div>`;
+
+  // Financial tab
+  renderFinancial();
+
+  // By Level (Novi live)
+  const lvR=groupBy(renewed,m=>m.level), lvP=groupBy(pending,m=>m.level);
+  const lvN=groupBy(nonrenewing,m=>m.level), lvW=groupBy(newMbrs,m=>m.level);
+  const allLvKeys=[...new Set([...Object.keys(lvR),...Object.keys(lvP),...Object.keys(lvN),...Object.keys(lvW)])].sort();
+
+  document.getElementById('lv-tbl').innerHTML=`
+    <thead><tr><th>Level</th><th class="num ahd-h">Renewed</th><th class="num warn-h">Pending</th><th class="num bhd-h">Non-Renewing</th><th class="num new-h">New</th><th class="num">Total</th><th class="num">Ren. Rate</th></tr></thead>
+    <tbody>${allLvKeys.map(lv=>{
+      const r=(lvR[lv]||[]).length,p=(lvP[lv]||[]).length,n=(lvN[lv]||[]).length,w=(lvW[lv]||[]).length;
+      const tot=r+p+n, rate=tot>0?r/tot:null;
+      return `<tr><td>${lv}</td>
+        <td class="num" style="color:var(--ahd);font-weight:700">${$N(r)}</td>
+        <td class="num" style="color:var(--warn);font-weight:600">${$N(p)}</td>
+        <td class="num" style="color:var(--bhd);font-weight:600">${$N(n)}</td>
+        <td class="num" style="color:var(--new);font-weight:600">${$N(w)}</td>
+        <td class="num">${$N(tot)}</td>
+        <td>${pctPill(rate)}</td></tr>`;
+    }).join('')}</tbody>`;
+
+  // Populate historical level date picker (dates with level detail only)
+  const histLvSel=document.getElementById('hist-lv-date');
+  histLvSel.innerHTML='';
+  HIST.date_meta.filter(d=>d.detail).forEach(dm=>{
+    const opt=document.createElement('option');
+    opt.value=dm.date;
+    opt.textContent=`${dm.date} — ${dm.yr}`;
+    histLvSel.appendChild(opt);
+  });
+  histLvSel.selectedIndex=histLvSel.options.length-1;
+  renderHistLvTable();
+
+  // By Country (Novi live)
+  const ctR=groupBy(renewed,m=>m.country), ctP=groupBy(pending,m=>m.country);
+  const ctN=groupBy(nonrenewing,m=>m.country), ctW=groupBy(newMbrs,m=>m.country);
+  const allCtKeys=[...new Set([...Object.keys(ctR),...Object.keys(ctP),...Object.keys(ctN),...Object.keys(ctW)])]
+    .sort((a,b)=>(ctR[b]||[]).length-(ctR[a]||[]).length);
+  document.getElementById('ct-tbl').innerHTML=`
+    <thead><tr><th>Country</th><th class="num ahd-h">Renewed</th><th class="num warn-h">Pending</th><th class="num bhd-h">Non-Renewing</th><th class="num new-h">New</th><th class="num">Total</th><th class="num">Ren. Rate</th></tr></thead>
+    <tbody>${allCtKeys.map(c=>{
+      const r=(ctR[c]||[]).length,p=(ctP[c]||[]).length,n=(ctN[c]||[]).length,w=(ctW[c]||[]).length;
+      const tot=r+p+n, rate=tot>0?r/tot:null;
+      return `<tr><td>${c}</td>
+        <td class="num" style="color:var(--ahd);font-weight:700">${$N(r)}</td>
+        <td class="num" style="color:var(--warn);font-weight:600">${$N(p)}</td>
+        <td class="num" style="color:var(--bhd);font-weight:600">${$N(n)}</td>
+        <td class="num" style="color:var(--new);font-weight:600">${$N(w)}</td>
+        <td class="num">${$N(tot)}</td>
+        <td>${pctPill(rate)}</td></tr>`;
+    }).join('')}</tbody>`;
+
+  // Pace table
+  const allYrs=[...new Set(HIST.raw.map(r=>r.cur_yr))].sort();
+  const curYrLabel=renewalYr(today);
+  if(!allYrs.includes(curYrLabel)) allYrs.push(curYrLabel);
+  const byYr={};
+  HIST.raw.forEach(r=>{(byYr[r.cur_yr]=byYr[r.cur_yr]||{})[r.day]=r.renewed;});
+  (byYr[curYrLabel]=byYr[curYrLabel]||{})[todayDay]=
+    `<strong style="color:var(--burg)">${nR}</strong> <span class="pill gld">LIVE</span>`;
+  const allDays=[...new Set(Object.values(byYr).flatMap(d=>Object.keys(d).map(Number)))].sort((a,b)=>a-b);
+  document.getElementById('pc-tbl').innerHTML=`
+    <thead><tr><th>Day</th>${allYrs.map(y=>`<th class="num${y===curYrLabel?' ahd-h':''}">${y}</th>`).join('')}</tr></thead>
+    <tbody>${allDays.slice(-40).map(day=>`<tr>
+      <td style="font-size:12px;color:var(--muted)">Day ${day}</td>
+      ${allYrs.map(yr=>{
+        const v=byYr[yr]?.[day];
+        return v!=null?`<td class="num">${v}</td>`:`<td class="num" style="color:#ccc">—</td>`;
+      }).join('')}
+    </tr>`).join('')}</tbody>`;
+
+  buildMbrsUI();
+}
+
+function renderOverviewTable() {
+  const sel=document.getElementById('cmp-date-sel');
+  const selDate=sel.value;
+  if(!selDate) return;
+  const dm=HIST.date_meta.find(d=>d.date===selDate);
+  const histRow=HIST.raw.find(r=>r.date===selDate);
+
+  const badge=document.getElementById('cmp-date-badge');
+  if(dm?.detail) badge.innerHTML='<span class="badge full">★ Full detail</span>';
+  else badge.innerHTML='<span class="badge count-only">Count only</span>';
+
+  const {renewed,pending,nonrenewing}=noviData;
+  const newMbrs=noviData.new;
+  const nR=renewed.length,nP=pending.length,nN=nonrenewing.length,nW=newMbrs.length;
+  const nTotal=nR+nP+nN;
+  const renewRate=nTotal>0?nR/nTotal:null;
+  const today=new Date().toISOString().slice(0,10);
+  const curYr=renewalYr(today);
+  const todayDay=dayInCycle(today);
+  const pYr=priorYr(curYr);
+
+  const histRen=histRow?.renewed??null;
+  const delta=histRen!=null?nR-histRen:null;
+  const pc=delta==null?'neu':delta>0?'ahd':delta<0?'bhd':'neu';
+
+  const colB=selDate?`${selDate} (${dm?.yr||''}, Day ${dm?.day||''})`:'Historical Date';
+  document.getElementById('ov-tbl').innerHTML=`
+    <thead><tr><th>Metric</th><th class="num">${curYr} Today (Live)</th><th class="num">${colB}</th></tr></thead>
+    <tbody>
+      <tr><td>Total going into cycle</td><td class="num"><strong>${$N(nTotal)}</strong></td><td class="num">${histRow?.total_going_in?$N(histRow.total_going_in):'—'}</td></tr>
+      <tr><td>Renewed</td><td class="num"><strong style="color:var(--ahd)">${$N(nR)}</strong></td><td class="num">${histRen!=null?$N(histRen):'—'}</td></tr>
+      <tr><td>Pending (not yet renewed)</td><td class="num" style="color:var(--warn)">${$N(nP)}</td><td class="num">—</td></tr>
+      <tr><td>Confirmed non-renewing</td><td class="num" style="color:var(--bhd)">${$N(nN)}</td><td class="num">${histRow?.nonrenew?$N(histRow.nonrenew):'—'}</td></tr>
+      <tr><td>New members</td><td class="num" style="color:var(--new)">${$N(nW)}</td><td class="num">${histRow?.new_members?$N(histRow.new_members):'—'}</td></tr>
+      <tr><td>Renewal rate</td><td class="num">${renewRate!=null?$P(renewRate):'—'}</td><td class="num">—</td></tr>
+      <tr><td>Δ Renewed vs selected date</td>
+        <td class="num"><span class="kd ${pc}">${delta!=null?$D(delta):'—'}</span></td>
+        <td class="num">—</td></tr>
+    </tbody>`;
+}
+
+// Member type classification for grouping into the four membership types:
+//   Regular Organizational Member  — agency sub-levels + associations + other govt + individual agency
+//   Regular Individual Member      — individual employees of govt agencies
+//   Associate Organizational Member — national/state prof assocs + vendors
+//   Associate Individual Member    — associate individuals
+function getMemberTypeGroup(level) {
+  if(!level) return 'Unknown';
+  const l=level.toLowerCase();
+  // Associate Individual — check before generic 'associate' catch
+  if(l.includes('associate individual')||l==='associate individual member') return 'Associate Individual Member';
+  if(l==='regular individual member') return 'Regular Individual Member';
+  // Associate Organizational
+  if(l.includes('national professional')||l.includes('national prof')||
+     l.includes('state/provincial')||l.includes('state or provincial')||
+     l.includes('other orgs')||l.includes('other organizations')||l.includes('vendors'))
+    return 'Associate Organizational Member';
+  // Regular Individual — employee of govt agency
+  if(l.includes('individual (employee)')||l.includes('individual employee')||
+     l.includes('regular individual'))
+    return 'Regular Individual Member';
+  // Regular Organizational — all agency sub-levels, associations of agencies, other govt, individual agency/reg org
+  if(l.includes('agency for')||l.includes('agency responsible')||
+     l.includes('associations of agencies')||l.includes('association of agencies')||
+     l.includes('other gov')||l.includes('individual agency'))
+    return 'Regular Organizational Member';
+  return 'Other';
+}
+
+// Display order within each membership type group
+const DUES_RULE_ORDER = [
+  // Regular Organizational
+  'Agency responsible for 20+ Regulated Entities/Professions',
+  'Agency responsible for 10-19 Regulated Entities/Professions',
+  'Agency responsible for 9 Regulated Entities/Professions',
+  'Agency responsible for 8 Regulated Entities/Professions',
+  'Agency responsible for 7 Regulated Entities/Professions',
+  'Agency responsible for 6 Regulated Entities/Professions',
+  'Agency responsible for 5 Regulated Entities/Professions',
+  'Agency responsible for 4 Regulated Entities/Professions',
+  'Agency responsible for 3 Regulated Entities/Professions',
+  'Agency responsible for 2 Regulated Entities/Professions',
+  'Associations of Agencies or Organizations',
+  'Other Government Agencies',
+  'Individual Agency/Regulatory Organization',
+  // Regular Individual
+  'Individual (employee of a government agency/organization)',
+  'Individual (employee of govt. agency/organization)',
+  // Associate Organizational
+  'National Professional Association/Certifying Organization',
+  'State/Provincial Professional Association',
+  'State or Provincial Professional Association',
+  'Other Organizations/Vendors',
+  // Associate Individual
+  'Associate Individual Member',
+  'Associate Individual',
+];
+
+const TYPE_GROUP_ORDER = [
+  'Regular Organizational Member',
+  'Regular Individual Member',
+  'Associate Organizational Member',
+  'Associate Individual Member',
+  'Other'
+];
+
+function renderFinancial() {
+  const {renewed,pending,nonrenewing}=noviData;
+  const newMbrs=noviData.new;
+
+  // Per-dues-rule accumulators
+  const byRule={};
+  function ensureRule(lv){ if(!byRule[lv]) byRule[lv]={renewedCt:0,newCt:0,pendingCt:0,collectedAmt:0,remainingAmt:0,unknownCt:0}; }
+
+  // Renewed: collected
+  let totalCollected=0, collectedUnknown=0;
+  renewed.forEach(m=>{
+    const lv=m.level||'Unknown'; ensureRule(lv);
+    const rate=getDues(m.level);
+    byRule[lv].renewedCt++;
+    if(rate!=null){ byRule[lv].collectedAmt+=rate; totalCollected+=rate; }
+    else{ byRule[lv].unknownCt++; collectedUnknown++; }
+  });
+
+  // New members: also collected (full dues, get remainder of year free)
+  let newUnknown=0;
+  newMbrs.forEach(m=>{
+    const lv=m.level||'Unknown'; ensureRule(lv);
+    const rate=getDues(m.level);
+    byRule[lv].newCt++;
+    if(rate!=null){ byRule[lv].collectedAmt+=rate; totalCollected+=rate; }
+    else{ byRule[lv].unknownCt++; newUnknown++; }
+  });
+
+  // Pending: estimated remaining
+  let totalRemaining=0, remainingUnknown=0;
+  pending.forEach(m=>{
+    const lv=m.level||'Unknown'; ensureRule(lv);
+    const rate=getDues(m.level);
+    byRule[lv].pendingCt++;
+    if(rate!=null){ byRule[lv].remainingAmt+=rate; totalRemaining+=rate; }
+    else{ byRule[lv].unknownCt++; remainingUnknown++; }
+  });
+
+  // Open/overdue balances (live from Novi)
+  let openBal=0, overdueBal=0;
+  [...pending,...nonrenewing].forEach(m=>{ openBal+=m.openBal||0; overdueBal+=m.overBal||0; });
+
+  // KPI cards
+  const kpiHtml=`
+    <div class="fin-grid">
+      <div class="fin-card">
+        <div class="fin-lbl">Est. Dues Collected</div>
+        <div class="fin-val" style="color:var(--ahd)">${$MC(totalCollected)}</div>
+        <div class="fin-sub">${renewed.length} renewed + ${newMbrs.length} new${collectedUnknown+newUnknown>0?' · '+(collectedUnknown+newUnknown)+' rates unknown':''}</div>
+      </div>
+      <div class="fin-card">
+        <div class="fin-lbl">Est. Dues Remaining</div>
+        <div class="fin-val" style="color:var(--warn)">${$MC(totalRemaining)}</div>
+        <div class="fin-sub">${pending.length} pending members if all renew${remainingUnknown>0?' · '+remainingUnknown+' rates unknown':''}</div>
+      </div>
+      <div class="fin-card">
+        <div class="fin-lbl">Est. Total If All Renew</div>
+        <div class="fin-val" style="color:var(--burg)">${$MC(totalCollected+totalRemaining)}</div>
+        <div class="fin-sub">Collected + all pending converting</div>
+      </div>
+      <div class="fin-card">
+        <div class="fin-lbl">Open Dues Balance</div>
+        <div class="fin-val" style="color:var(--bhd)">${$MC(openBal)}</div>
+        <div class="fin-sub">Live from Novi${overdueBal>0?' · <strong style="color:var(--bhd)">$'+overdueBal.toLocaleString()+' overdue</strong>':''}</div>
+      </div>
+    </div>`;
+
+  // Build breakdown table
+  const allRules=Object.keys(byRule);
+  const orderedRules=[
+    ...DUES_RULE_ORDER.filter(r=>allRules.includes(r)),
+    ...allRules.filter(r=>!DUES_RULE_ORDER.includes(r)).sort(),
+  ];
+
+  const typeGroups={};
+  TYPE_GROUP_ORDER.forEach(t=>typeGroups[t]=[]);
+  orderedRules.forEach(rule=>{
+    const grp=getMemberTypeGroup(rule);
+    if(!typeGroups[grp]) typeGroups[grp]=[];
+    typeGroups[grp].push(rule);
+  });
+
+  let tableRows='';
+  TYPE_GROUP_ORDER.forEach(grpName=>{
+    const rules=typeGroups[grpName];
+    if(!rules||!rules.length) return;
+    let grpCollected=0,grpRemaining=0,grpRenewed=0,grpNew=0,grpPending=0;
+    rules.forEach(r=>{ const d=byRule[r]; grpCollected+=d.collectedAmt; grpRemaining+=d.remainingAmt; grpRenewed+=d.renewedCt; grpNew+=d.newCt; grpPending+=d.pendingCt; });
+    tableRows+=`<tr style="background:var(--burg);color:#fff">
+      <td colspan="2" style="font-weight:700;font-family:var(--font-head);font-size:12px;padding:7px 11px;letter-spacing:.04em;text-transform:uppercase">${grpName}</td>
+      <td class="num" style="color:#fff;font-weight:700">${$N(grpRenewed+grpNew)}</td>
+      <td class="num" style="color:#fff;font-weight:700">${$N(grpPending)}</td>
+      <td class="num" style="color:#fff;font-weight:700">${$MC(grpCollected)}</td>
+      <td class="num" style="color:#fff;font-weight:700">${$MC(grpRemaining)}</td>
+    </tr>`;
+    rules.forEach(rule=>{
+      const d=byRule[rule];
+      const rate=getDues(rule);
+      const collLabel=d.renewedCt+d.newCt>0
+        ?`<span style="color:var(--ahd);font-weight:600">${$N(d.renewedCt)}</span>${d.newCt>0?' <span style="font-size:11px;color:var(--new)">(+'+d.newCt+' new)</span>':''}`
+        :'—';
+      tableRows+=`<tr>
+        <td style="padding-left:22px;font-size:13px">${rule}</td>
+        <td class="num" style="font-size:12px;color:var(--muted)">${rate!=null?$MC(rate):'—'}</td>
+        <td class="num">${collLabel}</td>
+        <td class="num">${d.pendingCt>0?'<span style="color:var(--warn)">'+$N(d.pendingCt)+'</span>':'—'}</td>
+        <td class="num">${d.collectedAmt>0?$MC(d.collectedAmt):'—'}</td>
+        <td class="num">${d.remainingAmt>0?'<span style="color:var(--warn)">'+$MC(d.remainingAmt)+'</span>':'—'}</td>
+      </tr>`;
+    });
+  });
+
+  tableRows+=`<tr style="background:var(--cream-dk);font-weight:700;border-top:2px solid var(--border)">
+    <td colspan="2" style="font-family:var(--font-head);font-size:13px;padding:9px 11px">TOTAL</td>
+    <td class="num">${$N(renewed.length+newMbrs.length)}</td>
+    <td class="num" style="color:var(--warn)">${$N(pending.length)}</td>
+    <td class="num" style="color:var(--ahd)">${$MC(totalCollected)}</td>
+    <td class="num" style="color:var(--warn)">${$MC(totalRemaining)}</td>
+  </tr>`;
+
+  const tableHtml=`
+    <div class="card" style="margin-top:18px">
+      <div class="ch"><div class="ct">Dues by Member Type &amp; Rule</div>
+        <div class="cs">Renewed + New = est. collected &nbsp;·&nbsp; Pending = est. remaining if renewed</div></div>
+      <div class="cb ts" style="padding:0">
+        <table class="tbl">
+          <thead><tr>
+            <th>Dues Rule</th><th class="num">Rate</th>
+            <th class="num ahd-h">Collected (Ren.+New)</th>
+            <th class="num warn-h">Pending</th>
+            <th class="num ahd-h">Est. Collected ($)</th>
+            <th class="num warn-h">Est. Remaining ($)</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  const noteHtml=`<div style="font-size:12px;color:var(--muted);margin-top:14px;padding:10px;background:var(--cream);border-radius:var(--r);border:1px solid var(--border)">
+    <strong>Note:</strong> Estimates use the dues rate schedule matched to each member's Novi EffectiveMemberType.
+    New members are counted as collected — they pay full dues and receive the rest of the current membership year as a bonus period.
+    Actual invoiced amounts may differ for custom billing. Open/overdue balances are live from Novi.
+  </div>`;
+
+  document.getElementById('fin-body').innerHTML=kpiHtml+tableHtml+noteHtml;
+}
+function renderHistLvTable() {
+  const sel=document.getElementById('hist-lv-date');
+  const d=sel?.value;
+  if(!d) return;
+  const rows=HIST.levels.filter(r=>r.date===d);
+  if(!rows.length){document.getElementById('hist-lv-tbl').innerHTML='<tr><td style="padding:16px;color:var(--muted)">No level data for this date.</td></tr>';return;}
+  document.getElementById('hist-lv-tbl').innerHTML=`
+    <thead><tr><th>Level</th><th class="num">Renewed</th><th class="num">Total</th><th class="num">% Renewed</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td>${r.level}</td>
+      <td class="num">${$N(r.renewed)}</td>
+      <td class="num">${$N(r.total)}</td>
+      <td>${pctPill(r.pct)}</td>
+
+    </tr>`).join('')}</tbody>`;
+}
+
+// ═══════════════════════════════════════════
+// MEMBER LIST TAB
+// ═══════════════════════════════════════════
+let allMembers=[], filteredMbrs=[];
+
+function buildMbrsUI() {
+  allMembers=[
+    ...noviData.renewed.map(m=>({...m,status:'renewed'})),
+    ...noviData.pending.map(m=>({...m,status:'pending'})),
+    ...noviData.nonrenewing.map(m=>({...m,status:'non-renewing'})),
+    ...noviData.new.map(m=>({...m,status:'new'})),
+  ];
+  filteredMbrs=[...allMembers];
+  document.getElementById('mb-load').style.display='none';
+  document.getElementById('mb-ok').style.display='block';
+  const levels=[...new Set(allMembers.map(m=>m.level))].sort();
+  const countries=[...new Set(allMembers.map(m=>m.country))].sort();
+  document.getElementById('ml').innerHTML='<option value="">All Levels</option>'+levels.map(l=>`<option>${l}</option>`).join('');
+  document.getElementById('mc').innerHTML='<option value="">All Countries</option>'+countries.map(c=>`<option>${c}</option>`).join('');
+  renderMbrs();
+}
+
+function fmbr() {
+  const srch=document.getElementById('ms').value.toLowerCase();
+  const lvl=document.getElementById('ml').value;
+  const cty=document.getElementById('mc').value;
+  const sts=document.getElementById('mst').value;
+  filteredMbrs=allMembers.filter(m=>{
+    if(srch&&!m.name.toLowerCase().includes(srch)) return false;
+    if(lvl&&m.level!==lvl) return false;
+    if(cty&&m.country!==cty) return false;
+    if(sts&&m.status!==sts) return false;
+    return true;
+  });
+  renderMbrs();
+}
+
+const STATUS_PILL={
+  'renewed':'<span class="pill ahd">Renewed</span>',
+  'pending':'<span class="pill warn">Pending</span>',
+  'non-renewing':'<span class="pill bhd">Non-Renewing</span>',
+  'new':'<span class="pill new">New Member</span>',
+};
+const ORDER={renewed:0,pending:1,'non-renewing':2,new:3};
+
+function renderMbrs() {
+  document.getElementById('mct').textContent=
+    `${filteredMbrs.length.toLocaleString()} member${filteredMbrs.length!==1?'s':''}`;
+  const sorted=[...filteredMbrs].sort((a,b)=>(ORDER[a.status]||9)-(ORDER[b.status]||9)||a.name.localeCompare(b.name));
+  document.getElementById('mb-tb').innerHTML=sorted.map((m,i)=>{
+    const exp=m.expires?new Date(m.expires).toLocaleDateString():'—';
+    const rowId=`exp-${i}`;
+    return `<tr class="expandable" onclick="toggleExp('${rowId}',this,'${m.uid}','${m.primaryContactId||''}')">
+      <td style="color:var(--muted);font-size:12px;width:28px">▶</td>
+      <td><strong>${m.name}</strong>${m.fallback?' <span style="font-size:10px;color:var(--muted)">⚠</span>':''}</td>
+      <td style="font-size:12px">${m.level}</td>
+      <td>${m.country}</td>
+      <td style="font-size:12px">${exp}</td>
+      <td>${STATUS_PILL[m.status]||m.status}</td>
+    </tr>
+    <tr id="${rowId}" class="exp-detail" style="display:none">
+      <td colspan="6">
+        <div class="exp-inner">
+          <div class="exp-field"><div class="exp-label">Primary Contact</div><div class="exp-val" id="pc-${rowId}">${m.primaryContactName||'<span style="color:var(--muted);font-size:11px">Loading…</span>'}</div></div>
+          <div class="exp-field"><div class="exp-label">Email</div><div class="exp-val">${m.email?`<a href="mailto:${m.email}" style="color:var(--burg)">${m.email}</a>`:'—'}</div></div>
+          <div class="exp-field"><div class="exp-label">Phone</div><div class="exp-val">${m.phone||'—'}</div></div>
+          <div class="exp-field"><div class="exp-label">Membership Level</div><div class="exp-val">${m.level}</div></div>
+          <div class="exp-field"><div class="exp-label">Country</div><div class="exp-val">${m.country}</div></div>
+          <div class="exp-field"><div class="exp-label">Expiry Date</div><div class="exp-val">${exp}</div></div>
+          <div class="exp-field"><div class="exp-label">Est. Dues Rate</div><div class="exp-val">${getDues(m.level)?$MC(getDues(m.level)):'Unknown'}</div></div>
+          <div class="exp-field"><div class="exp-label">Open Dues Balance</div><div class="exp-val" style="color:${m.openBal>0?'var(--bhd)':'var(--ahd)'}">${$MC(m.openBal)}</div></div>
+          <div class="exp-field"><div class="exp-label">Status</div><div class="exp-val">${STATUS_PILL[m.status]||m.status}</div></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No results</td></tr>';
+}
+
+function toggleExp(rowId,clickedRow,memberUid,primaryContactId) {
+  const detailRow=document.getElementById(rowId);
+  const isOpen=detailRow.style.display!=='none';
+  document.querySelectorAll('.exp-detail').forEach(r=>r.style.display='none');
+  document.querySelectorAll('.expandable td:first-child').forEach(td=>td.textContent='▶');
+  if(!isOpen){
+    detailRow.style.display='';
+    clickedRow.querySelector('td:first-child').textContent='▼';
+    // Fetch primary contact name if not already loaded
+    const pcEl=document.getElementById('pc-'+rowId);
+    if(pcEl&&pcEl.querySelector('span')&&primaryContactId){
+      noviReq('/api/members/'+primaryContactId)
+        .then(d=>{ pcEl.textContent=(d.FirstName||'')+' '+(d.LastName||''); })
+        .catch(()=>{ pcEl.textContent='—'; });
+    }
+  }
+}
+
+async function loadMbrsTab() {
+  document.getElementById('mb-load').style.display='block';
+  if(noviLoaded){buildMbrsUI();return;}
+  await loadAll();
+}
+
+// ═══════════════════════════════════════════
+// XLSX EXPORT
+// ═══════════════════════════════════════════
+function exportXlsx() {
+  if(!filteredMbrs.length){alert('No members to export.');return;}
+  const STATUS_LABEL={'renewed':'Renewed','pending':'Pending','non-renewing':'Non-Renewing','new':'New Member'};
+  const ORDER2={renewed:0,pending:1,'non-renewing':2,new:3};
+  const sorted=[...filteredMbrs].sort((a,b)=>(ORDER2[a.status]||9)-(ORDER2[b.status]||9)||a.name.localeCompare(b.name));
+  const cols=[
+    {h:'Organization',k:'name'},{h:'Level',k:'level'},{h:'Country',k:'country'},
+    {h:'Email',k:'email'},{h:'Phone',k:'phone'},
+    {h:'Expiry Date',k:'expires'},{h:'Status',k:'status'},{h:'Est. Dues Rate',k:'_dues'},
+    {h:'Open Dues Balance',k:'_opendues'},
+  ];
+  const esc=s=>{ const v=String(s??''); return v.includes(',')||v.includes('"')||v.includes('\n')?'"'+v.replace(/"/g,'""')+'"':v; };
+  const today=new Date().toISOString().slice(0,10);
+  const rows=[cols.map(c=>esc(c.h)).join(',')];
+  sorted.forEach(m=>{
+    rows.push(cols.map(c=>{
+      let v;
+      if(c.k==='status') v=STATUS_LABEL[m[c.k]]||m[c.k];
+      else if(c.k==='_dues') v=getDues(m.level)?'$'+getDues(m.level).toLocaleString():'Unknown';
+      else if(c.k==='_opendues') v=m.openBal>0?'$'+m.openBal.toLocaleString():'$0';
+      else v=m[c.k]??'';
+      return esc(v);
+    }).join(','));
+  });
+  const filterDesc=[
+    document.getElementById('ms').value?'Search:'+document.getElementById('ms').value:'',
+    document.getElementById('ml').value?'Level:'+document.getElementById('ml').value:'',
+    document.getElementById('mc').value?'Country:'+document.getElementById('mc').value:'',
+    document.getElementById('mst').value?'Status:'+document.getElementById('mst').value:'',
+  ].filter(Boolean).join(' | ')||'All members';
+  rows.push('');
+  rows.push(esc('Exported: '+today+' | Filters: '+filterDesc+' | '+sorted.length+' records'));
+  const csv='\uFEFF'+rows.join('\r\n'); // BOM for Excel UTF-8
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='CLEAR_Members_'+today+'_'+sorted.length+'records.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════
+// HISTORICAL COMPARISON TAB
+// ═══════════════════════════════════════════
+function initHistCtrls() {
+  const sa=document.getElementById('sel-a'), sb=document.getElementById('sel-b');
+  if(sa.options.length>1) return;
+  // All dates go in Renewal Trend (has count data); only ★ dates have level/country/revenue
+  HIST.date_meta.forEach(dm=>{
+    const label=`${dm.date} — ${dm.yr}, Day ${dm.day}${dm.detail?' ★':''}`;
+    sa.add(new Option(label,dm.date));
+    sb.add(new Option(label,dm.date));
+  });
+  // Default to last two ★ dates
+  const starDates=HIST.date_meta.filter(d=>d.detail);
+  const allDates=HIST.date_meta;
+  if(starDates.length>=2){
+    sa.value=starDates[starDates.length-2].date;
+    sb.value=starDates[starDates.length-1].date;
+  } else {
+    sa.selectedIndex=Math.max(0,allDates.length-2);
+    sb.selectedIndex=allDates.length-1;
+  }
+  // Add note explaining ★
+  document.getElementById('hm').innerHTML=
+    '<span style="font-size:11px;color:var(--muted)">★ dates have full level/country/revenue detail &nbsp;·&nbsp; All dates work for Renewal Trend</span>';
+}
+
+function runCmp() {
+  const dA=document.getElementById('sel-a').value, dB=document.getElementById('sel-b').value;
+  const v=document.getElementById('sel-v').value;
+  if(!dA||!dB) return;
+  const dmA=HIST.date_meta.find(d=>d.date===dA), dmB=HIST.date_meta.find(d=>d.date===dB);
+  document.getElementById('hm').textContent=`${dA} (${dmA?.yr}, Day ${dmA?.day})  vs  ${dB} (${dmB?.yr}, Day ${dmB?.day})`;
+  const fn={lv:cmpLv,ct:cmpCt,rv:cmpRv,tr:cmpTr};
+  document.getElementById('hr').innerHTML=(fn[v]||cmpLv)(dA,dB,dmA,dmB);
+}
+
+function cmpLv(dA,dB,dmA,dmB) {
+  const mA={},mB={};
+  HIST.levels.filter(r=>r.date===dA).forEach(r=>mA[r.level]=r);
+  HIST.levels.filter(r=>r.date===dB).forEach(r=>mB[r.level]=r);
+  const keys=[...new Set([...Object.keys(mA),...Object.keys(mB)])].sort();
+  if(!keys.length) return `<div class="alert warn">No level data for selected dates. Choose dates marked ★ for level detail.</div>`;
+  return `<div class="card"><div class="ch"><div><div class="ct">By Level: ${dA} vs ${dB}</div><div class="cs">${dmA?.yr} Day ${dmA?.day} vs ${dmB?.yr} Day ${dmB?.day}</div></div></div>
+  <div class="cb ts"><table class="tbl"><thead><tr><th>Level</th>
+    <th class="num">${dA} Ren.</th><th class="num">Tot</th><th class="num">%</th>
+    <th class="num">${dB} Ren.</th><th class="num">Tot</th><th class="num">%</th>
+    <th class="num">Δ</th></tr></thead>
+  <tbody>${keys.map(lv=>{const a=mA[lv],b=mB[lv];const d=(a&&b)?b.renewed-a.renewed:null;const dc=d==null?'dz':d>0?'dp':d<0?'dn':'dz';
+    return `<tr><td>${lv}</td>
+      <td class="num">${a?$N(a.renewed):'—'}</td><td class="num">${a?$N(a.total):'—'}</td><td>${a?pctPill(a.pct):'—'}</td>
+      <td class="num">${b?$N(b.renewed):'—'}</td><td class="num">${b?$N(b.total):'—'}</td><td>${b?pctPill(b.pct):'—'}</td>
+      <td class="num"><span class="${dc}">${d!=null?$D(d):'—'}</span></td></tr>`;
+  }).join('')}</tbody></table></div></div>`;
+}
+
+function cmpCt(dA,dB,dmA,dmB) {
+  const mA={},mB={};
+  HIST.countries.filter(r=>r.date===dA).forEach(r=>mA[r.country]=r);
+  HIST.countries.filter(r=>r.date===dB).forEach(r=>mB[r.country]=r);
+  const keys=[...new Set([...Object.keys(mA),...Object.keys(mB)])].sort();
+  if(!keys.length) return `<div class="alert warn">No country data for selected dates. Choose dates marked ★.</div>`;
+  return `<div class="card"><div class="ch"><div class="ct">By Country: ${dA} vs ${dB}</div></div>
+  <div class="cb ts"><table class="tbl"><thead><tr><th>Country</th>
+    <th class="num">${dA} Ren.</th><th class="num">Tot</th><th class="num">%</th>
+    <th class="num">${dB} Ren.</th><th class="num">Tot</th><th class="num">%</th>
+    <th class="num">Δ</th></tr></thead>
+  <tbody>${keys.map(c=>{const a=mA[c],b=mB[c];const d=(a&&b&&a.renewed!=null&&b.renewed!=null)?b.renewed-a.renewed:null;const dc=d==null?'dz':d>0?'dp':d<0?'dn':'dz';
+    return `<tr><td>${c}</td>
+      <td class="num">${a?$N(a.renewed):'—'}</td><td class="num">${a&&a.total?$N(a.total):'—'}</td><td>${a&&a.pct!=null?pctPill(a.pct):'—'}</td>
+      <td class="num">${b?$N(b.renewed):'—'}</td><td class="num">${b&&b.total?$N(b.total):'—'}</td><td>${b&&b.pct!=null?pctPill(b.pct):'—'}</td>
+      <td class="num"><span class="${dc}">${d!=null?$D(d):'—'}</span></td></tr>`;
+  }).join('')}</tbody></table></div></div>`;
+}
+
+function cmpRv(dA,dB,dmA,dmB) {
+  const mA={},mB={};
+  HIST.revenue.filter(r=>r.date===dA).forEach(r=>mA[r.item]=r);
+  HIST.revenue.filter(r=>r.date===dB).forEach(r=>mB[r.item]=r);
+  const SUM=['Total Renewal','New Member Revenue','Total Revenue','Budget','Difference'];
+  const keys=[...new Set([...Object.keys(mA),...Object.keys(mB)])];
+  const ordered=[...keys.filter(k=>!SUM.includes(k)).sort(),...SUM.filter(k=>keys.includes(k))];
+  if(!ordered.length) return `<div class="alert warn">No revenue data for selected dates. Choose dates marked ★.</div>`;
+  return `<div class="card"><div class="ch"><div class="ct">Revenue: ${dA} vs ${dB}</div></div>
+  <div class="cb ts"><table class="tbl"><thead><tr><th>Line Item</th><th class="num">${dA}</th><th class="num">${dB}</th><th class="num">Δ</th></tr></thead>
+  <tbody>${ordered.map(item=>{const a=mA[item],b=mB[item];const aV=a?.revenue,bV=b?.revenue;const d=(aV!=null&&bV!=null)?bV-aV:null;
+    const isSum=SUM.includes(item),isDiff=item==='Difference';
+    const dc=isDiff?(bV>0?'dp':bV<0?'dn':'dz'):(d==null?'dz':d>0?'dp':d<0?'dn':'dz');
+    return `<tr ${isSum?'style="font-weight:700;background:var(--cream)"':''}><td>${item}</td>
+      <td class="num ${isDiff&&aV>0?'dp':isDiff&&aV<0?'dn':''}">${aV!=null?$M(aV):'—'}</td>
+      <td class="num ${isDiff&&bV>0?'dp':isDiff&&bV<0?'dn':''}">${bV!=null?$M(bV):'—'}</td>
+      <td class="num"><span class="${dc}">${d!=null?(d>0?'+':'')+$M(d):'—'}</span></td></tr>`;
+  }).join('')}</tbody></table></div></div>`;
+}
+
+function cmpTr(dA,dB,dmA,dmB) {
+  const yA=dmA?.yr, yB=dmB?.yr;
+  const mA={},mB={};
+  HIST.raw.filter(r=>r.cur_yr===yA&&r.renewed!=null).forEach(r=>mA[r.day]=r.renewed);
+  HIST.raw.filter(r=>r.cur_yr===yB&&r.renewed!=null).forEach(r=>mB[r.day]=r.renewed);
+  const days=[...new Set([...Object.keys(mA),...Object.keys(mB)].map(Number))].sort((a,b)=>a-b);
+  if(!days.length) return `<div class="alert warn">No trend data for these years.</div>`;
+  return `<div class="card"><div class="ch"><div class="ct">Renewal Trend: ${yA} vs ${yB}</div></div>
+  <div class="cb ts"><table class="tbl"><thead><tr><th>Day in Cycle</th><th class="num">${yA}</th><th class="num">${yB}</th><th class="num">Δ (${yB}−${yA})</th></tr></thead>
+  <tbody>${days.map(day=>{const a=mA[day],b=mB[day];const d=(a!=null&&b!=null)?b-a:null;const dc=d==null?'dz':d>0?'dp':d<0?'dn':'dz';
+    return `<tr><td style="font-size:12px;color:var(--muted)">Day ${day}</td>
+      <td class="num">${a!=null?$N(a):'—'}</td><td class="num">${b!=null?$N(b):'—'}</td>
+      <td class="num"><span class="${dc}">${d!=null?$D(d):'—'}</span></td></tr>`;
+  }).join('')}</tbody></table></div></div>`;
+}
+
+// ═══════════════════════════════════════════
+// SURVEY TAB
+// ═══════════════════════════════════════════
+let surveyLoaded=false; let surveyAttempted=false;
+async function loadSurvey() {
+  if(surveyLoaded) return;
+  if(surveyAttempted) return; // avoid infinite retry loops
+  surveyAttempted=true;
+  document.getElementById('sv-load').style.display='block';
+  document.getElementById('sv-body').innerHTML='';
+  try {
+    const [survey,rollup]=await Promise.all([
+      smReq(`/surveys/${SM_ID}/details`),
+      smReq(`/surveys/${SM_ID}/rollups`),
+    ]);
+    surveyLoaded=true;
+    document.getElementById('sv-load').style.display='none';
+    renderSurvey(survey,rollup);
+  } catch(e) {
+    document.getElementById('sv-load').style.display='none';
+    document.getElementById('sv-body').innerHTML=`<div class="alert err">Could not load survey: ${e.message}</div>`;
+  }
+}
+async function smReq(path) {
+  const r=await fetch(gW()+'/surveymonkey'+path,{headers:{'X-Auth-Token':gT()}});
+  if(!r.ok) throw new Error(`SurveyMonkey ${r.status}`);
+  return r.json();
+}
+function renderSurvey(survey,rollup) {
+  let html=`<div class="kpis" style="margin-bottom:20px">
+    <div class="kpi bur"><div class="kl">Survey</div><div style="font-size:15px;font-weight:700;margin-top:4px">${survey.title||'Non-Renewal Reasons'}</div></div>
+  </div>`;
+  (rollup?.pages||[]).forEach(pg=>{
+    (pg.questions||[]).forEach(q=>{
+      if(!q.answers?.length) return;
+      const tot=q.answers.reduce((s,a)=>s+(a.count||0),0);
+      if(!tot) return;
+      const sorted=[...q.answers].sort((a,b)=>(b.count||0)-(a.count||0));
+      html+=`<div class="card" style="margin-bottom:18px"><div class="ch"><div class="ct">${q.heading||q.id}</div></div><div class="cb">`;
+      sorted.forEach(ans=>{
+        const cnt=ans.count||0,pct=tot?cnt/tot:0;
+        html+=`<div class="rbar">
+          <div class="rlbl">${ans.text||ans.id||'(answer)'}</div>
+          <div class="rtrk"><div class="rfil" style="width:${Math.round(pct*100)}%">
+            ${pct>0.08?`<span class="rflbl">${$P(pct)}</span>`:''}
+          </div></div>
+          <div class="rcnt">${cnt}</div>
+        </div>`;
+      });
+      html+='</div></div>';
+    });
+  });
+  document.getElementById('sv-body').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  const w=gW(),t=gT();
+  if(w) document.getElementById('cw').value=w;
+  if(t) document.getElementById('ct').value='••••••••';
+  initHistCtrls();
+  if(w&&t){loadAll();}
+  else{showErr(
+    '<div class="alert warn">Enter your worker URL and auth token above and click <strong>Save &amp; Load</strong>.</div>'+
+    '<div class="alert info">Historical Comparison is available now — no API needed. Dates marked ★ have full level, country, and revenue detail.</div>'
+  );}
+});
+</script>
+</body>
+</html>
