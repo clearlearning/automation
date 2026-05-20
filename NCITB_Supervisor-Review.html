@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisor Form Response Dashboard | CLEAR Learning</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --burgundy: #64092C;
+    --burgundy-dark: #4a0620;
+    --gold: #DDA838;
+    --gold-light: #f0c05a;
+    --charcoal: #484848;
+    --charcoal-light: #6b6b6b;
+    --cream: #faf8f5;
+    --white: #ffffff;
+    --border: #d8d0c8;
+    --green: #2d6a4f;
+    --green-bg: #d8f3dc;
+    --yellow: #b7791f;
+    --yellow-bg: #fef3c7;
+    --red: #9b1c1c;
+    --red-bg: #fde8e8;
+    --shadow: 0 2px 12px rgba(100,9,44,0.08);
+    --shadow-md: 0 4px 24px rgba(100,9,44,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--burgundy);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+  }
+
+  .header-logo {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-family: 'Libre Baskerville', serif;
+    color: var(--white);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .header-text p {
+    color: var(--gold-light);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .gold-bar {
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 24px 60px;
+  }
+
+  /* Search panel */
+  .search-panel {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(100,9,44,0.06);
+  }
+
+  .search-panel h2 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.95rem;
+    color: var(--burgundy);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-row {
+    display: grid;
+    grid-template-columns: 180px 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--charcoal);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  input, select {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.92rem;
+    color: var(--charcoal);
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 13px;
+    transition: border-color 0.2s;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364092C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--burgundy);
+    background: var(--white);
+  }
+
+  .btn {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--burgundy);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(100,9,44,0.2);
+  }
+
+  .btn-primary:hover { background: var(--burgundy-dark); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: var(--cream);
+    color: var(--charcoal);
+    border: 1.5px solid var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--burgundy); color: var(--burgundy); }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    min-height: 28px;
+  }
+
+  .status-text {
+    font-size: 0.85rem;
+    color: var(--charcoal-light);
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--charcoal-light);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 48px;
+    color: var(--charcoal-light);
+  }
+
+  .loading.active { display: block; }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--burgundy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: #fdf2f2;
+    border-left: 4px solid #c0392b;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    color: #c0392b;
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+  }
+
+  .error-msg.active { display: block; }
+
+  /* Empty state */
+  .empty-state {
+    display: none;
+    text-align: center;
+    padding: 60px 40px;
+    color: var(--charcoal-light);
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  .empty-state.active { display: block; }
+  .empty-state p { font-size: 0.92rem; }
+
+  /* Results table */
+  .results-wrap {
+    display: none;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(100,9,44,0.06);
+    overflow: hidden;
+    overflow-x: auto;
+  }
+
+  .results-wrap.active { display: block; }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .results-table thead {
+    background: var(--burgundy);
+    color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .results-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .results-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .results-table tbody tr:last-child td { border-bottom: none; }
+
+  .results-table tbody tr:hover { background: rgba(100,9,44,0.02); }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .status-green { background: var(--green-bg); color: var(--green); }
+  .status-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .status-red { background: var(--red-bg); color: var(--red); }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* Sig link */
+  .sig-link {
+    color: var(--burgundy);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.78rem;
+    border: 1px solid var(--burgundy);
+    border-radius: 4px;
+    padding: 2px 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .sig-link:hover { background: var(--burgundy); color: var(--white); }
+
+  /* Detail panel */
+  .detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .detail-overlay.active { display: flex; }
+
+  .detail-panel {
+    background: var(--white);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .detail-header {
+    background: var(--burgundy);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .detail-header h3 {
+    font-family: 'Libre Baskerville', serif;
+    color: var(--white);
+    font-size: 1rem;
+  }
+
+  .detail-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.2s;
+  }
+
+  .detail-close:hover { color: var(--white); }
+
+  .detail-body { padding: 24px; }
+
+  .detail-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .detail-section h4 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--burgundy);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .detail-field label {
+    font-size: 0.72rem;
+    color: var(--charcoal-light);
+    display: block;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .detail-field p {
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    font-weight: 500;
+  }
+
+  .detail-field p.empty { color: var(--charcoal-light); font-style: italic; font-weight: 400; }
+
+  @media (max-width: 700px) {
+    .search-row { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .legend { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <img class="header-logo" src="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+  <div class="header-text">
+    <h1>Supervisor Form Response Dashboard</h1>
+    <p>CLEAR Learning — NCIT Certification Processing</p>
+  </div>
+</header>
+<div class="gold-bar"></div>
+
+<main class="container">
+
+  <div class="search-panel">
+    <h2>Search Submissions</h2>
+    <div class="search-row">
+      <div class="field">
+        <label for="searchType">Search By</label>
+        <select id="searchType">
+          <option value="program">Program</option>
+          <option value="participant">Participant Name</option>
+          <option value="agency">Current Agency</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="searchValue">Search Value</label>
+        <input type="text" id="searchValue" placeholder="Enter search term…">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="searchBtn">Search</button>
+        <button class="btn btn-secondary" id="loadAllBtn">Load All</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="status-bar">
+    <span class="status-text" id="status-text"></span>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--green)"></div>
+        Meets requirement
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--yellow)"></div>
+        Within 1 month
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--red)"></div>
+        Does not meet requirement
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Loading submissions…</p>
+  </div>
+
+  <div class="empty-state" id="empty-state">
+    <p>No submissions found. Try a different search term or load all records.</p>
+  </div>
+
+  <div class="results-wrap" id="results-wrap">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Participant</th>
+          <th>Agency</th>
+          <th>Program Date</th>
+          <th>Location</th>
+          <th>Hire Date</th>
+          <th>Prior Exp</th>
+          <th>Prior Exp Duration</th>
+          <th>Signature</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- Detail overlay -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-panel">
+    <div class="detail-header">
+      <h3 id="detail-title">Submission Detail</h3>
+      <button class="detail-close" id="detail-close">×</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const WORKER_URL = 'https://clear-lms-proxy.avance.workers.dev';
+const AUTH_TOKEN = 'ClearHQ108WH:)abcxyz';
+
+// SharePoint / Excel file details
+const SP_SITE = 'clearorg.sharepoint.com,30064d9e-ae2d-457f-8fba-b85cf8b09f7e,453ad2f9-3aaf-4af2-9ca5-7668cece31c3';
+const SP_DRIVE = 'b!nk0GMC2uf0WPurhc-LCffvnSOkWvOvJKnKV2aM7OMcOrM3cnaHdfTrZQRzr1YwT1';
+const SP_FILE = '01DGXXWOWYQ7YWJCIOBRGY3EEVZ7NAWNOU';
+const SP_TABLE = 'Submissions';
+
+// ============================================================
+// State
+// ============================================================
+let allRecords = [];
+
+// ============================================================
+// Init
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('searchBtn').addEventListener('click', doSearch);
+  document.getElementById('loadAllBtn').addEventListener('click', loadAll);
+  document.getElementById('searchValue').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
+  document.getElementById('detail-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detail-overlay')) closeDetail();
+  });
+});
+
+// ============================================================
+// Fetch all rows from Excel via Graph API proxy
+// ============================================================
+async function fetchAllRows() {
+  const res = await fetch(`${WORKER_URL}/supervisor-cert/query`, {
+    headers: { 'X-Auth-Token': AUTH_TOKEN }
+  });
+  if (!res.ok) throw new Error(`Query error: ${res.status}`);
+  const data = await res.json();
+  return parseRows(data);
+}
+
+// ============================================================
+// Parse Excel rows into objects
+// ============================================================
+const COLUMNS = [
+  'FirstName','LastName','ProgramDate','LocationType','City','State',
+  'CurrentAgency','HireDate','ParticipantTitle','PriorExperience',
+  'PriorAgency','PriorTitle','PriorExpStartDate','PriorExpEndDate',
+  'SupervisorName','SupervisorTitle','SupervisorAgency','SupervisorEmail',
+  'SupervisorPhone','SignatureImage','SignatureTimestamp','SubmissionTimestamp',
+  'ProgramName'
+];
+
+function parseRows(rows) {
+  if (!Array.isArray(rows)) return [];
+  return rows.map(row => {
+    return {
+      FirstName:          row.FirstName          || row['FirstName']          || '',
+      LastName:           row.LastName           || row['LastName']           || '',
+      ProgramName:        row.ProgramName        || row['ProgramName']        || '',
+      ProgramDate:        row.ProgramDate        || row['ProgramDate']        || '',
+      LocationType:       row.LocationType       || row['LocationType']       || '',
+      City:               row.City               || row['City']               || '',
+      State:              row.State              || row['State']              || '',
+      CurrentAgency:      row.CurrentAgency      || row['CurrentAgency']      || '',
+      HireDate:           row.HireDate           || row['HireDate']           || '',
+      ParticipantTitle:   row.ParticipantTitle   || row['ParticipantTitle']   || '',
+      PriorExperience:    row.PriorExperience    || row['PriorExperience']    || '',
+      PriorAgency:        row.PriorAgency        || row['PriorAgency']        || '',
+      PriorTitle:         row.PriorTitle         || row['PriorTitle']         || '',
+      PriorExpStartDate:  row.PriorExpStartDate  || row['PriorExpStartDate']  || '',
+      PriorExpEndDate:    row.PriorExpEndDate     || row['PriorExpEndDate']    || '',
+      SupervisorName:     row.SupervisorName     || row['SupervisorName']     || '',
+      SupervisorTitle:    row.SupervisorTitle    || row['SupervisorTitle']    || '',
+      SupervisorAgency:   row.SupervisorAgency   || row['SupervisorAgency']   || '',
+      SupervisorEmail:    row.SupervisorEmail    || row['SupervisorEmail']    || '',
+      SupervisorPhone:    row.SupervisorPhone    || row['SupervisorPhone']    || '',
+      SignatureImage:     row.SignatureImage     || row['SignatureImage']     || '',
+      SignatureTimestamp: row.SignatureTimestamp || row['SignatureTimestamp'] || '',
+      SubmissionTimestamp:row.SubmissionTimestamp|| row['SubmissionTimestamp']|| ''
+    };
+  }).filter(r => r.FirstName || r.LastName);
+}
+
+// ============================================================
+// Experience calculation
+// ============================================================
+function calcExperienceDays(record) {
+  const today = new Date();
+  let totalDays = 0;
+
+  if (record.HireDate) {
+    const hire = excelDateToJS(record.HireDate);
+    if (hire) totalDays += Math.floor((today - hire) / 86400000);
+  }
+
+  if (record.PriorExperience === 'Yes' && record.PriorExpStartDate && record.PriorExpEndDate) {
+    const start = excelDateToJS(record.PriorExpStartDate);
+    const end = excelDateToJS(record.PriorExpEndDate);
+    if (start && end) totalDays += Math.floor((end - start) / 86400000);
+  }
+
+  return totalDays;
+}
+
+function excelDateToJS(val) {
+  if (!val) return null;
+  
+  // If it's already a parseable date string, use it directly
+  if (typeof val === 'string' && (val.includes('-') || val.includes('/'))) {
+    const d = new Date(val);
+    return isNaN(d) ? null : d;
+  }
+  
+  // If it's an Excel serial number (numeric) — Excel dates start from 1/1/1900
+  if (!isNaN(val) && Number(val) > 1) {
+    const d = new Date(Math.round((Number(val) - 25568) * 86400 * 1000));
+    return isNaN(d) ? null : d;
+  }
+
+  const d = new Date(val);
+  return isNaN(d) ? null : d;
+}
+
+function getStatus(record) {
+  const days = calcExperienceDays(record);
+  if (days >= 365) return 'green';
+  if (days >= 335) return 'yellow';
+  return 'red';
+}
+
+function getStatusLabel(record) {
+  const days = calcExperienceDays(record);
+  if (days >= 365) return 'Meets Requirement';
+  if (days >= 335) return 'Within 1 Month';
+  return 'Does Not Meet';
+}
+
+function calcPriorDays(record) {
+  const start = excelDateToJS(record.PriorExpStartDate);
+  const end = excelDateToJS(record.PriorExpEndDate);
+  if (!start || !end) return 0;
+  return Math.floor((end - start) / 86400000);
+}
+
+// ============================================================
+// Search
+// ============================================================
+async function loadAll() {
+  await runSearch(() => true);
+}
+
+async function doSearch() {
+  const type = document.getElementById('searchType').value;
+  const value = document.getElementById('searchValue').value.trim().toLowerCase();
+  if (!value) { loadAll(); return; }
+
+  await runSearch(record => {
+    if (type === 'program') {
+      return (record.ProgramName || '').toLowerCase().includes(value) ||
+             (record.ProgramDate || '').toLowerCase().includes(value) ||
+             (record.City || '').toLowerCase().includes(value);
+    }
+    if (type === 'participant') {
+      return (record.FirstName + ' ' + record.LastName).toLowerCase().includes(value);
+    }
+    if (type === 'agency') {
+      return (record.CurrentAgency || '').toLowerCase().includes(value);
+    }
+    return false;
+  });
+}
+
+async function runSearch(filterFn) {
+  showLoading(true);
+  hideError();
+  hideResults();
+
+  try {
+    if (!allRecords.length) {
+      allRecords = await fetchAllRows();
+    }
+    const filtered = allRecords.filter(filterFn);
+    renderResults(filtered);
+  } catch (err) {
+    showError('Failed to load data: ' + err.message + '. Make sure the Graph API proxy route is configured in your worker.');
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ============================================================
+// Render
+// ============================================================
+function renderResults(records) {
+  const tbody = document.getElementById('results-body');
+  const statusText = document.getElementById('status-text');
+
+  if (!records.length) {
+    document.getElementById('empty-state').classList.add('active');
+    statusText.textContent = 'No results found.';
+    return;
+  }
+
+  statusText.textContent = `${records.length} submission${records.length !== 1 ? 's' : ''} found`;
+
+  tbody.innerHTML = '';
+  records.forEach((record, idx) => {
+    const status = getStatus(record);
+    const label = getStatusLabel(record);
+    const tr = document.createElement('tr');
+
+    const sigCell = record.SignatureImage
+      ? `<a href="#" class="sig-link" data-idx="${idx}">View</a>`
+      : `<span style="color:var(--charcoal-light);font-size:0.78rem;">None</span>`;
+
+    const priorDuration = record.PriorExperience === 'Yes' && record.PriorExpStartDate && record.PriorExpEndDate
+      ? calcPriorDays(record) + ' days'
+      : '—';
+
+    const bgColor = status === 'green' ? 'var(--green-bg)' : status === 'yellow' ? 'var(--yellow-bg)' : 'var(--red-bg)';
+    const textColor = status === 'green' ? 'var(--green)' : status === 'yellow' ? 'var(--yellow)' : 'var(--red)';
+
+    tr.innerHTML = `
+      <td><strong style="background:${bgColor};color:${textColor};padding:3px 8px;border-radius:4px;white-space:nowrap;">${record.FirstName} ${record.LastName}</strong></td>
+      <td>${record.CurrentAgency || '—'}</td>
+      <td>${formatDate(record.ProgramDate)}</td>
+      <td>${record.LocationType === 'In-Person' ? (record.City && record.State ? record.City + ', ' + record.State : record.City || '—') : 'Online'}</td>
+      <td>${formatDate(record.HireDate)}</td>
+      <td>${record.PriorExperience === 'Yes' ? '✓ Yes' : 'No'}</td>
+      <td>${priorDuration}</td>
+      <td>${sigCell}</td>
+      <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:0.75rem;" data-detail="${idx}">Details</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Store filtered records for detail/sig access
+  tbody._records = records;
+
+  // Sig links
+  tbody.querySelectorAll('.sig-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const rec = tbody._records[parseInt(link.dataset.idx)];
+      if (rec.SignatureImage) {
+        const w = window.open();
+        w.document.write(`<img src="${rec.SignatureImage}" style="max-width:100%;border:1px solid #ccc;padding:20px;">`);
+      }
+    });
+  });
+
+  // Detail buttons
+  tbody.querySelectorAll('[data-detail]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rec = tbody._records[parseInt(btn.dataset.detail)];
+      showDetail(rec);
+    });
+  });
+
+  document.getElementById('results-wrap').classList.add('active');
+}
+
+// ============================================================
+// Detail panel
+// ============================================================
+function showDetail(record) {
+  const status = getStatus(record);
+  const label = getStatusLabel(record);
+  const days = calcExperienceDays(record);
+
+  document.getElementById('detail-title').textContent = `${record.FirstName} ${record.LastName}`;
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <h4>Experience Status</h4>
+      <span class="status-badge status-${status}" style="font-size:0.88rem;padding:5px 14px;">
+        <span class="status-dot"></span>
+        ${label} — ${days} days total
+      </span>
+    </div>
+
+    <div class="detail-section">
+      <h4>Participant</h4>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Full Name</label><p>${record.FirstName} ${record.LastName}</p></div>
+        <div class="detail-field"><label>Job Title</label><p>${record.ParticipantTitle || '—'}</p></div>
+        <div class="detail-field"><label>Current Agency</label><p>${record.CurrentAgency || '—'}</p></div>
+        <div class="detail-field"><label>Hire Date</label><p>${formatDate(record.HireDate)}</p></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>Program</h4>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Program Name</label><p>${record.ProgramName || '—'}</p></div>
+        <div class="detail-field"><label>Program Date</label><p>${formatDate(record.ProgramDate)}</p></div>
+        <div class="detail-field"><label>Location Type</label><p>${record.LocationType || '—'}</p></div>
+        <div class="detail-field"><label>City / State</label><p>${record.City && record.State ? record.City + ', ' + record.State : record.LocationType === 'Online' ? 'Online' : '—'}</p></div>
+      </div>
+    </div>
+
+    ${record.PriorExperience === 'Yes' ? `
+    <div class="detail-section">
+      <h4>Prior Regulatory Experience</h4>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Prior Agency</label><p>${record.PriorAgency || '—'}</p></div>
+        <div class="detail-field"><label>Prior Title</label><p>${record.PriorTitle || '—'}</p></div>
+        <div class="detail-field"><label>Start Date</label><p>${formatDate(record.PriorExpStartDate)}</p></div>
+        <div class="detail-field"><label>End Date</label><p>${formatDate(record.PriorExpEndDate)}</p></div>
+      </div>
+    </div>` : ''}
+
+    <div class="detail-section">
+      <h4>Supervisor</h4>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Name</label><p>${record.SupervisorName || '—'}</p></div>
+        <div class="detail-field"><label>Title</label><p>${record.SupervisorTitle || '—'}</p></div>
+        <div class="detail-field"><label>Agency</label><p>${record.SupervisorAgency || '—'}</p></div>
+        <div class="detail-field"><label>Email</label><p>${record.SupervisorEmail || '—'}</p></div>
+        <div class="detail-field"><label>Phone</label><p>${record.SupervisorPhone || '—'}</p></div>
+        <div class="detail-field"><label>Signature Timestamp</label><p>${formatDateTime(record.SignatureTimestamp)}</p></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>Submission</h4>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Submitted</label><p>${formatDateTime(record.SubmissionTimestamp)}</p></div>
+        <div class="detail-field"><label>Signature</label><p>${record.SignatureImage ? `<a href="#" class="sig-link" id="detail-sig-link">View Signature</a>` : '<span class="empty">Not provided</span>'}</p></div>
+      </div>
+    </div>
+  `;
+
+  if (record.SignatureImage) {
+    document.getElementById('detail-sig-link').addEventListener('click', e => {
+      e.preventDefault();
+      const w = window.open();
+      w.document.write(`<img src="${record.SignatureImage}" style="max-width:100%;border:1px solid #ccc;padding:20px;">`);
+    });
+  }
+
+  document.getElementById('detail-overlay').classList.add('active');
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('active');
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function formatDate(val) {
+  if (!val) return '—';
+  const d = excelDateToJS(val);
+  if (!d) return val;
+  return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
+function formatDateTime(val) {
+  if (!val) return '—';
+  const d = new Date(val);
+  if (isNaN(d)) return val;
+  return d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('active', show);
+  document.getElementById('searchBtn').disabled = show;
+}
+
+function hideError() {
+  const el = document.getElementById('error-msg');
+  el.classList.remove('active');
+  el.textContent = '';
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('active');
+}
+
+function hideResults() {
+  document.getElementById('results-wrap').classList.remove('active');
+  document.getElementById('empty-state').classList.remove('active');
+  document.getElementById('status-text').textContent = '';
+}
+</script>
+</body>
+</html>
