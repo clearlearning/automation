@@ -1293,29 +1293,54 @@ async function smReq(path) {
   return r.json();
 }
 function renderSurvey(survey,rollup) {
-  let html=`<div class="kpis" style="margin-bottom:20px">
-    <div class="kpi bur"><div class="kl">Survey</div><div style="font-size:15px;font-weight:700;margin-top:4px">${survey.title||'Non-Renewal Reasons'}</div></div>
-  </div>`;
-  (rollup?.pages||[]).forEach(pg=>{
-    (pg.questions||[]).forEach(q=>{
-      if(!q.answers?.length) return;
-      const tot=q.answers.reduce((s,a)=>s+(a.count||0),0);
-      if(!tot) return;
-      const sorted=[...q.answers].sort((a,b)=>(b.count||0)-(a.count||0));
-      html+=`<div class="card" style="margin-bottom:18px"><div class="ch"><div class="ct">${q.heading||q.id}</div></div><div class="cb">`;
-      sorted.forEach(ans=>{
-        const cnt=ans.count||0,pct=tot?cnt/tot:0;
-        html+=`<div class="rbar">
-          <div class="rlbl">${ans.text||ans.id||'(answer)'}</div>
-          <div class="rtrk"><div class="rfil" style="width:${Math.round(pct*100)}%">
-            ${pct>0.08?`<span class="rflbl">${$P(pct)}</span>`:''}
-          </div></div>
-          <div class="rcnt">${cnt}</div>
-        </div>`;
-      });
-      html+='</div></div>';
+  // Build lookup: question id → question object (with heading + answer choices)
+  const qMap={};
+  (survey.pages||[]).forEach(pg=>
+    (pg.questions||[]).forEach(q=>{ qMap[q.id]=q; })
+  );
+
+  // Build choice text lookup: choice/row id → text
+  const choiceText={};
+  Object.values(qMap).forEach(q=>{
+    const a=q.answers||{};
+    [...(a.choices||[]),(a.other?[a.other]:[]),...(a.rows||[])].forEach(c=>{
+      if(c.id) choiceText[c.id]=c.text;
     });
   });
+
+  let html=`<div class="kpis" style="margin-bottom:20px">
+    <div class="kpi bur"><div class="kl">Survey</div><div style="font-size:15px;font-weight:700;margin-top:4px">${survey.title}</div></div>
+    <div class="kpi gld"><div class="kl">Responses</div><div class="kv">${survey.response_count||0}</div></div>
+  </div>`;
+
+  // Only render multiple_choice and single_choice questions (skip contact form, essays)
+  (rollup?.data||[]).forEach(qRollup=>{
+    const q=qMap[qRollup.id];
+    if(!q) return;
+    if(!['multiple_choice','single_choice'].includes(q.family)) return;
+    const heading=q.headings?.[0]?.heading||'';
+    const summary=qRollup.summary?.[0]||{};
+    const choices=summary.choices||[];
+    const total=choices.reduce((s,c)=>s+(c.count||0),0);
+    if(!total) return;
+    const sorted=[...choices].sort((a,b)=>(b.count||0)-(a.count||0));
+    html+=`<div class="card" style="margin-bottom:18px">
+      <div class="ch"><div class="ct">${heading}</div><div class="cs">${summary.answered||0} responses</div></div>
+      <div class="cb">`;
+    sorted.forEach(c=>{
+      const cnt=c.count||0, pct=total?cnt/total:0;
+      const label=choiceText[c.id]||c.id;
+      html+=`<div class="rbar">
+        <div class="rlbl">${label}</div>
+        <div class="rtrk"><div class="rfil" style="width:${Math.round(pct*100)}%">
+          ${pct>0.08?`<span class="rflbl">${$P(pct)}</span>`:''}
+        </div></div>
+        <div class="rcnt">${cnt}</div>
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+
   document.getElementById('sv-body').innerHTML=html;
 }
 
