@@ -67,7 +67,6 @@ h1,h2,h3,.ct,.kl{font-family:var(--font-head)}
 .tbl th.warn-h{background:var(--warn-bg);color:var(--warn)}
 .tbl td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:14px;font-weight:400}
 .tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--burg-dk)}
 .tbl tr.expandable{cursor:pointer}
 .tbl tr.expandable:hover td{background:#f5eff3}
 .tbl tr.exp-detail td{background:#fdf8fb;padding:0}
@@ -103,7 +102,7 @@ h1,h2,h3,.ct,.kl{font-family:var(--font-head)}
 .btn-p:hover{background:var(--burg-lt)}
 .dp{color:var(--ahd);font-weight:700}.dn{color:var(--bhd);font-weight:700}.dz{color:var(--muted)}
 .rbar{display:flex;align-items:center;gap:10px;margin-bottom:9px}
-.rlbl{font-size:13px;min-width:220px;flex-shrink:0}
+.rlbl{font-size:13px;width:320px;flex-shrink:0;overflow:hidden;white-space:normal}
 .rtrk{flex:1;background:var(--cream-dk);border-radius:4px;height:22px;overflow:hidden}
 .rfil{height:100%;background:var(--burg);border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .5s}
 .rflbl{font-size:11px;color:#fff;font-weight:700;white-space:nowrap}
@@ -185,24 +184,18 @@ h1,h2,h3,.ct,.kl{font-family:var(--font-head)}
 
     <!-- Overview -->
     <div id="cur-sp-ov" class="sp on">
-      <div class="g2">
-        <div class="card">
-          <div class="ch">
-            <div><div class="ct">Current Year vs Selected Date</div><div class="cs" id="pace-lbl"></div></div>
-            <span class="badge live">LIVE</span>
-          </div>
-          <div class="cb">
-            <div class="date-pick-row">
-              <label>Compare to:</label>
-              <select id="cmp-date-sel" onchange="renderOverviewTable()"></select>
-              <span id="cmp-date-badge"></span>
-            </div>
-            <div class="ts"><table class="tbl" id="ov-tbl"></table></div>
-          </div>
+      <div class="card">
+        <div class="ch">
+          <div><div class="ct">Current Year vs Selected Date</div><div class="cs" id="pace-lbl"></div></div>
+          <span class="badge live">LIVE</span>
         </div>
-        <div class="card">
-          <div class="ch"><div class="ct">Cycle at a Glance</div></div>
-          <div class="cb" id="glance-body"></div>
+        <div class="cb">
+          <div class="date-pick-row">
+            <label>Compare to:</label>
+            <select id="cmp-date-sel" onchange="renderOverviewTable()"></select>
+            <span id="cmp-date-badge"></span>
+          </div>
+          <div class="ts"><table class="tbl" id="ov-tbl"></table></div>
         </div>
       </div>
     </div>
@@ -654,15 +647,6 @@ function renderCurrentTab() {
   sel.title='★ = has full level/country detail';
 
   renderOverviewTable();
-
-  // Cycle at a glance
-  document.getElementById('glance-body').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div><div class="kl" style="margin-bottom:4px">Today</div><div style="font-size:22px;font-weight:700">${today}</div><div style="font-size:12px;color:var(--muted)">Day ${todayDay} of cycle · ${curYr}</div></div>
-      <div><div class="kl" style="margin-bottom:4px">Cycle Close</div><div style="font-size:22px;font-weight:700">June 30, ${parseInt('20'+curYr.split('-')[1])}</div><div style="font-size:12px;color:var(--muted)">${Math.max(0,Math.round((new Date(parseInt('20'+curYr.split('-')[1]),5,30)-new Date())/86400000))} days remaining</div></div>
-      <div><div class="kl" style="margin-bottom:4px">Renewal Rate</div><div style="font-size:22px;font-weight:700;color:var(--ahd)">${renewRate!=null?$P(renewRate):'—'}</div><div style="font-size:12px;color:var(--muted)">${$N(nR)} of ${$N(nTotal)} renewed</div></div>
-      <div><div class="kl" style="margin-bottom:4px">At Risk</div><div style="font-size:22px;font-weight:700;color:var(--bhd)">${$N(nN)}</div><div style="font-size:12px;color:var(--muted)">Confirmed non-renewing</div></div>
-    </div>`;
 
   // Financial tab
   renderFinancial();
