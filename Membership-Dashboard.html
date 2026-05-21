@@ -414,7 +414,8 @@ const gT = () => localStorage.getItem('clear_auth_token') || '';
 function saveLoad() {
   const w=document.getElementById('cw').value.trim(), t=document.getElementById('ct').value.trim();
   if(w) localStorage.setItem('clear_worker_url',w);
-  if(t) localStorage.setItem('clear_auth_token',t);
+  // Only save token if it's not the masked placeholder
+  if(t && t !== '••••••••') localStorage.setItem('clear_auth_token',t);
   const s=document.getElementById('cst'); s.textContent='✓ Saved'; s.style.color='#1a6b3a';
   loadAll();
 }
