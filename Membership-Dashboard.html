@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CLEAR Membership Renewal Dashboard</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Trebuchet+MS&display=swap');
 :root{
@@ -136,17 +137,107 @@ h1,h2,h3,.ct,.kl{font-family:var(--font-head)}
 .date-pick-row label{font-size:12px;font-weight:700;font-family:var(--font-head);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .date-pick-row select{border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:13px;font-family:var(--font-body);background:#fff;color:var(--text)}
 .footer{text-align:center;padding:22px;font-size:11px;color:var(--muted)}
+/* Budget settings modal */
+.gear-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:20px;padding:0 0 0 16px;line-height:1;transition:.15s}
+.gear-btn:hover{color:#fff}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+.modal-overlay.on{display:flex}
+.modal{background:#fff;border-radius:var(--r);box-shadow:0 8px 40px rgba(0,0,0,.2);width:680px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-hdr{background:var(--burg);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-radius:var(--r) var(--r) 0 0}
+.modal-hdr h2{font-family:var(--font-head);font-size:15px;color:#fff}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.8);font-size:22px;cursor:pointer;line-height:1}
+.modal-close:hover{color:#fff}
+.modal-body{padding:22px}
+.modal-section{margin-bottom:20px}
+.modal-section h3{font-family:var(--font-head);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.budget-field{display:flex;flex-direction:column;gap:4px}
+.budget-field label{font-size:11px;font-weight:700;font-family:var(--font-head);color:var(--charcoal);text-transform:uppercase;letter-spacing:.04em}
+.budget-field input{border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;font-family:var(--font-body);color:var(--text);background:#fff}
+.budget-field input:focus{outline:none;border-color:var(--burg)}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:var(--cream);border-radius:0 0 var(--r) var(--r)}
+.btn-save{background:var(--burg);color:#fff;border:none;padding:8px 22px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font-head)}
+.btn-save:hover{background:var(--burg-lt)}
+.btn-cancel{background:transparent;color:var(--muted);border:1px solid var(--border);padding:8px 18px;border-radius:var(--r);cursor:pointer;font-size:13px;font-family:var(--font-head)}
+.btn-cancel:hover{background:var(--cream-dk)}
+.bvs-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.bvs-label{font-size:13px;width:320px;flex-shrink:0;white-space: normal;}
+.bvs-track{flex:1;background:var(--cream-dk);border-radius:4px;height:26px;overflow:hidden}
+.bvs-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:10px;transition:width .6s}
+.bvs-fill-lbl{font-size:11px;font-weight:700;white-space:nowrap;color:#fff}
+.bvs-pct{font-size:12px;font-weight:700;min-width:52px;text-align:right}
+
 </style>
 </head>
 <body>
 
 <header class="hdr">
   <h1>CLEAR Membership Renewal Dashboard</h1>
-  <div class="hdr-r">
-    <div><span class="dot"></span>Live Novi data · Historical database</div>
-    <div id="rl">Not yet loaded</div>
+  <div style="display:flex;align-items:center">
+    <div class="hdr-r">
+      <div><span class="dot"></span>Live Novi data · Historical database</div>
+      <div id="rl">Not yet loaded</div>
+    </div>
+    <button class="gear-btn" onclick="openBudgetModal()" title="Budget Settings">⚙</button>
   </div>
 </header>
+
+<!-- Budget Settings Modal -->
+<div class="modal-overlay" id="budget-modal" onclick="if(event.target===this)closeBudgetModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>⚙ Budget Settings</h2>
+      <button class="modal-close" onclick="closeBudgetModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert info" style="margin-bottom:16px">
+        Budget figures are saved to the cloud and shared with all users. Set once per renewal cycle.
+      </div>
+      <div class="modal-section">
+        <h3>Renewal Cycle</h3>
+        <div class="budget-grid">
+          <div class="budget-field">
+            <label>Cycle (e.g. 26-27)</label>
+            <input id="b-cycle" placeholder="26-27">
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Membership Targets</h3>
+        <div class="budget-grid">
+          <div class="budget-field">
+            <label>Target Renewals (count)</label>
+            <input id="b-renewals" type="number" placeholder="0">
+          </div>
+          <div class="budget-field">
+            <label>Target New Members (count)</label>
+            <input id="b-new" type="number" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Revenue Targets</h3>
+        <div class="budget-grid">
+          <div class="budget-field">
+            <label>Total Revenue Budget ($)</label>
+            <input id="b-total-rev" type="number" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Revenue by Dues Rule ($)</h3>
+        <div class="budget-grid" id="b-by-level">
+          <!-- Populated dynamically from DUES_RULE_ORDER -->
+        </div>
+      </div>
+      <div id="budget-save-status" style="font-size:12px;color:var(--ahd);margin-top:8px;text-align:right"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeBudgetModal()">Cancel</button>
+      <button class="btn-save" onclick="saveBudget()">Save Budget</button>
+    </div>
+  </div>
+</div>
 
 <div class="cfg">
   <span>Worker:</span><input id="cw" class="iw" placeholder="https://your-worker.workers.dev">
@@ -580,6 +671,10 @@ async function loadAll() {
     noviData={renewed,pending,nonrenewing,new:newMbrs};
     noviLoaded=true;
     document.getElementById('rl').textContent='Last refreshed: '+new Date().toLocaleTimeString();
+    // Load budget for current cycle
+    const budgetCycle = localStorage.getItem('clear_budget_cycle');
+    if (budgetCycle) await loadBudget(budgetCycle);
+    await loadBudget(budgetCycle);
     renderCurrentTab();
   } catch(e) {
     showErr(`<div class="alert err"><strong>Could not load Novi data:</strong> ${e.message}</div>
@@ -950,6 +1045,69 @@ function renderFinancial() {
     <td class="num" style="color:var(--warn)">${$MC(totalRemaining)}</td>
   </tr>`;
 
+
+  // Budget vs Actual section
+  let bvsHtml = '';
+  if (currentBudget) {
+    const bRen = currentBudget.target_renewals || 0;
+    const bNew = currentBudget.target_new || 0;
+    const bRev = currentBudget.total_revenue || 0;
+    const actRen = renewed.length;
+    const actNew = newMbrs.length;
+    const actRev = totalCollected;
+    function bvsBar(label, actual, budget) {
+      if (!budget) return '';
+      const pct = actual / budget;
+      const pctLbl = (pct * 100).toFixed(1) + '%';
+      const overUnder = actual - budget;
+      const ouLabel = overUnder >= 0
+        ? `<span style="color:var(--ahd);font-weight:700">+${overUnder.toLocaleString()} over</span>`
+        : `<span style="color:var(--bhd);font-weight:700">${overUnder.toLocaleString()} under</span>`;
+      return `<div class="bvs-row">
+        <div class="bvs-label">${label}</div>
+        <div class="bvs-track">
+          <div class="bvs-fill" style="width:${Math.min(100,Math.round(pct*100))}%;background:${pct>=0.75?'#1a6b3a':pct>=0.5?'#DDA838':'#64092C'}">
+            <span class="bvs-fill-lbl">${actual.toLocaleString()} of ${budget.toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="bvs-pct" style="color:${pct>=0.75?'#1a6b3a':pct>=0.5?'#DDA838':'#64092C'}">${pctLbl}</div>
+        <div style="font-size:12px;min-width:120px">${ouLabel}</div>
+      </div>`;
+    }
+    const bvsRows = [
+      bvsBar('Renewals', actRen, bRen),
+      bvsBar('New Members', actNew, bNew),
+      bvsBar('Total Revenue', actRev, bRev),
+    ].filter(Boolean).join('');
+
+    // Revenue by level budget vs actual
+    const byLevelBudget = currentBudget.by_level || {};
+    const lvBvsRows = Object.keys(byLevelBudget).map(rule => {
+      const bAmt = byLevelBudget[rule] || 0;
+      const aAmt = (byRule[rule]?.collectedAmt || 0);
+      return bvsBar(rule, aAmt, bAmt, 'var(--burg)');
+    }).filter(Boolean).join('');
+
+    bvsHtml = `<div class="card" style="margin-bottom:18px">
+      <div class="ch" style="cursor:pointer" onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.acc-arr').textContent=b.style.display==='block'?'▼':'▶'">
+        <div><div class="ct">Budget vs Actual — ${currentBudget._cycle || ''}</div>
+        <div class="cs">Actual collected vs annual budget targets · click to expand</div></div>
+        <span class="acc-arr" style="font-size:12px;color:var(--muted)">▶</span>
+      </div>
+      <div style="display:none"><div class="cb">
+        <div style="margin-bottom:14px">${bvsRows}</div>
+        ${lvBvsRows ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;font-family:var(--font-head);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Revenue by Dues Rule</div>
+          ${lvBvsRows}
+        </div>` : ''}
+      </div>
+    </div>`;
+  } else {
+    bvsHtml = `<div class="alert info" style="margin-bottom:18px">
+      No budget set for this cycle. Click the ⚙ gear icon in the header to add budget targets.
+    </div>`;
+  }
+
   const tableHtml=`
     <div class="card" style="margin-top:18px">
       <div class="ch"><div class="ct">Dues by Member Type &amp; Rule</div>
@@ -974,7 +1132,7 @@ function renderFinancial() {
     Actual invoiced amounts may differ for custom billing. Open/overdue balances are live from Novi.
   </div>`;
 
-  document.getElementById('fin-body').innerHTML=kpiHtml+tableHtml+noteHtml;
+  document.getElementById('fin-body').innerHTML=kpiHtml+bvsHtml+tableHtml+noteHtml;
 }
 function renderHistLvTable() {
   const sel=document.getElementById('hist-lv-date');
@@ -1327,6 +1485,118 @@ function renderSurvey(survey,rollup) {
   });
 
   document.getElementById('sv-body').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// BUDGET SETTINGS
+// ═══════════════════════════════════════════
+let currentBudget = null;
+
+const SNAPSHOT_WORKER = () => localStorage.getItem('clear_worker_url') || '';
+
+async function loadBudget(cycle) {
+  try {
+    const r = await fetch(SNAPSHOT_WORKER() + '/budget?cycle=' + encodeURIComponent(cycle), {
+      headers: {'X-Auth-Token': gT()}
+    });
+    const d = await r.json();
+    if (d.found) {
+      currentBudget = d.budget;
+      currentBudget._cycle = cycle;
+    } else {
+      currentBudget = null;
+    }
+  } catch(e) {
+    currentBudget = null;
+  }
+}
+
+function openBudgetModal() {
+  // Populate level fields from DUES_RULE_ORDER
+  const container = document.getElementById('b-by-level');
+  container.innerHTML = '';
+  DUES_RULE_ORDER.forEach(rule => {
+    const field = document.createElement('div');
+    field.className = 'budget-field';
+    const safeId = 'b-lv-' + rule.replace(/[^a-zA-Z0-9]/g,'_');
+    field.innerHTML = `<label>${rule}</label><input id="${safeId}" type="number" placeholder="0" data-rule="${rule}">`;
+    container.appendChild(field);
+  });
+
+  // Pre-fill with existing budget if available
+  const today = new Date().toISOString().slice(0,10);
+  const cycle = (currentBudget?._cycle) || localStorage.getItem('clear_budget_cycle') || renewalYr(today);
+  document.getElementById('b-cycle').value = cycle;
+
+  if (currentBudget) {
+    document.getElementById('b-renewals').value = currentBudget.target_renewals || '';
+    document.getElementById('b-new').value = currentBudget.target_new || '';
+    document.getElementById('b-total-rev').value = currentBudget.total_revenue || '';
+    const byLevel = currentBudget.by_level || {};
+    container.querySelectorAll('input[data-rule]').forEach(input => {
+      const rule = input.getAttribute('data-rule');
+      if (byLevel[rule]) input.value = byLevel[rule];
+    });
+  }
+
+  document.getElementById('budget-save-status').textContent = '';
+  document.getElementById('budget-modal').classList.add('on');
+}
+
+function closeBudgetModal() {
+  document.getElementById('budget-modal').classList.remove('on');
+}
+
+async function saveBudget() {
+  const cycle = document.getElementById('b-cycle').value.trim();
+  if (!cycle) { alert('Please enter a cycle (e.g. 26-27)'); return; }
+
+  const by_level = {};
+  document.querySelectorAll('#b-by-level input[data-rule]').forEach(input => {
+    const val = parseFloat(input.value);
+    if (!isNaN(val) && val > 0) {
+      by_level[input.getAttribute('data-rule')] = val;
+    }
+  });
+
+  const budget = {
+    target_renewals: parseInt(document.getElementById('b-renewals').value) || 0,
+    target_new:      parseInt(document.getElementById('b-new').value) || 0,
+    total_revenue:   parseFloat(document.getElementById('b-total-rev').value) || 0,
+    by_level,
+  };
+
+  const statusEl = document.getElementById('budget-save-status');
+  statusEl.textContent = 'Saving…';
+  statusEl.style.color = 'var(--muted)';
+
+  try {
+    const r = await fetch(SNAPSHOT_WORKER() + '/budget', {
+      method: 'POST',
+      headers: { 'X-Auth-Token': gT(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cycle, budget }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      currentBudget = { ...budget, _cycle: cycle };
+      localStorage.setItem('clear_budget_cycle', cycle);
+      statusEl.textContent = '✓ Saved successfully';
+      statusEl.style.color = 'var(--ahd)';
+      setTimeout(() => {
+        closeBudgetModal();
+        // Re-render financial tab if it's visible
+        if (document.getElementById('cur-sp-fin')?.classList.contains('on')) {
+          renderFinancial();
+        }
+      }, 800);
+    } else {
+      statusEl.textContent = 'Error: ' + (d.error || 'Unknown error');
+      statusEl.style.color = 'var(--bhd)';
+    }
+  } catch(e) {
+    statusEl.textContent = 'Failed to save: ' + e.message;
+    statusEl.style.color = 'var(--bhd)';
+  }
 }
 
 // ═══════════════════════════════════════════
