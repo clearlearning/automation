@@ -278,6 +278,14 @@
         <button class="btn btn-secondary btn-sm" id="clearFiltersBtn">Clear Filters</button>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <div class="field">
+        <label for="novi-token-input">Novi Auth Token</label>
+        <input type="password" id="novi-token-input" placeholder="Enter token (saved after first use)">
+      </div>
+      <button class="btn btn-secondary btn-sm" id="novi-connect-btn" style="padding:9px 16px;">Connect to Novi</button>
+      <div id="novi-connect-status" style="font-size:0.78rem;padding:6px 10px;border-radius:5px;display:none;white-space:nowrap;align-self:center;"></div>
+    </div>
   </div>
 
   <div class="error-msg" id="error-msg"></div>
@@ -341,6 +349,122 @@ let sortCol = '';
 let sortDir = 'asc';
 
 // ============================================================
+// Top-level Novi state + functions
+// ============================================================
+let noviAllEvents = null;
+
+async function noviCall(path) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch(`${WORKER_URL}/novi${path}`, {
+      headers: { 'X-Auth-Token': AUTH_TOKEN },
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!r.ok) { const t = await r.text(); throw new Error('Novi ' + r.status + ': ' + t); }
+    return r.json();
+  } catch(e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('Request timed out after 15s');
+    throw e;
+  }
+}
+
+function setNoviConnectStatus(msg, type) {
+  const el = document.getElementById('novi-connect-status');
+  if (!el) return;
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent = msg;
+  el.style.background = type === 'ok' ? 'var(--green-bg)' : type === 'err' ? 'var(--red-bg)' : 'var(--yellow-bg)';
+  el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--yellow)';
+}
+
+function setVerifStatus(msg, isError) {
+  const el = document.getElementById('novi-verif-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--charcoal-light)';
+}
+
+function noviFormatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return '';
+  return (dt.getMonth()+1).toString().padStart(2,'0') + '/' + dt.getDate().toString().padStart(2,'0') + '/' + dt.getFullYear();
+}
+
+function renderNoviDropdown(filter) {
+  const dropdown = document.getElementById('novi-event-dropdown');
+  if (!noviAllEvents || !dropdown) return;
+  const f = (filter || '').toLowerCase().trim();
+  const filtered = f
+    ? noviAllEvents.filter(e =>
+        (e.Name || '').toLowerCase().includes(f) ||
+        noviFormatDate(e.StartDate).includes(f) ||
+        (e.EventCategory?.Name || '').toLowerCase().includes(f)
+      )
+    : noviAllEvents;
+  const shown = filtered.slice(0, 50);
+  if (!shown.length) {
+    dropdown.innerHTML = '<div style="padding:9px 14px;font-size:0.82rem;color:#999;font-style:italic;">No events match</div>';
+  } else {
+    dropdown.innerHTML = shown.map(e => {
+      const d = noviFormatDate(e.StartDate);
+      const cat = e.EventCategory?.Name ? ` <span style="color:#aaa;font-size:0.7rem;">(${e.EventCategory.Name})</span>` : '';
+      return `<div class="novi-event-opt" data-id="${e.EventUniqueId || e.Id || ''}" data-name="${(e.Name||'').replace(/"/g,'&quot;')}" data-date="${d}"
+        style="padding:8px 14px;font-size:0.82rem;cursor:pointer;border-bottom:1px solid #f0ede8;display:flex;align-items:baseline;gap:8px;">
+        <span style="color:#999;font-size:0.75rem;white-space:nowrap;flex-shrink:0;">${d}</span>
+        <span>${e.Name || '(unnamed)'}${cat}</span>
+      </div>`;
+    }).join('');
+    dropdown.querySelectorAll('.novi-event-opt').forEach(opt => {
+      opt.addEventListener('mousedown', ev => {
+        ev.preventDefault();
+        document.getElementById('novi-event-id').value = opt.dataset.id;
+        document.getElementById('novi-event-search').value = opt.dataset.date + ' — ' + opt.dataset.name;
+        dropdown.style.display = 'none';
+        document.getElementById('novi-pull-btn').disabled = false;
+        document.getElementById('novi-payment-result').style.display = 'none';
+        document.getElementById('verif-search-results').innerHTML = '';
+        setVerifStatus('Event selected. Click Pull Registrations.');
+      });
+      opt.addEventListener('mouseover', () => opt.style.background = 'rgba(100,9,44,0.04)');
+      opt.addEventListener('mouseout', () => opt.style.background = '');
+    });
+  }
+  dropdown.style.display = 'block';
+}
+
+async function doNoviConnect() {
+  const token = document.getElementById('novi-token-input').value.trim();
+  if (!token) { setNoviConnectStatus('Enter your Novi auth token first.', 'err'); return; }
+  const btn = document.getElementById('novi-connect-btn');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  setNoviConnectStatus('Connecting to Novi…', 'loading');
+  try {
+    const res = await noviCall('/api/events?pageSize=200&offset=0');
+    const all = (res.Results || res || []).filter(e => e.Name || e.EventName);
+    if (!all.length) { setNoviConnectStatus('Connected but no events found.', 'err'); btn.disabled = false; btn.textContent = 'Connect to Novi'; return; }
+    noviAllEvents = all;
+    localStorage.setItem('clear_novi_token', token);
+    const now = new Date();
+    noviAllEvents.sort((a, b) => {
+      const da = new Date(a.StartDate), db = new Date(b.StartDate);
+      const af = da >= now, bf = db >= now;
+      if (af && bf) return da - db;
+      if (!af && !bf) return db - da;
+      return af ? -1 : 1;
+    });
+    setNoviConnectStatus(`Connected — ${all.length} events loaded`, 'ok');
+    btn.textContent = 'Reconnect to Novi'; btn.disabled = false;
+  } catch(err) {
+    setNoviConnectStatus('Connection failed: ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = 'Connect to Novi';
+  }
+}
+
+// ============================================================
 // Init
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -351,6 +475,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('detail-overlay').addEventListener('click', e => { if (e.target === document.getElementById('detail-overlay')) closeDetail(); });
   document.getElementById('exportBtn').addEventListener('click', exportToExcel);
   document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+
+  // Novi connect wiring
+  document.getElementById('novi-connect-btn').addEventListener('click', doNoviConnect);
+  document.getElementById('novi-token-input').addEventListener('keydown', e => { if (e.key === 'Enter') doNoviConnect(); });
+  const savedNoviToken = localStorage.getItem('clear_novi_token');
+  if (savedNoviToken) {
+    document.getElementById('novi-token-input').value = savedNoviToken;
+    setTimeout(doNoviConnect, 0);
+  }
 
   // Filter change listeners
   ['filterCertStatus','filterReviewFrom','filterReviewTo','filterExpStatus'].forEach(id => {
@@ -768,15 +901,6 @@ function showDetail(record) {
       <div class="status-editor">
         <h4>Payment &amp; Course Verification</h4>
 
-        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:end;">
-          <div class="field">
-            <label for="novi-token-input">Novi Auth Token</label>
-            <input type="password" id="novi-token-input" placeholder="Enter token (saved after first use)">
-          </div>
-          <button class="btn btn-secondary btn-sm" id="novi-connect-btn" style="padding:9px 16px;font-size:0.85rem;align-self:flex-end;">Connect</button>
-        </div>
-        <div id="novi-connect-status" style="font-size:0.78rem;margin-bottom:8px;display:none;padding:6px 10px;border-radius:5px;"></div>
-
         <div id="novi-event-wrap" style="display:none;">
           <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:end;">
             <div class="field">
@@ -939,111 +1063,18 @@ function showDetail(record) {
   // (LMS search triggered via unified verif search)
 
   // ============================================================
-  // Novi Payment Verification
+  // Novi Payment Verification (per-panel state + setup)
   // ============================================================
   let noviRegistrantMap = null;
-  let noviAllEvents = null;
 
-  async function noviCall(path) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
-    try {
-      const r = await fetch(`${WORKER_URL}/novi${path}`, {
-        headers: { 'X-Auth-Token': AUTH_TOKEN },
-        signal: controller.signal
-      });
-      clearTimeout(timer);
-      if (!r.ok) { const t = await r.text(); throw new Error('Novi ' + r.status + ': ' + t); }
-      return r.json();
-    } catch(e) {
-      clearTimeout(timer);
-      if (e.name === 'AbortError') throw new Error('Request timed out after 15s — check network or worker');
-      throw e;
-    }
-  }
-
-  function setVerifStatus(msg, isError) {
-    const el = document.getElementById('novi-verif-status');
-    if (!el) return;
-    el.textContent = msg;
-    el.style.color = isError ? 'var(--red)' : 'var(--charcoal-light)';
-  }
-
-  function setNoviConnectStatus(msg, type) {
-    const el = document.getElementById('novi-connect-status');
-    if (!el) return;
-    el.style.display = 'block';
-    el.textContent = msg;
-    el.style.background = type === 'ok' ? 'var(--green-bg)' : type === 'err' ? 'var(--red-bg)' : 'var(--yellow-bg)';
-    el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--yellow)';
-  }
-
-  function noviFormatDate(d) {
-    if (!d) return '';
-    const dt = new Date(d);
-    if (isNaN(dt)) return '';
-    return (dt.getMonth()+1).toString().padStart(2,'0') + '/' + dt.getDate().toString().padStart(2,'0') + '/' + dt.getFullYear();
-  }
-
-  // Pre-fill token from localStorage (same key examepdash uses)
-  const savedNoviToken = localStorage.getItem('clear_novi_token');
-  if (savedNoviToken) {
-    document.getElementById('novi-token-input').value = savedNoviToken;
-  }
-
-  document.getElementById('novi-connect-btn').addEventListener('click', doNoviConnect);
-  document.getElementById('novi-token-input').addEventListener('keydown', e => { if (e.key === 'Enter') doNoviConnect(); });
-
-  async function doNoviConnect() {
-    const token = document.getElementById('novi-token-input').value.trim();
-    if (!token) { setNoviConnectStatus('Enter your Novi auth token first.', 'err'); return; }
-    const btn = document.getElementById('novi-connect-btn');
-    btn.disabled = true; btn.textContent = 'Connecting…';
-    setNoviConnectStatus('Connecting to Novi…', 'loading');
-    setVerifStatus('');
-    console.log('[Novi] Starting connect, fetching events…');
-    try {
-      const res = await noviCall('/api/events?pageSize=200&offset=0');
-      const all = (res.Results || res || []).filter(e => e.Name || e.EventName);
-      if (!all.length) { setNoviConnectStatus('Connected but no events found.', 'err'); btn.disabled = false; btn.textContent = 'Connect'; return; }
-
-      noviAllEvents = all;
-      localStorage.setItem('clear_novi_token', token);
-      console.log('[Novi] Events loaded:', all.length);
-
-      // Sort: upcoming first (asc), then past (desc)
-      const now = new Date();
-      noviAllEvents.sort((a, b) => {
-        const da = new Date(a.StartDate), db = new Date(b.StartDate);
-        const af = da >= now, bf = db >= now;
-        if (af && bf) return da - db;
-        if (!af && !bf) return db - da;
-        return af ? -1 : 1;
-      });
-
-      setNoviConnectStatus(`Connected — ${all.length} events loaded`, 'ok');
-      document.getElementById('novi-event-wrap').style.display = 'block';
-      btn.textContent = 'Reconnect';
-      btn.disabled = false;
-
-      // Pre-fill search with program date and wire up dropdown
-      const programDateStr = noviFormatDate(excelDateToJS(record.ProgramDate));
-      const searchInput = document.getElementById('novi-event-search');
-      if (programDateStr) searchInput.value = programDateStr;
-
-      // Wire up search input
-      searchInput.addEventListener('focus', () => renderNoviDropdown(searchInput.value));
-      searchInput.addEventListener('input', () => {
-        document.getElementById('novi-event-id').value = '';
-        document.getElementById('novi-pull-btn').disabled = true;
-        renderNoviDropdown(searchInput.value);
-      });
-      searchInput.addEventListener('blur', () => setTimeout(() => {
-        const dd = document.getElementById('novi-event-dropdown');
-        if (dd) dd.style.display = 'none';
-      }, 200));
-
-      // Auto-select if exactly one date match
+  // If Novi already connected, show event wrap and pre-fill date
+  if (noviAllEvents) {
+    const eventWrap = document.getElementById('novi-event-wrap');
+    if (eventWrap) eventWrap.style.display = 'block';
+    const programDateStr = noviFormatDate(excelDateToJS(record.ProgramDate));
+    const searchInput = document.getElementById('novi-event-search');
+    if (searchInput && programDateStr) {
+      searchInput.value = programDateStr;
       const dateMatches = noviAllEvents.filter(e => noviFormatDate(e.StartDate) === programDateStr);
       if (dateMatches.length === 1) {
         const ev = dateMatches[0];
@@ -1051,59 +1082,26 @@ function showDetail(record) {
         searchInput.value = noviFormatDate(ev.StartDate) + ' — ' + (ev.Name || '');
         document.getElementById('novi-pull-btn').disabled = false;
         setVerifStatus(`Auto-selected: ${ev.Name}. Click Pull Registrations.`);
-      } else if (programDateStr) {
+      } else {
         renderNoviDropdown(programDateStr);
         setVerifStatus(`${dateMatches.length} event(s) match ${formatDate(record.ProgramDate)} — select one.`);
       }
-
-    } catch(err) {
-      console.error('[Novi] Connection error:', err);
-      setNoviConnectStatus('Connection failed: ' + err.message, 'err');
-      btn.disabled = false; btn.textContent = 'Connect';
     }
   }
 
-  function renderNoviDropdown(filter) {
-    const dropdown = document.getElementById('novi-event-dropdown');
-    if (!noviAllEvents || !dropdown) return;
-    const f = (filter || '').toLowerCase().trim();
-    const filtered = f
-      ? noviAllEvents.filter(e =>
-          (e.Name || '').toLowerCase().includes(f) ||
-          noviFormatDate(e.StartDate).includes(f) ||
-          (e.EventCategory?.Name || '').toLowerCase().includes(f)
-        )
-      : noviAllEvents;
-    const shown = filtered.slice(0, 50);
-    if (!shown.length) {
-      dropdown.innerHTML = '<div style="padding:9px 14px;font-size:0.82rem;color:#999;font-style:italic;">No events match</div>';
-    } else {
-      dropdown.innerHTML = shown.map(e => {
-        const d = noviFormatDate(e.StartDate);
-        const cat = e.EventCategory?.Name ? ` <span style="color:#aaa;font-size:0.7rem;">(${e.EventCategory.Name})</span>` : '';
-        return `<div class="novi-event-opt" data-id="${e.EventUniqueId || e.Id || ''}" data-name="${(e.Name||'').replace(/"/g,'&quot;')}" data-date="${d}"
-          style="padding:8px 14px;font-size:0.82rem;cursor:pointer;border-bottom:1px solid #f0ede8;display:flex;align-items:baseline;gap:8px;">
-          <span style="color:#999;font-size:0.75rem;white-space:nowrap;flex-shrink:0;">${d}</span>
-          <span>${e.Name || '(unnamed)'}${cat}</span>
-        </div>`;
-      }).join('');
-      dropdown.querySelectorAll('.novi-event-opt').forEach(opt => {
-        opt.addEventListener('mousedown', ev => {
-          ev.preventDefault();
-          document.getElementById('novi-event-id').value = opt.dataset.id;
-          document.getElementById('novi-event-search').value = opt.dataset.date + ' — ' + opt.dataset.name;
-          dropdown.style.display = 'none';
-          document.getElementById('novi-pull-btn').disabled = false;
-          document.getElementById('novi-payment-result').style.display = 'none';
-          document.getElementById('verif-search-results').innerHTML = '';
-          noviRegistrantMap = null;
-          setVerifStatus('Event selected. Click Pull Registrations.');
-        });
-        opt.addEventListener('mouseover', () => opt.style.background = 'rgba(100,9,44,0.04)');
-        opt.addEventListener('mouseout', () => opt.style.background = '');
-      });
-    }
-    dropdown.style.display = 'block';
+  // Wire up event search input for this panel instance
+  const _noviSearchInput = document.getElementById('novi-event-search');
+  if (_noviSearchInput) {
+    _noviSearchInput.addEventListener('focus', () => renderNoviDropdown(_noviSearchInput.value));
+    _noviSearchInput.addEventListener('input', () => {
+      document.getElementById('novi-event-id').value = '';
+      document.getElementById('novi-pull-btn').disabled = true;
+      renderNoviDropdown(_noviSearchInput.value);
+    });
+    _noviSearchInput.addEventListener('blur', () => setTimeout(() => {
+      const dd = document.getElementById('novi-event-dropdown');
+      if (dd) dd.style.display = 'none';
+    }, 200));
   }
 
   document.getElementById('novi-pull-btn').addEventListener('click', async () => {
