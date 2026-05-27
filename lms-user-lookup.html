@@ -89,6 +89,11 @@
       <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="connectBtn">Test Connection</button></div>
     </div>
     <div class="connection-status disconnected" id="connectionStatus"><span class="dot red"></span> Not connected</div>
+    <div class="form-row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-mid);">
+      <div class="form-group" style="flex:1;"><label>Novi Auth Token</label><input type="password" id="noviTokenInput" placeholder="Enter token (saved after first use)"></div>
+      <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="noviConnectBtn">Connect to Novi</button></div>
+    </div>
+    <div id="noviConnectStatus" style="display:none;font-size:13px;padding:8px 12px;border-radius:6px;margin-top:4px;"></div>
   </div>
   <div class="panel">
     <h2>&#128270; Search Users</h2>
@@ -101,6 +106,44 @@
   <div class="panel hidden" id="panelUser">
     <div class="user-header" id="userHeader"></div>
     <div id="courseCards"></div>
+
+    <!-- Payment Verification -->
+    <div class="panel" id="paymentPanel" style="display:none;">
+      <h2>&#128179; Payment Verification</h2>
+      <div id="noviEventWrap" style="display:none;">
+        <div class="form-row" style="margin-bottom:8px;">
+          <div class="form-group" style="flex:1;">
+            <label>Novi Event</label>
+            <div style="position:relative;">
+              <input type="text" id="noviEventSearch" placeholder="Type to search by name, date (MM/DD/YYYY), or category…" style="width:100%;">
+              <div id="noviEventDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--blue);border-top:none;border-radius:0 0 6px 6px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
+            </div>
+            <input type="hidden" id="noviEventId">
+          </div>
+          <div class="form-group" style="flex:0 0 auto;">
+            <label>&nbsp;</label>
+            <button class="btn btn-sm btn-primary" id="noviPullBtn" disabled>Pull Registrations</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="noviVerifStatus" style="font-size:13px;color:#888;margin-bottom:6px;"></div>
+      <div id="noviSearchWrap" style="display:none;">
+        <div class="form-row" style="margin-bottom:6px;">
+          <div class="form-group" style="flex:1;">
+            <label>Participant Name</label>
+            <input type="text" id="noviNameInput" placeholder="Search by name…">
+          </div>
+          <div class="form-group" style="flex:0 0 auto;">
+            <label>&nbsp;</label>
+            <button class="btn btn-sm btn-primary" id="noviSearchBtn">Search</button>
+          </div>
+        </div>
+        <div id="noviSearchResults"></div>
+      </div>
+      <div id="noviPaymentResult" style="display:none;padding:10px 14px;border-radius:6px;border:1px solid var(--gray-mid);margin-top:4px;"></div>
+    </div>
+
     <div class="action-bar">
       <div class="form-group" style="min-width:320px;flex:1;margin-bottom:0;">
         <label>Mark Course as Complete</label>
@@ -214,7 +257,8 @@ function setCon(s,t){const el=document.getElementById('connectionStatus');el.cla
 
 async function doConnect(){const url=document.getElementById('workerUrl').value.trim();const tok=document.getElementById('authToken').value.trim();if(!url||!tok){setCon('disconnected','Enter Auth Token and click Test Connection');return;}STATE.workerUrl=url;STATE.authToken=tok;setCon('loading','Connecting...');try{const info=await apiCall('/v1/siteinfo');STATE.connected=true;STATE.domain=info.domain||'';setCon('connected','Connected to '+(info.site_name||info.domain||'TalentLMS'));localStorage.setItem('clear_worker_url',url);localStorage.setItem('clear_auth_token',tok);document.getElementById('searchInput').disabled=false;document.getElementById('searchBtn').disabled=false;}catch(e){STATE.connected=false;setCon('disconnected','Connection failed: '+e.message);}}
 document.getElementById('connectBtn').addEventListener('click',doConnect);
-(function(){const u=localStorage.getItem('clear_worker_url')||'https://clear-lms-proxy.avance.workers.dev';const t=localStorage.getItem('clear_auth_token');if(u)document.getElementById('workerUrl').value=u;if(t){document.getElementById('authToken').value=t;setTimeout(doConnect,200);}})();
+(function(){const u=localStorage.getItem('clear_worker_url')||'https://clear-lms-proxy.avance.workers.dev';const t=localStorage.getItem('clear_auth_token');if(u)document.getElementById('workerUrl').value=u;if(t){document.getElementById('authToken').value=t;setTimeout(doConnect,200);}
+const nt=localStorage.getItem('clear_novi_token');if(nt){document.getElementById('noviTokenInput').value=nt;setTimeout(doNoviConnect,400);}})();
 
 // Search
 document.getElementById('searchBtn').addEventListener('click',doSearch);
@@ -244,6 +288,12 @@ async function loadUser(userId){
   const panel=document.getElementById('panelUser');panel.classList.remove('hidden');
   document.getElementById('courseCards').innerHTML='<p style="color:#888;">Loading user data...</p>';
   document.getElementById('actionStatus').className='status-bar';document.getElementById('actionStatus').style.display='none';
+  document.getElementById('paymentPanel').style.display='none';
+  document.getElementById('noviEventWrap').style.display='none';
+  document.getElementById('noviSearchWrap').style.display='none';
+  document.getElementById('noviPaymentResult').style.display='none';
+  document.getElementById('noviSearchResults').innerHTML='';
+  document.getElementById('noviVerifStatus').textContent='';
   try{
     const user=await apiCall('/v1/users/id:'+userId);
     STATE.selectedUser=user;
@@ -323,6 +373,14 @@ async function loadUser(userId){
 
     document.getElementById('courseCards').innerHTML=html;
     setupMarkCourse(courses);
+    // Show payment panel
+    const pp=document.getElementById('paymentPanel');
+    pp.style.display='block';
+    // If Novi already connected, show event wrap immediately
+    if(noviAllEvents)document.getElementById('noviEventWrap').style.display='block';
+    // Pre-fill token if saved
+    const savedTok=localStorage.getItem('clear_novi_token');
+    if(savedTok&&document.getElementById('noviTokenInput'))document.getElementById('noviTokenInput').value=savedTok;
     panel.scrollIntoView({behavior:'smooth'});
 
   }catch(e){document.getElementById('courseCards').innerHTML='<p style="color:var(--red);">Error loading user: '+esc(e.message)+'</p>';}
@@ -351,6 +409,206 @@ document.getElementById('markCompleteBtn').addEventListener('click',()=>{
 
 function setActionSt(m,t){const el=document.getElementById('actionStatus');el.className='status-bar'+(t?' '+t:'');el.style.display='block';el.innerHTML=m;}
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ============================================================
+// Novi Payment Verification
+// ============================================================
+let noviAllEvents=null;
+let noviRegistrantMap=null;
+
+async function noviCall(path){
+  const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+'/novi'+path,{headers:{'X-Auth-Token':STATE.authToken}});
+  if(!r.ok){const t=await r.text();throw new Error('Novi '+r.status+': '+t);}
+  return r.json();
+}
+
+function setNoviConnectStatus(msg,type){
+  const el=document.getElementById('noviConnectStatus');
+  el.style.display='block';
+  el.textContent=msg;
+  el.style.background=type==='ok'?'var(--green-bg)':type==='err'?'var(--fail-bg)':'var(--warn-bg)';
+  el.style.color=type==='ok'?'var(--pass-green)':type==='err'?'var(--fail-red)':'var(--warn-amber)';
+}
+
+function setNoviVerifStatus(msg){
+  const el=document.getElementById('noviVerifStatus');
+  if(el)el.textContent=msg;
+}
+
+function noviFormatDate(d){
+  if(!d)return'';
+  const dt=new Date(d);
+  if(isNaN(dt))return'';
+  return(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0')+'/'+dt.getFullYear();
+}
+
+async function doNoviConnect(){
+  const token=document.getElementById('noviTokenInput').value.trim();
+  if(!token){setNoviConnectStatus('Enter your Novi auth token first.','err');return;}
+  const btn=document.getElementById('noviConnectBtn');
+  btn.disabled=true;btn.textContent='Connecting…';
+  setNoviConnectStatus('Connecting to Novi…','loading');
+  try{
+    const res=await noviCall('/api/events?pageSize=200&offset=0');
+    const all=(res.Results||res||[]).filter(e=>e.Name||e.EventName);
+    if(!all.length){setNoviConnectStatus('Connected but no events found.','err');btn.disabled=false;btn.textContent='Connect';return;}
+    noviAllEvents=all;
+    localStorage.setItem('clear_novi_token',token);
+    // Sort: upcoming first (asc), then past (desc)
+    const now=new Date();
+    noviAllEvents.sort((a,b)=>{
+      const da=new Date(a.StartDate),db=new Date(b.StartDate);
+      const af=da>=now,bf=db>=now;
+      if(af&&bf)return da-db;
+      if(!af&&!bf)return db-da;
+      return af?-1:1;
+    });
+    setNoviConnectStatus('Connected — '+all.length+' events loaded','ok');
+    document.getElementById('noviEventWrap').style.display='block';
+    btn.textContent='Reconnect to Novi';btn.disabled=false;
+    // Wire up event search input
+    const input=document.getElementById('noviEventSearch');
+    const dd=document.getElementById('noviEventDropdown');
+    input.addEventListener('focus',()=>renderNoviDropdown(input.value));
+    input.addEventListener('input',()=>{
+      document.getElementById('noviEventId').value='';
+      document.getElementById('noviPullBtn').disabled=true;
+      renderNoviDropdown(input.value);
+    });
+    input.addEventListener('blur',()=>setTimeout(()=>{dd.style.display='none';},200));
+    document.addEventListener('click',e=>{if(!e.target.closest('#noviEventWrap'))dd.style.display='none';});
+  }catch(err){
+    setNoviConnectStatus('Connection failed: '+err.message,'err');
+    btn.disabled=false;btn.textContent='Connect';
+  }
+}
+
+function renderNoviDropdown(filter){
+  const dd=document.getElementById('noviEventDropdown');
+  if(!noviAllEvents||!dd)return;
+  const f=(filter||'').toLowerCase().trim();
+  const filtered=f
+    ?noviAllEvents.filter(e=>(e.Name||'').toLowerCase().includes(f)||noviFormatDate(e.StartDate).includes(f)||(e.EventCategory?.Name||'').toLowerCase().includes(f))
+    :noviAllEvents;
+  const shown=filtered.slice(0,50);
+  if(!shown.length){
+    dd.innerHTML='<div style="padding:9px 14px;font-size:13px;color:#999;font-style:italic;">No events match</div>';
+  }else{
+    dd.innerHTML=shown.map(e=>{
+      const d=noviFormatDate(e.StartDate);
+      const cat=e.EventCategory?.Name?'<span style="color:#aaa;font-size:11px;margin-left:6px;">('+esc(e.EventCategory.Name)+')</span>':'';
+      return'<div class="novi-evt-opt" data-id="'+(e.EventUniqueId||e.Id||'')+'" data-name="'+esc(e.Name||'')+'" data-date="'+d+'" style="padding:8px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #f4f4f5;display:flex;align-items:baseline;gap:8px;"><span style="color:#888;font-size:11px;white-space:nowrap;flex-shrink:0;">'+d+'</span><span>'+esc(e.Name||'(unnamed)')+cat+'</span></div>';
+    }).join('');
+    dd.querySelectorAll('.novi-evt-opt').forEach(opt=>{
+      opt.addEventListener('mousedown',ev=>{
+        ev.preventDefault();
+        document.getElementById('noviEventId').value=opt.dataset.id;
+        document.getElementById('noviEventSearch').value=opt.dataset.date+' — '+opt.dataset.name;
+        dd.style.display='none';
+        document.getElementById('noviPullBtn').disabled=false;
+        document.getElementById('noviPaymentResult').style.display='none';
+        document.getElementById('noviSearchResults').innerHTML='';
+        noviRegistrantMap=null;
+        setNoviVerifStatus('Event selected. Click Pull Registrations.');
+      });
+      opt.addEventListener('mouseover',()=>opt.style.background='#e3f2fd');
+      opt.addEventListener('mouseout',()=>opt.style.background='');
+    });
+  }
+  dd.style.display='block';
+}
+
+document.getElementById('noviConnectBtn').addEventListener('click',doNoviConnect);
+document.getElementById('noviTokenInput').addEventListener('keydown',e=>{if(e.key==='Enter')doNoviConnect();});
+
+document.getElementById('noviPullBtn').addEventListener('click',async()=>{
+  const eventId=document.getElementById('noviEventId').value;
+  if(!eventId){setNoviVerifStatus('Select an event first.');return;}
+  const btn=document.getElementById('noviPullBtn');
+  btn.disabled=true;btn.textContent='Pulling…';
+  setNoviVerifStatus('Fetching registrations…');
+  try{
+    let allRegs=[];let offset=0;
+    while(true){
+      const res=await noviCall('/api/registrations?eventId='+eventId+'&pageSize=200&offset='+offset);
+      const page=Array.isArray(res)?res:(res.Results||[]);
+      allRegs=allRegs.concat(page);
+      if(page.length<200)break;
+      offset+=200;
+    }
+    noviRegistrantMap=new Map();
+    allRegs.forEach(reg=>{
+      const ps=String(reg.PaymentStatus||'').trim();
+      const hasSR=!!reg.QBSalesReceiptID;
+      const bm=ps.match(/\$([0-9,]+\.?\d*)/);
+      const bal=bm?parseFloat(bm[1].replace(/,/g,'')):null;
+      let paid;
+      if(hasSR){paid=(bal===0||bal===null)?'Yes':'No';}
+      else if(ps==='Unpaid'){paid='No';}
+      else if(bal===0){paid='Yes';}
+      else if(bal>0){paid='No';}
+      else{paid='Yes';}
+      (reg.Attendees||[]).forEach(a=>{
+        const fullName=((a.FirstName||'')+' '+(a.LastName||'')).trim();
+        const key=fullName.toLowerCase();
+        if(!noviRegistrantMap.has(key)||paid==='No')noviRegistrantMap.set(key,{paid,email:a.Email||'',fullName});
+      });
+    });
+    setNoviVerifStatus(noviRegistrantMap.size+' registrant(s) loaded.');
+    // Pre-fill participant name from the currently loaded user
+    const ni=document.getElementById('noviNameInput');
+    if(ni&&STATE.selectedUser)ni.value=((STATE.selectedUser.first_name||'')+' '+(STATE.selectedUser.last_name||'')).trim();
+    document.getElementById('noviSearchWrap').style.display='block';
+  }catch(err){
+    setNoviVerifStatus('Error: '+err.message);
+  }
+  btn.disabled=false;btn.textContent='Pull Registrations';
+});
+
+document.getElementById('noviSearchBtn').addEventListener('click',doNoviSearch);
+document.getElementById('noviNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')doNoviSearch();});
+
+function doNoviSearch(){
+  const q=(document.getElementById('noviNameInput').value||'').trim();
+  if(!q)return;
+  const resultsDiv=document.getElementById('noviSearchResults');
+  const resultEl=document.getElementById('noviPaymentResult');
+  resultsDiv.innerHTML='';
+  resultEl.style.display='none';
+  if(!noviRegistrantMap||noviRegistrantMap.size===0){setNoviVerifStatus('Pull registrations first.');return;}
+  const ql=q.toLowerCase();
+  const matches=[...noviRegistrantMap.entries()]
+    .filter(([key])=>key.includes(ql)||ql.split(/\s+/).some(p=>key.includes(p)))
+    .map(([,val])=>val);
+  if(matches.length===1){
+    showNoviPaymentResult(matches[0].fullName,matches[0].paid,matches[0].email);
+  }else if(matches.length>1){
+    resultsDiv.innerHTML=matches.map(m=>{
+      const cls=m.paid==='Yes'?'cell-pass':m.paid==='No'?'cell-fail':'';
+      const lbl=m.paid==='Yes'?'&#10003; Paid':m.paid==='No'?'&#10007; Unpaid':'?';
+      return'<div class="novi-reg-opt" data-name="'+esc(m.fullName)+'" data-paid="'+m.paid+'" data-email="'+esc(m.email)+'" style="padding:8px 12px;border:1px solid var(--gray-mid);border-radius:6px;margin-bottom:4px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:13px;"><span><strong>'+esc(m.fullName)+'</strong>'+(m.email?'<span style="color:#888;margin-left:8px;font-size:12px;">'+esc(m.email)+'</span>':'')+'</span><span class="'+cls+'" style="font-size:12px;font-weight:700;">'+lbl+'</span></div>';
+    }).join('');
+    resultsDiv.querySelectorAll('.novi-reg-opt').forEach(el=>{
+      el.addEventListener('mouseover',()=>el.style.background='rgba(8,77,120,0.04)');
+      el.addEventListener('mouseout',()=>el.style.background='');
+      el.addEventListener('click',()=>{resultsDiv.innerHTML='';showNoviPaymentResult(el.dataset.name,el.dataset.paid,el.dataset.email);});
+    });
+  }else{
+    resultsDiv.innerHTML='<p style="font-size:13px;color:#888;margin-top:4px;">Not found in Novi registrations. Try a different name.</p>';
+  }
+}
+
+function showNoviPaymentResult(name,payStatus,email){
+  const el=document.getElementById('noviPaymentResult');
+  el.style.display='block';
+  const isPaid=payStatus==='Yes';
+  const isUnpaid=payStatus==='No';
+  el.style.background=isPaid?'var(--pass-bg)':isUnpaid?'var(--fail-bg)':'var(--warn-bg)';
+  el.style.borderColor=isPaid?'#a5d6a7':isUnpaid?'#ef9a9a':'#ffe082';
+  const badge=isPaid?'<span style="color:var(--pass-green);font-weight:700;font-size:14px;">&#10003; Paid</span>':isUnpaid?'<span style="color:var(--fail-red);font-weight:700;font-size:14px;">&#10007; Unpaid</span>':'<span style="color:var(--warn-amber);font-weight:700;font-size:14px;">? Unknown</span>';
+  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><span style="font-size:12px;color:#888;">Registrant: </span><strong>'+esc(name)+'</strong>'+(email?'<span style="font-size:12px;color:#888;margin-left:8px;">'+esc(email)+'</span>':'')+'</div>'+badge+'</div>';
+}
+
 </script>
 </body>
 </html>
