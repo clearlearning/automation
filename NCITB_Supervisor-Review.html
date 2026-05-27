@@ -1447,7 +1447,7 @@ function showDetail(record) {
       courseSelect.onchange = () => { openBtn.disabled = !courseSelect.value; };
       openBtn.onclick = () => {
         if (!courseSelect.value) return;
-        window.open(`https://portal.clearhq.org/trainer/users/id:${userId}`, '_blank');
+        window.open(`https://portal.clearhq.org/trainer/users/id:${courseId}`, '_blank');
         document.getElementById('lms-portal-note').style.display = 'block';
       };
 
