@@ -147,6 +147,59 @@
   .history-dot.empty { background: var(--border); }
   .history-meta { color: var(--charcoal-light); font-size: 0.75rem; margin-top: 1px; }
 
+  /* Payment verification */
+  .verif-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .verif-section h4 { font-size: 0.72rem; font-weight: 700; color: var(--burgundy); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .event-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; max-height: 180px; overflow-y: auto; }
+  .event-card { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.82rem; transition: all 0.15s; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .event-card:hover { border-color: var(--burgundy); background: rgba(100,9,44,0.03); }
+  .event-card.selected { border-color: var(--burgundy); background: rgba(100,9,44,0.06); font-weight: 600; }
+  .event-card-name { flex: 1; }
+  .event-card-date { font-size: 0.75rem; color: var(--charcoal-light); flex-shrink: 0; }
+  .payment-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .payment-paid { background: var(--green-bg); color: var(--green); }
+  .payment-unpaid { background: var(--red-bg); color: var(--red); }
+  .payment-unknown { background: #f0ede8; color: #9a9a9a; }
+  .payment-result { padding: 10px 14px; border-radius: 7px; font-size: 0.85rem; margin-top: 8px; border: 1px solid var(--border); background: var(--cream); }
+  .name-override-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; align-items: end; }
+
+  /* LMS completion */
+  .lms-completion-section { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
+  .lms-completion-section h5 { font-size: 0.7rem; font-weight: 700; color: var(--charcoal-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .course-completion-list { display: flex; flex-direction: column; gap: 4px; }
+  .course-completion-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border-radius: 5px; background: var(--cream); border: 1px solid var(--border); font-size: 0.8rem; }
+  .completion-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+  .cb-completed { background: var(--green-bg); color: var(--green); }
+  .cb-inprogress { background: var(--yellow-bg); color: var(--yellow); }
+  .cb-failed { background: var(--red-bg); color: var(--red); }
+  .cb-notstarted { background: #f0ede8; color: #9a9a9a; }
+
+  /* Course card accordions (from userstatus.html) */
+  .course-card { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+  .course-card-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--cream); cursor: pointer; transition: background 0.15s; }
+  .course-card-header:hover { background: #edeae5; }
+  .cc-name { font-weight: 700; font-size: 0.85rem; color: var(--charcoal); flex: 1; }
+  .cc-status { margin-left: 12px; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .course-card-body { padding: 16px; display: none; border-top: 1px solid var(--border); }
+  .course-card-body.open { display: block; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .badge-complete { background: var(--green-bg); color: var(--green); }
+  .badge-inprogress { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-notstarted { background: #eceff1; color: #78909c; }
+  .badge-failed { background: var(--red-bg); color: var(--red); }
+  .module-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .module-table th { background: var(--burgundy); color: #fff; padding: 8px 12px; text-align: left; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .module-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); }
+  .module-table tr:nth-child(even) { background: #fafafa; }
+  .module-type-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .type-scorm { background: #e8eaf6; color: #3949ab; }
+  .type-test { background: var(--yellow-bg); color: var(--yellow); }
+  .type-ilt { background: var(--green-bg); color: var(--green); }
+  .type-video { background: #fce4ec; color: #c62828; }
+  .type-other { background: #eceff1; color: #78909c; }
+  .score-pass { color: var(--green); font-weight: 700; }
+  .score-fail { color: var(--red); font-weight: 700; }
+
   @media (max-width: 700px) {
     .search-row { grid-template-columns: 1fr; }
     .filter-row { grid-template-columns: 1fr; }
@@ -708,29 +761,62 @@ function showDetail(record) {
           <button class="btn btn-primary" id="save-status-btn" style="padding:7px 20px;font-size:0.85rem;">Save Decision</button>
         </div>
         ${historyHtml}
+      </div>
+    </div>
 
-        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-          <h4 style="margin-bottom:12px;">Issue Certificate in TalentLMS</h4>
-          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px;align-items:end;">
-            <div class="field">
-              <label for="lms-search-input">Search User in LMS</label>
-              <input type="text" id="lms-search-input" placeholder="Search by name…" value="${record.FirstName} ${record.LastName}">
-            </div>
-            <button class="btn btn-secondary" id="lms-search-btn" style="padding:9px 16px;font-size:0.85rem;">Search</button>
+    <div class="detail-section">
+      <div class="status-editor">
+        <h4>Payment &amp; Course Verification</h4>
+
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:end;">
+          <div class="field">
+            <label for="novi-token-input">Novi Auth Token</label>
+            <input type="password" id="novi-token-input" placeholder="Enter token (saved after first use)">
           </div>
-          <div id="lms-search-results" style="margin-bottom:10px;"></div>
-          <div id="lms-course-section" style="display:none;">
-            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
-              <div class="field">
-                <label for="lms-course-select">NCIT Course</label>
-                <select id="lms-course-select"><option value="">— Select a course —</option></select>
-              </div>
-              <button class="btn btn-gold" id="lms-open-btn" style="padding:9px 16px;font-size:0.85rem;" disabled>Open in Portal</button>
-            </div>
-            <p id="lms-portal-note" style="display:none;font-size:0.78rem;color:var(--charcoal-light);margin-top:8px;">Portal opened in new tab. Issue the certificate, then return here to save your decision.</p>
-          </div>
-          <div id="lms-status-msg" style="font-size:0.8rem;color:var(--charcoal-light);margin-top:6px;"></div>
+          <button class="btn btn-secondary btn-sm" id="novi-connect-btn" style="padding:9px 16px;font-size:0.85rem;align-self:flex-end;">Connect</button>
         </div>
+        <div id="novi-connect-status" style="font-size:0.78rem;margin-bottom:8px;display:none;padding:6px 10px;border-radius:5px;"></div>
+
+        <div id="novi-event-wrap" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:end;">
+            <div class="field">
+              <label for="novi-event-search">Novi Event</label>
+              <div style="position:relative;">
+                <input type="text" id="novi-event-search" placeholder="Type to search by name, date (MM/DD/YYYY), or category…" style="width:100%;">
+                <div id="novi-event-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--burgundy);border-top:none;border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
+              </div>
+              <input type="hidden" id="novi-event-id">
+            </div>
+            <button class="btn btn-secondary btn-sm" id="novi-pull-btn" style="padding:9px 16px;font-size:0.85rem;align-self:flex-end;" disabled>Pull Registrations</button>
+          </div>
+        </div>
+
+        <div id="verif-search-wrap" style="display:none;padding-top:10px;border-top:1px solid var(--border);margin-top:4px;">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
+            <div class="field">
+              <label for="verif-name-input">Participant Name</label>
+              <input type="text" id="verif-name-input" placeholder="Search by name…" value="${record.FirstName} ${record.LastName}">
+            </div>
+            <button class="btn btn-primary btn-sm" id="verif-search-btn" style="padding:9px 16px;font-size:0.85rem;align-self:flex-end;">Search</button>
+          </div>
+          <div id="verif-search-results" style="margin-top:6px;margin-bottom:4px;"></div>
+        </div>
+
+        <div id="novi-verif-status" style="font-size:0.78rem;color:var(--charcoal-light);margin-top:4px;margin-bottom:4px;"></div>
+        <div id="novi-payment-result" style="display:none;" class="payment-result"></div>
+
+        <div id="lms-user-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div id="lms-completion-list" style="margin-bottom:12px;"></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
+            <div class="field">
+              <label for="lms-course-select">NCIT Course to Complete</label>
+              <select id="lms-course-select"><option value="">— Select a course —</option></select>
+            </div>
+            <button class="btn btn-gold" id="lms-open-btn" style="padding:9px 16px;font-size:0.85rem;" disabled>Open in Portal</button>
+          </div>
+          <p id="lms-portal-note" style="display:none;font-size:0.78rem;color:var(--charcoal-light);margin-top:8px;">Portal opened in new tab. Issue the certificate, then return here to save your decision.</p>
+        </div>
+        <div id="lms-status-msg" style="font-size:0.8rem;color:var(--charcoal-light);margin-top:6px;"></div>
       </div>
     </div>
 
@@ -785,6 +871,8 @@ function showDetail(record) {
       </div>
     </div>
   `;
+
+  try {
 
   // Show/hide review date
   document.getElementById('detail-cert-status').addEventListener('change', function() {
@@ -848,19 +936,389 @@ function showDetail(record) {
   });
 
   // TalentLMS search
-  document.getElementById('lms-search-btn').addEventListener('click', lmsSearch);
-  document.getElementById('lms-search-input').addEventListener('keydown', e => { if (e.key === 'Enter') lmsSearch(); });
+  // (LMS search triggered via unified verif search)
 
-  async function lmsSearch() {
-    const query = document.getElementById('lms-search-input').value.trim();
+  // ============================================================
+  // Novi Payment Verification
+  // ============================================================
+  let noviRegistrantMap = null;
+  let noviAllEvents = null;
+
+  async function noviCall(path) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const r = await fetch(`${WORKER_URL}/novi${path}`, {
+        headers: { 'X-Auth-Token': AUTH_TOKEN },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (!r.ok) { const t = await r.text(); throw new Error('Novi ' + r.status + ': ' + t); }
+      return r.json();
+    } catch(e) {
+      clearTimeout(timer);
+      if (e.name === 'AbortError') throw new Error('Request timed out after 15s — check network or worker');
+      throw e;
+    }
+  }
+
+  function setVerifStatus(msg, isError) {
+    const el = document.getElementById('novi-verif-status');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--red)' : 'var(--charcoal-light)';
+  }
+
+  function setNoviConnectStatus(msg, type) {
+    const el = document.getElementById('novi-connect-status');
+    if (!el) return;
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.style.background = type === 'ok' ? 'var(--green-bg)' : type === 'err' ? 'var(--red-bg)' : 'var(--yellow-bg)';
+    el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--yellow)';
+  }
+
+  function noviFormatDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    if (isNaN(dt)) return '';
+    return (dt.getMonth()+1).toString().padStart(2,'0') + '/' + dt.getDate().toString().padStart(2,'0') + '/' + dt.getFullYear();
+  }
+
+  // Pre-fill token from localStorage (same key examepdash uses)
+  const savedNoviToken = localStorage.getItem('clear_novi_token');
+  if (savedNoviToken) {
+    document.getElementById('novi-token-input').value = savedNoviToken;
+  }
+
+  document.getElementById('novi-connect-btn').addEventListener('click', doNoviConnect);
+  document.getElementById('novi-token-input').addEventListener('keydown', e => { if (e.key === 'Enter') doNoviConnect(); });
+
+  async function doNoviConnect() {
+    const token = document.getElementById('novi-token-input').value.trim();
+    if (!token) { setNoviConnectStatus('Enter your Novi auth token first.', 'err'); return; }
+    const btn = document.getElementById('novi-connect-btn');
+    btn.disabled = true; btn.textContent = 'Connecting…';
+    setNoviConnectStatus('Connecting to Novi…', 'loading');
+    setVerifStatus('');
+    console.log('[Novi] Starting connect, fetching events…');
+    try {
+      const res = await noviCall('/api/events?pageSize=200&offset=0');
+      const all = (res.Results || res || []).filter(e => e.Name || e.EventName);
+      if (!all.length) { setNoviConnectStatus('Connected but no events found.', 'err'); btn.disabled = false; btn.textContent = 'Connect'; return; }
+
+      noviAllEvents = all;
+      localStorage.setItem('clear_novi_token', token);
+      console.log('[Novi] Events loaded:', all.length);
+
+      // Sort: upcoming first (asc), then past (desc)
+      const now = new Date();
+      noviAllEvents.sort((a, b) => {
+        const da = new Date(a.StartDate), db = new Date(b.StartDate);
+        const af = da >= now, bf = db >= now;
+        if (af && bf) return da - db;
+        if (!af && !bf) return db - da;
+        return af ? -1 : 1;
+      });
+
+      setNoviConnectStatus(`Connected — ${all.length} events loaded`, 'ok');
+      document.getElementById('novi-event-wrap').style.display = 'block';
+      btn.textContent = 'Reconnect';
+      btn.disabled = false;
+
+      // Pre-fill search with program date and wire up dropdown
+      const programDateStr = noviFormatDate(excelDateToJS(record.ProgramDate));
+      const searchInput = document.getElementById('novi-event-search');
+      if (programDateStr) searchInput.value = programDateStr;
+
+      // Wire up search input
+      searchInput.addEventListener('focus', () => renderNoviDropdown(searchInput.value));
+      searchInput.addEventListener('input', () => {
+        document.getElementById('novi-event-id').value = '';
+        document.getElementById('novi-pull-btn').disabled = true;
+        renderNoviDropdown(searchInput.value);
+      });
+      searchInput.addEventListener('blur', () => setTimeout(() => {
+        const dd = document.getElementById('novi-event-dropdown');
+        if (dd) dd.style.display = 'none';
+      }, 200));
+
+      // Auto-select if exactly one date match
+      const dateMatches = noviAllEvents.filter(e => noviFormatDate(e.StartDate) === programDateStr);
+      if (dateMatches.length === 1) {
+        const ev = dateMatches[0];
+        document.getElementById('novi-event-id').value = ev.EventUniqueId || ev.Id || '';
+        searchInput.value = noviFormatDate(ev.StartDate) + ' — ' + (ev.Name || '');
+        document.getElementById('novi-pull-btn').disabled = false;
+        setVerifStatus(`Auto-selected: ${ev.Name}. Click Pull Registrations.`);
+      } else if (programDateStr) {
+        renderNoviDropdown(programDateStr);
+        setVerifStatus(`${dateMatches.length} event(s) match ${formatDate(record.ProgramDate)} — select one.`);
+      }
+
+    } catch(err) {
+      console.error('[Novi] Connection error:', err);
+      setNoviConnectStatus('Connection failed: ' + err.message, 'err');
+      btn.disabled = false; btn.textContent = 'Connect';
+    }
+  }
+
+  function renderNoviDropdown(filter) {
+    const dropdown = document.getElementById('novi-event-dropdown');
+    if (!noviAllEvents || !dropdown) return;
+    const f = (filter || '').toLowerCase().trim();
+    const filtered = f
+      ? noviAllEvents.filter(e =>
+          (e.Name || '').toLowerCase().includes(f) ||
+          noviFormatDate(e.StartDate).includes(f) ||
+          (e.EventCategory?.Name || '').toLowerCase().includes(f)
+        )
+      : noviAllEvents;
+    const shown = filtered.slice(0, 50);
+    if (!shown.length) {
+      dropdown.innerHTML = '<div style="padding:9px 14px;font-size:0.82rem;color:#999;font-style:italic;">No events match</div>';
+    } else {
+      dropdown.innerHTML = shown.map(e => {
+        const d = noviFormatDate(e.StartDate);
+        const cat = e.EventCategory?.Name ? ` <span style="color:#aaa;font-size:0.7rem;">(${e.EventCategory.Name})</span>` : '';
+        return `<div class="novi-event-opt" data-id="${e.EventUniqueId || e.Id || ''}" data-name="${(e.Name||'').replace(/"/g,'&quot;')}" data-date="${d}"
+          style="padding:8px 14px;font-size:0.82rem;cursor:pointer;border-bottom:1px solid #f0ede8;display:flex;align-items:baseline;gap:8px;">
+          <span style="color:#999;font-size:0.75rem;white-space:nowrap;flex-shrink:0;">${d}</span>
+          <span>${e.Name || '(unnamed)'}${cat}</span>
+        </div>`;
+      }).join('');
+      dropdown.querySelectorAll('.novi-event-opt').forEach(opt => {
+        opt.addEventListener('mousedown', ev => {
+          ev.preventDefault();
+          document.getElementById('novi-event-id').value = opt.dataset.id;
+          document.getElementById('novi-event-search').value = opt.dataset.date + ' — ' + opt.dataset.name;
+          dropdown.style.display = 'none';
+          document.getElementById('novi-pull-btn').disabled = false;
+          document.getElementById('novi-payment-result').style.display = 'none';
+          document.getElementById('verif-search-results').innerHTML = '';
+          noviRegistrantMap = null;
+          setVerifStatus('Event selected. Click Pull Registrations.');
+        });
+        opt.addEventListener('mouseover', () => opt.style.background = 'rgba(100,9,44,0.04)');
+        opt.addEventListener('mouseout', () => opt.style.background = '');
+      });
+    }
+    dropdown.style.display = 'block';
+  }
+
+  document.getElementById('novi-pull-btn').addEventListener('click', async () => {
+    const eventId = document.getElementById('novi-event-id').value;
+    if (!eventId) { setVerifStatus('Select an event first.', true); return; }
+    const btn = document.getElementById('novi-pull-btn');
+    btn.disabled = true; btn.textContent = 'Pulling…';
+    setVerifStatus('Fetching registrations…');
+    try {
+      let allRegs = []; let offset = 0;
+      while (true) {
+        const res = await noviCall('/api/registrations?eventId=' + eventId + '&pageSize=200&offset=' + offset);
+        const page = Array.isArray(res) ? res : (res.Results || []);
+        allRegs = allRegs.concat(page);
+        if (page.length < 200) break;
+        offset += 200;
+      }
+      noviRegistrantMap = new Map();
+      allRegs.forEach(reg => {
+        const ps = String(reg.PaymentStatus || '').trim();
+        const hasSalesReceipt = !!reg.QBSalesReceiptID;
+        const balanceMatch = ps.match(/\$([0-9,]+\.?\d*)/);
+        const balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g,'')) : null;
+        let paid;
+        if (hasSalesReceipt) { paid = (balance === 0 || balance === null) ? 'Yes' : 'No'; }
+        else if (ps === 'Unpaid') { paid = 'No'; }
+        else if (balance === 0) { paid = 'Yes'; }
+        else if (balance > 0) { paid = 'No'; }
+        else { paid = 'Yes'; }
+        (reg.Attendees || []).forEach(a => {
+          const fullName = ((a.FirstName || '') + ' ' + (a.LastName || '')).trim();
+          const key = fullName.toLowerCase();
+          if (!noviRegistrantMap.has(key) || paid === 'No') {
+            noviRegistrantMap.set(key, { paid, email: a.Email || '', fullName });
+          }
+        });
+      });
+      setVerifStatus(`${noviRegistrantMap.size} registrant(s) loaded. Enter name below to search.`);
+      document.getElementById('verif-search-wrap').style.display = 'block';
+    } catch(err) {
+      setVerifStatus('Error: ' + err.message, true);
+    }
+    btn.disabled = false; btn.textContent = 'Pull Registrations';
+  });
+
+  // ── Unified participant search ──────────────────────────────
+  function doVerifSearch() {
+    const q = document.getElementById('verif-name-input').value.trim();
+    if (!q) return;
+    const resultsDiv = document.getElementById('verif-search-results');
+    resultsDiv.innerHTML = '';
+    document.getElementById('novi-payment-result').style.display = 'none';
+
+    if (noviRegistrantMap && noviRegistrantMap.size > 0) {
+      const ql = q.toLowerCase();
+      const matches = [...noviRegistrantMap.entries()]
+        .filter(([key]) => key.includes(ql) || ql.split(/\s+/).some(p => key.includes(p)))
+        .map(([, val]) => val);
+
+      if (matches.length === 1) {
+        showPaymentResult(matches[0].fullName, matches[0].paid, matches[0].email);
+      } else if (matches.length > 1) {
+        resultsDiv.innerHTML = matches.map(m => {
+          const cls = m.paid === 'Yes' ? 'payment-paid' : m.paid === 'No' ? 'payment-unpaid' : 'payment-unknown';
+          const lbl = m.paid === 'Yes' ? '✓ Paid' : m.paid === 'No' ? '✗ Unpaid' : '?';
+          return `<div class="novi-registrant-opt" data-name="${m.fullName.replace(/"/g,'&quot;')}" data-paid="${m.paid}" data-email="${m.email.replace(/"/g,'&quot;')}"
+            style="padding:7px 12px;border:1px solid var(--border);border-radius:5px;margin-bottom:4px;cursor:pointer;font-size:0.83rem;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span><strong>${m.fullName}</strong>${m.email ? `<span style="color:var(--charcoal-light);margin-left:8px;font-size:0.75rem;">${m.email}</span>` : ''}</span>
+            <span class="payment-badge ${cls}" style="font-size:0.7rem;">${lbl}</span>
+          </div>`;
+        }).join('');
+        resultsDiv.querySelectorAll('.novi-registrant-opt').forEach(el => {
+          el.addEventListener('mouseover', () => el.style.background = 'rgba(100,9,44,0.03)');
+          el.addEventListener('mouseout', () => el.style.background = '');
+          el.addEventListener('click', () => {
+            resultsDiv.innerHTML = '';
+            showPaymentResult(el.dataset.name, el.dataset.paid, el.dataset.email);
+          });
+        });
+      } else {
+        resultsDiv.innerHTML = `<p style="font-size:0.82rem;color:var(--charcoal-light);">Not found in Novi registrations. Try a different name.</p>`;
+      }
+    } else {
+      setVerifStatus('Pull registrations first, then search.', true);
+    }
+
+    // Run LMS search with same name
+    lmsSearch(q);
+  }
+
+  document.getElementById('verif-search-btn').addEventListener('click', doVerifSearch);
+  document.getElementById('verif-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') doVerifSearch(); });
+
+  function showPaymentResult(name, payStatus, email) {
+    const el = document.getElementById('novi-payment-result');
+    if (!el) return;
+    el.style.display = 'block';
+    const cls = payStatus === 'Yes' ? 'payment-paid' : payStatus === 'No' ? 'payment-unpaid' : 'payment-unknown';
+    const txt = payStatus === 'Yes' ? '✓ Paid' : payStatus === 'No' ? '✗ Unpaid' : '? Unknown';
+    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div><span style="font-size:0.82rem;color:var(--charcoal-light);">Registrant: </span><strong>${name}</strong>${email ? `<span style="font-size:0.78rem;color:var(--charcoal-light);margin-left:8px;">${email}</span>` : ''}</div>
+      <span class="payment-badge ${cls}">${txt}</span>
+    </div>`;
+  }
+
+  // ============================================================
+  // TalentLMS — unified completion + certificate
+  // ============================================================
+  // Module config and helpers copied from userstatus.html
+  const SURVEY_COURSE_IDS = [131, 138, 141];
+  const MODULE_CONFIG = {
+    2348:{include:true,order:1},2349:{include:false,order:null},
+    2528:{include:true,order:null},2532:{include:false,order:null},
+    2324:{include:true,order:1},2325:{include:true,order:2},2328:{include:true,order:3},2329:{include:true,order:4},2332:{include:true,order:5},2333:{include:true,order:6},2336:{include:false,order:null},
+    2655:{include:true,order:1},2656:{include:true,order:2},2657:{include:true,order:3},2661:{include:false,order:null},2926:{include:true,order:4},2662:{include:true,order:5},
+    2116:{include:true,order:1},2117:{include:true,order:2},2120:{include:true,order:3},2121:{include:true,order:4},2124:{include:true,order:5},2125:{include:true,order:6},2128:{include:true,order:7},2129:{include:true,order:8},2132:{include:true,order:9},2133:{include:true,order:10},2393:{include:false,order:null},2136:{include:true,order:11},2137:{include:true,order:12},2140:{include:false,order:null},2141:{include:true,order:13},2142:{include:true,order:14},2145:{include:true,order:15},2146:{include:true,order:16},2149:{include:true,order:17},2150:{include:true,order:18},2153:{include:true,order:19},2154:{include:true,order:20},2250:{include:true,order:21},2251:{include:true,order:22},2252:{include:true,order:23},2253:{include:true,order:24},2157:{include:false,order:null},2158:{include:false,order:null},2391:{include:true,order:25},
+    2256:{include:true,order:1},
+    2401:{include:true,order:1},2402:{include:false,order:null},
+    2605:{include:true,order:1},2395:{include:false,order:null},
+    2545:{include:true,order:1},2546:{include:false,order:null},
+    2540:{include:true,order:1},2541:{include:false,order:null},
+    2723:{include:true,order:1},2724:{include:true,order:2},3025:{include:true,order:3},3026:{include:true,order:4},2728:{include:false,order:null},
+    2197:{include:true,order:1},2198:{include:true,order:2},2199:{include:true,order:3},2210:{include:true,order:4},2211:{include:true,order:5},2212:{include:true,order:6},2226:{include:false,order:null},2216:{include:false,order:null},
+    2299:{include:true,order:1},2300:{include:true,order:2},2301:{include:true,order:3},2284:{include:true,order:4},2283:{include:true,order:6},2286:{include:true,order:8},2285:{include:true,order:10},2289:{include:true,order:5},2290:{include:true,order:7},2291:{include:true,order:9},2292:{include:true,order:11},2686:{include:true,order:12},2687:{include:true,order:13},2697:{include:true,order:14},2702:{include:true,order:15},2298:{include:false,order:null},
+    2689:{include:true,order:1},2690:{include:true,order:2},2691:{include:true,order:3},2692:{include:true,order:4},2947:{include:true,order:5},2950:{include:true,order:6},2951:{include:true,order:7},2955:{include:true,order:8},2694:{include:false,order:null},
+    3014:{include:false,order:null},3016:{include:false,order:null},
+    2227:{include:true,order:1},2235:{include:true,order:2},2228:{include:true,order:3},2236:{include:true,order:4},2229:{include:true,order:5},2237:{include:true,order:6},2230:{include:true,order:7},2238:{include:true,order:8},2231:{include:true,order:9},2239:{include:true,order:10},2234:{include:false,order:null},
+    2585:{include:true,order:1},2586:{include:true,order:2},2587:{include:true,order:3},2588:{include:true,order:4},2589:{include:true,order:5},2590:{include:false,order:null},2591:{include:false,order:null},
+    2523:{include:true,order:1},2524:{include:false,order:null},
+    2338:{include:true,order:1},2337:{include:true,order:2},2339:{include:true,order:3},2340:{include:true,order:4},2341:{include:true,order:5},2344:{include:false,order:null},
+    2606:{include:true,order:3},2607:{include:true,order:4},2612:{include:true,order:5},2608:{include:true,order:6},2609:{include:true,order:7},2613:{include:true,order:8},2610:{include:true,order:9},2611:{include:true,order:10},2614:{include:true,order:11},2615:{include:true,order:12},2624:{include:true,order:1},2625:{include:true,order:2},2626:{include:false,order:null},
+    2957:{include:true,order:1},
+    2258:{include:true,order:1},2259:{include:true,order:2},2260:{include:true,order:3},2266:{include:false,order:null},2759:{include:true,order:4},2521:{include:true,order:5},
+    2052:{include:true,order:1},2050:{include:true,order:2},2056:{include:true,order:3},2054:{include:true,order:4},2058:{include:true,order:5},2059:{include:true,order:6},2067:{include:true,order:7},2065:{include:true,order:8},2072:{include:true,order:9},2070:{include:true,order:10},2241:{include:false,order:null},2074:{include:true,order:11},2075:{include:true,order:12},2081:{include:false,order:null},2078:{include:true,order:13},2082:{include:true,order:14},2085:{include:true,order:15},2086:{include:true,order:16},2089:{include:true,order:17},2094:{include:true,order:18},2091:{include:true,order:19},2095:{include:true,order:20},2245:{include:true,order:21},2244:{include:true,order:22},2246:{include:true,order:23},2247:{include:true,order:24},2097:{include:false,order:null},2098:{include:false,order:null},2384:{include:true,order:25},
+    2254:{include:true,order:1},
+    2406:{include:true,order:1},2407:{include:true,order:2},2408:{include:false,order:null},2410:{include:true,order:3},2411:{include:true,order:4},2412:{include:false,order:null},2414:{include:true,order:5},2415:{include:true,order:6},2416:{include:false,order:null},2418:{include:true,order:7},2419:{include:true,order:8},2420:{include:false,order:null},2422:{include:true,order:9},2424:{include:true,order:10},2425:{include:false,order:null},2427:{include:false,order:null},2429:{include:true,order:11},2430:{include:true,order:12},2431:{include:false,order:null},2433:{include:false,order:null},2434:{include:true,order:13},2435:{include:true,order:14},2436:{include:false,order:null},2438:{include:true,order:15},2439:{include:true,order:16},2440:{include:false,order:null},2442:{include:true,order:17},2443:{include:true,order:18},2444:{include:false,order:null},2446:{include:true,order:19},2447:{include:true,order:20},2448:{include:false,order:null},2455:{include:false,order:null},2456:{include:false,order:null},2458:{include:true,order:21},2459:{include:true,order:22},2460:{include:true,order:23},2461:{include:true,order:24},2457:{include:true,order:25},
+    2464:{include:true,order:1},2465:{include:true,order:2},2466:{include:false,order:null},2468:{include:true,order:3},2469:{include:true,order:4},2470:{include:false,order:null},2472:{include:true,order:5},2473:{include:true,order:6},2474:{include:false,order:null},2476:{include:true,order:7},2477:{include:true,order:8},2478:{include:false,order:null},2480:{include:true,order:9},2482:{include:true,order:10},2483:{include:false,order:null},2485:{include:false,order:null},2487:{include:true,order:11},2488:{include:true,order:12},2489:{include:false,order:null},2491:{include:false,order:null},2492:{include:true,order:13},2493:{include:true,order:14},2494:{include:false,order:null},2496:{include:true,order:15},2497:{include:true,order:16},2498:{include:false,order:null},2500:{include:true,order:17},2501:{include:true,order:18},2502:{include:false,order:null},2504:{include:true,order:19},2505:{include:true,order:20},2506:{include:false,order:null},2517:{include:true,order:21},2518:{include:true,order:22},2519:{include:true,order:23},2520:{include:true,order:24},2513:{include:false,order:null},2515:{include:false,order:null},2516:{include:true,order:25},
+    2871:{include:true,order:1},2872:{include:true,order:2},2875:{include:true,order:3},2873:{include:true,order:4},2874:{include:true,order:5},2877:{include:true,order:6},2878:{include:true,order:7},2879:{include:true,order:8},2880:{include:true,order:9},2881:{include:true,order:10},
+    2765:{include:true,order:1},2766:{include:true,order:2},2767:{include:false,order:null},2768:{include:true,order:3},2769:{include:true,order:4},2770:{include:false,order:null},2771:{include:false,order:null},2772:{include:true,order:5},2773:{include:true,order:6},2774:{include:false,order:null},2775:{include:true,order:7},2776:{include:true,order:8},2777:{include:false,order:null},2781:{include:true,order:9},2780:{include:true,order:10},2779:{include:false,order:null},2784:{include:true,order:11},2785:{include:true,order:12},2787:{include:false,order:null},2789:{include:true,order:13},
+    2270:{include:true,order:1},2271:{include:true,order:2},2272:{include:true,order:3},2925:{include:true,order:4},2281:{include:false,order:null},
+    2165:{include:true,order:1},2174:{include:true,order:2},2175:{include:true,order:4},2191:{include:false,order:null},2192:{include:false,order:null},2170:{include:true,order:6},2166:{include:true,order:7},2176:{include:true,order:8},2172:{include:true,order:10},2167:{include:true,order:11},2177:{include:true,order:12},2178:{include:true,order:14},2173:{include:true,order:16},2186:{include:true,order:3},2187:{include:true,order:5},2188:{include:true,order:9},2189:{include:true,order:13},2190:{include:true,order:15},2179:{include:false,order:null},2184:{include:false,order:null},
+    2886:{include:true,order:1},
+    3401:{include:true,order:1},
+    3306:{include:true,order:1},3325:{include:true,order:2},3326:{include:true,order:3},3309:{include:true,order:4},3310:{include:true,order:5},3311:{include:true,order:6},3314:{include:true,order:7},3327:{include:true,order:8},3316:{include:true,order:9},3319:{include:true,order:10},3328:{include:true,order:11},3329:{include:true,order:12},3322:{include:true,order:13},
+    3017:{include:true,order:14},
+    2109:{include:true,order:1},2632:{include:true,order:1},2368:{include:true,order:1},2634:{include:true,order:1},
+    3652:{include:true,order:1},3654:{include:true,order:2},3655:{include:true,order:3},3657:{include:true,order:4},3659:{include:true,order:5},3660:{include:true,order:6},3661:{include:true,order:7},3663:{include:true,order:8},3665:{include:true,order:9},3666:{include:true,order:10},3667:{include:true,order:11},3669:{include:true,order:12},
+    3630:{include:false,order:null},3633:{include:false,order:null},3641:{include:false,order:null},3637:{include:false,order:null},3626:{include:false,order:null},3639:{include:false,order:null},3635:{include:false,order:null},3627:{include:false,order:null},3628:{include:false,order:null},3629:{include:false,order:null},3645:{include:false,order:null},3648:{include:false,order:null},3650:{include:false,order:null},3643:{include:false,order:null},3562:{include:false,order:null},3649:{include:false,order:null},
+    3737:{include:false,order:null},
+    2746:{include:false,order:null},2758:{include:false,order:null},2936:{include:false,order:null},3340:{include:false,order:null},3463:{include:false,order:null},3701:{include:false,order:null},3703:{include:false,order:null},
+    2571:{include:true,order:1},2679:{include:true,order:2},2353:{include:true,order:3},2561:{include:false,order:null},2678:{include:true,order:4},2717:{include:true,order:5},2354:{include:true,order:6},2562:{include:false,order:null},2684:{include:true,order:7},2680:{include:true,order:8},2355:{include:true,order:9},2563:{include:false,order:null},2685:{include:true,order:10},2564:{include:false,order:null},
+    2319:{include:true,order:1},2320:{include:true,order:2},2321:{include:true,order:3},2322:{include:false,order:null},
+    3732:{include:true,order:1},3733:{include:true,order:2},3736:{include:true,order:3},
+  };
+
+  function lmsGetUnitType(u) {
+    const t = (u.type || '').trim();
+    if (t === 'SCORM | xAPI | cmi5' || t === 'SCORM' || t === 'xAPI' || t === 'cmi5') return 'scorm';
+    if (t === 'Test') return 'test';
+    if (t === 'Assignment') return 'assignment';
+    if (t === 'Instructor-led training') return 'ilt';
+    if (t === 'Video' || t === 'YouTube' || t === 'Vimeo') return 'video';
+    if (t === 'Survey') return 'survey';
+    return 'other';
+  }
+  function lmsShouldShowUnit(u, courseId) {
+    const id = Number(u.id);
+    const cfg = MODULE_CONFIG[id];
+    if (cfg !== undefined) return cfg.include;
+    const type = lmsGetUnitType(u);
+    if (type === 'survey') return SURVEY_COURSE_IDS.includes(Number(courseId));
+    return ['scorm','test','assignment','ilt','video'].includes(type);
+  }
+  function lmsGetModuleOrder(u) {
+    const cfg = MODULE_CONFIG[Number(u.id)];
+    return (cfg && cfg.order != null) ? cfg.order : Infinity;
+  }
+  function lmsUnitTypeBadge(type, rawType) {
+    const t = (rawType || '').toLowerCase().trim();
+    const map = {
+      scorm: ['type-scorm', t === 'xapi' ? 'xAPI' : t === 'cmi5' ? 'cmi5' : 'SCORM'],
+      test: ['type-test', 'Test'],
+      assignment: ['type-test', 'Assignment'],
+      ilt: ['type-ilt', 'ILT'],
+      video: ['type-video', 'Video'],
+      survey: ['type-other', 'Survey']
+    };
+    const [cls, label] = map[type] || ['type-other', 'Module'];
+    return `<span class="module-type-badge ${cls}">${label}</span>`;
+  }
+  function lmsNormalizeStatus(raw) {
+    const l = (raw || '').toLowerCase().trim();
+    if (l === 'completed' || l === 'complete' || l === 'passed') return 'Completed';
+    if (l === 'failed') return 'Failed';
+    if (l === 'incomplete' || l === 'in progress' || l === 'in_progress') return 'In Progress';
+    return 'Not Started';
+  }
+  function lmsStatusBadge(s) {
+    switch(s) {
+      case 'Completed': return '<span class="badge badge-complete">Completed</span>';
+      case 'Failed':    return '<span class="badge badge-failed">Failed</span>';
+      case 'In Progress': return '<span class="badge badge-inprogress">In Progress</span>';
+      default: return '<span class="badge badge-notstarted">Not Started</span>';
+    }
+  }
+
+  async function lmsSearch(nameQuery) {
+    const query = (nameQuery || '').trim();
     if (!query) return;
     const statusMsg = document.getElementById('lms-status-msg');
-    const resultsDiv = document.getElementById('lms-search-results');
-    const courseSection = document.getElementById('lms-course-section');
+    const resultsDiv = document.getElementById('verif-search-results');
+    const userDetail = document.getElementById('lms-user-detail');
 
-    statusMsg.textContent = 'Searching…';
-    resultsDiv.innerHTML = '';
-    courseSection.style.display = 'none';
+    statusMsg.textContent = 'Searching TalentLMS…';
+    userDetail.style.display = 'none';
 
     try {
       const res = await fetch(`${WORKER_URL}/v1/users`, { headers: { 'X-Auth-Token': AUTH_TOKEN } });
@@ -872,50 +1330,137 @@ function showDetail(record) {
         (u.last_name || '').toLowerCase().includes(query.toLowerCase())
       );
 
-      if (!filtered.length) { statusMsg.textContent = 'No users found. Try a different name.'; return; }
+      if (!filtered.length) { statusMsg.textContent = 'Not found in TalentLMS.'; return; }
       statusMsg.textContent = '';
 
-      if (filtered.length === 1) { loadLMSCourses(filtered[0].id, filtered[0].first_name + ' ' + filtered[0].last_name); return; }
+      if (filtered.length === 1) { loadLMSUserDetail(filtered[0].id, filtered[0].first_name + ' ' + filtered[0].last_name); return; }
 
-      resultsDiv.innerHTML = filtered.slice(0, 15).map(u =>
-        `<div style="padding:8px 12px;border:1px solid var(--border);border-radius:5px;margin-bottom:6px;cursor:pointer;font-size:0.85rem;" class="lms-user-result" data-id="${u.id}" data-name="${u.first_name} ${u.last_name}">
-          <strong>${u.first_name} ${u.last_name}</strong>
-          <span style="color:var(--charcoal-light);margin-left:8px;">${u.email || ''}</span>
-        </div>`
-      ).join('');
+      // Multiple matches — append LMS disambiguation below any Novi results
+      const lmsHeader = document.createElement('p');
+      lmsHeader.style.cssText = 'font-size:0.75rem;color:var(--charcoal-light);margin:6px 0 4px;';
+      lmsHeader.textContent = 'Multiple TalentLMS users found — select one:';
+      resultsDiv.appendChild(lmsHeader);
 
-      resultsDiv.querySelectorAll('.lms-user-result').forEach(el => {
+      filtered.slice(0, 10).forEach(u => {
+        const el = document.createElement('div');
+        el.style.cssText = 'padding:8px 12px;border:1px solid var(--border);border-radius:5px;margin-bottom:4px;cursor:pointer;font-size:0.83rem;';
+        el.innerHTML = `<strong>${u.first_name} ${u.last_name}</strong><span style="color:var(--charcoal-light);margin-left:8px;">${u.email || ''}</span>`;
         el.addEventListener('mouseover', () => el.style.background = 'rgba(100,9,44,0.04)');
         el.addEventListener('mouseout', () => el.style.background = '');
-        el.addEventListener('click', () => { resultsDiv.innerHTML = ''; loadLMSCourses(el.dataset.id, el.dataset.name); });
+        el.addEventListener('click', () => {
+          resultsDiv.querySelectorAll('.lms-disambig').forEach(n => n.remove());
+          lmsHeader.remove();
+          el.remove();
+          loadLMSUserDetail(u.id, u.first_name + ' ' + u.last_name);
+        });
+        el.classList.add('lms-disambig');
+        resultsDiv.appendChild(el);
       });
-    } catch (err) { statusMsg.textContent = 'Search failed: ' + err.message; }
+    } catch (err) { statusMsg.textContent = 'LMS search failed: ' + err.message; }
   }
 
-  async function loadLMSCourses(userId, userName) {
+  async function loadLMSUserDetail(userId, userName) {
     const statusMsg = document.getElementById('lms-status-msg');
-    const courseSection = document.getElementById('lms-course-section');
+    const userDetail = document.getElementById('lms-user-detail');
+    const completionList = document.getElementById('lms-completion-list');
     const courseSelect = document.getElementById('lms-course-select');
+    const openBtn = document.getElementById('lms-open-btn');
+
     statusMsg.textContent = `Loading courses for ${userName}…`;
-    courseSection.style.display = 'none';
+    userDetail.style.display = 'none';
+
     try {
       const res = await fetch(`${WORKER_URL}/v1/users/id:${userId}`, { headers: { 'X-Auth-Token': AUTH_TOKEN } });
       if (!res.ok) throw new Error(`TalentLMS error: ${res.status}`);
       const user = await res.json();
-      const ncitCourses = (user.courses || []).filter(c => (c.name || '').toLowerCase().includes('ncit') && (c.name || '').toLowerCase().includes('basic'));
-      if (!ncitCourses.length) { statusMsg.textContent = `No NCIT Basic courses found for ${userName}.`; return; }
-      courseSelect.innerHTML = '<option value="">— Select a course —</option>' + ncitCourses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-      document.getElementById('lms-open-btn').disabled = true;
-      courseSection.style.display = 'block';
-      statusMsg.textContent = `Found ${ncitCourses.length} NCIT Basic course(s) for ${userName}.`;
-      courseSelect.addEventListener('change', function() { document.getElementById('lms-open-btn').disabled = !this.value; });
-      document.getElementById('lms-open-btn').onclick = () => {
-        const cId = courseSelect.value; if (!cId) return;
-        window.open(`https://portal.clearhq.org/trainer/users/id:${cId}`, '_blank');
+
+      const ncitCourses = (user.courses || []).filter(c =>
+        (c.name || '').toLowerCase().includes('ncit') && (c.name || '').toLowerCase().includes('basic')
+      );
+
+      if (!ncitCourses.length) {
+        statusMsg.textContent = `No NCIT Basic courses found for ${userName}.`;
+        return;
+      }
+
+      // Build accordion HTML matching userstatus.html exactly
+      let html = '';
+      for (const c of ncitCourses) {
+        try {
+          const status = await fetch(`${WORKER_URL}/v1/getuserstatusincourse/course_id:${c.id},user_id:${userId}`, { headers: { 'X-Auth-Token': AUTH_TOKEN } });
+          const detail = status.ok ? await status.json() : null;
+          const units = detail ? (detail.units || []) : [];
+
+          const displayUnits = units
+            .filter(u => lmsShouldShowUnit(u, c.id))
+            .sort((a, b) => lmsGetModuleOrder(a) - lmsGetModuleOrder(b));
+
+          const completionStatus = c.completion_status_formatted || c.completion_status || detail?.completion_status || 'Not Started';
+          const completionPct = c.completion_percentage || detail?.completion_percentage || '0';
+          const enrolledDate = c.enrolled_on || c.enrolled_on_timestamp || detail?.enrolled_on || '';
+          const dateStr = enrolledDate ? `<span style="font-size:12px;color:#888;margin-left:12px;">Enrolled: ${enrolledDate}</span>` : '';
+
+          html += `<div class="course-card">
+            <div class="course-card-header" onclick="this.nextElementSibling.classList.toggle('open')">
+              <span class="cc-name">${c.name}${dateStr}</span>
+              <span class="cc-status">${lmsStatusBadge(lmsNormalizeStatus(completionStatus))} <span style="font-size:12px;color:#666;margin-left:4px;">${completionPct}%</span></span>
+            </div>
+            <div class="course-card-body">`;
+
+          if (displayUnits.length > 0) {
+            html += `<table class="module-table"><thead><tr><th style="width:55%;">Module</th><th>Type</th><th>Status</th><th>Score</th></tr></thead><tbody>`;
+            for (const u of displayUnits) {
+              const type = lmsGetUnitType(u);
+              const s = lmsNormalizeStatus(u.completion_status_formatted || u.completion_status || 'Not Started');
+              const unitPct = (u.completion_percentage !== undefined && u.completion_percentage !== null && u.completion_percentage !== '')
+                ? ` <span style="font-size:11px;color:#888;">(${u.completion_percentage}%)</span>` : '';
+              let scoreCell = '<span style="color:#bbb;font-size:12px;">—</span>';
+              if (type === 'test' || type === 'assignment') {
+                try {
+                  const ta = await fetch(`${WORKER_URL}/v1/gettestanswers/test_id:${u.id},user_id:${userId}`, { headers: { 'X-Auth-Token': AUTH_TOKEN } });
+                  if (ta.ok) {
+                    const taData = await ta.json();
+                    if (taData.score !== undefined && taData.score !== null && taData.score !== '') {
+                      const pct = parseFloat(taData.score);
+                      const cls = pct >= 70 ? 'score-pass' : 'score-fail';
+                      scoreCell = `<span class="${cls}">${pct.toFixed(1)}%</span>`;
+                    }
+                  }
+                } catch(te) {}
+              }
+              html += `<tr><td>${u.name}</td><td>${lmsUnitTypeBadge(type, u.type)}</td><td>${lmsStatusBadge(s)}${unitPct}</td><td>${scoreCell}</td></tr>`;
+            }
+            html += `</tbody></table>`;
+          } else {
+            html += `<p style="font-size:13px;color:#888;">No SCORM, test, assignment, ILT, or video modules found in this course.</p>`;
+          }
+          html += `</div></div>`;
+        } catch(ce) {
+          html += `<div class="course-card"><div class="course-card-header"><span class="cc-name">${c.name}</span><span class="cc-status"><span class="badge badge-notstarted">Error loading</span></span></div></div>`;
+        }
+      }
+
+      completionList.innerHTML = html;
+
+      // Populate course select for portal
+      courseSelect.innerHTML = '<option value="">— Select a course —</option>' +
+        ncitCourses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      openBtn.disabled = true;
+      courseSelect.onchange = () => { openBtn.disabled = !courseSelect.value; };
+      openBtn.onclick = () => {
+        if (!courseSelect.value) return;
+        window.open(`https://portal.clearhq.org/trainer/users/id:${userId}`, '_blank');
         document.getElementById('lms-portal-note').style.display = 'block';
       };
+
+      userDetail.style.display = 'block';
+      statusMsg.textContent = `Showing ${userName}`;
     } catch (err) { statusMsg.textContent = 'Failed to load courses: ' + err.message; }
   }
+
+  setTimeout(() => {
+    document.getElementById('verif-search-wrap').style.display = 'block';
+  }, 0);
 
   if (record.SignatureImage) {
     document.getElementById('detail-sig-link').addEventListener('click', e => {
@@ -926,6 +1471,14 @@ function showDetail(record) {
   }
 
   document.getElementById('detail-overlay').classList.add('active');
+
+  } catch(setupErr) {
+    console.error('showDetail setup error:', setupErr);
+    const errBanner = document.createElement('div');
+    errBanner.style.cssText = 'background:#fde8e8;color:#9b1c1c;padding:10px 16px;font-size:0.82rem;border-radius:6px;margin:12px 24px;';
+    errBanner.textContent = 'Panel setup error: ' + setupErr.message;
+    document.getElementById('detail-body').prepend(errBanner);
+  }
 }
 
 function closeDetail() { document.getElementById('detail-overlay').classList.remove('active'); }
