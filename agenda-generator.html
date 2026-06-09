@@ -83,6 +83,7 @@
   .btn-ghost { background:transparent;color:var(--gray);border:1.5px solid var(--gray-mid); } .btn-ghost:hover:not(:disabled) { background:var(--gray-light); }
   .btn-danger { background:var(--white);color:var(--fail-red);border:1.5px solid var(--fail-red); } .btn-danger:hover:not(:disabled) { background:var(--fail-bg); }
   .btn-burgundy { background:var(--burgundy);color:var(--white);font-weight:700; } .btn-burgundy:hover:not(:disabled) { background:var(--burgundy-light); }
+  .btn-outlook { background:#0078d4;color:var(--white);font-weight:700; } .btn-outlook:hover:not(:disabled) { background:#006cbf; }
   .btn-sm { padding:7px 16px;font-size:12px; }
   .btn-row { display:flex;gap:10px;flex-wrap:wrap;align-items:center; }
 
@@ -164,6 +165,10 @@
   .default-time-panel { background:var(--gold-pale);border:1px solid #e8c96a;border-radius:var(--radius);padding:16px 20px;margin-top:12px; }
   .default-time-panel h4 { font-size:12px;color:#7a5c00;margin-bottom:10px;font-weight:700; }
 
+  /* ── ICS TIP ── */
+  .ics-tip { font-size:12px;color:#888;margin-top:10px;padding:10px 14px;background:#e8f0fb;border-left:3px solid #0078d4;border-radius:0 var(--radius) var(--radius) 0;line-height:1.5; }
+  .ics-tip strong { color:#0078d4; }
+
   @media(max-width:768px){.header{padding:16px;}.main{padding:16px;}.panel{padding:16px;}.form-row{flex-direction:column;}}
   @media print{.header{background:var(--burgundy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.panel{display:none;}}
 </style>
@@ -242,11 +247,10 @@
             <label>Start Time (applied to all live sessions)</label>
             <div class="time-picker-wrap">
               <select id="defHour" onchange="applyDefaultTime()">
-                <option value="06">6</option><option value="07">7</option><option value="08">8</option>
-                <option value="09">9</option><option value="10">10</option><option value="11">11</option>
-                <option value="12">12</option><option value="13">1</option><option value="14">2</option>
-                <option value="15">3</option><option value="16">4</option><option value="17">5</option>
-                <option value="18">6</option>
+                <option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                <option value="9">9</option><option value="10">10</option><option value="11">11</option>
+                <option value="12">12</option><option value="1">1</option><option value="2">2</option>
+                <option value="3">3</option><option value="4">4</option><option value="5">5</option>
               </select>
               <span class="time-picker-sep">:</span>
               <select id="defMin" onchange="applyDefaultTime()">
@@ -299,6 +303,10 @@
       <button class="btn btn-secondary" onclick="generatePreview()">&#128065; Preview Agenda</button>
       <button class="btn btn-gold" onclick="exportPDF()">&#11015; Program Agenda PDF</button>
       <button class="btn btn-burgundy" onclick="exportInstructorPDF()">&#128101; Instructor Agenda PDF</button>
+      <button class="btn btn-outlook" onclick="exportOutlookICS()">&#128197; Export Instructor Calendar Invites (.ics)</button>
+    </div>
+    <div class="ics-tip">
+      <strong>How to use the .ics file:</strong> Download, then attach it to your instructor materials email. Instructors double-click the attachment in Outlook — one click to add all their sessions to their calendar. Each invite is set to start 15 minutes before the agenda time for setup and tech check. For virtual sessions, paste the Zoom link in the table above and it will appear in the invite's Location field.
     </div>
     <div id="previewSection" class="hidden" style="margin-top:24px;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--gray-mid);border-bottom:none;">
@@ -333,7 +341,6 @@ const INSTRUCTORS=[
 // SESSION DURATIONS (minutes) keyed by displayName
 // ═══════════════════════════════════════════════════════
 const SESSION_DURATIONS={
-  // NCIT Basic US & Canadian
   'Welcome & Introduction Session':60,
   'Welcome and Introduction':60,
   'Investigative Process - Instructor-Led Session':120,
@@ -345,67 +352,55 @@ const SESSION_DURATIONS={
   'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session':180,
   'Program Review & Exam Information - Instructor-Led Session':120,
   'Program Review & Final Exam Information - Live Session':120,
-  // NCIT Specialized
   'Live Session - Cognitive Memory Recall Technique (CMRT)':120,
   'Live Session - Behavioral Analysis & Questioning':150,
   'Live Session - Observation Skills':120,
   'Live Session - Program Review & Test Prep':90,
-  // Module Reviews: handled by index in specialized (first=150, second=90)
-  // Investigating Reports / Drug Diversion
   'Workshop One':120,
   'Workshop Two':120,
   'Session One':120,
   'Session Two':120,
-  // Ethics
   'Developing a Professional Attitude: Ethics for the Regulatory Investigator':180,
-  // Communications
   'Communications and the Art of Persuasion':180,
-  // Advanced Concepts
   'Module 1: Instructor-Led Session':180,
   'Module 2: Instructor-Led Session':120,
   'Module 3: Instructor-Led Session':90,
-  // Executive Leadership
   'Module 4: Instructor-Led Session':180,
-  // (Module 1=150,2=120,3=150 handled below via per-course override)
-  // Getting the Most From Your Board
   'Roles of a Board Chair':60,
   'Running Effective Board Meetings':60,
   'Challenges':60,
   'Staff Interactions':60,
-  // Skills for Regulatory Admin (all 3 hours)
   'Module 1 Live Session Link':180,
   'Module 2 Live Session Link':180,
   'Module 3 Live Session Link':180,
 };
 
-// Per-course duration overrides: courseId -> {displayName: minutes}
 const COURSE_DURATION_OVERRIDES={
-  138:{ // Executive Leadership
+  138:{
     'Module 1: Instructor-Led Session':150,
     'Module 2: Instructor-Led Session':120,
     'Module 3: Instructor-Led Session':150,
     'Module 4: Instructor-Led Session':180,
   },
-  142:{ // Advanced Concepts
+  142:{
     'Module 1: Instructor-Led Session':180,
     'Module 2: Instructor-Led Session':120,
     'Module 3: Instructor-Led Session':90,
   },
-  129:{ // NCIT Specialized — Module Review appears twice
-    'Live Session - Module Review':150, // first occurrence; second handled by index
+  129:{
+    'Live Session - Module Review':150,
   }
 };
 
-function getDuration(courseId, displayName, rowIndexAmongILT){
+function getDuration(courseId,displayName,rowIndexAmongILT){
   const override=COURSE_DURATION_OVERRIDES[courseId];
-  if(override&&override[displayName]!==undefined) return override[displayName];
-  // NCIT Specialized second Module Review = 90 min
-  if(courseId===129&&displayName==='Live Session - Module Review'&&rowIndexAmongILT>0) return 90;
+  if(override&&override[displayName]!==undefined)return override[displayName];
+  if(courseId===129&&displayName==='Live Session - Module Review'&&rowIndexAmongILT>0)return 90;
   return SESSION_DURATIONS[displayName]||null;
 }
 
 // ═══════════════════════════════════════════════════════
-// COURSE DATABASE — VIRTUAL (11 programs)
+// COURSE DATABASE
 // ═══════════════════════════════════════════════════════
 const COURSES=[
 {id:142,name:'Advanced Concepts in Regulatory Governance - Online Program',pdfTitle:'Advanced Concepts in Regulatory Governance \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
@@ -494,7 +489,6 @@ let selectedCourse=null, rows=[], _rowId=0;
   const u=localStorage.getItem('clear_worker_url'),t=localStorage.getItem('clear_auth_token');
   if(u)document.getElementById('workerUrl').value=u;
   if(t)document.getElementById('authToken').value=t;
-  // Default time = 12:00 PM
   document.getElementById('defHour').value='12';
   document.getElementById('defMin').value='00';
   document.getElementById('defAmPm').value='PM';
@@ -517,28 +511,28 @@ function getDefaultTime24(){
   let h=parseInt(document.getElementById('defHour').value);
   const m=document.getElementById('defMin').value;
   const ap=document.getElementById('defAmPm').value;
-  if(ap==='PM'&&h!==12) h+=12;
-  if(ap==='AM'&&h===12) h=0;
+  if(ap==='PM'&&h!==12)h+=12;
+  if(ap==='AM'&&h===12)h=0;
   return String(h).padStart(2,'0')+':'+m;
 }
 
-function calcEndTime(startTime24, durationMin){
-  if(!startTime24||!durationMin) return '';
+function calcEndTime(startTime24,durationMin){
+  if(!startTime24||!durationMin)return'';
   const[h,m]=startTime24.split(':').map(Number);
   const total=h*60+m+durationMin;
   return minToTime(total);
 }
 
 function applyDefaultTime(){
-  if(!selectedCourse||selectedCourse.isInPerson) return;
+  if(!selectedCourse||selectedCourse.isInPerson)return;
   const defTime=getDefaultTime24();
   let iltIndex=0;
   rows.forEach(row=>{
-    if(!row.isILT||row.isDayHeader) return;
+    if(!row.isILT||row.isDayHeader)return;
     if(!row.startTimeEdited){
       row.startTime=defTime;
       const dur=getDuration(selectedCourse.id,row.displayName,iltIndex);
-      if(!row.endTimeEdited) row.endTime=calcEndTime(defTime,dur)||row.endTime;
+      if(!row.endTimeEdited)row.endTime=calcEndTime(defTime,dur)||row.endTime;
     }
     iltIndex++;
   });
@@ -612,7 +606,7 @@ function onCourseSelect(cId){
   } else {
     ipF.classList.add('hidden');
     vtF.classList.remove('hidden');
-    document.getElementById('scheduleHint').innerHTML='<strong style="color:var(--gray);">Zoom sessions</strong> require date, start/end times, and an instructor assignment. Self-paced rows have no date/time/instructor.';
+    document.getElementById('scheduleHint').innerHTML='<strong style="color:var(--gray);">Zoom sessions</strong> require date, start/end times, and an instructor assignment. Paste Zoom links to include them in calendar invites. Self-paced rows have no date/time/instructor.';
     document.getElementById('btnAddRow').style.display='';
     const defTime=getDefaultTime24();
     let iltIdx=0;
@@ -625,7 +619,7 @@ function onCourseSelect(cId){
         et=calcEndTime(defTime,dur)||'';
         iltIdx++;
       }
-      return {id:++_rowId,displayName:r.displayName,isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:'',startTime:st,endTime:et,instructor:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false};
+      return {id:++_rowId,displayName:r.displayName,isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:'',startTime:st,endTime:et,instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false};
     });
   }
   renderTable();
@@ -657,7 +651,7 @@ function buildInPersonRows(){
       const adjEnd=offsetTime(s.end,defStart,newStart);
       rows.push({id:++_rowId,isDayHeader:false,isILT:true,platform:'In-Person',displayName:s.topic,
         startTime:adjStart,endTime:adjEnd,date:dateStr,isBreak:s.isBreak||false,
-        title:null,topicsHtml:null,instructor:prevInst[s.topic]||'',selected:false});
+        title:null,topicsHtml:null,instructor:prevInst[s.topic]||'',zoomLink:'',selected:false});
     });
   });
 }
@@ -673,17 +667,16 @@ function renderTable(){
   if(isIP){
     thead.innerHTML='<tr><th>Start</th><th></th><th>End</th><th style="min-width:160px;">Instructor</th><th>'+esc(selectedCourse.lastColHeader)+'</th></tr>';
   } else {
-    thead.innerHTML='<tr><th class="col-check"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="Select all"></th><th style="min-width:148px;">Date</th><th style="min-width:130px;">Start</th><th style="min-width:130px;">End</th><th style="min-width:140px;">Platform</th><th style="min-width:160px;">Instructor</th><th>'+(selectedCourse?esc(selectedCourse.lastColHeader):'Session Name')+'</th><th style="width:32px;"></th></tr>';
+    thead.innerHTML='<tr><th class="col-check"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="Select all"></th><th style="min-width:148px;">Date</th><th style="min-width:130px;">Start</th><th style="min-width:130px;">End</th><th style="min-width:140px;">Platform</th><th style="min-width:160px;">Instructor</th><th style="min-width:210px;">Zoom Link</th><th>'+(selectedCourse?esc(selectedCourse.lastColHeader):'Session Name')+'</th><th style="width:32px;"></th></tr>';
   }
 
-  // Track ILT index for duplicate-name duration lookup
   let iltIdx=0;
 
   rows.forEach((row,i)=>{
     const tr=document.createElement('tr');
     if(row.isDayHeader){
       tr.className='row-day-header';
-      const cs=isIP?5:8;
+      const cs=isIP?5:9;
       tr.innerHTML='<td colspan="'+cs+'" style="background:var(--burgundy);color:var(--white);font-weight:700;font-size:13px;padding:10px 12px;">'+esc(row.dayLabel)+' \u2014 '+esc(row.dateLabel)+'</td>';
       tb.appendChild(tr);return;
     }
@@ -701,17 +694,17 @@ function renderTable(){
       const inst=row.isILT?'<td><select class="tbl-select" style="min-width:160px;" onchange="upd('+i+',\'instructor\',this.value)">'+instOptions(row.instructor)+'</select></td>':'<td><span class="cell-muted">\u2014</span></td>';
 
       if(row.isILT){
-        // Duration badge
         const dur=getDuration(selectedCourse?selectedCourse.id:null,row.displayName,iltIdx);
         const durLabel=dur?(dur>=60?Math.floor(dur/60)+(dur%60?'h '+(dur%60)+'m':'h'):(dur+'m')):'';
         const badgeCls=row.endTimeEdited?'dur-badge dur-edited':'dur-badge';
         const durBadge=durLabel?'<span class="'+badgeCls+'" title="'+(row.endTimeEdited?'End time manually edited':'Auto-calculated from duration')+'">\u23F1 '+durLabel+'</span>':'';
         const startCell='<td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.startTime||'')+'" onchange="updStart('+i+',this.value)"><span class="tz-tag">'+tz+'</span></div></td>';
         const endCell='<td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.endTime||'')+'" onchange="updEnd('+i+',this.value)"><span class="tz-tag">'+tz+'</span>'+durBadge+'</div></td>';
-        tr.innerHTML=ck+'<td><input type="date" class="tbl-input" value="'+row.date+'" onchange="upd('+i+',\'date\',this.value)"></td>'+startCell+endCell+pl+inst+nm+dl;
+        const zoomCell='<td><input type="text" class="tbl-input" placeholder="https://zoom.us/j/\u2026" style="min-width:200px;" value="'+esc(row.zoomLink||'')+'" onchange="upd('+i+',\'zoomLink\',this.value)"></td>';
+        tr.innerHTML=ck+'<td><input type="date" class="tbl-input" value="'+row.date+'" onchange="upd('+i+',\'date\',this.value)"></td>'+startCell+endCell+pl+inst+zoomCell+nm+dl;
         iltIdx++;
       } else {
-        tr.innerHTML=ck+'<td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td>'+pl+inst+nm+dl;
+        tr.innerHTML=ck+'<td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td><td><span class="cell-muted">\u2014</span></td>'+pl+inst+'<td><span class="cell-muted">\u2014</span></td>'+nm+dl;
       }
     }
     tb.appendChild(tr);
@@ -725,19 +718,18 @@ function upd(i,f,v){rows[i][f]=v;}
 function updStart(i,v){
   rows[i].startTime=v;
   rows[i].startTimeEdited=true;
-  // Recalc end if not manually edited
   if(!rows[i].endTimeEdited&&selectedCourse){
     let iltIdx=0;
     for(let j=0;j<i;j++){if(rows[j].isILT&&!rows[j].isDayHeader)iltIdx++;}
     const dur=getDuration(selectedCourse.id,rows[i].displayName,iltIdx);
-    if(dur) rows[i].endTime=calcEndTime(v,dur);
+    if(dur)rows[i].endTime=calcEndTime(v,dur);
   }
   renderTable();
 }
 function updEnd(i,v){rows[i].endTime=v;rows[i].endTimeEdited=true;renderTable();}
 function updPlatform(i,v){rows[i].platform=v;rows[i].isILT=(v==='Zoom'||v==='Teams');if(!rows[i].isILT)rows[i].instructor='';renderTable();updateIltCount();}
 function removeRow(i){rows.splice(i,1);renderTable();updateIltCount();}
-function addManualRow(){rows.push({id:++_rowId,displayName:'New Session',isILT:true,platform:'Zoom',title:null,topicsHtml:null,date:'',startTime:getDefaultTime24(),endTime:'',instructor:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false});renderTable();updateIltCount();}
+function addManualRow(){rows.push({id:++_rowId,displayName:'New Session',isILT:true,platform:'Zoom',title:null,topicsHtml:null,date:'',startTime:getDefaultTime24(),endTime:'',instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false});renderTable();updateIltCount();}
 function toggleRow(i,c){rows[i].selected=c;refreshBatch();renderTable();}
 function toggleSelectAll(cb){rows.forEach(r=>{if(!r.isDayHeader)r.selected=cb.checked;});refreshBatch();renderTable();}
 function clearSelection(){rows.forEach(r=>r.selected=false);const sa=document.getElementById('selectAll');if(sa)sa.checked=false;refreshBatch();renderTable();}
@@ -767,10 +759,9 @@ async function processPdfFile(file){
     for(let p=1;p<=pdf.numPages;p++){
       const page=await pdf.getPage(p);
       const tc=await page.getTextContent();
-      // Join items with positional awareness: new line when y changes significantly
       let lastY=null;
       tc.items.forEach(item=>{
-        if(lastY!==null&&Math.abs(item.transform[5]-lastY)>5) fullText+='\n';
+        if(lastY!==null&&Math.abs(item.transform[5]-lastY)>5)fullText+='\n';
         fullText+=item.str;
         lastY=item.transform[5];
       });
@@ -784,7 +775,7 @@ async function processPdfFile(file){
     applyImportedData(result);
     showImportStatus('success','\u2713 Agenda imported successfully \u2014 '+result.rows.length+' sessions loaded. Switch to the Schedule panel to add instructor names.');
     switchTab('new');
-  } catch(err){
+  }catch(err){
     showUploadProgress(false);
     showImportStatus('error','Could not read PDF: '+err.message);
   }
@@ -792,167 +783,94 @@ async function processPdfFile(file){
 
 function parseAgendaPDF(text){
   const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
-
-  // ── Extract title (first non-empty line, often the program name)
-  let title='';
-  let cohort='';
-  let tz='ET';
-
-  // Title is typically the first bold/large line
+  let title='',cohort='',tz='ET';
   for(let i=0;i<Math.min(10,lines.length);i++){
     const l=lines[i];
-    // Skip "CLEAR Learning" header line
-    if(l.toLowerCase().includes('clear learning')) continue;
-    if(l.toLowerCase().includes('generated')) continue;
-    if(l.toLowerCase().includes('instructor agenda')) {title=l.replace(/instructor agenda/i,'').replace(/\u2014/g,'').trim(); break;}
-    if(l.toLowerCase().includes('schedule')||l.toLowerCase().includes('program')||l.toLowerCase().includes('ncit')||l.toLowerCase().includes('training')){
-      title=l; break;
-    }
+    if(l.toLowerCase().includes('clear learning'))continue;
+    if(l.toLowerCase().includes('generated'))continue;
+    if(l.toLowerCase().includes('instructor agenda')){title=l.replace(/instructor agenda/i,'').replace(/\u2014/g,'').trim();break;}
+    if(l.toLowerCase().includes('schedule')||l.toLowerCase().includes('program')||l.toLowerCase().includes('ncit')||l.toLowerCase().includes('training')){title=l;break;}
   }
-
-  // Cohort: line after title that isn't a date/timezone
   for(let i=0;i<lines.length;i++){
-    if(lines[i]===title||lines[i].toLowerCase().includes('clear learning')) continue;
+    if(lines[i]===title||lines[i].toLowerCase().includes('clear learning'))continue;
     if(lines[i].match(/\b(spring|fall|winter|summer|cohort)\b/i)){cohort=lines[i];break;}
-    if(lines[i].match(/\b20\d\d\b/)&&!lines[i].match(/^\w+ \d{1,2},/)){ cohort=lines[i];break;}
+    if(lines[i].match(/\b20\d\d\b/)&&!lines[i].match(/^\w+ \d{1,2},/)){cohort=lines[i];break;}
   }
-
-  // Timezone
   const tzMatch=text.match(/All times are in (ET|CT|MT|PT|UTC)/i);
-  if(tzMatch) tz=tzMatch[1].toUpperCase();
+  if(tzMatch)tz=tzMatch[1].toUpperCase();
 
-  // ── Match program from title
   let matchedCourse=null;
   for(const c of COURSES){
-    if(c.isInPerson) continue;
-    // Check if the PDF title contains key words from pdfTitle
+    if(c.isInPerson)continue;
     const pdfTitleClean=c.pdfTitle.replace(/\u2014.*/,'').trim().toLowerCase();
     const titleClean=title.toLowerCase();
-    if(titleClean.includes(pdfTitleClean.slice(0,20))||pdfTitleClean.includes(titleClean.slice(0,20))){
-      matchedCourse=c; break;
-    }
+    if(titleClean.includes(pdfTitleClean.slice(0,20))||pdfTitleClean.includes(titleClean.slice(0,20))){matchedCourse=c;break;}
   }
-  // Fallback: search all courses
   if(!matchedCourse){
     for(const c of COURSES){
-      if(c.isInPerson) continue;
-      if(title.toLowerCase().includes(c.name.split(' ').slice(0,3).join(' ').toLowerCase())){
-        matchedCourse=c; break;
-      }
+      if(c.isInPerson)continue;
+      if(title.toLowerCase().includes(c.name.split(' ').slice(0,3).join(' ').toLowerCase())){matchedCourse=c;break;}
     }
   }
 
-  // ── Parse table rows
-  // Look for date patterns: "Month D, YYYY" or time patterns "H:MM AM/PM"
   const dateRe=/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s*\d{4}/;
   const timeRe=/\b(\d{1,2}):(\d{2})\s*(AM|PM)/i;
-
-  // Build parsed rows from text
-  // Strategy: find lines with times, extract date+start+end+platform+session
   const parsedRows=[];
   let currentDate='';
 
-  // The PDF table rows look like: "Date | Start | End | Platform | Session"
-  // After text extraction they may be on separate lines or concatenated
-  // We'll look for time-containing lines and reconstruct
-
-  // Collect all lines containing time patterns
   for(let i=0;i<lines.length;i++){
     const line=lines[i];
-    // Date header lines
     const dateM=line.match(dateRe);
-    if(dateM&&!timeRe.test(line)){
-      currentDate=isoFromDisplay(dateM[0]);
-      continue;
-    }
-    // If line contains a date AND time, extract inline
-    if(dateM&&timeRe.test(line)){
-      currentDate=isoFromDisplay(dateM[0]);
-    }
-
+    if(dateM&&!timeRe.test(line)){currentDate=isoFromDisplay(dateM[0]);continue;}
+    if(dateM&&timeRe.test(line))currentDate=isoFromDisplay(dateM[0]);
     const times=[];
     let tMatch;
     const tRe=/\b(\d{1,2}):(\d{2})\s*(AM|PM)/gi;
-    while((tMatch=tRe.exec(line))!==null) times.push(tMatch[0]);
-
+    while((tMatch=tRe.exec(line))!==null)times.push(tMatch[0]);
     if(times.length>=2){
-      // Has start and end time on same line
-      const startT=to24(times[0]);
-      const endT=to24(times[1]);
-      // Platform detection
+      const startT=to24(times[0]),endT=to24(times[1]);
       let platform='Zoom';
-      if(/learning portal/i.test(line)) platform='Learning Portal';
-      else if(/teams/i.test(line)) platform='Teams';
-      // Session name: strip times, dates, platform keywords
-      let sName=line
-        .replace(dateRe,'')
-        .replace(/\b\d{1,2}:\d{2}\s*(AM|PM)/gi,'')
-        .replace(/zoom|teams/gi,'')
-        .replace(/learning portal/gi,'')
-        .replace(/ET|CT|MT|PT|UTC/g,'')
-        .replace(/\u2013|\u2014|-/g,' ')
-        .replace(/\s{2,}/g,' ')
-        .trim();
-      if(sName.length>2){
-        parsedRows.push({displayName:sName,isILT:platform!=='Learning Portal',platform,date:currentDate,startTime:startT,endTime:endT,instructor:'',selected:false,isDayHeader:false,startTimeEdited:true,endTimeEdited:true,id:++_rowId,title:null,topicsHtml:null});
-      }
-    } else if(times.length===1){
-      // Single time — might be start only, look ahead for end on next line
-      // Or could be a self-study row listed with no time
-    } else {
-      // No time — check if it looks like a self-study row
-      if(/self.study/i.test(line)||/learning portal/i.test(line)){
-        let sName=line.replace(/learning portal/gi,'').replace(/\u2013|\u2014/g,' ').replace(/\s{2,}/g,' ').trim();
-        if(sName.length>3){
-          parsedRows.push({displayName:sName,isILT:false,platform:'Learning Portal',date:'',startTime:'',endTime:'',instructor:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false,id:++_rowId,title:null,topicsHtml:null});
-        }
-      }
+      if(/learning portal/i.test(line))platform='Learning Portal';
+      else if(/teams/i.test(line))platform='Teams';
+      let sName=line.replace(dateRe,'').replace(/\b\d{1,2}:\d{2}\s*(AM|PM)/gi,'').replace(/zoom|teams/gi,'').replace(/learning portal/gi,'').replace(/ET|CT|MT|PT|UTC/g,'').replace(/\u2013|\u2014|-/g,' ').replace(/\s{2,}/g,' ').trim();
+      if(sName.length>2)parsedRows.push({displayName:sName,isILT:platform!=='Learning Portal',platform,date:currentDate,startTime:startT,endTime:endT,instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:true,endTimeEdited:true,id:++_rowId,title:null,topicsHtml:null});
+    } else if(!times.length&&(/self.study/i.test(line)||/learning portal/i.test(line))){
+      let sName=line.replace(/learning portal/gi,'').replace(/\u2013|\u2014/g,' ').replace(/\s{2,}/g,' ').trim();
+      if(sName.length>3)parsedRows.push({displayName:sName,isILT:false,platform:'Learning Portal',date:'',startTime:'',endTime:'',instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false,id:++_rowId,title:null,topicsHtml:null});
     }
   }
 
-  if(parsedRows.length===0&&!matchedCourse){
-    return {error:'Could not extract session data from this PDF. Make sure it was generated by this tool.'};
-  }
+  if(parsedRows.length===0&&!matchedCourse)return{error:'Could not extract session data from this PDF. Make sure it was generated by this tool.'};
 
-  // If we matched a course, use its template rows with extracted times
   let finalRows=[];
   if(matchedCourse){
-    // Merge template rows with extracted times by matching session names
     let iltIdx=0;
     const defTime=getDefaultTime24();
     finalRows=matchedCourse.rows.map(r=>{
       const isILT=r.isILT;
-      // Find matching extracted row by name similarity
       const extracted=parsedRows.find(p=>{
-        const pn=p.displayName.toLowerCase();
-        const rn=r.displayName.toLowerCase();
+        const norm=s=>s.toLowerCase().replace(/[-\u2013\u2014]+/g,' ').replace(/\s+/g,' ').trim();
+        const pn=norm(p.displayName),rn=norm(r.displayName);
         return pn.includes(rn.slice(0,Math.min(rn.length,20)))||rn.includes(pn.slice(0,Math.min(pn.length,20)));
       });
       let st=isILT?(extracted?extracted.startTime:defTime):'';
       let et=isILT?(extracted?extracted.endTime:''):'';
       const dt=extracted?extracted.date:'';
-      if(!et&&isILT){
-        const dur=getDuration(matchedCourse.id,r.displayName,iltIdx);
-        et=calcEndTime(st,dur)||'';
-      }
-      if(isILT) iltIdx++;
-      return {id:++_rowId,displayName:r.displayName,isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:dt,startTime:st,endTime:et,instructor:'',selected:false,isDayHeader:false,startTimeEdited:!!extracted,endTimeEdited:!!extracted};
+      if(!et&&isILT){const dur=getDuration(matchedCourse.id,r.displayName,iltIdx);et=calcEndTime(st,dur)||'';}
+      if(isILT)iltIdx++;
+      return {id:++_rowId,displayName:r.displayName,isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:dt,startTime:st,endTime:et,instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false};
     });
   } else {
     finalRows=parsedRows;
   }
 
-  return {title:title.replace(/\u2014\s*Schedule$/i,'').trim(),cohort,tz,course:matchedCourse,rows:finalRows};
+  return{title:title.replace(/\u2014\s*Schedule$/i,'').trim(),cohort,tz,course:matchedCourse,rows:finalRows};
 }
 
 function applyImportedData(result){
-  // Set form fields
-  if(result.title) document.getElementById('programTitle').value=result.title;
-  if(result.cohort) document.getElementById('cohortName').value=result.cohort;
-  if(result.tz){
-    const tzSel=document.getElementById('timezone');
-    for(let i=0;i<tzSel.options.length;i++){if(tzSel.options[i].value===result.tz){tzSel.selectedIndex=i;break;}}
-  }
+  if(result.title)document.getElementById('programTitle').value=result.title;
+  if(result.cohort)document.getElementById('cohortName').value=result.cohort;
+  if(result.tz){const tzSel=document.getElementById('timezone');for(let i=0;i<tzSel.options.length;i++){if(tzSel.options[i].value===result.tz){tzSel.selectedIndex=i;break;}}}
   if(result.course){
     selectedCourse=result.course;
     document.getElementById('introText').value=result.course.introHtml;
@@ -960,7 +878,7 @@ function applyImportedData(result){
     document.getElementById('courseValue').value=String(result.course.id);
     document.getElementById('defaultTimePanelVirtual').classList.remove('hidden');
     document.getElementById('ipFields').classList.add('hidden');
-    document.getElementById('scheduleHint').innerHTML='Imported from PDF \u2014 add instructor names below, then export the Instructor Agenda.';
+    document.getElementById('scheduleHint').innerHTML='Imported from PDF \u2014 add instructor names and Zoom links below, then export.';
     document.getElementById('btnAddRow').style.display='';
     const cs=document.getElementById('courseStatus');
     cs.className='status-bar success';
@@ -976,41 +894,31 @@ function applyImportedData(result){
   document.getElementById('schedulePanel').scrollIntoView({behavior:'smooth'});
 }
 
-// ── PDF parse helpers
 function isoFromDisplay(s){
-  // "Jan 15, 2026" -> "2026-01-15"
   const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
   const m=s.match(/(\w{3})\s+(\d{1,2}),?\s*(\d{4})/);
-  if(!m) return '';
+  if(!m)return'';
   const mo=months[m[1].toLowerCase()];
   return m[3]+'-'+String(mo).padStart(2,'0')+'-'+String(parseInt(m[2])).padStart(2,'0');
 }
 function to24(t){
   const m=t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  if(!m) return '';
+  if(!m)return'';
   let h=parseInt(m[1]),mn=m[2],ap=m[3].toUpperCase();
-  if(ap==='PM'&&h!==12) h+=12;
-  if(ap==='AM'&&h===12) h=0;
+  if(ap==='PM'&&h!==12)h+=12;
+  if(ap==='AM'&&h===12)h=0;
   return String(h).padStart(2,'0')+':'+mn;
 }
 
-function showUploadProgress(show){
-  document.getElementById('uploadProgress').style.display=show?'block':'none';
-  if(show)document.getElementById('progressFill').style.width='0%';
-}
+function showUploadProgress(show){document.getElementById('uploadProgress').style.display=show?'block':'none';if(show)document.getElementById('progressFill').style.width='0%';}
 function setProgress(pct){document.getElementById('progressFill').style.width=pct+'%';}
-function showImportStatus(type,msg){
-  const el=document.getElementById('importStatus');
-  el.className='status-bar '+type;
-  el.textContent=msg;
-  el.style.display='block';
-}
+function showImportStatus(type,msg){const el=document.getElementById('importStatus');el.className='status-bar '+type;el.textContent=msg;el.style.display='block';}
 
 // ═══════════════════════════════════════════════════════
 // SESSION CELL (preview + PDF)
 // ═══════════════════════════════════════════════════════
 function sessionCell(row,forPdf){
-  if(!row.title&&!row.topicsHtml) return esc(row.displayName);
+  if(!row.title&&!row.topicsHtml)return esc(row.displayName);
   let h='';
   if(row.title){h+=forPdf?'<div style="font-weight:700;color:#64092c;margin-bottom:3px;">'+esc(row.title)+'</div>':'<div class="session-title">'+esc(row.title)+'</div>';}
   if(row.topicsHtml){h+=forPdf?'<ul style="margin:3px 0 0 16px;padding:0;font-size:9pt;color:#484848;">'+row.topicsHtml.replace(/<\/?ul>/g,'')+'</ul>':'<ul class="session-topics">'+row.topicsHtml.replace(/<\/?ul>/g,'')+'</ul>';}
@@ -1033,7 +941,7 @@ function generatePreview(){
     let currentDay=null;
     rows.forEach(row=>{
       if(row.isDayHeader){
-        if(currentDay!==null) body+='</tbody></table>';
+        if(currentDay!==null)body+='</tbody></table>';
         body+='<div style="background:#64092c;color:#fff;font-weight:700;padding:10px 12px;margin-top:16px;font-size:13px;">'+esc(row.dayLabel)+' - '+esc(row.dateLabel)+'</div>';
         body+='<table class="prev-table"><thead><tr><th style="width:90px;">Start</th><th style="width:10px;"></th><th style="width:90px;">End</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>';
         currentDay=row;
@@ -1041,7 +949,7 @@ function generatePreview(){
         body+='<tr><td style="white-space:nowrap;">'+esc(fmtTime(row.startTime))+'</td><td style="text-align:center;color:#bbb;">\u2013</td><td style="white-space:nowrap;">'+esc(fmtTime(row.endTime))+'</td><td>'+esc(row.displayName)+'</td></tr>';
       }
     });
-    if(currentDay!==null) body+='</tbody></table>';
+    if(currentDay!==null)body+='</tbody></table>';
   } else {
     body+='<div class="doc-tz">All times are in '+esc(tz)+'</div>';
     body+='<table class="prev-table"><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>';
@@ -1049,9 +957,9 @@ function generatePreview(){
     body+='</tbody></table>';
   }
   let h='<div class="doc-title">'+esc(title)+'</div>';
-  if(cohort) h+='<div class="doc-cohort">'+esc(cohort)+'</div>';
-  if(location&&isIP) h+='<div class="doc-cohort">'+esc(location)+'</div>';
-  if(intro) h+='<div class="doc-intro">'+intro+'</div>';
+  if(cohort)h+='<div class="doc-cohort">'+esc(cohort)+'</div>';
+  if(location&&isIP)h+='<div class="doc-cohort">'+esc(location)+'</div>';
+  if(intro)h+='<div class="doc-intro">'+intro+'</div>';
   h+=body;
   document.getElementById('previewContent').innerHTML=h;
   document.getElementById('previewSection').classList.remove('hidden');
@@ -1070,15 +978,15 @@ function exportPDF(){
   if(isIP){
     const dayNote=selectedCourse.dayStartNote||'';const hasExam=selectedCourse.hasExam;
     let body='';
-    if(hasExam) body+='<div class="ip-intro"><p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p></div>';
-    if(dayNote) body+='<div class="ip-intro"><p>'+esc(dayNote)+'. Schedule is subject to change.</p></div>';
+    if(hasExam)body+='<div class="ip-intro"><p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p></div>';
+    if(dayNote)body+='<div class="ip-intro"><p>'+esc(dayNote)+'. Schedule is subject to change.</p></div>';
     else body+='<div class="ip-intro"><p>Schedule is subject to change.</p></div>';
     let dayOpen=false;
     rows.forEach(row=>{
       if(row.isDayHeader){if(dayOpen)body+='</table>';body+='<div class="day-bar">'+esc(row.dayLabel)+' \u2014 '+esc(row.dateLabel)+'</div><table>';dayOpen=true;}
       else{const cls=row.isBreak?' class="brk"':'';body+='<tr'+cls+'><td class="tc">'+esc(fmtTime(row.startTime))+'</td><td class="td">\u2013</td><td class="tc">'+esc(fmtTime(row.endTime))+'</td><td>'+esc(row.displayName)+'</td></tr>';}
     });
-    if(dayOpen) body+='</table>';
+    if(dayOpen)body+='</table>';
     const safe=fullTitle.replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
     const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap");@page{size:portrait;margin:0.5in 0.6in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:9pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:8px;margin-bottom:10px;}.doc-title{font-size:14pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:9.5pt;color:#484848;margin-top:2px;}.doc-meta{font-size:8pt;color:#7a6b62;text-align:right;line-height:1.5;}.ip-intro{font-size:8pt;color:#484848;line-height:1.45;margin-bottom:4px;}.ip-intro p{margin-bottom:4px;}.ip-intro strong{color:#64092c;}.day-bar{background:#64092c;color:#fff;font-weight:700;padding:5pt 8pt;font-size:9pt;margin-top:8pt;}table{width:100%;border-collapse:collapse;font-size:8.5pt;}td{padding:3pt 6pt;border-bottom:0.5pt solid #d4c8c0;vertical-align:top;line-height:1.35;}.tc{white-space:nowrap;width:62px;color:#666;}.td{width:10px;text-align:center;color:#bbb;}tr.brk td{color:#999;font-style:italic;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+(location?'<div class="doc-cohort">'+esc(location)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Program Agenda</div></div>'+body+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
     const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
@@ -1086,7 +994,7 @@ function exportPDF(){
     const trs=rows.map(row=>{if(row.isDayHeader)return'';const z=row.platform==='Zoom'||row.platform==='Teams';const pd=z?'<strong>'+esc(row.platform)+'</strong>':'<span style="color:#64092c;">'+esc(row.platform)+'</span>';return '<tr><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td>'+pd+'</td><td class="col-name-cell">'+sessionCell(row,true)+'</td></tr>';}).join('');
     const safe=fullTitle.replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
     let bodyHtml='<div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>';
-    if(intro) bodyHtml+='<div class="doc-intro">'+intro+'</div>';
+    if(intro)bodyHtml+='<div class="doc-intro">'+intro+'</div>';
     bodyHtml+='<div class="doc-tz">All times are in '+esc(tz)+'</div><table><colgroup><col class="col-date"><col class="col-start"><col class="col-end"><col class="col-plat"><col class="col-name"></colgroup><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>'+trs+'</tbody></table>';
     const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:portrait;margin:0.6in 0.65in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:11pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:16pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:11pt;color:#484848;margin-top:3px;}.doc-meta{font-size:9pt;color:#7a6b62;text-align:right;line-height:1.6;}.doc-intro{font-size:9.5pt;color:#484848;line-height:1.55;margin-bottom:16px;}.doc-intro p{margin-bottom:8px;break-inside:avoid;}.doc-intro h3{font-size:10pt;color:#64092c;margin:12px 0 4px;}.doc-intro strong{color:#64092c;}.doc-tz{font-size:9pt;font-weight:700;color:#484848;margin-bottom:10px;}table{width:100%;border-collapse:collapse;font-size:9.5pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:7pt 8pt;text-align:left;font-weight:700;font-size:8.5pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:6pt 8pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}col.col-date{width:90px;}col.col-start{width:78px;}col.col-end{width:78px;}col.col-plat{width:90px;}col.col-name{width:auto;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+bodyHtml+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
     const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
@@ -1106,15 +1014,15 @@ function exportInstructorPDF(){
   if(isIP){
     const dayNote=selectedCourse.dayStartNote||'';const hasExam=selectedCourse.hasExam;
     let body='<div class="ip-note">This document is for internal use only. Do not distribute to program attendees.</div>';
-    if(hasExam) body+='<div class="ip-intro"><p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p></div>';
-    if(dayNote) body+='<div class="ip-intro"><p>'+esc(dayNote)+'. Schedule is subject to change.</p></div>';
+    if(hasExam)body+='<div class="ip-intro"><p><strong>CLEAR POLICY STATES THAT NO ATTENDEE MAY TAKE THE FINAL EXAM BEFORE THE TRAINING IS COMPLETE. PLEASE KEEP THIS IN MIND WHEN MAKING YOUR TRAVEL PLANS.</strong></p></div>';
+    if(dayNote)body+='<div class="ip-intro"><p>'+esc(dayNote)+'. Schedule is subject to change.</p></div>';
     else body+='<div class="ip-intro"><p>Schedule is subject to change.</p></div>';
     let dayOpen=false;
     rows.forEach(row=>{
       if(row.isDayHeader){if(dayOpen)body+='</table>';body+='<div class="day-bar">'+esc(row.dayLabel)+' \u2014 '+esc(row.dateLabel)+'</div><table>';dayOpen=true;}
       else{const cls=row.isBreak?' class="brk"':'';const instName=row.instructor?esc(row.instructor):(row.isBreak?'':'');body+='<tr'+cls+'><td class="tc">'+esc(fmtTime(row.startTime))+'</td><td class="td">\u2013</td><td class="tc">'+esc(fmtTime(row.endTime))+'</td><td>'+esc(row.displayName)+'</td><td class="ti">'+instName+'</td></tr>';}
     });
-    if(dayOpen) body+='</table>';
+    if(dayOpen)body+='</table>';
     const safe=('Instructor_Agenda_'+(cohort||title)).replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
     const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap");@page{size:portrait;margin:0.5in 0.6in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:9pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:8px;margin-bottom:10px;}.doc-title{font-size:14pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:9.5pt;color:#484848;margin-top:2px;}.doc-meta{font-size:8pt;color:#7a6b62;text-align:right;line-height:1.5;}.ip-note{font-size:7.5pt;color:#888;margin-bottom:6px;font-style:italic;}.ip-intro{font-size:8pt;color:#484848;line-height:1.45;margin-bottom:4px;}.ip-intro p{margin-bottom:4px;}.ip-intro strong{color:#64092c;}.day-bar{background:#64092c;color:#fff;font-weight:700;padding:5pt 8pt;font-size:9pt;margin-top:8pt;}table{width:100%;border-collapse:collapse;font-size:8.5pt;}td{padding:3pt 6pt;border-bottom:0.5pt solid #d4c8c0;vertical-align:top;line-height:1.35;}.tc{white-space:nowrap;width:62px;color:#666;}.td{width:10px;text-align:center;color:#bbb;}.ti{width:120px;font-weight:600;color:#084d78;white-space:nowrap;}tr.brk td{color:#999;font-style:italic;}tr.brk .ti{color:#999;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+(location?'<div class="doc-cohort">'+esc(location)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Instructor Agenda</div></div>'+body+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
     const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
@@ -1127,6 +1035,111 @@ function exportInstructorPDF(){
     const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:landscape;margin:0.5in 0.55in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:10pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:15pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:10pt;color:#484848;margin-top:3px;}.doc-meta{font-size:8.5pt;color:#7a6b62;text-align:right;line-height:1.6;}table{width:100%;border-collapse:collapse;font-size:9pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:6pt 7pt;text-align:left;font-weight:700;font-size:8pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:5pt 7pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+bodyHtml+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
     const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// ICS EXPORT — OUTLOOK CALENDAR INVITES
+// ═══════════════════════════════════════════════════════
+function exportOutlookICS(){
+  const title=document.getElementById('programTitle').value||'Program Session';
+  const cohort=document.getElementById('cohortName').value;
+  const tz=document.getElementById('timezone').value;
+  const isIP=selectedCourse&&selectedCourse.isInPerson;
+  const location=isIP?(document.getElementById('ipLocation').value||''):'';
+
+  const iltRows=rows.filter(r=>!r.isDayHeader&&r.isILT&&r.date&&r.startTime&&r.endTime);
+  if(!iltRows.length){
+    alert('No sessions with dates and times found.\nPlease fill in dates and start/end times for your sessions first.');
+    return;
+  }
+
+  const tzMap={ET:'America/New_York',CT:'America/Chicago',MT:'America/Denver',PT:'America/Los_Angeles',UTC:'UTC'};
+  const tzLabels={ET:'Eastern Time',CT:'Central Time',MT:'Mountain Time',PT:'Pacific Time',UTC:'UTC'};
+  const tzId=tzMap[tz]||'America/New_York';
+  const tzLabel=tzLabels[tz]||'Eastern Time';
+
+  function toIcsDatetime(isoDate,time24){
+    return isoDate.replace(/-/g,'')+'T'+time24.replace(':','')+'00';
+  }
+
+  function subtractMinutes(time24,mins){
+    const[h,m]=time24.split(':').map(Number);
+    const total=h*60+m-mins;
+    const adj=((total%1440)+1440)%1440;
+    return String(Math.floor(adj/60)).padStart(2,'0')+':'+String(adj%60).padStart(2,'0');
+  }
+
+  function fmtTime12(t24){
+    const[h,m]=t24.split(':').map(Number);
+    return(h%12||12)+':'+String(m).padStart(2,'0')+' '+(h>=12?'PM':'AM');
+  }
+
+  function icsEscape(s){
+    return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n').replace(/\r/g,'');
+  }
+
+  function fold(line){
+    if(line.length<=75)return line;
+    let out='',pos=0;
+    while(pos<line.length){
+      if(pos===0){out+=line.slice(0,75);pos=75;}
+      else{out+='\r\n '+line.slice(pos,pos+74);pos+=74;}
+    }
+    return out;
+  }
+
+  const programLabel=cohort?title+' \u2014 '+cohort:title;
+  const now=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//CLEAR Learning//Program Agenda Generator//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n';
+  ics+=fold('X-WR-CALNAME:'+icsEscape(programLabel))+'\r\n';
+  ics+='X-WR-TIMEZONE:'+tzId+'\r\n';
+  ics+='BEGIN:VTIMEZONE\r\nTZID:'+tzId+'\r\nEND:VTIMEZONE\r\n';
+
+  iltRows.forEach((row,idx)=>{
+    const sessionStart12=fmtTime12(row.startTime);
+    const earlyStart=subtractMinutes(row.startTime,15);
+    const dtStart=toIcsDatetime(row.date,earlyStart);
+    const dtEnd=toIcsDatetime(row.date,row.endTime);
+
+    const instrLine=row.instructor?'Instructor: '+row.instructor+'\n':'';
+    const zoomLine=(row.zoomLink&&!isIP)?'Zoom Link: '+row.zoomLink+'\n':'';
+
+    const descBody=
+      'The '+row.displayName+' session will begin at '+sessionStart12+' '+tzLabel+'. '+
+      'Please log in 15 minutes early to allow time to set up, run a tech check, and troubleshoot any issues that may arise.\n\n'+
+      instrLine+
+      zoomLine+
+      'Thank you \u2014 please contact clearlearning@clearhq.org if you have any questions or need further assistance.';
+
+    const locationVal=(row.zoomLink&&!isIP)?row.zoomLink:(location||'');
+    const uid='CLEAR-'+row.date.replace(/-/g,'')+'-'+String(idx+1).padStart(3,'0')+'@clearhq.org';
+    const summary=icsEscape(row.displayName+(cohort?' \u2014 '+cohort:''));
+
+    ics+='BEGIN:VEVENT\r\n';
+    ics+=fold('UID:'+uid)+'\r\n';
+    ics+='DTSTAMP:'+now+'\r\n';
+    ics+=fold('DTSTART;TZID='+tzId+':'+dtStart)+'\r\n';
+    ics+=fold('DTEND;TZID='+tzId+':'+dtEnd)+'\r\n';
+    ics+=fold('SUMMARY:'+summary)+'\r\n';
+    ics+=fold('DESCRIPTION:'+icsEscape(descBody))+'\r\n';
+    if(locationVal)ics+=fold('LOCATION:'+icsEscape(locationVal))+'\r\n';
+    ics+='ORGANIZER;CN=CLEAR Learning:mailto:clearlearning@clearhq.org\r\n';
+    ics+='STATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\n';
+    ics+='END:VEVENT\r\n';
+  });
+
+  ics+='END:VCALENDAR';
+
+  const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const safeTitle=(cohort||title).replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,50);
+  a.href=url;
+  a.download=safeTitle+'_Instructor_Invites.ics';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
 }
 
 // ═══════════════════════════════════════════════════════
