@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLEAR Novi Event Creator</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<style>
+  :root {
+    --burgundy: #64092C;
+    --burgundy-dark: #4a0620;
+    --burgundy-light: #8a0e3c;
+    --gold: #DDA838;
+    --gold-light: #f0c35a;
+    --charcoal: #484848;
+    --charcoal-light: #666;
+    --white: #ffffff;
+    --gray-50: #f8f7f7;
+    --gray-100: #f0eded;
+    --gray-200: #e0dbdb;
+    --gray-300: #c8c1c1;
+    --success: #2d7a4f;
+    --success-bg: #eaf5ee;
+    --error: #b91c1c;
+    --error-bg: #fef2f2;
+    --warning: #92400e;
+    --warning-bg: #fffbeb;
+    --shadow: 0 1px 3px rgba(100,9,44,0.08), 0 4px 16px rgba(100,9,44,0.06);
+    --shadow-lg: 0 8px 32px rgba(100,9,44,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Open Sans', system-ui, sans-serif;
+    background: var(--gray-50);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--burgundy);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .app-header h1 {
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .app-header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Auth Panel */
+  #auth-panel {
+    max-width: 480px;
+    margin: 60px auto;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  #auth-panel .panel-header {
+    background: var(--burgundy);
+    padding: 20px 28px;
+    color: var(--white);
+  }
+  #auth-panel .panel-header h2 { font-size: 17px; font-weight: 600; }
+  #auth-panel .panel-header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  #auth-panel .panel-body { padding: 28px; }
+
+  /* Main Layout */
+  #main-app { display: none; max-width: 1100px; margin: 0 auto; padding: 24px 24px 60px; }
+
+  /* Connection Bar */
+  .connection-bar {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .conn-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    flex-shrink: 0;
+  }
+  .conn-dot.connected { background: #22c55e; }
+  .conn-dot.error { background: var(--error); }
+  .conn-text { font-size: 13px; color: var(--charcoal-light); flex: 1; }
+  .conn-text strong { color: var(--charcoal); }
+
+  /* Program Selector */
+  .program-selector {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .program-selector h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--burgundy);
+    margin-bottom: 14px;
+  }
+  .program-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .prog-btn {
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--charcoal);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+  .prog-btn:hover { border-color: var(--burgundy); color: var(--burgundy); background: var(--gray-50); }
+  .prog-btn.active { border-color: var(--burgundy); background: var(--burgundy); color: var(--white); font-weight: 600; }
+  .prog-btn .prog-tag {
+    display: block;
+    font-size: 10px;
+    opacity: 0.7;
+    margin-top: 2px;
+    font-weight: normal;
+  }
+  .prog-btn.active .prog-tag { opacity: 0.85; }
+
+  /* Form */
+  #event-form { display: none; }
+
+  .form-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .form-card-header {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 13px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .form-card-header h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--charcoal);
+  }
+  .card-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .badge-required { background: #fde8ef; color: var(--burgundy); }
+  .badge-auto { background: #e8f5e9; color: #2d7a4f; }
+  .form-card-body { padding: 20px; }
+
+  .form-row {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--charcoal);
+    letter-spacing: 0.2px;
+  }
+  .field-group label .req { color: var(--burgundy); margin-left: 2px; }
+  .field-group .hint {
+    font-size: 11px;
+    color: var(--charcoal-light);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  input[type="text"], input[type="url"], input[type="number"],
+  input[type="datetime-local"], select, textarea {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1px solid var(--gray-300);
+    border-radius: 5px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--charcoal);
+    background: var(--white);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--burgundy);
+    box-shadow: 0 0 0 3px rgba(100,9,44,0.08);
+  }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  select { cursor: pointer; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .toggle-row label { font-size: 13px; cursor: pointer; }
+  input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--burgundy); }
+
+  /* Radio tabs */
+  .radio-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .radio-tab {
+    padding: 7px 16px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    background: var(--white);
+    color: var(--charcoal);
+    transition: all 0.15s;
+  }
+  .radio-tab.active { border-color: var(--burgundy); background: var(--burgundy); color: var(--white); font-weight: 600; }
+
+  /* Tickets section */
+  .ticket-block {
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .ticket-block:last-child { margin-bottom: 0; }
+  .ticket-header {
+    background: var(--gray-50);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--charcoal-light);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .ticket-body { padding: 16px; }
+
+  /* Action bar */
+  .action-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    border-top: 1px solid var(--gray-200);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+    z-index: 100;
+  }
+  .action-bar-left { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--charcoal-light); }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 20px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .btn-primary { background: var(--burgundy); color: var(--white); }
+  .btn-primary:hover:not(:disabled) { background: var(--burgundy-dark); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: var(--white); color: var(--charcoal); border: 1.5px solid var(--gray-300); }
+  .btn-secondary:hover { border-color: var(--burgundy); color: var(--burgundy); }
+  .btn-gold { background: var(--gold); color: var(--charcoal); }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  /* Status / Result */
+  .status-box {
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .status-box.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .status-box.success { background: var(--success-bg); border: 1px solid #bbf7d0; color: var(--success); }
+  .status-box.error { background: var(--error-bg); border: 1px solid #fecaca; color: var(--error); }
+  .status-box.warning { background: var(--warning-bg); border: 1px solid #fde68a; color: var(--warning); }
+  .status-box strong { display: block; margin-bottom: 4px; font-size: 14px; }
+
+  /* Progress steps */
+  .progress-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .step {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 12px;
+    text-align: center;
+    border-right: 1px solid var(--gray-200);
+    color: var(--charcoal-light);
+  }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--burgundy); color: var(--white); font-weight: 600; }
+  .step.done { background: var(--success-bg); color: var(--success); }
+  .step .step-num { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; opacity: 0.7; }
+  .step.active .step-num, .step.done .step-num { opacity: 1; }
+
+  /* Checklist */
+  .checklist { list-style:none; padding:0; margin:0; }
+  .checklist-section-header { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--burgundy); background:rgba(100,9,44,.06); padding:7px 0 6px; margin:14px 0 4px; border-bottom:2px solid rgba(100,9,44,.15); }
+  .checklist-item { padding:8px 0; border-bottom:1px solid var(--gray-200); }
+  .checklist-item:last-child { border-bottom:none; }
+  .checklist-label { display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .checklist-check { margin-top:3px; flex-shrink:0; width:15px; height:15px; accent-color:var(--burgundy); cursor:pointer; }
+  .checklist-text { font-size:13px; line-height:1.5; }
+  .checklist-detail { font-size:12px; color:#555; margin-top:3px; display:block; line-height:1.5; }
+  .checklist-label:has(input:checked) .checklist-text { opacity:.45; text-decoration:line-through; color:#888; }
+  .checklist-copy-btn { padding:5px 12px; font-size:12px; font-weight:600; border:1px solid var(--gray-300); border-radius:4px; background:var(--white); cursor:pointer; font-family:inherit; display:inline-block; }
+  .checklist-copy-btn:hover { background:var(--gray-100); border-color:var(--burgundy); }
+  .checklist-field { display:inline-block; background:#f0f0f0; border-radius:3px; padding:1px 6px; margin:2px 2px 2px 0; font-size:11px; color:#444; }
+  /* ── Rich text editor ── */
+  .desc-field { margin-bottom: 0; }
+  .desc-label-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:6px; }
+  .desc-field-label { font-size:12px; font-weight:700; color:var(--charcoal); text-transform:uppercase; letter-spacing:0.04em; }
+  .desc-tab { padding:4px 10px; font-size:11px; font-weight:600; border:1px solid var(--gray-300); border-radius:4px; background:var(--white); color:var(--charcoal); cursor:pointer; font-family:inherit; }
+  .desc-tab.active { background:var(--burgundy); color:var(--white); border-color:var(--burgundy); }
+  .copy-btn { padding:4px 10px; font-size:11px; font-weight:600; border:1px solid var(--gray-300); border-radius:4px; background:var(--white); color:var(--charcoal); cursor:pointer; font-family:inherit; }
+  .copy-btn:hover { background:var(--gray-100); }
+  .copy-btn.copied { background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7; }
+  .rte-toolbar { display:flex; flex-wrap:wrap; gap:3px; padding:6px 8px; background:var(--gray-50); border:1px solid var(--gray-300); border-bottom:none; border-radius:5px 5px 0 0; }
+  .rte-btn { padding:3px 8px; font-size:12px; border:1px solid var(--gray-300); border-radius:3px; background:var(--white); cursor:pointer; font-family:inherit; min-width:28px; text-align:center; }
+  .rte-btn:hover { background:var(--gray-100); border-color:var(--burgundy); }
+  .rte-sep { width:1px; background:var(--gray-300); margin:2px 3px; align-self:stretch; }
+  .rte-editor { border:1px solid var(--gray-300); border-radius:0 0 5px 5px; padding:10px 12px; font-size:13px; line-height:1.6; min-height:100px; outline:none; background:var(--white); }
+  .rte-editor:focus { border-color:var(--burgundy); }
+  .rte-editor p { margin-bottom:8px; }
+  .rte-editor ul, .rte-editor ol { padding-left:20px; margin-bottom:8px; }
+  .rte-editor a { color:var(--blue); }
+  .rte-html { width:100%; border:1px solid var(--gray-300); border-radius:5px; padding:10px 12px; font-size:12px; font-family:monospace; line-height:1.5; background:#fafafa; resize:vertical; outline:none; }
+  .rte-html:focus { border-color:var(--burgundy); }
+
+  .result-links { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .result-links a { text-decoration: none; }
+
+  /* Loading spinner */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Misc */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin: 20px 0;
+  }
+  .text-muted { color: var(--charcoal-light); font-size: 12px; }
+  .hidden { display: none !important; }
+
+  #loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    gap: 16px;
+  }
+  #loading-overlay .spin-lg {
+    width: 40px; height: 40px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--burgundy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  #loading-overlay p { font-size: 14px; color: var(--charcoal-light); }
+
+  @media (max-width: 700px) {
+    .form-row.cols-2, .form-row.cols-3, .form-row.cols-4 { grid-template-columns: 1fr; }
+    #main-app { padding: 16px 16px 80px; }
+    .program-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>CLEAR Novi Event Creator</h1>
+  <div class="header-right">
+    <span id="header-program-label" class="text-muted"></span>
+  </div>
+</div>
+
+<div id="loading-overlay" class="hidden">
+  <div class="spin-lg"></div>
+  <p id="loading-msg">Loading…</p>
+</div>
+
+<!-- Auth Panel -->
+<div id="auth-panel">
+  <div class="panel-header">
+    <h2>Connect to Novi</h2>
+    <p>Enter your Cloudflare Worker URL and auth token to get started.</p>
+  </div>
+  <div class="panel-body">
+    <div class="field-group" style="margin-bottom:14px">
+      <label>Worker URL<span class="req">*</span></label>
+      <input type="text" id="worker-url" placeholder="https://your-worker.workers.dev" />
+    </div>
+    <div class="field-group" style="margin-bottom:20px">
+      <label>Auth Token<span class="req">*</span></label>
+      <input type="text" id="auth-token" placeholder="Your X-Auth-Token" />
+    </div>
+    <button class="btn btn-primary" onclick="connect()" id="connect-btn">Connect</button>
+    <div id="auth-error" class="status-box error hidden" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="main-app">
+
+  <div class="connection-bar">
+    <div class="conn-dot connected" id="conn-dot"></div>
+    <span class="conn-text" id="conn-text">Connected</span>
+    <button class="btn btn-secondary btn-sm" onclick="disconnect()">Disconnect</button>
+  </div>
+
+  <div id="global-status"></div>
+
+  <!-- Program Selector -->
+  <div class="program-selector">
+    <h2>Select Program Type</h2>
+    <div class="program-grid" id="program-grid"></div>
+  </div>
+
+  <!-- Event Form -->
+  <div id="event-form">
+
+    <div class="progress-steps" id="progress-steps">
+      <div class="step active" id="step-1"><span class="step-num">Step 1</span>Configure Event</div>
+      <div class="step" id="step-2"><span class="step-num">Step 2</span>Review & Create Event</div>
+      <div class="step" id="step-3"><span class="step-num">Step 3</span>Create Tickets</div>
+      <div class="step" id="step-4"><span class="step-num">Step 4</span>Complete</div>
+    </div>
+
+    <!-- Step 1: Configure -->
+    <div id="config-section">
+
+      <!-- Cohort Identity -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Cohort Details</h3>
+          <span class="card-badge badge-required">Required</span>
+        </div>
+        <div class="form-card-body">
+          <div class="form-row cols-3">
+            <div class="field-group">
+              <label>Month <span class="req">*</span></label>
+              <select id="f-month">
+                <option value="">Select month…</option>
+                <option>January</option><option>February</option><option>March</option>
+                <option>April</option><option>May</option><option>June</option>
+                <option>July</option><option>August</option><option>September</option>
+                <option>October</option><option>November</option><option>December</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Year <span class="req">*</span></label>
+              <input type="number" id="f-year" placeholder="2026" min="2024" max="2030" />
+            </div>
+
+          </div>
+          <div class="form-row">
+            <div class="field-group">
+              <label>Event Title (auto-generated, editable)</label>
+              <input type="text" id="f-title" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field-group">
+              <label>Overview / Short Description <span class="req">*</span></label>
+              <input type="text" id="f-overview" />
+              <span class="hint">Maps to Novi Overview field (shown in event listings)</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field-group">
+              <label>Internal / Notes Name <span class="req">*</span></label>
+              <input type="text" id="f-notes-name" placeholder="e.g. 2026.08.27 NCIT B CAN Open" />
+              <span class="hint">Cohort name used in TalentLMS and Novi Internal Notes</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Date &amp; Time</h3>
+          <span class="card-badge badge-required">Required</span>
+        </div>
+        <div class="form-card-body">
+          <div class="form-row cols-3">
+            <div class="field-group">
+              <label>Start Date/Time <span class="req">*</span></label>
+              <input type="datetime-local" id="f-start" />
+              <span class="hint" id="start-hint">Welcome Session start</span>
+            </div>
+            <div class="field-group">
+              <label>End Date/Time <span class="req">*</span></label>
+              <input type="datetime-local" id="f-end" />
+              <span class="hint" id="end-hint">Final session end</span>
+            </div>
+            <div class="field-group">
+              <label>Time Zone</label>
+              <select id="f-timezone">
+                <option value="Eastern Standard Time">Eastern Time (ET)</option>
+                <option value="Central Standard Time">Central Time (CT)</option>
+                <option value="Mountain Standard Time">Mountain Time (MT)</option>
+                <option value="Pacific Standard Time">Pacific Time (PT)</option>
+                <option value="Canada Central Standard Time">Canada Central</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Location</h3>
+        </div>
+        <div class="form-card-body">
+          <div class="radio-tabs" id="location-tabs">
+            <button class="radio-tab active" onclick="setLocationType('Online', this)">Virtual</button>
+            <button class="radio-tab" onclick="setLocationType('InPerson', this)">In-Person</button>
+          </div>
+
+          <!-- Virtual fields -->
+          <div id="virtual-fields">
+            <div class="form-row cols-2">
+              <div class="field-group">
+                <label>Virtual Location Name</label>
+                <input type="text" id="f-online-link-text" value="Welcome Session Zoom Registration Link" maxlength="50" />
+                <span class="hint">Max 50 characters</span>
+              </div>
+              <div class="field-group">
+                <label>Meeting URL (Zoom Registration Link) <span class="req">*</span></label>
+                <input type="url" id="f-online-link-url" placeholder="https://zoom.us/meeting/register/…" / oninput="updateDescriptions()">
+                <span class="hint">Create Welcome Session in Zoom first, with registration required</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field-group">
+                <label>Program Agenda Link</label>
+                <input type="url" id="f-agenda-url" placeholder="https://clearlearning.github.io/..." oninput="updateDescriptions()" />
+                <span class="hint">Updates the agenda link in the confirmation email. Leave blank to keep template default.</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- In-person fields -->
+          <div id="inperson-fields" class="hidden">
+            <div class="status-box info" style="margin-bottom:14px;">
+              <strong>In-Person Event Variables</strong> — these fields auto-update the Secondary Details and Confirmation Email content below.
+            </div>
+            <div class="form-row cols-2">
+              <div class="field-group">
+                <label>Venue Name <span class="req">*</span></label>
+                <input type="text" id="f-venue-name" placeholder="Holiday Inn Austin Town Lake" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>Address Line 1 <span class="req">*</span></label>
+                <input type="text" id="f-addr1" placeholder="20 North IH-35" / oninput="updateDescriptions()">
+              </div>
+            </div>
+            <div class="form-row cols-2">
+              <div class="field-group">
+                <label>Address Line 2</label>
+                <input type="text" id="f-addr2" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>City <span class="req">*</span></label>
+                <input type="text" id="f-city" / oninput="updateDescriptions()">
+              </div>
+            </div>
+            <div class="form-row cols-4">
+              <div class="field-group">
+                <label>State/Province</label>
+                <input type="text" id="f-state" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>Zip/Postal Code</label>
+                <input type="text" id="f-zip" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>Country</label>
+                <input type="text" id="f-country" value="US" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>Local Time Zone <span class="req">*</span></label>
+                <select id="f-tz-local">
+                  <option value="Eastern Standard Time">Eastern (ET)</option>
+                  <option value="Central Standard Time">Central (CT)</option>
+                  <option value="Mountain Standard Time">Mountain (MT)</option>
+                  <option value="Pacific Standard Time">Pacific (PT)</option>
+                  <option value="Canada Central Standard Time">Canada Central</option>
+                </select>
+              </div>
+            </div>
+            <!-- In-person specific: hotel info for confirmation email -->
+
+            <div class="form-row">
+              <div class="field-group">
+                <label>Program Agenda Link</label>
+                <input type="url" id="f-agenda-url-ipt" placeholder="https://clearlearning.github.io/..." oninput="updateDescriptions()" />
+                <span class="hint">Updates the agenda link in the confirmation email.</span>
+              </div>
+            </div>
+            <div class="form-row cols-2">
+              <div class="field-group">
+                <label>Hotel Booking Link</label>
+                <input type="url" id="f-hotel-link" placeholder="https://…" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>Hotel Rate Deadline</label>
+                <input type="text" id="f-hotel-deadline" placeholder="e.g. April 3, 2026" / oninput="updateDescriptions()">
+              </div>
+            </div>
+            <div class="form-row cols-2">
+              <div class="field-group">
+                <label>Cancellation No-Refund Date</label>
+                <input type="text" id="f-cancel-deadline" placeholder="e.g. April 20, 2026" / oninput="updateDescriptions()">
+              </div>
+              <div class="field-group">
+                <label>Check-in Time / Training Start</label>
+                <input type="text" id="f-checkin" placeholder="e.g. 7:30 to 8 a.m. on May 4, 2026" / oninput="updateDescriptions()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agenda -->
+            <!-- Event Description (read-only preview, editable textarea) -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Event Descriptions</h3>
+          <span class="card-badge badge-auto">Auto-populated from template &amp; location</span>
+        </div>
+        <div class="form-card-body">
+
+          <!-- Primary Details -->
+          <div class="desc-field" id="desc-details">
+            <div class="desc-label-row">
+              <label class="desc-field-label">Primary Details</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="desc-tab active" onclick="showDescTab('details','rich',this)">Rich Text</button>
+                <button class="desc-tab" onclick="showDescTab('details','html',this)">HTML</button>
+                <button class="copy-btn" onclick="copyFieldHtml('f-details','copy-details')" id="copy-details">Copy HTML</button>
+              </div>
+            </div>
+            <div id="rte-details-rich">
+              <div class="rte-toolbar">
+                <button class="rte-btn" onclick="rteCmd('details','bold')"><b>B</b></button>
+                <button class="rte-btn" onclick="rteCmd('details','italic')"><i>I</i></button>
+                <button class="rte-btn" onclick="rteCmd('details','underline')"><u>U</u></button>
+                <span class="rte-sep"></span>
+                <button class="rte-btn" onclick="rteCmd('details','insertUnorderedList')">&#8226; List</button>
+                <button class="rte-btn" onclick="rteCmd('details','insertOrderedList')">1. List</button>
+                <span class="rte-sep"></span>
+                <button class="rte-btn" onclick="rteLink('details')">&#128279; Link</button>
+                <button class="rte-btn" onclick="rteCmd('details','removeFormat')">&#10005; Clear</button>
+              </div>
+              <div class="rte-editor" id="rte-details" contenteditable="true" oninput="rteToTextarea('details')"></div>
+            </div>
+            <textarea id="f-details" class="rte-html hidden" rows="6" oninput="textareaToRte('details')"></textarea>
+          </div>
+
+          <!-- Post-Registration -->
+          <div class="desc-field" id="desc-post-reg" style="margin-top:18px">
+            <div class="desc-label-row">
+              <label class="desc-field-label">Post-Registration Message <span style="font-size:11px;font-weight:400;color:var(--gray-400)">(shown after registration completes)</span></label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="desc-tab active" onclick="showDescTab('post-reg','rich',this)">Rich Text</button>
+                <button class="desc-tab" onclick="showDescTab('post-reg','html',this)">HTML</button>
+                <button class="copy-btn" onclick="copyFieldHtml('f-post-reg','copy-post-reg')" id="copy-post-reg">Copy HTML</button>
+              </div>
+            </div>
+            <p class="hint" style="margin-bottom:6px">&#9888;&#65039; API cannot write this field. Copy HTML and paste into Novi. <strong>Enable Code View (&#60;/&#62; button) in Novi&#39;s editor first.</strong></p>
+            <div id="rte-post-reg-rich">
+              <div class="rte-toolbar">
+                <button class="rte-btn" onclick="rteCmd('post-reg','bold')"><b>B</b></button>
+                <button class="rte-btn" onclick="rteCmd('post-reg','italic')"><i>I</i></button>
+                <button class="rte-btn" onclick="rteCmd('post-reg','underline')"><u>U</u></button>
+                <span class="rte-sep"></span>
+                <button class="rte-btn" onclick="rteCmd('post-reg','insertUnorderedList')">&#8226; List</button>
+                <button class="rte-btn" onclick="rteCmd('post-reg','insertOrderedList')">1. List</button>
+                <span class="rte-sep"></span>
+                <button class="rte-btn" onclick="rteLink('post-reg')">&#128279; Link</button>
+                <button class="rte-btn" onclick="rteCmd('post-reg','removeFormat')">&#10005; Clear</button>
+              </div>
+              <div class="rte-editor" id="rte-post-reg" contenteditable="true" oninput="rteToTextarea('post-reg')"></div>
+            </div>
+            <textarea id="f-post-reg" class="rte-html hidden" rows="5" oninput="textareaToRte('post-reg')"></textarea>
+          </div>
+
+          <!-- Confirmation Email -->
+          <div class="desc-field" id="desc-t1-email" style="margin-top:18px">
+            <div class="desc-label-row">
+              <label class="desc-field-label">Ticket Confirmation Email <span style="font-size:11px;font-weight:400;color:var(--gray-400)">(both tickets)</span></label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="desc-tab active" onclick="showDescTab('t1-email','rich',this)">Rich Text</button>
+                <button class="desc-tab" onclick="showDescTab('t1-email','html',this)">HTML</button>
+                <button class="copy-btn" onclick="copyFieldHtml('t1-email','copy-t1-email')" id="copy-t1-email">Copy HTML</button>
+              </div>
+            </div>
+            <div id="rte-t1-email-rich">
+              <div class="rte-toolbar">
+                <button class="rte-btn" onclick="rteCmd('t1-email','bold')"><b>B</b></button>
+                <button class="rte-btn" onclick="rteCmd('t1-email','italic')"><i>I</i></button>
+                <button class="rte-btn" onclick="rteCmd('t1-email','underline')"><u>U</u></button>
+                <span class="rte-sep"></span>
+                <button class="rte-btn" onclick="rteCmd('t1-email','insertUnorderedList')">&#8226; List</button>
+                <button class="rte-btn" onclick="rteCmd('t1-email','insertOrderedList')">1. List</button>
+                <span class="rte-sep"></span>
+                <button class="rte-btn" onclick="rteLink('t1-email')">&#128279; Link</button>
+                <button class="rte-btn" onclick="rteCmd('t1-email','removeFormat')">&#10005; Clear</button>
+              </div>
+              <div class="rte-editor" id="rte-t1-email" contenteditable="true" oninput="rteToTextarea('t1-email')"></div>
+            </div>
+            <textarea id="t1-email" class="rte-html hidden" rows="6" oninput="textareaToRte('t1-email')"></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tickets -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h3>Tickets</h3>
+          <span class="card-badge badge-required">2 Tickets</span>
+        </div>
+        <div class="form-card-body">
+
+          <div class="ticket-block">
+            <div class="ticket-header">Ticket 1 — Member Rate</div>
+            <div class="ticket-body">
+              <div class="form-row cols-3">
+                <div class="field-group">
+                  <label>Ticket Name</label>
+                  <input type="text" id="t1-name" value="CLEAR Member Registration" />
+                </div>
+                <div class="field-group">
+                  <label>Price ($) <span class="req">*</span></label>
+                  <input type="number" id="t1-price" min="0" step="0.01" />
+                </div>
+                <div class="field-group">
+                  <label>Seats Per Ticket</label>
+                  <input type="number" id="t1-seats" value="1" min="1" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field-group">
+                  <label>Ticket Details</label>
+                  <input type="text" id="t1-details" value="This registration type is for active CLEAR members." />
+                </div>
+              </div>
+              <input type="hidden" id="t1-email" />
+            </div>
+          </div>
+
+          <div class="ticket-block">
+            <div class="ticket-header">Ticket 2 — Non-Member Rate</div>
+            <div class="ticket-body">
+              <div class="form-row cols-3">
+                <div class="field-group">
+                  <label>Ticket Name</label>
+                  <input type="text" id="t2-name" value="General Event Registration" />
+                </div>
+                <div class="field-group">
+                  <label>Price ($) <span class="req">*</span></label>
+                  <input type="number" id="t2-price" min="0" step="0.01" />
+                </div>
+                <div class="field-group">
+                  <label>Seats Per Ticket</label>
+                  <input type="number" id="t2-seats" value="1" min="1" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field-group">
+                  <label>Ticket Details</label>
+                  <input type="text" id="t2-details" value="This registration type is for non-CLEAR members." />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Capacity -->
+      
+    </div><!-- /config-section -->
+
+    <!-- Step 2+: Results -->
+    <div id="result-section" class="hidden">
+      <div id="result-status"></div>
+      <div id="checklist-section" class="hidden">
+        <div class="form-card">
+          <div class="form-card-header">
+            <h3>Manual Steps Remaining</h3>
+            <span class="card-badge" style="background:#fde8ef;color:#64092c;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px">Complete in Novi</span>
+          </div>
+          <div class="form-card-body">
+            <ul class="checklist" id="checklist"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left" id="action-status"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="resetForm()" id="btn-reset">Start Over</button>
+        <button class="btn btn-secondary" onclick="showReviewPanel()">&#128203; Review Entry</button>
+        <button class="btn btn-primary" onclick="submitEvent()" id="btn-submit">
+          Create Event in Novi &#8594;
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /event-form -->
+
+</div><!-- /main-app -->
+
+<!-- Review Modal -->
+<div id="review-modal" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:9999;overflow-y:auto;padding:40px 20px">
+  <div style="background:#fff;max-width:760px;margin:0 auto;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+    <div style="background:var(--burgundy);color:#fff;padding:16px 24px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:16px">&#128203; Entry Review</h2>
+      <button onclick="document.getElementById('review-modal').classList.add('hidden')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div id="review-content" style="padding:24px;font-size:13px;line-height:1.6;max-height:70vh;overflow-y:auto"></div>
+    <div style="padding:14px 24px;border-top:1px solid #eee;text-align:right">
+      <button onclick="document.getElementById('review-modal').classList.add('hidden')" class="btn btn-secondary">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+const CATEGORY_IDS = {
+  'Virtual NCIT':     2434,
+  'In-Person NCIT':   9238,
+  'Board Member':     2435,
+  'ELPR':             2436,
+  'CLEAR Learning':   2433,
+};
+
+const PROGRAMS = [
+  { id: 'ncit-b-can-virt',  label: 'NCIT Basic',         tag: 'Canadian – Virtual',     category: 'Virtual NCIT',   capacity: 70,  memberPrice: 465, nonMemberPrice: 580, delivery: 'virtual' },
+  { id: 'ncit-b-us-virt',   label: 'NCIT Basic',         tag: 'US – Virtual',           category: 'Virtual NCIT',   capacity: 70,  memberPrice: 465, nonMemberPrice: 580, delivery: 'virtual' },
+  { id: 'ncit-b-can-ipt',   label: 'NCIT Basic',         tag: 'Canadian – In-Person',   category: 'In-Person NCIT', capacity: 70,  memberPrice: 465, nonMemberPrice: 580, delivery: 'inperson' },
+  { id: 'ncit-b-us-ipt',    label: 'NCIT Basic',         tag: 'US – In-Person',         category: 'In-Person NCIT', capacity: 70,  memberPrice: 465, nonMemberPrice: 580, delivery: 'inperson' },
+  { id: 'ncit-ait', label: 'NCIT AIT', tag: 'Applied Investigative Techniques – In-Person', category: 'In-Person NCIT', capacity: 70, memberPrice: 365, nonMemberPrice: 460, delivery: 'inperson' },
+  { id: 'ncit-s-virt',      label: 'NCIT Specialized',   tag: 'Virtual',                category: 'Virtual NCIT',   capacity: 50,  memberPrice: 545, nonMemberPrice: 680, delivery: 'virtual' },
+  { id: 'ncit-s-ipt',       label: 'NCIT Specialized',   tag: 'In-Person',              category: 'In-Person NCIT', capacity: 50,  memberPrice: 545, nonMemberPrice: 680, delivery: 'inperson' },
+  { id: 'ncit-w-irsm',      label: 'Workshop: IRSM',     tag: 'Investigating Sexual Misconduct', category: 'Virtual NCIT', capacity: 45, memberPrice: 240, nonMemberPrice: 300, delivery: 'virtual' },
+  { id: 'ncit-w-ethics',    label: 'Workshop: Ethics',   tag: 'Ethics for Regulatory Investigator', category: 'Virtual NCIT', capacity: 45, memberPrice: 140, nonMemberPrice: 180, delivery: 'virtual' },
+  { id: 'ncit-w-ddi',       label: 'Workshop: Drug Diversion', tag: 'Drug Diversion Investigations', category: 'Virtual NCIT', capacity: 45, memberPrice: 240, nonMemberPrice: 300, delivery: 'virtual' },
+  { id: 'ncit-w-comms',     label: 'Workshop: Communications', tag: 'Communication Skills & Persuasion', category: 'Virtual NCIT', capacity: 45, memberPrice: 140, nonMemberPrice: 180, delivery: 'virtual' },
+  { id: 'acrg',             label: 'ACRG',               tag: 'Advanced Concepts in Regulatory Governance', category: 'Board Member', capacity: 30, memberPrice: 420, nonMemberPrice: 525, delivery: 'virtual' },
+  { id: 'elpr',             label: 'ELPR',               tag: 'Executive Leadership Program – Virtual', category: 'ELPR', capacity: 30, memberPrice: 555, nonMemberPrice: 695, delivery: 'virtual' },
+  { id: 'elpr-ipt',          label: 'ELPR',               tag: 'Executive Leadership Program – In-Person', category: 'ELPR', capacity: 30, memberPrice: 555, nonMemberPrice: 695, delivery: 'inperson' },
+  { id: 'bct',              label: 'BCT',                tag: 'Getting the Most From Your Board', category: 'Board Member', capacity: 30, memberPrice: 285, nonMemberPrice: 365, delivery: 'virtual' },
+  { id: 'srasab',           label: 'SRASAB',             tag: 'Skills for Regulatory Administrator', category: 'CLEAR Learning', capacity: 40, memberPrice: 345, nonMemberPrice: 430, delivery: 'virtual' },
+];
+
+// ─── Templates ────────────────────────────────────────────────────────────────
+const TEMPLATES = {
+  'ncit-b-can-virt': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/NCIT-b-s/20221011_NCIT_B_CAN.png',
+    titlePattern: prog => `National Certified Investigator/Inspector Training (NCIT) – Canadian Basic Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Basic',
+    details: `<p>CLEAR's <strong>National Certified Investigator/Inspector Training (NCIT) – Basic Programme (Canadian)</strong> is a foundational professional development experience designed for regulatory investigators and inspectors at all stages of their careers. Whether you are new to the field or looking to formalise and strengthen your investigative practice, the NCIT Basic Programme provides the core knowledge and skills essential to conducting thorough, fair, and defensible regulatory investigations.</p><p>This programme is delivered in a <strong>hybrid format</strong> that combines independent study with live, instructor-led sessions. Participants engage directly with experienced regulatory professionals through interactive discussions, practical exercises, and real-world case applications. The curriculum covers the full investigative process — from jurisdiction and complaint intake through evidence collection, interviewing, report writing, and administrative proceedings.</p><p>Once you have registered for the programme, you will receive a link to register for the Welcome Session — a live Zoom session hosted by CLEAR staff that kicks off your learning experience. During this session, we will walk through what to expect from the programme, how to navigate the learning portal, and what will be required of you along the way.&nbsp;</p><p>Successful completion of this programme requires attending all required instructor-led sessions, completing the assigned independent study, and passing a final exam.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong></p><p>To participate in this training programme, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>CLEAR Cancellation Policy</strong></p><p>By registering, you acknowledge and agree to these terms. We encourage you to plan accordingly for a smooth learning experience and timely completion.</p><ul><li><strong>Substitutions:</strong> Allowed at any time before the start date of the programme.</li><li><strong>Cancellations:</strong> Subject to a <strong>$95 USD service charge.</strong></li><li><strong>No refunds or credits</strong> for cancellations made less than <strong>two weeks</strong> before the programme start date.</li><li><strong>Completion Requirement:</strong> Participants must complete the programme within <strong>30 days</strong> to avoid forfeiting their registration fee. Re-registration at full cost may be required otherwise.</li></ul>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Basic Programme (Canadian)</strong>. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the programme. During this session, CLEAR staff will walk you through the learning portal, review programme expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the programme.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing programme materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Basic Programme (Canadian)</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through programme expectations, how to navigate the learning portal, and what will be required of you throughout the programme. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the programme agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session. All required programme components — including independent study, instructor-led sessions, and the final exam — must be completed within <strong>30 days</strong> of the programme start date.</p><p><strong>Certification</strong><br>CLEAR offers certification to participants who successfully pass a proctored final exam and meet eligibility requirements. Details on testing procedures and requirements will be provided during the programme.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally. Participants who prefer a printed copy are welcome to download and print it at their convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this programme, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the programme start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the programme start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT B CAN Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'ncit-b-us-virt': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/NCIT-b-s/20221011_NCIT_B_US.png',
+    titlePattern: prog => `National Certified Investigator/Inspector Training (NCIT) – US Basic Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Basic',
+    details: `<p>CLEAR's <strong>National Certified Investigator/Inspector Training (NCIT) – Basic Program</strong> is a foundational professional development experience designed for regulatory investigators and inspectors at all stages of their careers. Whether you are new to the field or looking to formalize and strengthen your investigative practice, the NCIT Basic Program provides the core knowledge and skills essential to conducting thorough, fair, and defensible regulatory investigations.</p><p>This program is delivered in a <strong>hybrid format</strong> that combines independent study with live, instructor-led sessions. Participants engage directly with experienced regulatory professionals through interactive discussions, practical exercises, and real-world case applications. The curriculum covers the full investigative process — from jurisdiction and complaint intake through evidence collection, interviewing, report writing, and administrative proceedings.</p><p>Once you have registered for the program, you will receive a link to register for the Welcome Session — a live Zoom session hosted by CLEAR staff that kicks off your learning experience. During this session, we will walk through what to expect from the program, how to navigate the learning portal, and what will be required of you along the way.&nbsp;</p><p>Successful completion of this program requires attending all required instructor-led sessions, completing the assigned independent study, and passing a final exam.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong></p><p>To participate in this training program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>CLEAR Cancellation Policy</strong></p><p>By registering, you acknowledge and agree to these terms. We encourage you to plan accordingly for a smooth learning experience and timely completion.</p><ul><li><strong>Substitutions:</strong> Allowed at any time before the start date of the program.</li><li><strong>Cancellations:</strong> Subject to a <strong>$95 USD service charge.</strong></li><li><strong>No refunds or credits</strong> for cancellations made less than <strong>two weeks</strong> before the program start date.</li><li><strong>Completion Requirement:</strong> Participants must complete the program within <strong>30 days</strong> to avoid forfeiting their registration fee. Re-registration at full cost may be required otherwise.</li></ul>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Basic Program</strong>. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Basic Program</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session. All required program components — including independent study, instructor-led sessions, and the final exam — must be completed within <strong>30 days</strong> of the program start date.</p><p><strong>Certification</strong><br>CLEAR offers certification to participants who successfully pass a proctored final exam and meet eligibility requirements. Details on testing procedures and requirements will be provided during the program.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally. Participants who prefer a printed copy are welcome to download and print it at their convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT B US Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'ncit-b-can-ipt': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/NCIT-b-s/20221011_NCIT_B_CAN.png',
+    titlePattern: prog => `National Certified Investigator/Inspector Training (NCIT) – Canadian Basic Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Basic – {CITY}, {STATE}',
+    details: `<p>CLEAR's <strong>National Certified Investigator/Inspector Training (NCIT) – Basic Programme (Canadian)</strong> is a foundational professional development experience designed for regulatory investigators and inspectors at all stages of their careers. Whether you are new to the field or looking to formalise and strengthen your investigative practice, the NCIT Basic Programme provides the core knowledge and skills essential to conducting thorough, fair, and defensible regulatory investigations.</p><p>This programme is delivered as an intensive <strong>three-day, in-person training</strong> that combines instructor-led sessions with practical exercises and real-world case applications. Participants engage directly with experienced regulatory professionals in a collaborative, hands-on learning environment.</p><p><strong>Day One:</strong> Introduction &amp; Welcome, Professional Conduct, Principles of Administrative Law, Investigative Process.</p><p><strong>Day Two:</strong> Principles of Evidence, Evidence Collection, Interviewing Techniques, Investigator Safety.</p><p><strong>Day Three:</strong> Overview of Inspections, Report Writing, Testifying in Proceedings, Q&amp;A, Examination.</p><p>Registration and check-in will take place at the training venue on the morning of Day One. Full programme information and a detailed schedule will be emailed to registered attendees prior to the programme start date.</p><p>Successful completion of this programme requires attending all three days in their entirety and passing the final examination on Day Three.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for programme attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p>In keeping with CLEAR's commitment to sustainability, participant guides are provided digitally. If you prefer a printed copy, you are welcome to download and print it from the event portal at your convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this programme, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the programme start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants must attend all three days and complete the final examination to avoid forfeiting their registration fee.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Basic Programme (Canadian)</strong>. We are looking forward to seeing you there!</p><p>Approximately one week before the programme start date, you will receive an email with important programme information and access to the <strong>CLEAR Learning Portal</strong>, where you will be able to download the <b>Participant Guide </b>and complete the required <strong>Standard Release</strong>.</p><p>Registration and check-in will take place at the training venue on the morning of Day One.</p><p><strong>Hotel Accommodations</strong><br>If you have not already done so, we encourage you to book your hotel room as soon as possible. The preferred rate is available until <strong>{HOTEL_DEADLINE}</strong> or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p>Questions? Reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a> — we are happy to help.</p><p>We look forward to a great programme!</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Basic Programme (Canadian)</strong>. We are looking forward to seeing you there!</p><p>Here is everything you need to know to prepare for the programme.</p><p><strong>Registration &amp; Check-In</strong><br>Registration and check-in will be at {CHECKIN}. Please note that the registration fee covers training only — meals and parking are your responsibility.</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for programme attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Participant Guide</strong><br>Your registration includes access to a digital copy of the Participant Guide, available through the CLEAR Learning Portal. We recommend downloading it in advance so you have it readily available throughout the programme.</p><p><strong>Technical Requirements</strong><br>To participate in this programme, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the programme start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p><p>Thank you again for choosing CLEAR. We look forward to a great programme!</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT B CAN {CITY}, {STATE}`,
+    startHint: 'Day 1 start',
+    endHint: 'Day 3 end',
+  },
+  'ncit-b-us-ipt': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/NCIT-b-s/20221011_NCIT_B_US.png',
+    titlePattern: prog => `National Certified Investigator/Inspector Training (NCIT) – US Basic Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Basic – {CITY}, {STATE}',
+    details: `<p>CLEAR's <strong>National Certified Investigator/Inspector Training (NCIT) – Basic Program</strong> is a foundational professional development experience designed for regulatory investigators and inspectors at all stages of their careers. Whether you are new to the field or looking to formalize and strengthen your investigative practice, the NCIT Basic Program provides the core knowledge and skills essential to conducting thorough, fair, and defensible regulatory investigations.</p><p>This program is delivered as an intensive <strong>three-day, in-person training</strong> that combines instructor-led sessions with practical exercises and real-world case applications. Participants engage directly with experienced regulatory professionals in a collaborative, hands-on learning environment.</p><p><strong>Day One:</strong> Introduction &amp; Welcome, Professional Conduct, Principles of Administrative Law, Investigative Process.</p><p><strong>Day Two:</strong> Principles of Evidence, Evidence Collection, Interviewing Techniques, Investigator Safety.</p><p><strong>Day Three:</strong> Overview of Inspections, Report Writing, Testifying in Proceedings, Q&amp;A, Examination.</p><p>Registration and check-in will take place at the training venue on the morning of Day One. Full program information and a detailed schedule will be emailed to registered attendees prior to the program start date.</p><p>Successful completion of this program requires attending all three days in their entirety and passing the final examination on Day Three.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;padding:3px 10px;">Book Your Hotel Room</a></p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p>In keeping with CLEAR's commitment to sustainability, participant guides are provided digitally. If you prefer a printed copy, you are welcome to download and print it from the event portal at your convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants must attend all three days and complete the final examination to avoid forfeiting their registration fee.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Basic Program</strong>. We are looking forward to seeing you there!</p><p>Approximately one week before the program start date, you will receive an email with important program information and access to the <strong>CLEAR Learning Portal</strong>, where you will be able to download the <b>Participant Guide</b> and complete the required <strong>Standard Release</strong>.</p><p>Registration and check-in will take place at the training venue on the morning of Day One.</p><p><strong>Hotel Accommodations</strong><br>If you have not already done so, we encourage you to book your hotel room as soon as possible. The preferred rate is available until <strong>{HOTEL_DEADLINE}</strong> or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p>Questions? Reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a> — we are happy to help.</p><p>We look forward to a great program!</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Basic Program</strong>. We are looking forward to seeing you there!</p><p>Here is everything you need to know to prepare for the program.</p><p><strong>Registration &amp; Check-In</strong><br>Registration and check-in will be at {CHECKIN}. Please note that the registration fee covers training only — meals and parking are your responsibility.</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Participant Guide</strong><br>Your registration includes access to a digital copy of the Participant Guide, available through the CLEAR Learning Portal. We recommend downloading it in advance so you have it readily available throughout the program.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p><p>Thank you again for choosing CLEAR. We look forward to a great program!</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT B US {CITY}, {STATE}`,
+    startHint: 'Day 1 start',
+    endHint: 'Day 3 end',
+  },
+  'ncit-ait': {
+    titlePattern: prog => `National Certified Investigator/Inspector Training – Applied Investigative Techniques Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Applied Investigative Techniques – {CITY}, {STATE}',
+    details: `<p><span><strong>CLEAR</strong> is excited to introduce an engaging, hands-on experience that takes participants through every step of a case – from complaint intake to a mock hearing. </span></p><p><span>This interactive two-day program allows attendees to actively apply the skills and best practices learned in <strong>CLEAR's NCIT</strong> courses, offering a comprehensive, real-world approach to professional development. <strong>Completion of the NCIT – Basic program is a prerequisite.</strong> </span></p><p><span></span>Registration will open at 8:00 am on the first day. All food and parking arrangements will be your responsibility.<strong>The program will begin at 8:30 am each day. </strong></p><p><strong>Key Learning Objectives:</strong></p><ul><li><strong>Complaint Intake and Analysis:</strong> Learn how to effectively intake and analyze complaints to determine the appropriate course of action.</li><li><strong>Evidence Collection and Analysis:</strong> Master best practices for gathering, preserving, and analyzing evidence to build a strong case.</li><li><strong>Interviewing Techniques:</strong> Practice interviewing skills to elicit accurate and complete information from witnesses and subjects.</li><li><strong>Report Writing:</strong> Develop the ability to write clear, concise, and comprehensive report narratives that effectively communicate findings.</li><li><strong>Testifying in Administrative Proceedings:</strong> Gain the confidence and skills necessary to testify effectively in administrative hearings and other legal proceedings.</li></ul><p>By the end of this course, you will be equipped with the applied techniques necessary to conduct thorough, fair, and legally sound investigations that contribute to the integrity and success of your regulatory organization.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><span><strong>Training Location:</strong><br></span></p><p>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE}</p><p>Full program information and timeline will be emailed to registered attendees.</p><p>The preferred rate will be available until {HOTEL_DEADLINE} or until the hotel block is filled.<br><br><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="background: #64092c; color: white; padding: 3px 10px; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 8px rgb(0, 0, 0, .3);"><strong>HOTEL BOOKING LINK</strong></a></p><p style="margin-top: 20px;">As part of CLEAR's commitment to sustainability, we no longer provide printed participant guides. Those who wish to have a printed copy can easily download the guide from the event portal and print it at their convenience.</p><p><strong>Technical Requirements</strong></p><p>To participate in this training program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li></ul><p><strong>CLEAR Cancellation Policy</strong></p><p>By registering, you acknowledge and agree to these terms. We encourage you to plan accordingly for a smooth learning experience and timely completion.</p><ul><li><strong>Substitutions:</strong> Allowed at any time before the start date of the program.</li><li><strong>Cancellations:</strong> Subject to a <strong>$95 USD service charge.</strong></li><li><strong>No refunds or credits</strong> for cancellations made after <strong>{CANCEL_DEADLINE}</strong>.</li><li><strong>Completion Requirement:</strong> Participants must complete the program within <strong>the 2 day program</strong> to avoid forfeiting their registration fee. Re-registration at full cost may be required otherwise.</li></ul>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Applied Investigative Techniques Program</strong>. We are looking forward to seeing you there!</p><p>Approximately <strong>two weeks before the program start date</strong>, you will receive an email with important program information and access to the <strong>CLEAR Learning Portal</strong>, where you will be able to download the Participant Guide and complete the required <strong>Standard Release</strong>.</p><p>The Learning Portal also includes an <strong>independent study review of the NCIT Basic Program</strong>. This review is not required, but is strongly recommended — this program builds directly on the concepts covered in the Basic Program, and completing the review will help ensure you get the most out of your experience.</p><p>Registration and check-in will take place at the training venue on the morning of Day One.</p><p><strong>Hotel Accommodations</strong><br>If you have not already done so, we encourage you to book your hotel room as soon as possible. The preferred rate is available until <strong>{HOTEL_DEADLINE}</strong> or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p>Questions? Reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a> — we are happy to help.</p><p>We look forward to a great program!</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Applied Investigative Techniques Program</strong>. We are looking forward to seeing you there!</p><p>Before the program begins, here are a few important details to help you prepare.</p><p><strong>Registration &amp; Check-In</strong><br>Check-in will be from {CHECKIN}. Please note that the registration fee covers training only. Additional information regarding meals and parking will be provided closer to the program start date.</p><p><strong>Hotel Accommodations</strong><br>We have secured a room block at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.<br><a href="{HOTEL_LINK}"><strong>Book Your Hotel Room</strong></a></p><br><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE}</p><p><strong>What You Will Need</strong><br>To participate in this program, please ensure you have access to the following:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A functioning <strong>webcam</strong></li></ul><p>In keeping with CLEAR's commitment to sustainability, participant guides are provided digitally. If you prefer a printed copy, you are welcome to download and print it from the event portal at your convenience. You will receive an email granting you access to the portal approximately two weeks prior to your event start date.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants who do not complete the program within the two-day session may forfeit their registration fee; re-registration at full cost may be required.</p><p>If you have any questions, please don't hesitate to reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>. We are happy to help.</p><p>Thank you again for choosing CLEAR. We look forward to a great program!</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT AIT {CITY}, {STATE}`,
+    startHint: 'Day 1 start',
+    endHint: 'Day 2 end',
+  },
+  'ncit-s-virt': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/NCIT-b-s/20221011_NCIT_S.png',
+    titlePattern: prog => `National Certified Investigator/Inspector Training (NCIT) – Specialized Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Specialized',
+    details: `<p>CLEAR's <strong>National Certified Investigator/Inspector Training (NCIT) – Specialized Program</strong> offers advanced certification in three individual subject areas for regulatory investigators and inspectors who have successfully completed the NCIT Basic Program and passed the final exam. Building on the foundational skills established in the Basic Program, the Specialized Program takes participants deeper into the craft of regulatory investigation through interactive, applied learning.</p><p>The three subject areas covered in this program are:</p><ul><li><strong>Advanced Interviewing Skills</strong></li><li><strong>Advanced Investigative Analysis</strong></li><li><strong>Investigative Report Development</strong></li></ul><p>This program is delivered in a <strong>hybrid format</strong> that combines self-paced independent study with live, instructor-led sessions. The program is structured so that coursework requires <strong>no more than three hours per workday</strong>, minimizing disruption to your regular work schedule. The program culminates in a <strong>proctored online exam</strong> administered through the CLEAR Learning Portal.</p><p>Participants who successfully complete all three modules and pass the examination are eligible to receive <strong>NCIT Specialized digital badges</strong> in each subject area.</p><p>Once you have registered for the program, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one.</p><p>Successful completion of this program requires attending all required instructor-led sessions, completing the assigned independent study, and passing the final exam.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. Participants must complete the program within <strong>30 days</strong> of the program start date to avoid forfeiting their registration fee. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Specialized Program</strong>. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Specialized Program</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session. All required program components — including independent study, instructor-led sessions, and the final exam — must be completed within <strong>30 days</strong> of the program start date.</p><p><strong>Digital Badges</strong><br>Upon successful completion of all three modules and the final exam, you will be eligible to receive <strong>NCIT Specialized digital badges</strong> in each subject area — Advanced Interviewing Skills, Advanced Investigative Analysis, and Investigative Report Development. Details on the examination process and requirements will be provided during the program.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally. Participants who prefer a printed copy are welcome to download and print it at their convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT S Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'ncit-s-ipt': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/NCIT-b-s/20221011_NCIT_S.png',
+    titlePattern: prog => `National Certified Investigator/Inspector Training (NCIT) – Specialized Program – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – NCIT Specialized – {CITY}, {STATE}',
+    details: `<p>CLEAR's <strong>National Certified Investigator/Inspector Training (NCIT) – Specialized Program</strong> offers advanced certification in three individual subject areas for regulatory investigators and inspectors who have successfully completed the NCIT Basic Program and passed the final exam. Building on the foundational skills established in the Basic Program, the Specialized Program takes participants deeper into the craft of regulatory investigation through interactive, applied learning.</p><p>The three subject areas covered in this program are:</p><ul><li><strong>Advanced Interviewing Skills</strong></li><li><strong>Advanced Investigative Analysis</strong></li><li><strong>Investigative Report Development</strong></li></ul><p>This program is delivered as an intensive <strong>three-day, in-person training</strong> that combines instructor-led sessions with practical exercises and real-world case applications. Each module is designed to promote interaction through the use of small groups, role-playing exercises, and case studies. The program culminates in an examination administered on Day Three by CLEAR staff.</p><p>Participants who successfully complete all three modules and pass the examination are eligible to receive <strong>NCIT Specialized digital badges</strong> in each subject area.</p><p>Registration and check-in will take place at the training venue on the morning of Day One. Full program information and a detailed schedule will be emailed to registered attendees prior to the program start date.</p><p>Successful completion of this program requires attending all three days in their entirety and passing the final examination on Day Three.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p>In keeping with CLEAR's commitment to sustainability, participant guides are provided digitally. If you prefer a printed copy, you are welcome to download and print it from the event portal at your convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants must attend all three days and complete the final examination to avoid forfeiting their registration fee.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>NCIT Specialized Program</strong>. We are looking forward to seeing you there!</p><p>Approximately one week before the program start date, you will receive an email with important program information and access to the <strong>CLEAR Learning Portal</strong>, where you will be able to download the Participant Guide and complete the required <strong>Standard Release</strong>.</p><p>Registration and check-in will take place at the training venue on the morning of Day One.</p><p><strong>Hotel Accommodations</strong><br>If you have not already done so, we encourage you to book your hotel room as soon as possible. The preferred rate is available until <strong>{HOTEL_DEADLINE}</strong> or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p>Questions? Reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a> — we are happy to help.</p><p>We look forward to a great program!</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>NCIT Specialized Program</strong>. We are looking forward to seeing you there!</p><p>Here is everything you need to know to prepare for the program.</p><p><strong>Registration &amp; Check-In</strong><br>Registration and check-in will be from {CHECKIN}. Please note that the registration fee covers training only — meals and parking are your responsibility.</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Digital Badges</strong><br>Upon successful completion of all three modules and the final exam, you will be eligible to receive <strong>NCIT Specialized digital badges</strong> in each subject area — Advanced Interviewing Skills, Advanced Investigative Analysis, and Investigative Report Development. Details on the examination process and requirements will be provided during the program.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a digital copy of the Participant Guide, available through the CLEAR Learning Portal. We recommend downloading it in advance so you have it readily available throughout the program.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants must attend all three days and complete the final examination to avoid forfeiting their registration fee. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p><p>Thank you again for choosing CLEAR. We look forward to a great program!</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT S {CITY}, {STATE}`,
+    startHint: 'Day 1 start',
+    endHint: 'Day 3 end',
+  },
+  'ncit-w-irsm': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/Third_Tier/20221011_NCIT_3_IRSM.png',
+    titlePattern: prog => `Investigating Reports of Sexual Misconduct – {MONTH} {YEAR}`,
+    summaryPattern: 'NCIT Workshop – Investigating Reports of Sexual Misconduct',
+    details: `<p>Regulatory investigators and inspectors are often called upon to investigate reports of sexual misconduct involving licensed professionals — cases that require not only strong investigative skills, but also a thorough understanding of the unique sensitivities and complexities these investigations present. CLEAR's <strong>Investigating Reports of Sexual Misconduct</strong> workshop is designed to equip regulatory professionals with the knowledge, skills, and confidence to handle these cases thoroughly, fairly, and with the care they demand.</p><p>This workshop is delivered in a <strong>hybrid format</strong> that combines self-paced independent study with live, instructor-led sessions. Participants begin by completing independent study content through <strong>CLEAR's Learning Portal</strong>, then attend two live two-hour virtual workshop sessions featuring:</p><ul><li>A review of key self-study material</li><li>Facilitated Q&amp;A and discussion</li><li>Small group case study analysis focused on sexual misconduct investigations conducted by regulatory agencies</li></ul><p>The program opens with a brief welcome session and runs over two weeks. All live sessions are held in <strong>Eastern Time (ET)</strong>.</p><p>Once you have registered for the program, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one.</p><p>Successful completion of this program requires attending all required instructor-led sessions and completing the assigned independent study. All program components must be completed within <strong>30 days</strong> of the program start date.</p><p>In keeping with CLEAR's commitment to sustainability, all virtual CLEAR Learning programs use eBooks in place of printed materials.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. Participants must complete the program within <strong>30 days</strong> of the program start date to avoid forfeiting their registration fee. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>Investigating Reports of Sexual Misconduct</strong> workshop. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>Investigating Reports of Sexual Misconduct</strong> workshop. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session. All required program components — including independent study and instructor-led sessions — must be completed within <strong>30 days</strong> of the program start date.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally. Participants who prefer a printed copy are welcome to download and print it at their convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT W IRSM Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'ncit-w-ethics': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/Third_Tier/20221011_NCIT_3_ETHICS.png',
+    titlePattern: prog => `Developing a Professional Attitude: Ethics for the Regulatory Investigator – {MONTH} {YEAR}`,
+    summaryPattern: 'NCIT Workshop – Ethics and the Regulatory Investigator',
+    details: `<p>Investigators routinely exercise professional judgment in dynamic, high-stakes situations. The discretionary decisions made during the investigatory stage carry real consequences — for the regulant, the agency, and the investigator. This course is designed to deepen participants' understanding of ethical standards and their practical application in regulatory investigations.</p><p>The course will:</p><ul><li>Review models for professional conduct, including ethical standards established by statute, governmental policy, and professional codes</li><li>Explore conflict of interest and scope of liability as they relate to public employment and investigative work</li><li>Apply ethical principles to real-world dilemmas through case studies and scenarios</li></ul><p>For more information on <b>CLEAR's NCIT Workshop Programming</b>, visit the <a href="https://www.clearhq.org/ncit-third-tier" target="_blank" rel="noopener">NCIT Workshops page</a>.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>This program will be delivered in a live virtual format and will not be recorded.</strong></p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for <strong>Developing a Professional Attitude: Ethics for the Regulatory Investigator</strong>. We are excited to have you join us!</p><p>Approximately one week before the program date, you will receive an email with your login credentials and instructions for accessing the program's Participant Guide and additional resources through <strong>CLEAR's Learning Portal</strong>.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for <strong>Developing a Professional Attitude: Ethics for the Regulatory Investigator</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Accessing the Learning Portal</strong><br>Approximately one week before the program date, you will receive an email with your login credentials and instructions for accessing the Participant Guide and additional resources through <strong>CLEAR's Learning Portal</strong>.</p><p>In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Please Note</strong><br>This program will be delivered in a live virtual format and will not be recorded.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT W Ethics Open`,
+    startHint: 'Program start',
+    endHint: 'Program end',
+    locationName: 'Zoom Registration Link',
+  },
+  'ncit-w-ddi': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/Third_Tier/20221011_NCIT_3_DD.png',
+    titlePattern: prog => `Drug Diversion Investigations – {MONTH} {YEAR}`,
+    summaryPattern: 'NCIT Workshop – Drug Diversion Investigations',
+    details: `<p>Drug diversion in healthcare settings poses serious risks to patient welfare, regulatory compliance, and public trust. This program provides a comprehensive overview of how diversion occurs, how to investigate it, and how to prevent it.</p><p>Participants will examine the motives and methods behind drug diversion, the types of drugs most commonly involved, accountability systems, and the broader impacts on individuals and society. The course also covers relevant regulatory frameworks, investigative techniques, and collaborative strategies for addressing diversion effectively.</p><p>This workshop is delivered in a <strong>hybrid format</strong> that combines self-paced independent study with live, instructor-led sessions. Participants begin by completing independent study content through <strong>CLEAR's Learning Portal</strong>, then attend two live two-hour virtual workshop sessions held over two weeks. All live sessions are held in <strong>Eastern Time (ET)</strong>.</p><p>Once you have registered for the program, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one.</p><p>Successful completion of this program requires attending all required instructor-led sessions and completing the assigned independent study. All program components must be completed within <strong>30 days</strong> of the program start date.</p><p>In keeping with CLEAR's commitment to sustainability, all virtual CLEAR Learning programs use eBooks in place of printed materials.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. Participants must complete the program within <strong>30 days</strong> of the program start date to avoid forfeiting their registration fee. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>Drug Diversion Investigations</strong> workshop. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>Drug Diversion Investigations</strong> workshop. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session. All required program components — including independent study and instructor-led sessions — must be completed within <strong>30 days</strong> of the program start date.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally. Participants who prefer a printed copy are welcome to download and print it at their convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT W DDI Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'ncit-w-comms': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/NCIT_Content/Third_Tier/20221011_NCIT_3_COMM.png',
+    titlePattern: prog => `Communication Skills and the Art of Persuasion – {MONTH} {YEAR}`,
+    summaryPattern: 'NCIT Workshop – Ethics and the Regulatory Investigator',
+    details: `<p>The ability to communicate effectively is a key component of being a successful investigator — and a skill that can always be sharpened. CLEAR's <strong>Communication Skills and the Art of Persuasion</strong> workshop is a focused, single-session program that introduces participants to the core principles of effective communication and their practical application in a regulatory context.</p><p>This live virtual session covers:</p><ul><li>The building blocks of communication</li><li>Preparation and delivery techniques</li><li>The use of language and physicality to get your point across</li><li>Listening skills</li><li>Persuasive communication and argument</li><li>Successful presentation skills</li></ul><p>Upon completion of this workshop, participants will be able to identify the components of effective communication, define and apply the building blocks of persuasive communication, compare models of persuasive argument, and implement successful presentation skills.</p><p>This program is delivered in a <strong>single live three-hour virtual session</strong> with no pre-work or independent study required.</p><p>For more information on CLEAR's NCIT Workshop Programming, visit the <a href="https://www.clearhq.org/ncit-third-tier" target="_blank" rel="noopener">NCIT Workshops page</a>.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>This program will be delivered in a live virtual format and will not be recorded.</strong></p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for <strong>Communication Skills and the Art of Persuasion</strong>. We are excited to have you join us!</p><p>Approximately one week before the program date, you will receive an email with your login credentials and instructions for accessing the Participant Guide and additional resources through <strong>CLEAR's Learning Portal</strong>.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for <strong>Communication Skills and the Art of Persuasion</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Accessing the Learning Portal</strong><br>Approximately one week before the program date, you will receive an email with your login credentials and instructions for accessing the Participant Guide and additional resources through <strong>CLEAR's Learning Portal</strong>.</p><p>In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Please Note</strong><br>This program will be delivered in a live virtual format and will not be recorded.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} NCIT W Comms Open`,
+    startHint: 'Program start',
+    endHint: 'Program end',
+    locationName: 'Zoom Registration Link',
+  },
+  'acrg': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/events/20230418-bmt-acrg-for-website-2-1.png',
+    titlePattern: prog => `Advanced Concepts in Regulatory Governance – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – Advanced Concepts in Regulatory Governance',
+    details: `<p>Regulatory board and council members carry significant responsibilities — and the challenges they face as leaders in public protection are unique. CLEAR's <strong>Advanced Concepts in Regulatory Governance (ACRG)</strong> program is designed specifically for experienced regulatory board and council members who are ready to deepen their understanding of governance, strengthen their leadership practice, and connect with peers from across the regulatory community.</p><p>This comprehensive one-week program is delivered in a <strong>hybrid format</strong> that combines self-paced independent study with live, instructor-led sessions via Zoom. Live sessions include Q&amp;A, lectures, and small and large group discussions and activities, providing ample opportunity for peer-to-peer learning and engagement.</p><p>The program covers three core topic areas:</p><ul><li><strong>Leadership and the Public Trust</strong> — Explores the concept of public interest, trends in profession-based regulation, trustworthiness, the importance of structure, process and culture, avoiding governance pitfalls, and board members as leaders</li><li><strong>Accountability and Evaluation</strong> — Focuses on regulatory board members' accountability and evaluation roles through interactive components that allow attendees to apply concepts to their own experiences</li><li><strong>Public Reporting</strong> — Examines how boards communicate their work and demonstrate accountability to the public they serve</li></ul><p>Once you have registered for the program, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one.</p><p>Successful completion of this program requires attending all required instructor-led sessions and completing the assigned independent study.</p><p>In keeping with CLEAR's commitment to sustainability, all virtual CLEAR Learning programs use eBooks in place of printed materials.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>Advanced Concepts in Regulatory Governance</strong> program. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>Advanced Concepts in Regulatory Governance</strong> program. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally. Participants who prefer a printed copy are welcome to download and print it at their convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} ACRG Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'elpr': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/events/executive-leadership-new-ver20-1-2-1-1-1.png',
+    titlePattern: prog => `Executive Leadership Program for Regulators – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning - Executive Leadership Program',
+    details: `<p>Regulatory leadership demands more than technical expertise — it requires vision, adaptability, and the ability to inspire and guide others through complex, high-stakes environments. CLEAR's <strong>Executive Leadership Program for Regulators (ELPR)</strong> is a comprehensive program designed for individuals in regulatory leadership roles at any level of experience, as well as marketing and communications professionals, legislators, board members, and legal counsel who work within the regulatory space.</p><p>This program is delivered in a <strong>hybrid format</strong> that combines self-paced independent study with live, instructor-led sessions via Zoom, including role-playing activities, scenarios, group work, and discussion. Key topics include:</p><ul><li>Creating a positive regulatory reputation</li><li>Building effective stakeholder relationships and mastering the art of negotiation</li><li>Regulatory leadership styles and strategies</li><li>Organizational culture and change</li></ul><p>Prior to the program start date, participants will be asked to complete a brief <strong>pre-program questionnaire</strong> so that facilitators can tailor the content to the specific needs and interests of those participating. Participants will also have the option to complete an <strong>Emotional Quotient (EQ) assessment</strong> — while not required, those who complete it will receive their results prior to the program start date, providing a valuable lens through which to engage with the leadership content.</p><p>Your registration includes access to <strong>CLEAR's Learning Portal</strong> and a digital copy of the <strong>Participant Guide</strong>, which contains practical worksheets and checklists designed to support real-world decision-making and leadership that you can take back and apply in your organization.</p><p>Once you have registered for the program, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff. During this session walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one.</p><p>Successful completion of this program requires attending all required instructor-led sessions and completing the assigned independent study.</p><p>In keeping with CLEAR's commitment to sustainability, all virtual CLEAR Learning programs use eBooks in place of printed materials.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>Executive Leadership Program for Regulators</strong>. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have before independent study begins. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, live session links, and additional resources through CLEAR's Learning Portal.</p><p>As part of your program experience, you will have the opportunity to upload an <strong>annual report from your organization</strong> for potential analysis and discussion during the program. This is entirely optional, but participants who choose to submit one find it adds a meaningful layer of relevance to the leadership discussions. Instructions for uploading your annual report will be included in your Welcome Session follow-up email.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>Executive Leadership Program for Regulators</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Pre-Program Activities</strong><br>To help facilitators tailor the program to your needs, you will be asked to complete a brief <strong>pre-program questionnaire</strong> prior to the start date. You will also have the option to complete an <strong>Emotional Quotient (EQ) assessment</strong> — those who complete it will receive their results before the program begins. Instructions for both will be included in your Welcome Session follow-up email.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session. All required program components must be completed by the end of the program week.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. The guide contains practical worksheets and checklists designed to support real-world decision-making and leadership that you can take back and apply in your organization. In keeping with CLEAR's commitment to sustainability, materials are provided digitally.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} ELPR Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'elpr-ipt': {
+    titlePattern: prog => `Executive Leadership Program for Regulators – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – Executive Leadership Program – {CITY}, {STATE}',
+    details: `<p>CLEAR's <strong>Executive Leadership Program for Regulators (ELPR)</strong> is a comprehensive three-day workshop covering a broad array of leadership topics relevant to regulatory administrators and leaders. Through a combination of instructor-led sessions, role-playing activities, scenarios, group work, and discussion, participants engage deeply with the material and with each other in a collaborative, hands-on learning environment.</p><p>The program addresses issues and challenges associated with:</p><ul><li><strong>Creating a Positive Regulatory Reputation</strong> — Understanding the message, identifying the audience, building media partnerships, and managing the medium and the message</li><li><strong>Building Effective Stakeholder Relationships &amp; Mastering the Art of Negotiation</strong> — The importance of credibility, developing negotiation skills, and understanding the variables that influence regulation</li><li><strong>Regulatory Leadership Styles and Strategies</strong> — Identifying and understanding the numerous types and styles of regulatory leadership</li><li><strong>Organizational Culture and Change</strong> — Navigating and leading through change within regulatory organizations</li></ul><p>Prior to the program start date, participants will be asked to complete a brief <strong>pre-program questionnaire</strong> so that facilitators can tailor the content to the specific needs and interests of those participating. Participants will also have the option to complete an <strong>Emotional Quotient (EQ) assessment</strong> — while not required, those who complete it will receive their results prior to the program start date, providing a valuable lens through which to engage with the leadership content.</p><p>Your registration includes access to a digital copy of the <strong>Participant Guide</strong>, which contains practical worksheets and checklists designed to support real-world decision-making and leadership that you can take back and apply in your organization.</p><p>Registration and check-in will take place at the training venue on the morning of Day One. Full program information and a detailed schedule will be emailed to registered attendees prior to the program start date.</p><p>Successful completion of this program requires attending all three days in their entirety.</p><p><strong>Who Should Attend</strong><br>The course content is directly relevant for individuals in regulatory leadership roles at any level of experience. It is also valuable for marketing and communications professionals, legislators, board members, and legal counsel.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p>In keeping with CLEAR's commitment to sustainability, participant guides are provided digitally. If you prefer a printed copy, you are welcome to download and print it from the event portal at your convenience.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants must attend all three days to avoid forfeiting their registration fee. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for the <strong>Executive Leadership Program for Regulators</strong>. We are looking forward to seeing you there!</p><p>Approximately one week before the program start date, you will receive an email with important program information and access to the <strong>CLEAR Learning Portal</strong>, where you will be able to download the Participant Guide and complete the required <strong>Standard Release</strong>.</p><p>You will also receive instructions for completing the <strong>pre-program questionnaire</strong> and, if you choose, the optional <strong>Emotional Quotient (EQ) assessment</strong>. Those who complete the EQ assessment will receive their results prior to the program start date.</p><p>Registration and check-in will take place at the training venue on the morning of Day One.</p><p><strong>Hotel Accommodations</strong><br>If you have not already done so, we encourage you to book your hotel room as soon as possible. The preferred rate is available until <strong>{HOTEL_DEADLINE}</strong> or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p>Questions? Reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a> — we are happy to help.</p><p>We look forward to a great program!</p>`,
+    confirmEmail: `<p>Thank you for registering for the <strong>Executive Leadership Program for Regulators</strong>. We are looking forward to seeing you there!</p><p>Here is everything you need to know to prepare for the program.</p><p><strong>Registration &amp; Check-In</strong><br>{CHECKIN}. Please note that the registration fee covers training only — meals and parking are your responsibility.</p><p><strong>Pre-Program Activities</strong><br>Approximately one week before the program start date, you will receive an email with important program information and access to the <strong>CLEAR Learning Portal</strong>, where you will be able to download the Participant Guide and complete the required <strong>Standard Release</strong>. You will also receive instructions for completing the <strong>pre-program questionnaire</strong> and, if you choose, the optional <strong>Emotional Quotient (EQ) assessment</strong>. Those who complete the EQ assessment will receive their results prior to the program start date.</p><p><strong>Hotel Accommodations</strong><br>A room block has been secured at a preferred rate for program attendees. Reservations must be made by <strong>{HOTEL_DEADLINE}</strong>, or until the block is filled — whichever comes first.</p><p><a href="{HOTEL_LINK}" target="_blank" rel="noopener" style="display:inline-block;background-color:#64092c;color:#ffffff;font-family:'Open Sans',sans-serif;font-size:14px;font-weight:600;padding:3px 10px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);text-decoration:none;">Book Your Hotel Room</a></p><p><strong>Training Location</strong><br>{VENUE_NAME}<br>{ADDR1}<br>{CITY}, {STATE} {ZIP}</p><p><strong>Participant Guide</strong><br>Your registration includes access to a digital copy of the Participant Guide, available through the CLEAR Learning Portal. We recommend downloading it in advance so you have it readily available throughout the program.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made after <strong>{CANCEL_DEADLINE}</strong>. Participants must attend all three days to avoid forfeiting their registration fee. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p><p>Thank you again for choosing CLEAR. We look forward to a great program!</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} ELPR {CITY}, {STATE}`,
+    startHint: 'Day 1 start',
+    endHint: 'Day 3 end',
+  },
+  'bct': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/events/bct-1.png',
+    titlePattern: prog => `Getting the Most From Your Board – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – Skills for Effective Chairing',
+    details: `<p>The role of a regulatory board chair carries unique responsibilities — and stepping into that role confidently requires preparation. CLEAR's <strong>Getting the Most From Your Board: Skills for Effective Chairing</strong> is a comprehensive training program designed specifically for newly appointed regulatory board chairs. Through four focused, one-hour live virtual sessions, this program equips you with the critical knowledge and skills necessary to lead your board effectively from day one.</p><p>The program covers four key areas:</p><ul><li><strong>Roles and Responsibilities of a Board Chair</strong> — Gain a deep understanding of the unique role of the board chairperson within a regulatory board</li><li><strong>Running Effective Board Meetings</strong> — Learn the specific duties and responsibilities that come with the position, including how to facilitate productive and well-structured meetings</li><li><strong>Leadership Skills</strong> — Identify and develop the key skills and competencies for effective board leadership</li><li><strong>Collaboration, Communication, Staff Interactions &amp; Program Review</strong> — Recognize the importance of fostering strong collaboration and communication between board members and staff</li></ul><p>All sessions are delivered live via <strong>Zoom</strong>. Once you have registered, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff that kicks off the program. Attending this session is strongly encouraged as it sets you up for success throughout the program.</p><p>For more information about this program, visit the <a href="https://www.clearhq.org/bct" target="_blank" rel="noopener">Getting the Most From Your Board page</a>.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for <strong>Getting the Most From Your Board: Skills for Effective Chairing</strong>. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through program expectations and answer any questions you may have. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>You will receive an email with your session links and additional program resources through <strong>CLEAR's Learning Portal</strong> following the Welcome Session.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for <strong>Getting the Most From Your Board: Skills for Effective Chairing</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff that officially kicks off the program. During this session, we will walk through program expectations and answer any questions you may have. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive an email with your session links and additional program resources through <strong>CLEAR's Learning Portal</strong>.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} BCT Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+  'srasab': {
+    logo: 'https://assets-002.noviams.com/novi-file-uploads/clear/events/website-srasab-logo--1-1-1.png',
+    titlePattern: prog => `Skills for the Regulatory Administrator - Staffing a Board – {MONTH} {YEAR}`,
+    summaryPattern: 'CLEAR Learning – Skills for the Regulatory Administrator',
+    details: `<p>Executive and senior regulatory staff play a critical role in supporting the work of regulatory boards and councils — and doing that well requires a distinct and specialized skill set. CLEAR's <strong>Skills for the Regulatory Administrator: Staffing a Board</strong> program provides executive and senior regulatory staff with the opportunity to learn from leaders in professional and occupational regulation and from each other, developing the skills needed to effectively provide staff support at the highest level.</p><p>This program is delivered through three live virtual instructor-led sessions, each preceded by a short preparatory video that participants are asked to watch before attending. The videos introduce key concepts that will be explored and discussed in depth during the live sessions.</p><p>The three sessions cover:</p><ul><li><strong>Characteristics of Regulatory Governance</strong> — Understand regulatory frameworks, distinguish between operations and policy, and recognize agency responsibilities</li><li><strong>Leading a Board: The Effective Board Support</strong> — Develop a strategic mindset, foster effective communication, emotional intelligence, and relationship-building, and acquire skills in collaborative leadership</li><li><strong>Tactics for Effective Board Leadership</strong> — Identify and mitigate risks, stay informed on global regulatory trends, and enhance communication through effective writing, dynamic presentations, and data-driven decision-making</li></ul><p>Prior to the program start date, participants will be asked to complete a brief <strong>pre-program questionnaire</strong> so that facilitators can tailor the content to the specific needs and interests of those participating.</p><p>Once you have registered for the program, you will receive a link to register for the <strong>Welcome &amp; Introduction Session</strong> — a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one.</p><p>For more information about this program, visit the <a href="https://www.clearhq.org/skills-for-the-regulatory-administrator--staffing-a-board" target="_blank" rel="noopener">Skills for the Regulatory Administrator page</a>.</p><hr style="margin:24px 0;border:none;border-top:1px solid #e0e0e0;"><p><strong>Who Should Attend</strong><br><strong>This program is restricted to staff members of regulatory bodies and agencies.</strong> For questions about eligibility, please contact <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p>`,
+    secondary: ``,
+    postReg: `<p>Thank you for registering for <strong>Skills for the Regulatory Administrator: Staffing a Board</strong>. We are excited to have you join us!</p><p>Your first step is to register for the <strong>Welcome &amp; Introduction Session</strong>, a live Zoom session that officially kicks off the program. During this session, CLEAR staff will walk you through the learning portal, review program expectations, and answer any questions you may have. Attending this session is strongly encouraged — it sets you up for success throughout the program.</p><p><strong>Register for the Welcome Session here:</strong> <a href="{ONLINE_URL}" target="_blank" rel="noopener">{ONLINE_URL}</a></p><p>Following the Welcome Session, you will receive an email with your login credentials and instructions for accessing program materials, session links, and additional resources through <strong>CLEAR's Learning Portal</strong>. Each session is preceded by a short preparatory video — please watch the video for each session before attending the corresponding live session, as the content will be discussed and built upon in class.</p><p>You will also receive instructions for completing the <strong>pre-program questionnaire</strong>, which helps facilitators tailor the program to the needs and interests of participants.</p><p>We look forward to seeing you on <strong>{DATE}</strong>, and thank you again for choosing CLEAR for your regulatory learning needs.</p>`,
+    confirmEmail: `<p>Thank you for registering for <strong>Skills for the Regulatory Administrator: Staffing a Board</strong>. We look forward to having you join us!</p><p>Here is everything you need to know to get started.</p><p><strong>Welcome &amp; Introduction Session</strong><br>Remember to register for the <strong>Welcome &amp; Introduction Session</strong> using the link provided — this is a live Zoom session hosted by CLEAR staff. During this session, we will walk through program expectations, how to navigate the learning portal, and what will be required of you throughout the program. Attending this session is strongly encouraged as it sets you up for success from day one. In the meantime, you can <a href="{AGENDA_URL}" target="_blank" rel="noopener">view the program agenda here</a>.</p><p><strong>Pre-Program Activities</strong><br>You will be asked to complete a brief <strong>pre-program questionnaire</strong> prior to the start date — instructions will be included in your Welcome Session follow-up email. Each program session is also preceded by a short preparatory video available through the learning portal. Please watch the video for each session before attending, as the content will be discussed and built upon during the live session.</p><p><strong>Accessing the Learning Portal</strong><br>Following the Welcome Session, you will receive a separate email with your login credentials to <strong>CLEAR's Learning Portal</strong>. Portal access is not provided before the Welcome Session.</p><p><strong>Participant Guide</strong><br>Your registration includes access to a <strong>digital copy</strong> of the Participant Guide, available through the learning portal. In keeping with CLEAR's commitment to sustainability, materials are provided digitally.</p><p><strong>Technical Requirements</strong><br>To participate in this program, you will need:</p><ul><li>A <strong>PC</strong> (Windows 8 or later) or <strong>Mac</strong> (macOS 10.13 or later)</li><li>The latest version of <strong>Google Chrome, Microsoft Edge, Apple Safari, or Mozilla Firefox</strong></li><li>A reliable <strong>wired or Wi-Fi internet connection</strong></li><li>A functioning <strong>microphone</strong> and <strong>webcam</strong></li></ul><p>CLEAR strongly recommends against using MiFi devices or VPN connections due to bandwidth requirements. Please note that inability to participate due to unmet technical requirements is not grounds for a refund.</p><p><strong>Cancellation Policy</strong><br>Substitutions are welcome at any time prior to the program start date. Cancellations are subject to a <strong>$95 USD service charge</strong>. No refunds or credits will be issued for cancellations made less than <strong>two weeks</strong> before the program start date. By registering, you acknowledge and agree to these terms.</p><p>Questions? We are happy to help — reach out to us at <a href="mailto:clearlearning@clearhq.org">clearlearning@clearhq.org</a>.</p>`,
+    notesPattern: `{YEAR}.{MM}.{DD} SRASAB Open`,
+    startHint: 'Welcome Session start',
+    endHint: 'Final session end',
+    locationName: 'Welcome Session Zoom Registration Link',
+  },
+};
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let workerUrl = '';
+let authToken = '';
+let selectedProgram = null;
+let createdEventId = null;
+let locationType = 'Online';
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  workerUrl = localStorage.getItem('clear_worker_url') || '';
+  authToken = localStorage.getItem('clear_auth_token') || '';
+  if (workerUrl) document.getElementById('worker-url').value = workerUrl;
+  if (authToken) document.getElementById('auth-token').value = authToken;
+  if (workerUrl && authToken) connect();
+
+  buildProgramGrid();
+
+  // Auto-update title when month/year/variant changes
+  ['f-month', 'f-year'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateTitle);
+  });
+  document.getElementById('f-month').addEventListener('change', updateNotesName);
+  document.getElementById('f-year').addEventListener('change', updateNotesName);
+  document.getElementById('f-start').addEventListener('change', updateNotesName);
+  document.getElementById('f-city').addEventListener('input', updateNotesName);
+  document.getElementById('f-state').addEventListener('input', updateNotesName);
+});
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+async function connect() {
+  const url = document.getElementById('worker-url').value.trim();
+  const token = document.getElementById('auth-token').value.trim();
+  if (!url || !token) return;
+
+  setLoading(true, 'Connecting…');
+  try {
+    const res = await noviRequest('GET', '/api/event-categories', null, url, token);
+    if (!res.ok) throw new Error('Auth failed');
+    workerUrl = url;
+    authToken = token;
+    localStorage.setItem('clear_worker_url', url);
+    localStorage.setItem('clear_auth_token', token);
+    document.getElementById('auth-panel').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('conn-text').innerHTML = `<strong>Connected</strong> to ${url}`;
+    setLoading(false);
+  } catch(e) {
+    setLoading(false);
+    const err = document.getElementById('auth-error');
+    err.classList.remove('hidden');
+    err.textContent = 'Connection failed. Check your Worker URL and auth token.';
+  }
+}
+
+function disconnect() {
+  localStorage.removeItem('clear_worker_url');
+  localStorage.removeItem('clear_auth_token');
+  location.reload();
+}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function noviRequest(method, path, body, url, token) {
+  const u = (url || workerUrl).trim().replace(/\/$/, '');
+  const t = (token || authToken).trim();
+  const opts = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Auth-Token': t,
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(u + '/novi' + path, opts);
+}
+
+// ─── Staff ────────────────────────────────────────────────────────────────────
+function buildProgramGrid() {
+  const grid = document.getElementById('program-grid');
+  grid.innerHTML = PROGRAMS.map(p => `
+    <button class="prog-btn" onclick="selectProgram('${p.id}', this)">
+      ${p.label}
+      <span class="prog-tag">${p.tag}</span>
+    </button>
+  `).join('');
+}
+
+function selectProgram(id, btn) {
+  document.querySelectorAll('.prog-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedProgram = PROGRAMS.find(p => p.id === id);
+  document.getElementById('event-form').style.display = 'block';
+  document.getElementById('header-program-label').textContent = selectedProgram.label + ' · ' + selectedProgram.tag;
+  populateFromTemplate(id);
+  resetResult();
+
+  // Set delivery mode
+  if (selectedProgram.delivery === 'inperson') {
+    setLocationType('InPerson', document.querySelectorAll('.radio-tab')[1]);
+  } else {
+    setLocationType('Online', document.querySelectorAll('.radio-tab')[0]);
+  }
+
+  document.getElementById('event-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function populateFromTemplate(id) {
+  const tmpl = TEMPLATES[id];
+  const prog = PROGRAMS.find(p => p.id === id);
+  if (!tmpl || !prog) return;
+
+  document.getElementById('t1-price').value = prog.memberPrice;
+  document.getElementById('t2-price').value = prog.nonMemberPrice;
+  rteSetContent('details',  tmpl.details      || '');
+  rteSetContent('post-reg', tmpl.postReg      || '');
+  rteSetContent('t1-email', tmpl.confirmEmail || '');
+
+  // Overview / short description - summaryPattern may be a string
+  if (tmpl.summaryPattern) {
+    const overviewVal = typeof tmpl.summaryPattern === 'function'
+      ? tmpl.summaryPattern(prog)
+      : tmpl.summaryPattern;
+    document.getElementById('f-overview').value = overviewVal;
+  }
+
+  if (tmpl.locationName) {
+    document.getElementById('f-online-link-text').value = tmpl.locationName;
+  }
+
+  const startHint = document.getElementById('start-hint');
+  const endHint = document.getElementById('end-hint');
+  if (startHint) startHint.textContent = tmpl.startHint || '';
+  if (endHint) endHint.textContent = tmpl.endHint || '';
+
+  updateTitle();
+  updateNotesName();
+}
+
+// ─── Title / Notes auto-generation ───────────────────────────────────────────
+function updateTitle() {
+  if (!selectedProgram) return;
+  const tmpl = TEMPLATES[selectedProgram.id];
+  if (!tmpl) return;
+  const month = document.getElementById('f-month').value;
+  const year = document.getElementById('f-year').value;
+  if (!month || !year) return;
+  let title = tmpl.titlePattern(selectedProgram)
+    .replace('{MONTH}', month)
+    .replace('{YEAR}', year);
+  document.getElementById('f-title').value = title;
+}
+
+function updateNotesName() {
+  if (!selectedProgram) return;
+  const tmpl = TEMPLATES[selectedProgram.id];
+  if (!tmpl) return;
+  const month = document.getElementById('f-month').value;
+  const year = document.getElementById('f-year').value;
+  if (!month || !year) return;
+  const monthNum = String(new Date(`${month} 1, ${year}`).getMonth() + 1).padStart(2,'0');
+  const startVal = document.getElementById('f-start').value;
+  const dd = startVal ? String(new Date(startVal).getDate()).padStart(2,'0') : '01';
+  const city  = document.getElementById('f-city')?.value  || '';
+  const state = document.getElementById('f-state')?.value || '';
+  let notes = tmpl.notesPattern
+    .replace('{YEAR}', year)
+    .replace('{MM}', monthNum)
+    .replace('{DD}', dd)
+    .replace('{CITY}', city)
+    .replace('{STATE}', state);
+  document.getElementById('f-notes-name').value = notes;
+}
+
+// ─── Location type toggle ─────────────────────────────────────────────────────
+function setLocationType(type, btn) {
+  locationType = type;
+  document.querySelectorAll('.radio-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('virtual-fields').classList.toggle('hidden', type !== 'Online');
+  document.getElementById('inperson-fields').classList.toggle('hidden', type !== 'InPerson');
+}
+
+// ─── Build API payload ────────────────────────────────────────────────────────
+function resolvePlaceholders(str) {
+    return str
+      .replace(/{VENUE_NAME}/g, document.getElementById('f-venue-name')?.value || '')
+      .replace(/{ADDR1}/g, document.getElementById('f-addr1')?.value || '')
+      .replace(/{CITY}/g, document.getElementById('f-city')?.value || '')
+      .replace(/{STATE}/g, document.getElementById('f-state')?.value || '')
+      .replace(/{ZIP}/g, document.getElementById('f-zip')?.value || '')
+      .replace(/{HOTEL_LINK}/g, document.getElementById('f-hotel-link')?.value || '#')
+      .replace(/{HOTEL_DEADLINE}/g, document.getElementById('f-hotel-deadline')?.value || '')
+      .replace(/{CANCEL_DEADLINE}/g, document.getElementById('f-cancel-deadline')?.value || '')
+      .replace(/{CHECKIN}/g, document.getElementById('f-checkin')?.value || '')
+      .replace(/{AGENDA_URL}/g, (document.getElementById('f-agenda-url')?.value || document.getElementById('f-agenda-url-ipt')?.value || ''))
+      .replace(/{DATE}/g, (() => {
+        const sv = document.getElementById('f-start')?.value;
+        if (!sv) return '{DATE}';
+        return new Date(sv).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+      })());
+  }
+
+function buildEventPayload() {
+  const prog = selectedProgram;
+  const tmpl = TEMPLATES[prog.id];
+  const categoryKey = prog.category;
+  const categoryId = CATEGORY_IDS[categoryKey];
+
+  // Resolve in-person placeholders in templates
+  
+
+  const payload = {
+    name: document.getElementById('f-title').value,
+    active: false, // create as draft
+    summary: document.getElementById('f-overview').value,
+    details: resolvePlaceholders(rteGetContent('details')),
+    secondaryDetails: resolvePlaceholders(rteGetContent('secondary')),
+    startDate: document.getElementById('f-start').value,
+    endDate: document.getElementById('f-end').value,
+    allDayEvent: false,
+    timeZone: locationType === 'Online'
+      ? document.getElementById('f-timezone').value
+      : document.getElementById('f-tz-local').value,
+    locationType: locationType === 'Online' ? 'Online' : 'Address',
+    eventCategory: { id: categoryId },
+    internalNotes: document.getElementById('f-notes-name').value || '',
+  };
+
+  if (locationType === 'Online') {
+
+    payload.onlineLinkText = document.getElementById('f-online-link-text').value;
+    payload.onlineLinkUrl = document.getElementById('f-online-link-url').value;
+    payload.joinWindow = 15;
+  } else {
+    payload.locationName = document.getElementById('f-venue-name').value;
+    payload.address1 = document.getElementById('f-addr1').value;
+    payload.address2 = document.getElementById('f-addr2').value;
+    payload.city = document.getElementById('f-city').value;
+    payload.state = document.getElementById('f-state').value;
+    payload.zipCode = document.getElementById('f-zip').value;
+    payload.country = document.getElementById('f-country').value;
+  }
+
+
+  // Post-registration additional details
+  const postReg = resolvePlaceholders(rteGetContent('post-reg'));
+  if (postReg) payload.additionalDetails = postReg;
+
+  return payload;
+}
+
+function buildTicketPayload(eventId, ticketNum) {
+  const prog = selectedProgram;
+  const tmpl = TEMPLATES[prog.id];
+
+  if (ticketNum === 1) {
+    return {
+      EventUniqueId: eventId,
+      Name: document.getElementById('t1-name').value,
+      Details: document.getElementById('t1-details').value,
+      Price: parseFloat(document.getElementById('t1-price').value),
+      SeatsPerTicket: parseInt(document.getElementById('t1-seats').value),
+      TicketType: 'Paid',
+      ConfirmationEmailInfo: rteGetContent('t1-email'),
+    };
+  } else {
+    return {
+      EventUniqueId: eventId,
+      Name: document.getElementById('t2-name').value,
+      Details: document.getElementById('t2-details').value,
+      Price: parseFloat(document.getElementById('t2-price').value),
+      SeatsPerTicket: parseInt(document.getElementById('t2-seats').value),
+      TicketType: 'Paid',
+      ConfirmationEmailInfo: rteGetContent('t1-email'),
+    };
+  }
+}
+
+// ─── Submit ───────────────────────────────────────────────────────────────────
+async function submitEvent() {
+  if (!validate()) return;
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating…';
+
+  setStep(2);
+  showResult('info', 'Creating event…', 'Step 1 of 3: POST /api/events');
+
+  try {
+    // Step 1: Create event
+    const eventPayload = buildEventPayload();
+    const evRes = await noviRequest('POST', '/api/events', eventPayload);
+    const evData = await evRes.json();
+
+    if (!evRes.ok || !evData.EventUniqueId) {
+      throw new Error('Event creation failed: ' + JSON.stringify(evData.errors || evData.message || evData));
+    }
+
+    createdEventId = evData.EventUniqueId;
+    const eventUrl = `https://www.clearhq.org/events/${evData.SEOInfo?.FileName || createdEventId}`;
+    const adminUrl = "https://www.clearhq.org/admin/events/event-list";
+
+    setStep(3);
+    showResult('info', 'Event created! Creating tickets…', `Event ID: ${createdEventId}`);
+
+    // Step 2: Create member ticket
+    const t1Payload = buildTicketPayload(createdEventId, 1);
+    const t1Res = await noviRequest('POST', '/api/tickets', t1Payload);
+    const t1Data = await t1Res.json();
+    if (!t1Res.ok) throw new Error('Member ticket failed: ' + JSON.stringify(t1Data.errors || t1Data));
+
+    // Step 3: Create non-member ticket
+    const t2Payload = buildTicketPayload(createdEventId, 2);
+    const t2Res = await noviRequest('POST', '/api/tickets', t2Payload);
+    const t2Data = await t2Res.json();
+    if (!t2Res.ok) throw new Error('Non-member ticket failed: ' + JSON.stringify(t2Data.errors || t2Data));
+
+    setStep(4);
+
+    // Success!
+    const resultHtml = `
+      <strong>✓ Event and tickets created successfully!</strong>
+      Event: <strong>${document.getElementById('f-title').value}</strong><br>
+      Event ID: <code>${createdEventId}</code>
+      <div class="result-links">
+        <a href="${adminUrl}" target="_blank" class="btn btn-primary btn-sm">Open in Novi Admin →</a>
+        <a href="${eventUrl}" target="_blank" class="btn btn-secondary btn-sm">View Event Page →</a>
+      </div>
+    `;
+    document.getElementById('result-section').classList.remove('hidden');
+    document.getElementById('result-status').innerHTML = `<div class="status-box success">${resultHtml}</div>`;
+    document.getElementById('config-section').classList.add('hidden');
+
+    showChecklist(adminUrl);
+
+    btn.innerHTML = '✓ Created';
+    document.getElementById('action-status').textContent = 'Event and 2 tickets created.';
+
+  } catch(e) {
+    setStep(1);
+    document.getElementById('result-section').classList.remove('hidden');
+    document.getElementById('result-status').innerHTML = `<div class="status-box error"><strong>Error</strong>${e.message}</div>`;
+    btn.disabled = false;
+    btn.innerHTML = 'Retry →';
+  }
+}
+
+var ACCOUNTING = {
+  "ncit-b-can-virt":   { member: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"} },
+  "ncit-b-can-ipt":    { member: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"} },
+  "ncit-b-us-virt":    { member: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"} },
+  "ncit-b-us-ipt":     { member: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT Basic"} },
+  "ncit-ait":               { member: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT AIT"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT AIT"} },
+  "ncit-s-virt":       { member: {item:"Unearned NCIT Revenue: NCIT Specialized", cls:"NCIT Specialized"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Specialized", cls:"NCIT Specialized"} },
+  "ncit-s-ipt":        { member: {item:"Unearned NCIT Revenue: NCIT Specialized", cls:"NCIT Specialized"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Specialized", cls:"NCIT Specialized"} },
+  "ncit-ait":               { member: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT AIT"}, nonmember: {item:"Unearned NCIT Revenue: NCIT Basic", cls:"NCIT AIT"} },
+  "ncit-w-irsm":       { member: {item:"Unearned IRSM: Investigating Reports of Sexual Misconduct", cls:"Third tier programming: IRSM"}, nonmember: {item:"Unearned IRSM: Investigating Reports of Sexual Misconduct", cls:"Third tier programming: IRSM"} },
+  "ncit-w-irsm-ipt":   { member: {item:"Unearned IRSM: Investigating Reports of Sexual Misconduct", cls:"Third tier programming: IRSM"}, nonmember: {item:"Unearned IRSM: Investigating Reports of Sexual Misconduct", cls:"Third tier programming: IRSM"} },
+  "ncit-w-ethics":     { member: {item:"Unearned 3rd Tier Income: Ethics for the Regulatory Investigator", cls:"Ethics"}, nonmember: {item:"Unearned 3rd Tier Income: Ethics for the Regulatory Investigator", cls:"Ethics"} },
+  "ncit-w-ethics-ipt": { member: {item:"Unearned 3rd Tier Income: Ethics for the Regulatory Investigator", cls:"Ethics"}, nonmember: {item:"Unearned 3rd Tier Income: Ethics for the Regulatory Investigator", cls:"Ethics"} },
+  "ncit-w-ddi":        { member: {item:"Unearned Drug Diversion: Drug Diversion Investigations", cls:"Third tier programming: Drug Diversion"}, nonmember: {item:"Unearned Drug Diversion: Drug Diversion Investigations", cls:"Third tier programming: Drug Diversion"} },
+  "ncit-w-comms":      { member: {item:"Unearned 3rd Tier Income: Communication Skills and the Art of Persuasion", cls:"Communications"}, nonmember: {item:"Unearned 3rd Tier Income: Communication Skills and the Art of Persuasion", cls:"Communications"} },
+  "ncit-w-comms-ipt":  { member: {item:"Unearned 3rd Tier Income: Communication Skills and the Art of Persuasion", cls:"Communications"}, nonmember: {item:"Unearned 3rd Tier Income: Communication Skills and the Art of Persuasion", cls:"Communications"} },
+  "acrg":              { member: {item:"Unearned ACRG Income: ACRG Program – Member", cls:"ACRG"}, nonmember: {item:"Unearned ACRG Income: ACRG Program – non-member", cls:"ACRG"} },
+  "elpr":              { member: {item:"Unearned ELP: Executive Leadership Program for Regulators", cls:"ELP"}, nonmember: {item:"Unearned ELP: Executive Leadership Program for Regulators", cls:"ELP"} },
+  "elpr-ipt":          { member: {item:"Unearned ELP: Executive Leadership Program for Regulators", cls:"ELP"}, nonmember: {item:"Unearned ELP: Executive Leadership Program for Regulators", cls:"ELP"} },
+  "elpr-ipt":          { member: {item:"Unearned ELP: Executive Leadership Program for Regulators", cls:"ELP"}, nonmember: {item:"Unearned ELP: Executive Leadership Program for Regulators", cls:"ELP"} },
+  "bct":               { member: {item:"CLEAR Online Board Member Training Program", cls:"BMT"}, nonmember: {item:"CLEAR Online Board Member Training Program", cls:"BMT"} },
+  "srasab":            { member: {item:"Unearned 3rd Tier Income: Unearned SRASAB – Member", cls:"General CLEAR Learning: SRASAB"}, nonmember: {item:"Unearned 3rd Tier Income: Unearned SRASAB – non-member", cls:"General CLEAR Learning: SRASAB"} }
+};
+
+var CAPACITY = {
+  "ncit-b-can-virt":70,"ncit-b-can-ipt":70,"ncit-b-us-virt":70,"ncit-b-us-ipt":70,
+  "ncit-s-virt":50,"ncit-s-ipt":50,"ncit-ait":30,
+  "ncit-w-irsm":45,"ncit-w-irsm-ipt":45,"ncit-w-ethics":45,"ncit-w-ethics-ipt":45,
+  "ncit-w-ddi":45,"ncit-w-comms":45,"ncit-w-comms-ipt":45,
+  "acrg":30,"elpr":30,"elpr-ipt":30,"bct":30,"srasab":40
+};
+
+var ATTENDEE_FORMS = {
+  "ncit-s-virt": ["Name (required)","Job Title (required)","Company (required)","Email (required)","Phone (optional)","ADA (optional)","Terms & Conditions (required)","NCIT Basic (Internal Use Only) (optional)","Internal Notes (Internal Use Only) (optional)"],
+  "ncit-s-ipt":  ["Name (required)","Job Title (required)","Company (required)","Email (required)","Phone (optional)","ADA (optional)","Terms & Conditions (required)","NCIT Basic (Internal Use Only) (optional)","Internal Notes (Internal Use Only) (optional)"]
+};
+var DEFAULT_ATTENDEE_FORM = ["Name (required)","Job Title (required)","Company (required)","Email (required)","Phone (optional)","ADA (optional)","Terms & Conditions (required)","Internal Notes (Internal Use Only) (optional)"];
+
+function showChecklist(adminUrl) {
+  const isVirtual  = locationType !== 'InPerson';
+  const progId     = selectedProgram ? selectedProgram.id : '';
+  const acct       = ACCOUNTING[progId] || { member:{item:'[see program standards]',cls:'[see program standards]'}, nonmember:{item:'[see program standards]',cls:'[see program standards]'} };
+  const cap        = CAPACITY[progId] || 30;
+  const fields     = ATTENDEE_FORMS[progId] || DEFAULT_ATTENDEE_FORM;
+
+  const startVal   = document.getElementById('f-start')?.value || '';
+  const startDisplay = startVal
+    ? new Date(startVal).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) +
+      ' at ' + new Date(startVal).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+    : '[event start date/time]';
+
+  let reminderDisplay = '';
+  if (startVal) {
+    const d = new Date(startVal);
+    if (isVirtual) {
+      d.setHours(d.getHours() - 1);
+    } else {
+      d.setDate(d.getDate() - 1);
+    }
+    reminderDisplay = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) +
+      ' at ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  } else {
+    reminderDisplay = isVirtual ? '1 hour before the Welcome Session' : '24 hours before Day 1';
+  }
+
+  const ci = (label, detail) => `
+    <li class="checklist-item">
+      <label class="checklist-label">
+        <input type="checkbox" class="checklist-check" />
+        <span class="checklist-text"><strong>${label}</strong>${detail ? '<br><span class="checklist-detail">' + detail + '</span>' : ''}</span>
+      </label>
+    </li>`;
+  const sec = title => `<li class="checklist-section-header">${title}</li>`;
+
+  const acctDetail = (item, cls) =>
+    '<span style="color:#555">Item:</span> <strong>' + item + '</strong><br>' +
+    '<span style="color:#555">Class:</span> <strong>' + cls + '</strong>';
+
+  const items = [
+    sec('DETAILS TAB'),
+    ci('Upload logo', 'Website logos are stored in SharePoint: <a href="https://clearorg.sharepoint.com/:f:/s/CLEARLearning/IgChsqnPN4YPTLTGXX-BlHhXAaQBuQuOjikpOpo_UEkR0MA?e=xPzJVr" target="_blank" rel="noopener">CLEAR Learning Logos folder</a>. In Novi, go to the Details tab and upload the appropriate program logo.'),
+    ci('Upload agenda', 'Program agendas are stored in the appropriate cohort folder in SharePoint. In Novi, go to the Details tab and upload the agenda PDF for this cohort.'),
+    ci('Set staff contact', 'Event Contact: <strong>Association Staff</strong> → select the appropriate staff member from the list.'),
+    ci('Update Post-Registration Message',
+      'In Novi, open the event editor, enable <strong>Code View</strong> (&#60;/&#62; button) in the Additional Details (Post-Registration) editor, then paste the HTML below:<br>' +
+      '<button onclick="copyChecklistField(\'f-post-reg\')" class="checklist-copy-btn" style="margin-top:6px">&#128203; Copy Post-Registration HTML</button>'),
+
+    sec('TICKETS TAB — Ticket 1: CLEAR Member Registration'),
+    ci('Set visibility', 'Change Visibility to <strong>Open (Anyone)</strong>.'),
+    ci('Set purchase restriction', 'Restrict To: <strong>Logged-In Users with Member Benefits</strong><br>Restriction Level: <strong>Restrict Purchaser and Attendee</strong>'),
+    ci('Set accounting', acctDetail(acct.member.item, acct.member.cls)),
+    ci('Set attendee form fields', fields.map(f => '<span class="checklist-field">' + f + '</span>').join(' ')),
+
+    sec('TICKETS TAB — Ticket 2: General Event Registration'),
+    ci('Set visibility', 'Change Visibility to <strong>Open (Anyone)</strong>.'),
+    ci('Set purchase restriction', 'Restrict To: <strong>Specific Group/Committee</strong><br>In the field that appears, select: <strong>Has User Account (Group)</strong><br>Restriction Level: <strong>Restrict Purchaser and Attendee</strong>'),
+    ci('Set accounting', acctDetail(acct.nonmember.item, acct.nonmember.cls)),
+    ci('Set attendee form fields', fields.map(f => '<span class="checklist-field">' + f + '</span>').join(' ')),
+
+    sec('SETTINGS TAB'),
+    ci('Enable pre-event reminder email', 'Check <em>"Send attendees an automated pre-event reminder"</em> and set the date/time to: <strong>' + reminderDisplay + '</strong>.'),
+    ci('Set event capacity', 'Set to <strong>' + cap + '</strong> (unless otherwise decided for this cohort).'),
+    ci('Set Registration Open Until', isVirtual ? 'Set to the date and time of the <strong>Welcome Session</strong>: <strong>' + startDisplay + '</strong>' : 'Set to the date and time of <strong>Day 1</strong>: <strong>' + startDisplay + '</strong>'),
+
+    sec('ACTIVATE'),
+    ci('Activate the event', 'Once all steps above are complete, change the event status from <strong>Draft</strong> to <strong>Active</strong>.'),
+  ];
+
+  document.getElementById('checklist-section').classList.remove('hidden');
+  document.getElementById('checklist').innerHTML = items.join('');
+  document.getElementById('checklist-section').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ─── Rich Text Editor ────────────────────────────────────────────────────────
+
+function rteSetContent(fieldId, html) {
+  const editor = document.getElementById('rte-' + fieldId);
+  const textarea = document.getElementById(fieldId === 't1-email' ? 't1-email' : 'f-' + fieldId);
+  if (editor) editor.innerHTML = html || '';
+  if (textarea) textarea.value = html || '';
+}
+
+function rteGetContent(fieldId) {
+  const textarea = document.getElementById(fieldId === 't1-email' ? 't1-email' : 'f-' + fieldId);
+  return textarea ? textarea.value : '';
+}
+
+function rteToTextarea(fieldId) {
+  const editor = document.getElementById('rte-' + fieldId);
+  const textarea = document.getElementById(fieldId === 't1-email' ? 't1-email' : 'f-' + fieldId);
+  if (editor && textarea) textarea.value = editor.innerHTML;
+}
+
+function textareaToRte(fieldId) {
+  const editor = document.getElementById('rte-' + fieldId);
+  const textarea = document.getElementById(fieldId === 't1-email' ? 't1-email' : 'f-' + fieldId);
+  if (editor && textarea) editor.innerHTML = textarea.value;
+}
+
+function showDescTab(fieldId, mode, btn) {
+  const richDiv = document.getElementById('rte-' + fieldId + '-rich');
+  const textarea = document.getElementById(fieldId === 't1-email' ? 't1-email' : 'f-' + fieldId);
+  if (!richDiv || !textarea) return;
+  const tabs = btn.closest('.desc-label-row').querySelectorAll('.desc-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (mode === 'rich') {
+    textareaToRte(fieldId);
+    richDiv.classList.remove('hidden');
+    textarea.classList.add('hidden');
+  } else {
+    rteToTextarea(fieldId);
+    richDiv.classList.add('hidden');
+    textarea.classList.remove('hidden');
+  }
+}
+
+function rteCmd(fieldId, cmd) {
+  const editor = document.getElementById('rte-' + fieldId);
+  if (!editor) return;
+  editor.focus();
+  document.execCommand(cmd, false, null);
+  rteToTextarea(fieldId);
+}
+
+function rteLink(fieldId) {
+  const url = prompt('Enter URL:');
+  if (!url) return;
+  const editor = document.getElementById('rte-' + fieldId);
+  if (!editor) return;
+  editor.focus();
+  document.execCommand('createLink', false, url);
+  editor.querySelectorAll('a[href="' + url + '"]').forEach(a => {
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  });
+  rteToTextarea(fieldId);
+}
+
+function copyFieldHtml(fieldId, btnId) {
+  const textarea = document.getElementById(fieldId);
+  if (!textarea) return;
+  navigator.clipboard.writeText(textarea.value).then(() => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy HTML'; btn.classList.remove('copied'); }, 2000);
+    }
+  });
+}
+
+// ─── Live description update from location fields ─────────────────────────────
+function updateDescriptions() {
+  if (!selectedProgram) return;
+  const tmpl = TEMPLATES[selectedProgram.id];
+  if (!tmpl) return;
+  ['details', 'secondary', 'post-reg', 't1-email'].forEach(fieldId => {
+    const raw = fieldId === 'details' ? (tmpl.details || '')
+              : fieldId === 'post-reg' ? (tmpl.postReg || '')
+              : (tmpl.confirmEmail || '');
+    const resolved = resolvePlaceholders(raw);
+    rteSetContent(fieldId, resolved);
+  });
+  updateNotesName();
+}
+
+// ─── Review Panel ─────────────────────────────────────────────────────────────
+function showReviewPanel() {
+  const g = id => document.getElementById(id)?.value || '';
+  const prog = selectedProgram ? selectedProgram.label + ' — ' + selectedProgram.tag : '—';
+  const rows = (label, val) => `<tr><td style="padding:4px 10px 4px 0;color:#666;white-space:nowrap;font-weight:600;width:180px">${label}</td><td style="padding:4px 0;word-break:break-all">${val || '—'}</td></tr>`;
+  const sec = title => `<tr><td colspan="2" style="padding:10px 0 4px;font-weight:700;color:var(--burgundy);font-size:12px;text-transform:uppercase;letter-spacing:0.05em;border-top:1px solid #eee">${title}</td></tr>`;
+  const htmlPrev = html => html ? `<div style="border:1px solid #e5e5e5;border-radius:4px;padding:8px 10px;font-size:12px;max-height:120px;overflow-y:auto;background:#fafafa">${html}</div>` : '<span style="color:#999">—</span>';
+
+  let locRows = '';
+  if (locationType === 'Online') {
+    locRows = rows('Type', 'Virtual') + rows('Location Name', g('f-online-link-text')) + rows('Meeting URL', g('f-online-link-url'));
+  } else {
+    locRows = rows('Type', 'In-Person') + rows('Venue', g('f-venue-name')) + rows('Address', [g('f-addr1'),g('f-addr2'),g('f-city'),g('f-state'),g('f-zip')].filter(Boolean).join(', '));
+  }
+
+  document.getElementById('review-content').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      ${sec('Event')}
+      ${rows('Program', prog)}
+      ${rows('Title', g('f-title'))}
+      ${rows('Overview', g('f-overview'))}
+      ${rows('Internal Notes Name', g('f-notes-name'))}
+      ${rows('Internal Notes', g('f-internal-notes'))}
+      ${sec('Date & Time')}
+      ${rows('Start', g('f-start'))} ${rows('End', g('f-end'))}
+      ${rows('Timezone', locationType === 'Online' ? g('f-timezone') : g('f-tz-local'))}
+      ${sec('Location')}
+      ${locRows}
+      ${sec('Tickets')}
+      ${rows('Member Price', '$' + g('t1-price'))} ${rows('Non-Member Price', '$' + g('t2-price'))}
+      ${sec('Descriptions')}
+    </table>
+    <div style="margin-top:8px"><strong style="font-size:12px;color:#555">Primary Details:</strong>${htmlPrev(rteGetContent('details'))}</div>
+    <div style="margin-top:8px"><strong style="font-size:12px;color:#555">Post-Registration:</strong>${htmlPrev(rteGetContent('post-reg'))}</div>
+    <div style="margin-top:8px"><strong style="font-size:12px;color:#555">Confirmation Email:</strong>${htmlPrev(rteGetContent('t1-email'))}</div>`;
+
+  document.getElementById('review-modal').classList.remove('hidden');
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function copyChecklistField(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  // Sync RTE editor to textarea first
+  const editorId = fieldId === 't1-email' ? 't1-email' : fieldId.replace('f-', '');
+  rteToTextarea(editorId);
+  const html = el.value;
+  navigator.clipboard.writeText(html).then(() => {
+    // Find button by its onclick content and flash it
+    const btns = document.querySelectorAll('.checklist-copy-btn');
+    btns.forEach(btn => {
+      if (btn.getAttribute('onclick')?.includes(fieldId)) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ Copied!';
+        btn.style.background = '#e8f5e9';
+        btn.style.borderColor = '#a5d6a7';
+        btn.style.color = '#2e7d32';
+        setTimeout(() => { btn.innerHTML = orig; btn.style = ''; }, 2000);
+      }
+    });
+  });
+}
+function validate() {
+  const required = [
+    { id: 'f-month', label: 'Month' },
+    { id: 'f-year', label: 'Year' },
+    { id: 'f-title', label: 'Event Title' },
+    { id: 'f-overview', label: 'Overview / Short Description' },
+    { id: 'f-start', label: 'Start Date/Time' },
+    { id: 'f-end', label: 'End Date/Time' },
+    { id: 't1-price', label: 'Member Price' },
+    { id: 't2-price', label: 'Non-Member Price' },
+  ];
+  if (locationType === 'Online') {
+    required.push({ id: 'f-online-link-url', label: 'Meeting URL' });
+  } else {
+    required.push({ id: 'f-venue-name', label: 'Venue Name' });
+    required.push({ id: 'f-addr1', label: 'Address' });
+    required.push({ id: 'f-city', label: 'City' });
+  }
+
+  for (const f of required) {
+    const el = document.getElementById(f.id);
+    if (!el || !el.value.trim()) {
+      showGlobalStatus('error', `Please fill in: <strong>${f.label}</strong>`);
+      el.focus();
+      return false;
+    }
+  }
+  clearGlobalStatus();
+  return true;
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`step-${i}`);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+  }
+}
+
+function showResult(type, title, body) {
+  document.getElementById('result-section').classList.remove('hidden');
+  document.getElementById('result-status').innerHTML =
+    `<div class="status-box ${type}"><strong>${title}</strong>${body || ''}</div>`;
+}
+
+function resetResult() {
+  createdEventId = null;
+  document.getElementById('result-section').classList.add('hidden');
+  document.getElementById('result-status').innerHTML = '';
+  document.getElementById('checklist-section').classList.add('hidden');
+  document.getElementById('config-section').classList.remove('hidden');
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = false;
+  btn.innerHTML = 'Create Event in Novi →';
+  setStep(1);
+  document.getElementById('action-status').textContent = '';
+  clearGlobalStatus();
+}
+
+function resetForm() {
+  resetResult();
+  document.querySelectorAll('.prog-btn').forEach(b => b.classList.remove('active'));
+  selectedProgram = null;
+  document.getElementById('event-form').style.display = 'none';
+  document.getElementById('header-program-label').textContent = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showGlobalStatus(type, msg) {
+  document.getElementById('global-status').innerHTML =
+    `<div class="status-box ${type}" style="margin-bottom:16px">${msg}</div>`;
+}
+function clearGlobalStatus() {
+  document.getElementById('global-status').innerHTML = '';
+}
+
+function setLoading(show, msg) {
+  const el = document.getElementById('loading-overlay');
+  el.classList.toggle('hidden', !show);
+  if (msg) document.getElementById('loading-msg').textContent = msg;
+}
+</script>
+</body>
+</html>
