@@ -1,0 +1,2783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program Coordinator Manual – CLEAR Learning</title>
+<style>
+/* ============================================================
+   CLEAR LEARNING — COORDINATOR MANUAL
+   Design tokens — update here to restyle everything
+============================================================ */
+:root {
+  --burgundy:     #64092C;
+  --burgundy-dk:  #4a0620;
+  --burgundy-lt:  #f5eaee;
+  --gold:         #DDA838;
+  --gold-lt:      #fdf6e3;
+  --charcoal:     #484848;
+  --blue:         #084D78;
+  --blue-lt:      #e8f2f8;
+  --surface:      #f7f6f4;
+  --white:        #ffffff;
+  --border:       #e0ddd8;
+  --text:         #2c2c2c;
+  --text-muted:   #6b6b6b;
+  --sidebar-w:    272px;
+  --radius:       6px;
+  --tr:           0.15s ease;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Open Sans', 'Segoe UI', sans-serif;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  line-height: 1.65;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   SIDEBAR — Light style
+============================================================ */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+/* Sidebar branding strip */
+.sidebar-brand {
+  background: var(--burgundy);
+  padding: 20px 20px 16px;
+  flex-shrink: 0;
+}
+.sidebar-brand .org-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 5px;
+}
+.sidebar-brand h1 {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.35;
+}
+.sidebar-brand .brand-rule {
+  width: 28px;
+  height: 2px;
+  background: var(--gold);
+  margin-top: 12px;
+}
+
+/* Section labels */
+.nav-group-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 18px 20px 5px;
+}
+
+/* Nav links */
+#sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 20px;
+  color: var(--charcoal);
+  text-decoration: none;
+  font-size: 13px;
+  border-left: 3px solid transparent;
+  transition: background var(--tr), color var(--tr), border-color var(--tr);
+  cursor: pointer;
+  line-height: 1.35;
+}
+#sidebar nav a .nav-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+#sidebar nav a:hover {
+  background: var(--burgundy-lt);
+  color: var(--burgundy);
+  border-left-color: var(--burgundy);
+}
+#sidebar nav a:hover .nav-icon { opacity: 1; }
+#sidebar nav a.active {
+  background: var(--burgundy-lt);
+  color: var(--burgundy);
+  border-left-color: var(--burgundy);
+  font-weight: 600;
+}
+#sidebar nav a.active .nav-icon { opacity: 1; }
+
+/* Sub-links (indented) */
+#sidebar nav a.sub {
+  padding-left: 44px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+#sidebar nav a.sub:hover { color: var(--burgundy); }
+#sidebar nav a.sub.active { color: var(--burgundy); font-weight: 600; }
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   MAIN CONTENT AREA
+============================================================ */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Top bar */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 8px;
+}
+.topbar-crumb {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.topbar-crumb strong { color: var(--burgundy); font-weight: 600; }
+.topbar-sep { color: var(--border); font-size: 14px; }
+
+/* Page views */
+.page-view { display: none; }
+.page-view.active { display: block; }
+
+/* ── Content shell ── */
+.content-shell {
+  max-width: 820px;
+  padding: 44px 48px 72px;
+}
+
+/* ── Page header ── */
+.page-header {
+  margin-bottom: 36px;
+}
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.page-title {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--burgundy);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.page-desc {
+  font-size: 14.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 600px;
+}
+.page-rule {
+  width: 48px;
+  height: 3px;
+  background: var(--gold);
+  margin-top: 16px;
+}
+
+/* ── Overview cards grid ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 8px;
+}
+.nav-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: border-color var(--tr), box-shadow var(--tr), transform var(--tr);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-card:hover {
+  border-color: var(--burgundy);
+  box-shadow: 0 2px 10px rgba(100,9,44,0.08);
+  transform: translateY(-1px);
+}
+.nav-card .card-icon { font-size: 20px; margin-bottom: 6px; }
+.nav-card h3 { font-size: 13.5px; font-weight: 700; color: var(--burgundy); line-height: 1.3; }
+.nav-card p { font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-top: 2px; }
+
+/* ── Phase accordion cards ── */
+.phase-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+
+.phase-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.phase-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--tr);
+}
+.phase-card-header:hover { background: #fdf9f7; }
+
+.phase-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.phase-virtual .phase-num { background: var(--blue); }
+
+.phase-header-text { flex: 1; }
+.phase-step-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.phase-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.phase-chevron {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  transition: transform var(--tr);
+}
+.phase-card.open .phase-chevron { transform: rotate(180deg); }
+
+.phase-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 20px 20px 22px 20px;
+}
+.phase-card.open .phase-body { display: block; }
+
+/* ── Checklist ── */
+.checklist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.checklist > li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.check-box {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  margin-top: 2px;
+  background: var(--white);
+}
+.checklist .sub-items {
+  list-style: none;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 2px;
+}
+.checklist .sub-items li {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--charcoal);
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.sub-dot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin-top: 7px;
+}
+
+/* ── Inline doc links ── */
+.doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: inherit;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--tr), color var(--tr);
+}
+.doc-link:hover { border-bottom-color: var(--blue); }
+.doc-link-icon { font-size: 11px; opacity: 0.75; }
+
+/* ── Program exception callouts ── */
+.exception-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.exception-callout {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.exception-callout-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--tr);
+}
+.exc-elpr .exception-callout-header  { background: var(--blue-lt); }
+.exc-ncit .exception-callout-header  { background: var(--burgundy-lt); }
+.exc-BMT .exception-callout-header  { background: var(--gold-lt); }
+.exception-callout-header:hover { filter: brightness(0.97); }
+.exc-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.exc-elpr .exc-badge  { background: var(--blue); color: var(--white); }
+.exc-ncit .exc-badge  { background: var(--burgundy); color: var(--white); }
+.exc-BMT .exc-badge  { background: var(--gold); color: #5a3e00; }
+.exception-callout-header span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+.exc-chevron {
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: transform var(--tr);
+}
+.exception-callout.open .exc-chevron { transform: rotate(180deg); }
+.exception-body {
+  display: none;
+  padding: 14px 18px 16px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.exception-callout.open .exception-body { display: block; }
+.exception-body p { margin-bottom: 10px; }
+.exception-body p:last-child { margin-bottom: 0; }
+.exception-body ul { margin: 6px 0 10px 18px; display: flex; flex-direction: column; gap: 4px; }
+.exception-body strong { font-weight: 700; }
+.exception-body .doc-link { font-size: 13px; }
+
+/* ── Section dividers ── */
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 32px 0;
+}
+.section-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  margin-top: 32px;
+}
+.section-label:first-child { margin-top: 0; }
+
+/* ── Tools reference section ── */
+.platform-stack { display: flex; flex-direction: column; gap: 16px; }
+.platform-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.platform-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--tr);
+}
+.platform-card-header:hover { background: var(--surface); }
+.platform-card.open .platform-card-header { background: var(--surface); }
+.platform-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.plat-red    { background: var(--burgundy-lt); }
+.plat-blue   { background: var(--blue-lt); }
+.plat-gold   { background: var(--gold-lt); }
+.plat-grey   { background: #f0efed; }
+.platform-header-text { flex: 1; }
+.platform-name { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.platform-desc { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.platform-chevron {
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: transform var(--tr);
+}
+.platform-card.open .platform-chevron { transform: rotate(180deg); }
+.platform-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 18px 20px;
+}
+.platform-card.open .platform-body { display: block; }
+
+/* Guide link rows */
+.guide-links { display: flex; flex-direction: column; gap: 2px; }
+.guide-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  transition: background var(--tr);
+  text-decoration: none;
+  gap: 12px;
+}
+.guide-link-row:hover { background: var(--surface); }
+.guide-link-row .glr-text { flex: 1; }
+.guide-link-row .glr-title { font-size: 13.5px; font-weight: 600; color: var(--burgundy); }
+.guide-link-row .glr-desc  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.guide-link-row .glr-arrow { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+.guide-link-row:hover .glr-arrow { color: var(--burgundy); }
+
+/* ── Intro blurb box ── */
+.intro-box {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--burgundy);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 18px 22px;
+  margin-bottom: 32px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.intro-box p { margin-bottom: 8px; }
+.intro-box p:last-child { margin-bottom: 0; }
+
+/* ── Pill tags ── */
+.pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.pill {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.pill-grey { background: #f0efed; color: var(--charcoal); border: 1px solid var(--border); }
+
+/* ── Search bar ── */
+.search-wrap {
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search-input {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  font-size: 12.5px;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 9px center;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--tr);
+}
+.search-input:focus { border-color: var(--burgundy); }
+.search-input::placeholder { color: var(--text-muted); }
+
+/* Search results overlay */
+#search-results {
+  display: none;
+  position: fixed;
+  top: 48px;
+  left: var(--sidebar-w);
+  right: 0;
+  bottom: 0;
+  background: var(--surface);
+  z-index: 40;
+  overflow-y: auto;
+}
+#search-results.visible { display: block; }
+.search-results-shell {
+  max-width: 820px;
+  padding: 32px 48px 60px;
+}
+.search-results-header {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+.search-results-header strong { color: var(--text); }
+.search-result-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+.search-result-item:hover {
+  border-color: var(--burgundy);
+  box-shadow: 0 2px 8px rgba(100,9,44,0.07);
+}
+.search-result-section {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.search-result-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--burgundy);
+  margin-bottom: 4px;
+}
+.search-result-snippet {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.search-result-snippet mark {
+  background: #fff3b0;
+  color: var(--text);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.search-no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ── Facilitator guide styles ── */
+.session-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.session-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.session-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--tr);
+}
+.session-card-header:hover { background: var(--surface); }
+.session-card.open .session-card-header { background: var(--surface); }
+.session-icon { flex-shrink: 0; font-size: 18px; margin-top: 2px; width: 28px; text-align: center; }
+.session-header-text { flex: 1; }
+.session-program-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 2px;
+}
+.session-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.session-chevron {
+  flex-shrink: 0; font-size: 13px; color: var(--text-muted);
+  margin-top: 4px; transition: transform var(--tr);
+}
+.session-card.open .session-chevron { transform: rotate(180deg); }
+.session-body { display: none; border-top: 1px solid var(--border); padding: 22px 24px 26px; }
+.session-card.open .session-body { display: block; }
+
+.script-block {
+  background: var(--surface);
+  border-left: 3px solid var(--burgundy);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 18px;
+  margin: 12px 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+  font-style: italic;
+}
+.script-block .script-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--burgundy); font-style: normal;
+  margin-bottom: 8px; display: block;
+}
+.fyi-box {
+  background: var(--gold-lt); border: 1px solid #e8d090;
+  border-radius: var(--radius); padding: 14px 18px; margin: 12px 0;
+  font-size: 13.5px; line-height: 1.65;
+}
+.fyi-box .fyi-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: #7a5a00; margin-bottom: 8px; display: block;
+}
+.fyi-box ul { margin: 6px 0 0 16px; display: flex; flex-direction: column; gap: 4px; }
+.fyi-box li { font-size: 13.5px; }
+.action-block {
+  background: var(--blue-lt); border: 1px solid #b8d4e6;
+  border-radius: var(--radius); padding: 14px 18px; margin: 12px 0;
+  font-size: 13.5px; line-height: 1.65;
+}
+.action-block .action-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--blue); margin-bottom: 8px; display: block;
+}
+.action-block ul { margin: 4px 0 0 16px; display: flex; flex-direction: column; gap: 4px; }
+.action-block li { font-size: 13.5px; }
+.session-sub {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: white; background: #64092c; border-radius: 8px; padding: 5px 10px;
+  margin: 18px 0 8px; 
+}
+.session-sub:first-child { margin-top: 4px; }
+.poll-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 12px; background: var(--burgundy-lt);
+  border-radius: var(--radius); margin: 6px 0; font-size: 13px;
+}
+.poll-row .poll-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.breakout-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 12px; background: var(--blue-lt);
+  border-radius: var(--radius); margin: 6px 0; font-size: 13px;
+}
+.breakout-row .poll-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.faq-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.faq-item {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.faq-q {
+  padding: 13px 18px; font-size: 13.5px; font-weight: 600;
+  color: var(--text); cursor: pointer; user-select: none;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; transition: background var(--tr);
+}
+.faq-q:hover { background: var(--surface); }
+.faq-chevron { font-size: 11px; color: var(--text-muted); flex-shrink: 0; transition: transform var(--tr); }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-a {
+  display: none; padding: 12px 18px 16px; font-size: 13.5px;
+  line-height: 1.7; border-top: 1px solid var(--border); color: var(--text);
+}
+.faq-item.open .faq-a { display: block; }
+.faq-a ul { margin: 8px 0 4px 18px; display: flex; flex-direction: column; gap: 4px; }
+.faq-a li { font-size: 13.5px; line-height: 1.6; }
+.faq-a strong { font-weight: 700; }
+.guidelines-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+.guideline-item {
+  display: flex; gap: 16px; background: var(--white);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px;
+}
+.guideline-num {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--burgundy);
+  background: var(--burgundy-lt); border-radius: var(--radius);
+  padding: 4px 9px; height: fit-content; margin-top: 2px;
+}
+.guideline-body h4 { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.guideline-body p, .guideline-body li { font-size: 13.5px; line-height: 1.65; }
+.guideline-body ul { margin: 6px 0 0 16px; display: flex; flex-direction: column; gap: 3px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; }
+  .content-shell { padding: 24px 20px 48px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .topbar { padding: 0 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+============================================================ -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="org-label">CLEAR Learning</div>
+    <h1>Program Coordinator<br>Manual</h1>
+    <div class="brand-rule"></div>
+  </div>
+
+  <div class="search-wrap">
+    <input class="search-input" type="search" id="search-input" placeholder="Search the manual…" autocomplete="off">
+  </div>
+
+  <nav>
+    <div class="nav-group-label">Start Here</div>
+    <a onclick="show('home')" class="active">
+      <span class="nav-icon">🏠</span> Overview
+    </a>
+
+    <div class="nav-group-label">In-Person Programs</div>
+    <a onclick="show('ipt')">
+      <span class="nav-icon">📋</span> Full Process
+    </a>
+    <a onclick="show('ipt'); openPhase('ipt-p1')" class="sub">Create the Event</a>
+    <a onclick="show('ipt'); openPhase('ipt-p2')" class="sub">Set Up the Cohort</a>
+    <a onclick="show('ipt'); openPhase('ipt-p3')" class="sub">Import into TalentLMS</a>
+    <a onclick="show('ipt'); openPhase('ipt-p4')" class="sub">Pre-Program Reminders</a>
+    <a onclick="show('ipt'); openPhase('ipt-p5')" class="sub">On-Site Management</a>
+    <a onclick="show('ipt'); openPhase('ipt-p6')" class="sub">Proctor the Exam</a>
+    <a onclick="show('ipt'); openPhase('ipt-p7')" class="sub">Close Out the Cohort</a>
+
+    <div class="nav-group-label">Virtual Programs</div>
+    <a onclick="show('virtual')">
+      <span class="nav-icon">💻</span> Full Process
+    </a>
+    <a onclick="show('virtual'); openPhase('virt-p1')" class="sub">Create the Event</a>
+    <a onclick="show('virtual'); openPhase('virt-p2')" class="sub">Set Up in TalentLMS</a>
+    <a onclick="show('virtual'); openPhase('virt-p3')" class="sub">Import into TalentLMS</a>
+    <a onclick="show('virtual'); openPhase('virt-p4')" class="sub">Pre-Program Reminders</a>
+    <a onclick="show('virtual'); openPhase('virt-p5')" class="sub">Cohort Management</a>
+    <a onclick="show('virtual'); openPhase('virt-p6')" class="sub">Examination Window</a>
+    <a onclick="show('virtual'); openPhase('virt-p7')" class="sub">Close Out the Cohort</a>
+
+    <div class="nav-group-label">Facilitator Guides</div>
+    <a onclick="show('facilitation')">
+      <span class="nav-icon">🎙️</span> Session Facilitation
+    </a>
+    <a onclick="show('facilitation'); openPhase('fac-universal')" class="sub">Universal Guidelines</a>
+    <a onclick="show('facilitation'); openPhase('fac-ncit-basic')" class="sub">NCIT Basic</a>
+    <a onclick="show('facilitation'); openPhase('fac-ncit-spec')" class="sub">NCIT Specialized</a>
+    <a onclick="show('facilitation'); openPhase('fac-sab')" class="sub">Skills for Reg. Admin</a>
+    <a onclick="show('facilitation'); openPhase('fac-irsm')" class="sub">IRSM</a>
+    <a onclick="show('facilitation'); openPhase('fac-ddi')" class="sub">Drug Diversion (DDI)</a>
+    <a onclick="show('facilitation'); openPhase('fac-standalone')" class="sub">Stand-Alone Sessions</a>
+    <a onclick="show('facilitation'); openPhase('fac-faq')" class="sub">Exam FAQ</a>
+
+    <div class="nav-group-label">Tools &amp; Platforms</div>
+    <a onclick="show('tools')">
+      <span class="nav-icon">🔧</span> All Process Guides
+    </a>
+    <a onclick="show('tools'); openPhase('plat-tools-dir')" class="sub">HTML Tools Directory</a>
+    <a onclick="show('tools'); openPhase('plat-lms')" class="sub">TalentLMS</a>
+    <a onclick="show('tools'); openPhase('plat-novi')" class="sub">Novi AMS</a>
+    <a onclick="show('tools'); openPhase('plat-autodash')" class="sub">Automation Dashboard</a>
+    <a onclick="show('tools'); openPhase('plat-monkey')" class="sub">SurveyMonkey &amp; Evals</a>
+    <a onclick="show('tools'); openPhase('plat-testing')" class="sub">Exams &amp; Credentials</a>
+  </nav>
+
+  <div class="sidebar-footer">
+    CLEAR Learning<br>Program Coordinator Manual
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN
+============================================================ -->
+<main id="main">
+
+  <div class="topbar">
+    <span class="topbar-crumb">CLEAR Learning <span class="topbar-sep">›</span> <strong id="topbar-label">Overview</strong></span>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HOME / OVERVIEW
+  ══════════════════════════════════════════ -->
+  <div id="view-home" class="page-view active">
+    <div class="content-shell">
+      <div class="page-header">
+        <div class="page-eyebrow">Getting Started</div>
+        <h2 class="page-title">Program Coordinator Manual</h2>
+        <p class="page-desc">Everything you need to manage CLEAR Learning program cohorts from event creation through close-out — for both in-person and virtual delivery.</p>
+        <div class="page-rule"></div>
+      </div>
+
+      <div class="intro-box">
+        <p>This manual is organized around the two delivery formats: <strong>In-Person</strong> and <strong>Virtual</strong>. Each section walks through the phases of a cohort in order. Where a step works differently for a specific program, that's called out within the relevant phase.</p>
+        <p>The <strong>Facilitator Guides</strong> section covers session scripts, poll schedules, breakout room instructions, and exam FAQs for every NCIT and related program. The <strong>Tools &amp; Platforms</strong> section is a reference library of process guides, each opening in a new tab.</p>
+      </div>
+
+      <div class="section-label">Jump to a section</div>
+      <div class="card-grid">
+        <div class="nav-card" onclick="show('ipt')">
+          <div class="card-icon">📋</div>
+          <h3>In-Person Programs</h3>
+          <p>End-to-end process for in-person cohort delivery — from event creation through close-out.</p>
+        </div>
+        <div class="nav-card" onclick="show('virtual')">
+          <div class="card-icon">💻</div>
+          <h3>Virtual Programs</h3>
+          <p>End-to-end process for virtual cohort delivery — Welcome Session through exam close-out.</p>
+        </div>
+        <div class="nav-card" onclick="show('facilitation')">
+          <div class="card-icon">🎙️</div>
+          <h3>Facilitator Guides</h3>
+          <p>Session scripts, poll schedules, breakout room instructions, and exam FAQs for all NCIT programs.</p>
+        </div>
+        <div class="nav-card" onclick="show('tools')">
+          <div class="card-icon">🔧</div>
+          <h3>Tools &amp; Platforms</h3>
+          <p>All process guides organized by platform — TalentLMS, Novi, Automation Dashboard, and more.</p>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:36px;">Software used in this role</div>
+      <div class="pill-row">
+        <span class="pill pill-grey">NoviAMS</span>
+        <span class="pill pill-grey">TalentLMS</span>
+        <span class="pill pill-grey">Automation Dashboard</span>
+        <span class="pill pill-grey">Credly</span>
+        <span class="pill pill-grey">SurveyMonkey</span>
+        <span class="pill pill-grey">Wufoo</span>
+        <span class="pill pill-grey">Zoom</span>
+        <span class="pill pill-grey">Vimeo</span>
+        <span class="pill pill-grey">Power Automate</span>
+        <span class="pill pill-grey">SharePoint</span>
+        <span class="pill pill-grey">WeTransfer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       IN-PERSON PROGRAMS
+  ══════════════════════════════════════════ -->
+  <div id="view-ipt" class="page-view">
+    <div class="content-shell">
+      <div class="page-header">
+        <div class="page-eyebrow">In-Person Programs</div>
+        <h2 class="page-title">End-to-End Process</h2>
+        <p class="page-desc">Follow these phases in sequence for every in-person cohort. Expand a phase to see the full task list. Program-specific notes appear as callouts within each phase.</p>
+        <div class="page-rule"></div>
+      </div>
+
+      <div class="phase-stack">
+
+        <!-- PHASE 1 -->
+        <div class="phase-card" id="ipt-p1">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 1</div>
+              <div class="phase-title">Create the Event</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li><span class="check-box"></span><span>Confirm dates for program</span></li>
+              <li><span class="check-box"></span><span>Marketing</span></li>
+              <li><span class="check-box"></span><span>Instructors</span></li>
+              <li><span class="check-box"></span><span>Facilitation staff</span></li>
+              <li><span class="check-box"></span><span>Venue logistics/contracts</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/CreateNoviEvent-Process-Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> Create the event in Novi</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/create-novi-event.html" target="_blank"><span class="doc-link-icon">🔧</span> Novi Event Creator tool</a>
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Include the program agenda in the description</span></li>
+                    <li><span class="sub-dot"></span><span>Set the date for the automated reminder email</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li><span class="check-box"></span><span>Prepare program materials/supplies and arrange shipping</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- PHASE 2 -->
+        <div class="phase-card" id="ipt-p2">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 2</div>
+              <div class="phase-title">Set Up the Cohort</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li><span class="check-box"></span><span>Create the cohort folder in SharePoint</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ProgramAgendaGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Save the Program and Instructor Agendas</a> for the cohort to the folder — use the <a class="doc-link" href="https://clearlearning.github.io/automation/agenda-generator.html" target="_blank"><span class="doc-link-icon">🔧</span> Program Agenda Generator</a>
+                </span>
+              </li>
+              <li><span class="check-box"></span><span>Copy the PowerPoint files for the program from the CLEAR Learning current in-person files</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearlearning.github.io/automation/survey-link-tool.html" target="_blank"><span class="doc-link-icon">📄</span> Generate the QR codes</a> for the module evaluations – save in the cohort folder in a "QR codes" subfolder
+                </span>
+              </li>
+              <li><span class="check-box"></span><span>Update QR codes in the PowerPoint slides for the module evaluations – update the speaker notes as necessary</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Create_Live_Sessions_in_TalentLMS_User_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> Set up the live sessions for the cohort in TalentLMS</a>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- PHASE 3 -->
+        <div class="phase-card" id="ipt-p3">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 3</div>
+              <div class="phase-title">Import the Cohort into TalentLMS</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/UserImportTool_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Generate and upload the import file into TalentLMS</a> using the <a class="doc-link" href="https://clearlearning.github.io/automation/lms-user-import.html" target="_blank"><span class="doc-link-icon">🔧</span> User Import Tool</a> and watch for progress. The upload file:
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Creates the cohort</span></li>
+                    <li><span class="sub-dot"></span><span>Assigns the courses to the cohort</span></li>
+                    <li><span class="sub-dot"></span><span>Creates/updates user accounts</span></li>
+                    <li><span class="sub-dot"></span><span>Assigns the cohort and the courses to the users</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li><span class="check-box"></span><span>Check that the welcome email from TalentLMS was sent</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>Once upload is complete, <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Assign_Learners_to_Live_Sessions_User_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> register all users for all instructor-led sessions</a> assigned to their cohort</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- PHASE 4 -->
+        <div class="phase-card" id="ipt-p4">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 4</div>
+              <div class="phase-title">Send Pre-Program Reminder Emails</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:14px;margin-bottom:14px;color:var(--text-muted);">Prior to the start of the program, send any reminders that need to be sent. What you send depends on the program:</p>
+            <div class="exception-group">
+              <div class="exception-callout exc-ncit">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">NCIT</span>
+                  <span>Basic, Specialized &amp; AIT Programs</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>Send <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/NCIT_Standard_Release_Tool_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> standard release reminders</a> to those who haven't completed them — use the <a class="doc-link" href="https://clearlearning.github.io/automation/StandardReleaseChecker.html" target="_blank"><span class="doc-link-icon">🔧</span> NCIT Standard Release Status Report tool</a>.</p>
+                </div>
+              </div>
+              <div class="exception-callout exc-elpr">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">ELPR</span>
+                  <span>Executive Leadership Program for Regulators</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>Send reminders for the following pre-work items:</p>
+                  <ul>
+                    <li>Questionnaire</li>
+                    <li>EQ Survey results</li>
+                    <li>Sample Annual Report submission</li>
+                  </ul>
+                  <p style="margin-top:10px;">See also: <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/EQ_Survey_Process_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> EQ Survey Process Guide</a></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHASE 5 -->
+        <div class="phase-card" id="ipt-p5">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 5</div>
+              <div class="phase-title">On-Site Cohort Management</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li><span class="check-box"></span><span>Check in with venue</span></li>
+              <li><span class="check-box"></span><span>Set up venue meeting space</span></li>
+              <li><span class="check-box"></span><span>Check in attendees</span></li>
+              <li><span class="check-box"></span><span>Give introductory remarks at beginning of program</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TakeAttendance_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Take attendance each day</a></span>
+              </li>
+              <li><span class="check-box"></span><span>Provide customer service and technical support</span></li>
+              <li><span class="check-box"></span><span>Assist instructors as needed</span></li>
+              <li><span class="check-box"></span><span>Pack up CLEAR property and prepare for shipping back to HQ</span></li>
+            </ul>
+
+            <div class="exception-group" style="margin-top:16px;">
+              <div class="exception-callout exc-elpr">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">ELPR</span>
+                  <span>Executive Leadership Program for Regulators</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>Learners are added to the portal <strong>one week before the In-Person Program</strong> to give them access to pre-work before attending the event.</p>
+                  <p><strong>The Welcome Email contains:</strong></p>
+                  <ul>
+                    <li>Event Location – Venue Name, Address, and Training Room Info</li>
+                    <li>Dates and start times</li>
+                    <li>Parking &amp; Meals info</li>
+                    <li>Program Information – login details</li>
+                    <li>Action Items – Pre-work assignments</li>
+                    <li>Onsite CLEAR contact</li>
+                  </ul>
+                  <p style="margin-top:10px;"><strong>The Pre-work consists of:</strong></p>
+                  <ul>
+                    <li><strong>A Questionnaire</strong> – basically a census of the cohort given to the instructors so they can tailor the program to the audience. See <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Attendee-Questionnaire-Report.docx" target="_blank"><span class="doc-link-icon">📄</span> Generating the Attendee Questionnaire Report</a></li>
+                    <li><strong>The What is Your Emotional Quotient? survey</strong> – an EQ Survey. Results are emailed to the learners the Friday before the event starts. See <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/EQ_Survey_Process_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> EQ Survey Process Guide</a></li>
+                    <li><strong>Uploading a sample annual report from their organization</strong> – optional, but reports are sent to instructors and used during the program. See <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Processing-Annual-Report-Submissions-for-ELPR.docx" target="_blank"><span class="doc-link-icon">📄</span> Processing Annual Report Submissions</a></li>
+                  </ul>
+                  <p style="margin-top:10px;">There is no final exam for this program. There are no status emails to send.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHASE 6 -->
+        <div class="phase-card" id="ipt-p6">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 6</div>
+              <div class="phase-title">Proctor the Examination</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li><span class="check-box"></span><span>After the review session send the attendees on a short break</span></li>
+              <li><span class="check-box"></span><span>Provide exam instructions and answer any questions</span></li>
+              <li><span class="check-box"></span><span>Proctor the exam</span></li>
+            </ul>
+            <div class="exception-group" style="margin-top:16px;">
+              <div class="exception-callout exc-ncit">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">NCIT</span>
+                  <span>NCIT Basic – Post-Exam Note</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>When you close out the exam you will see the application for certification. You don't have to complete that now — you can come back to it later. It goes to it automatically because it's the next lesson in the program.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHASE 7 -->
+        <div class="phase-card" id="ipt-p7">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 7</div>
+              <div class="phase-title">Close Out the Cohort</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ExamReportGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Pull the NCIT Exam status report using the Exam Report Generator</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/exam-reporting.html" target="_blank"><span class="doc-link-icon">🔧</span> Exam Report Generator tool</a>
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Exports exam results from TalentLMS directly</span></li>
+                    <li><span class="sub-dot"></span><span>Import payment verification from Novi for the cohort</span></li>
+                    <li><span class="sub-dot"></span><span>Export the Credly upload template and import to issue badges</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li><span class="check-box"></span><span>Communicate with attendees who fail the exam and follow retesting procedure</span></li>
+              <li><span class="check-box"></span><span>Monitor for certificate requests via TalentLMS and Wufoo form and process as appropriate — use the <a class="doc-link" href="https://clearlearning.github.io/automation/lms-user-lookup.html" target="_blank"><span class="doc-link-icon">🔧</span> User Lookup tool</a> to verify completion and issue certificates</span></li>
+              <li><span class="check-box"></span><span>Pull module evaluation reports and share with instructors — use the <a class="doc-link" href="https://clearlearning.github.io/automation/mod-eval-reports.html" target="_blank"><span class="doc-link-icon">🔧</span> Module Evaluation Report Dashboard</a></span></li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TakeAttenanceNovi_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Mark attendance in Novi</a></span>
+              </li>
+              <li><span class="check-box"></span><span>Instructor emails – handled by Julie</span></li>
+            </ul>
+          </div>
+        </div>
+
+      </div><!-- /phase-stack IPT -->
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       VIRTUAL PROGRAMS
+  ══════════════════════════════════════════ -->
+  <div id="view-virtual" class="page-view">
+    <div class="content-shell">
+      <div class="page-header">
+        <div class="page-eyebrow">Virtual Programs</div>
+        <h2 class="page-title">End-to-End Process</h2>
+        <p class="page-desc">Follow these phases in sequence for every virtual cohort. Expand a phase to see the full task list. Program-specific notes appear as callouts within each phase.</p>
+        <div class="page-rule"></div>
+      </div>
+
+      <div class="phase-stack">
+
+        <!-- V-PHASE 1 -->
+        <div class="phase-card phase-virtual" id="virt-p1">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 1</div>
+              <div class="phase-title">Create the Event</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li><span class="check-box"></span><span>Confirm dates for program</span></li>
+              <li><span class="check-box"></span><span>Marketing</span></li>
+              <li><span class="check-box"></span><span>Instructors</span></li>
+              <li><span class="check-box"></span><span>Facilitation staff</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/CreateNoviEvent-Process-Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> Create the event in Novi</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/create-novi-event.html" target="_blank"><span class="doc-link-icon">🔧</span> Novi Event Creator tool</a>
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Pre-requisites: Program Agenda &amp; Welcome Session Registration Link</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  Create the cohort folder in SharePoint and generate the following documents
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ProgramAgendaGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Create the Program &amp; Instructor agendas</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/agenda-generator.html" target="_blank"><span class="doc-link-icon">🔧</span> Program Agenda Generator</a></span></li>
+                    <li><span class="sub-dot"></span><span>Copy and paste the PowerPoint files for instructor-led sessions into the folder</span></li>
+                  </ul>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- V-PHASE 2 -->
+        <div class="phase-card phase-virtual" id="virt-p2">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 2</div>
+              <div class="phase-title">Set Up the Course in TalentLMS</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Create_Live_Sessions_in_TalentLMS_User_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> Create live sessions for the cohort</a>
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Create in TalentLMS</span></li>
+                    <li><span class="sub-dot"></span><span>Update live sessions in Zoom</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TalentLMS-Email-Template-Generator.docx" target="_blank"><span class="doc-link-icon">📄</span> Update the TalentLMS Welcome Email template</a> with cohort-specific information (if needed) — use the <a class="doc-link" href="https://clearlearning.github.io/automation/welcome-emails.html" target="_blank"><span class="doc-link-icon">🔧</span> Welcome Email Templates tool</a></span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/UpdateAsyncModEvalLink_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Update the module evaluation links</a> for the asynchronous &amp; instructor-led modules — use the <a class="doc-link" href="https://clearlearning.github.io/automation/survey-link-tool.html" target="_blank"><span class="doc-link-icon">🔧</span> Module Survey Link Generator</a></span>
+              </li>
+              <li><span class="check-box"></span><span>Host the Welcome Session via Zoom</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- V-PHASE 3 -->
+        <div class="phase-card phase-virtual" id="virt-p3">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 3</div>
+              <div class="phase-title">Import the Cohort into TalentLMS</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/UserImportTool_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Generate and upload the import file into TalentLMS</a> using the <a class="doc-link" href="https://clearlearning.github.io/automation/lms-user-import.html" target="_blank"><span class="doc-link-icon">🔧</span> User Import Tool</a> and watch for progress. The upload file:
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Creates the cohort</span></li>
+                    <li><span class="sub-dot"></span><span>Assigns the courses to the cohort</span></li>
+                    <li><span class="sub-dot"></span><span>Creates/updates user accounts</span></li>
+                    <li><span class="sub-dot"></span><span>Assigns the cohort and the courses to the users</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li><span class="check-box"></span><span>Check that the welcome email from TalentLMS was sent</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>Once upload is complete, <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Assign_Learners_to_Live_Sessions_User_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> register all users for all live sessions</a> assigned to their cohort</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+
+        <!-- V PHASE 4 -->
+        <div class="phase-card phase-virtual" id="virt-p4">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 4</div>
+              <div class="phase-title">Send Pre-Program Reminder Emails</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:14px;margin-bottom:14px;color:var(--text-muted);">Prior to the start of the program, send any reminders that need to be sent. What you send depends on the program:</p>
+            <div class="exception-group">
+              <div class="exception-callout exc-ncit">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">NCIT</span>
+                  <span>Basic, Specialized &amp; AIT Programs</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>Send <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/NCIT_Standard_Release_Tool_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> standard release reminders</a> to those who haven't completed them — use the <a class="doc-link" href="https://clearlearning.github.io/automation/StandardReleaseChecker.html" target="_blank"><span class="doc-link-icon">🔧</span> NCIT Standard Release Status Report tool</a>.</p>
+                </div>
+              </div>
+              <div class="exception-callout exc-elpr">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">ELPR</span>
+                  <span>Executive Leadership Program for Regulators</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>Send reminders for the following pre-work items:</p>
+                  <ul>
+                    <li>Questionnaire</li>
+                    <li>EQ Survey results</li>
+                    <li>Sample Annual Report submission</li>
+                  </ul>
+                  <p style="margin-top:10px;">See also: <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/EQ_Survey_Process_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> EQ Survey Process Guide</a></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- V-PHASE 5 -->
+        <div class="phase-card phase-virtual" id="virt-p5">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 5</div>
+              <div class="phase-title">Cohort Management</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li>
+                <span class="check-box"></span>
+                <span>Host live sessions – <a class="doc-link" href="https://clearorg.sharepoint.com/:f:/s/CLEARStaff/IgAUpmG7JV9CSJGLi1fVvQJZAXZwuk7J8tYgq3Qk9xws3sw?e=ScaUiH" target="_blank"><span class="doc-link-icon">📄</span> Facilitation guides for all virtual programs located here</a></span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TakeAttendance_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Take attendance</a></span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Update-Release-ILT-Recordings_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Release and monitor completion of makeup materials</a></span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/StatusReportGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Send mid-program status update</a> after the week one Q &amp; A live session — use the <a class="doc-link" href="https://clearlearning.github.io/automation/lms-status-reporting.html" target="_blank"><span class="doc-link-icon">🔧</span> Status Report Generator</a></span>
+              </li>
+              <li><span class="check-box"></span><span>Provide customer service and technical support</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/StatusReportGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Send end-of-program status update &amp; assign completed users to the exam</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/lms-status-reporting.html" target="_blank"><span class="doc-link-icon">🔧</span> Status Report Generator</a></span>
+              </li>
+            </ul>
+
+            <div class="exception-group" style="margin-top:16px;">
+              <div class="exception-callout exc-elpr">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">ELPR</span>
+                  <span>Executive Leadership Program for Regulators</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>Learners are added to the portal <strong>one week before their Welcome &amp; Introduction Session</strong> to give them access to pre-work before attending live sessions. The Welcome Email contains the date, time, and URL for the Welcome &amp; Introduction Session.</p>
+                  <p><strong>The Pre-work consists of:</strong></p>
+                  <ul>
+                    <li><strong>A Questionnaire</strong> – a census of the cohort given to instructors so they can tailor the program. See <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Attendee-Questionnaire-Report.docx" target="_blank"><span class="doc-link-icon">📄</span> Generating the Attendee Questionnaire Report</a></li>
+                    <li><strong>The What is Your Emotional Quotient? survey</strong> – Results are emailed to the learners after the Welcome &amp; Introduction session. See <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/EQ_Survey_Process_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> EQ Survey Process Guide</a></li>
+                    <li><strong>Uploading a sample annual report from their organization</strong> – optional, reports are sent to instructors for use during the program. See <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Processing-Annual-Report-Submissions-for-ELPR.docx" target="_blank"><span class="doc-link-icon">📄</span> Processing Annual Report Submissions</a></li>
+                  </ul>
+                  <p style="margin-top:10px;">There is no final exam for this program. There are no status emails to send.</p>
+                </div>
+              </div>
+              <div class="exception-callout exc-BMT">
+                <div class="exception-callout-header" onclick="toggleException(this)">
+                  <span class="exc-badge">BMT</span>
+                  <span>So, You Think You Want to be a Board or Council Member</span>
+                  <span class="exc-chevron">▼</span>
+                </div>
+                <div class="exception-body">
+                  <p>This program also contains the EQ Survey but it also contains the Communication Styles Survey. Use the <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/EQ_Survey_Process_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> EQ Survey Process Guide</a> but select this course from the main page. The communications style quiz results will be processed with the EQ results for this course and the results from both surveys will be included in their email.</p>
+                  <p>Once a month check for newly completed surveys in this course and send emails as appropriate. No instructor emails will be generated for this course.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- V-PHASE 6 -->
+        <div class="phase-card phase-virtual" id="virt-p6">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 6</div>
+              <div class="phase-title">Examination Window</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li><span class="check-box"></span><span>Monitor users who did not complete the program on time; assign the exam once they complete if still in the examination window</span></li>
+              <li><span class="check-box"></span><span>Monitor cohort exam completion</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ExamReportGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Send reminder emails</a> one week before and one day before the examination closes to anyone who has not yet taken the exam — use the <a class="doc-link" href="https://clearlearning.github.io/automation/exam-reporting.html" target="_blank"><span class="doc-link-icon">🔧</span> Exam Report Generator</a>
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Part 3 of the linked document</span></li>
+                  </ul>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- V-PHASE 7 -->
+        <div class="phase-card phase-virtual" id="virt-p7">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Phase 7</div>
+              <div class="phase-title">Close Out the Cohort</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <ul class="checklist">
+              <li>
+                <span class="check-box"></span>
+                <span>
+                  <a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ExamReportGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Pull the NCIT Exam status report using the Exam Report Generator</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/exam-reporting.html" target="_blank"><span class="doc-link-icon">🔧</span> Exam Report Generator tool</a>
+                  <ul class="sub-items">
+                    <li><span class="sub-dot"></span><span>Exports exam results from TalentLMS directly</span></li>
+                    <li><span class="sub-dot"></span><span>Import payment verification from Novi for the cohort</span></li>
+                    <li><span class="sub-dot"></span><span>Export the Credly upload template and import to issue badges</span></li>
+                  </ul>
+                </span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ExamReportGenerator_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Communicate with attendees who fail the exam and follow retesting procedure</a> – Part 5 of the linked document</span>
+              </li>
+              <li><span class="check-box"></span><span>Monitor for certificate requests via TalentLMS and Wufoo form and process as appropriate</span></li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Module_Evaluation_Report_Generator_User_Guide.docx" target="_blank"><span class="doc-link-icon">📄</span> Pull module evaluation reports and share with instructors</a> — use the <a class="doc-link" href="https://clearlearning.github.io/automation/mod-eval-reports.html" target="_blank"><span class="doc-link-icon">🔧</span> Module Evaluation Report Dashboard</a></span>
+              </li>
+              <li>
+                <span class="check-box"></span>
+                <span><a class="doc-link" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TakeAttenanceNovi_ProcessGuide.docx" target="_blank"><span class="doc-link-icon">📄</span> Mark attendance in Novi</a></span>
+              </li>
+              <li><span class="check-box"></span><span>Instructor emails – handled by Julie</span></li>
+            </ul>
+          </div>
+        </div>
+
+      </div><!-- /phase-stack Virtual -->
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TOOLS & PLATFORMS
+  ══════════════════════════════════════════ -->
+  <div id="view-tools" class="page-view">
+    <div class="content-shell">
+      <div class="page-header">
+        <div class="page-eyebrow">Reference</div>
+        <h2 class="page-title">Tools &amp; Platforms</h2>
+        <p class="page-desc">All process guides organized by the platform they live in. Each link opens the full guide in a new tab.</p>
+        <div class="page-rule"></div>
+      </div>
+
+      <div class="platform-stack">
+
+        <!-- HTML TOOLS DIRECTORY -->
+        <div class="platform-card" id="plat-tools-dir">
+          <div class="platform-card-header" onclick="togglePlatform(this)">
+            <div class="platform-icon plat-gold">🔧</div>
+            <div class="platform-header-text">
+              <div class="platform-name">HTML Tools Directory</div>
+              <div class="platform-desc">All CLEAR Learning automation tools — direct links to every tool</div>
+            </div>
+            <div class="platform-chevron">▼</div>
+          </div>
+          <div class="platform-body">
+            <div class="guide-links">
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/tools-index.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Admin Tools Dashboard</div><div class="glr-desc">Central hub for all CLEAR Learning administrative tools</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/agenda-generator.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Program Agenda Generator</div><div class="glr-desc">Create and update program &amp; instructor agendas; export calendar invites</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/create-novi-event.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Novi Event Creator</div><div class="glr-desc">Create Novi event listings for all CLEAR Learning programs</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/welcome-emails.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Welcome Email Templates</div><div class="glr-desc">Generate and paste welcome email HTML into TalentLMS Events Engine</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/lms-user-import.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">User Import Tool</div><div class="glr-desc">Import cohorts from Novi into TalentLMS</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/StandardReleaseChecker.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">NCIT Standard Release Status Report</div><div class="glr-desc">Check completion status and generate reminder emails</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/lms-status-reporting.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Status Report Generator</div><div class="glr-desc">Generate mid-program and end-of-program status emails; assign final exams</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/scorm-reader.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Self Study Progress Checker</div><div class="glr-desc">Check individual learner SCORM progress</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/exam-reporting.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Exam Report Generator</div><div class="glr-desc">Pull exam data, import payments, send reminders, issue Credly badges</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/lms-user-lookup.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">User Lookup Tool</div><div class="glr-desc">Look up individual learners — check completion, payment, and issue certificates</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/litmos-lookup.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Litmos Historical Lookup</div><div class="glr-desc">Look up completion records for NCIT programs prior to April 2023</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/EQ-Survey-Results.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">EQ Survey Automation</div><div class="glr-desc">Generate EQ and Communications Style result emails for ELPR and SS4R</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/NCITB_Supervisor-Review.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">NCIT Supervisor Form Response Dashboard</div><div class="glr-desc">Review and process NCIT Basic supervisor certification applications</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/survey-link-tool.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Module Survey Link Generator</div><div class="glr-desc">Generate SurveyMonkey URLs and QR codes for module evaluations</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/mod-eval-reports.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Module Evaluation Report Dashboard</div><div class="glr-desc">Generate instructor PDF reports from module evaluation data</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/evaldataupdater.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Master Instructor File Updater</div><div class="glr-desc">Append new evaluation data to the Master Instructor Workbook</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/surveylink-bulkgen.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">Bulk Survey Link Generator</div><div class="glr-desc">Generate multiple survey links in bulk</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- TALENTLMS -->
+        <div class="platform-card" id="plat-lms">
+          <div class="platform-card-header" onclick="togglePlatform(this)">
+            <div class="platform-icon plat-blue">🎓</div>
+            <div class="platform-header-text">
+              <div class="platform-name">TalentLMS</div>
+              <div class="platform-desc">Course setup, live sessions, attendance, and learner management</div>
+            </div>
+            <div class="platform-chevron">▼</div>
+          </div>
+          <div class="platform-body">
+            <div class="guide-links">
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Create_Live_Sessions_in_TalentLMS_User_Guide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Create Live Sessions in TalentLMS</div><div class="glr-desc">Virtual &amp; in-person session creation, Zoom configuration, survey link attachment</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Assign_Learners_to_Live_Sessions_User_Guide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Assign Learners to Live Sessions</div><div class="glr-desc">Bulk assignment of cohort members to ILT sessions</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TakeAttendance_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Update Completion Status for Live Sessions</div><div class="glr-desc">Mark attendance for virtual and in-person programs in TalentLMS</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Update-Release-ILT-Recordings_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Update &amp; Release Live Session Recordings</div><div class="glr-desc">Vimeo upload, editing, embed code, and TalentLMS release</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/UpdateAsyncModEvalLink_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Updating Module Evaluation Links</div><div class="glr-desc">SurveyMonkey URL generation for async modules, virtual ILT, and in-person sessions — use the <strong>Module Survey Link Generator</strong></div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/survey-link-tool.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Module Survey Link Generator</div><div class="glr-desc">Generate SurveyMonkey URLs and QR codes for module evaluations</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TalentLMS-Email-Template-Generator.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">TalentLMS Email Template Generator</div><div class="glr-desc">Generate and paste welcome email HTML into TalentLMS Events Engine</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/welcome-emails.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Welcome Email Templates Tool</div><div class="glr-desc">Browser-based tool for generating cohort-specific welcome email HTML</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOVI AMS -->
+        <div class="platform-card" id="plat-novi">
+          <div class="platform-card-header" onclick="togglePlatform(this)">
+            <div class="platform-icon plat-red">🗂️</div>
+            <div class="platform-header-text">
+              <div class="platform-name">Novi AMS</div>
+              <div class="platform-desc">Event creation, attendee management, and attendance marking</div>
+            </div>
+            <div class="platform-chevron">▼</div>
+          </div>
+          <div class="platform-body">
+            <div class="guide-links">
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/CreateNoviEvent-Process-Guide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Using the Novi Event Creator Tool</div><div class="glr-desc">Create event listings for all CLEAR Learning programs and delivery formats</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/create-novi-event.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Novi Event Creator Tool</div><div class="glr-desc">Browser-based tool for creating Novi events</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/TakeAttenanceNovi_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Mark Attendees as Attended in Novi</div><div class="glr-desc">Batch-mark registrants as attended after a program completes</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- AUTOMATION DASHBOARD -->
+        <div class="platform-card" id="plat-autodash">
+          <div class="platform-card-header" onclick="togglePlatform(this)">
+            <div class="platform-icon plat-gold">⚙️</div>
+            <div class="platform-header-text">
+              <div class="platform-name">Automation Dashboard</div>
+              <div class="platform-desc">CLEAR Learning administrative tools — learner import, status reports, and more</div>
+            </div>
+            <div class="platform-chevron">▼</div>
+          </div>
+          <div class="platform-body">
+            <div class="guide-links">
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/tools-index.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Admin Tools Dashboard</div><div class="glr-desc">Central hub — access all tools from one place</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ProgramAgendaGenerator_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Program Agenda Generator — Process Guide</div><div class="glr-desc">Create and update program &amp; instructor agendas; export Outlook calendar invites</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/agenda-generator.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Program Agenda Generator Tool</div><div class="glr-desc">Browser-based agenda creation tool</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/UserImportTool_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">User Import Tool — Process Guide</div><div class="glr-desc">Import cohorts from Novi into TalentLMS — create accounts, groups, and course assignments</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/lms-user-import.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 User Import Tool</div><div class="glr-desc">Browser-based cohort import tool</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/NCIT_Standard_Release_Tool_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">NCIT Standard Release Status Report — Process Guide</div><div class="glr-desc">Check Standard Release completion and send reminder emails</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/StandardReleaseChecker.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 NCIT Standard Release Status Report Tool</div><div class="glr-desc">Browser-based standard release checker and email generator</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/StatusReportGenerator_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Status Report Generator — Process Guide</div><div class="glr-desc">Generate mid-program and end-of-program status emails; assign final exams</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/lms-status-reporting.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Status Report Generator Tool</div><div class="glr-desc">Browser-based status report and exam assignment tool</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/scorm-reader.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Self Study Progress Checker</div><div class="glr-desc">Check individual learner SCORM module progress</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/UserLookupTool_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">User Lookup Tool — Process Guide</div><div class="glr-desc">Verify course completion, payment status, and issue certificates</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/lms-user-lookup.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 User Lookup Tool</div><div class="glr-desc">Look up individual learners — completion, payment, and certificate issuance</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/LitmosHistoricalData_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Litmos Historical Data — Process Guide</div><div class="glr-desc">Look up completion records for NCIT programs prior to April 2023</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/litmos-lookup.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Litmos Historical Lookup Tool</div><div class="glr-desc">Browser-based Litmos record search</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVALUATIONS & SURVEYS -->
+        <div class="platform-card" id="plat-monkey">
+          <div class="platform-card-header" onclick="togglePlatform(this)">
+            <div class="platform-icon plat-grey">📊</div>
+            <div class="platform-header-text">
+              <div class="platform-name">Evaluations &amp; Surveys</div>
+              <div class="platform-desc">Module evaluations, EQ surveys, questionnaires, and annual reports</div>
+            </div>
+            <div class="platform-chevron">▼</div>
+          </div>
+          <div class="platform-body">
+            <div class="guide-links">
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Module_Evaluation_Report_Generator_User_Guide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Module Evaluation Report Generator — Process Guide</div><div class="glr-desc">Generate instructor PDF reports and update the Master Instructor Workbook</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/mod-eval-reports.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Module Evaluation Report Dashboard</div><div class="glr-desc">Browser-based evaluation report tool</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/evaldataupdater.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Master Instructor File Updater</div><div class="glr-desc">Append new evaluation data to the Master Instructor Workbook</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/EQ_Survey_Process_Guide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">EQ Survey Report Emails — Process Guide</div><div class="glr-desc">Generate learner and instructor EQ result emails for ELPR and BMT programs</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/EQ-Survey-Results.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 EQ Survey Automation Tool</div><div class="glr-desc">Generate EQ and Communications Style result emails</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/survey-link-tool.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Module Survey Link Generator</div><div class="glr-desc">Generate SurveyMonkey URLs and QR codes for module evaluations</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/surveylink-bulkgen.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Bulk Survey Link Generator</div><div class="glr-desc">Generate multiple survey links in bulk</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Attendee-Questionnaire-Report.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Attendee Questionnaire Report</div><div class="glr-desc">Pull and distribute ELPR and ACRG questionnaire reports to instructors</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/Processing-Annual-Report-Submissions-for-ELPR.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Processing Annual Report Submissions (ELPR)</div><div class="glr-desc">Download participant annual reports from TalentLMS and distribute to instructors</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXAMS & CREDENTIALS -->
+        <div class="platform-card" id="plat-testing">
+          <div class="platform-card-header" onclick="togglePlatform(this)">
+            <div class="platform-icon plat-red">🏅</div>
+            <div class="platform-header-text">
+              <div class="platform-name">Exams &amp; Credentials</div>
+              <div class="platform-desc">Exam reporting, Credly badge issuance, and certification review</div>
+            </div>
+            <div class="platform-chevron">▼</div>
+          </div>
+          <div class="platform-body">
+            <div class="guide-links">
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/ExamReportGenerator_ProcessGuide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">Exam Report Generator — Process Guide</div><div class="glr-desc">Pull exam data, import payment verification, send reminders, and issue Credly badges</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/exam-reporting.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 Exam Report Generator Tool</div><div class="glr-desc">Browser-based exam reporting and badge issuance tool</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearorg.sharepoint.com/sites/CLEARLearning/Shared%20Documents/Process%20Documentation/Development/NCIT_SupervisorCert_Review_Tool_Process_Guide.docx" target="_blank">
+                <div class="glr-text"><div class="glr-title">NCIT Supervisor Certification Review Tool — Process Guide</div><div class="glr-desc">Review and process supervisor verification forms; verify payment and issue certificates</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+              <a class="guide-link-row" href="https://clearlearning.github.io/automation/NCITB_Supervisor-Review.html" target="_blank">
+                <div class="glr-text"><div class="glr-title">🔧 NCIT Supervisor Form Response Dashboard</div><div class="glr-desc">Browser-based supervisor certification review tool</div></div>
+                <span class="glr-arrow">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /platform-stack -->
+    </div>
+  </div>
+<!-- Search results overlay -->
+<div id="search-results">
+  <div class="search-results-shell">
+    <div class="search-results-header" id="search-results-header"></div>
+    <div id="search-results-list"></div>
+  </div>
+</div>
+
+  <!-- ══════════════════════════════════════════
+       FACILITATOR GUIDES
+  ══════════════════════════════════════════ -->
+  <div id="view-facilitation" class="page-view">
+    <div class="content-shell">
+      <div class="page-header">
+        <div class="page-eyebrow">Facilitator Guides</div>
+        <h2 class="page-title">Session Facilitation</h2>
+        <p class="page-desc">Scripts, pre-session checklists, poll schedules, and breakout room instructions for every NCIT and related program. For internal facilitator use only.</p>
+        <div class="page-rule"></div>
+      </div>
+
+      <div class="session-stack">
+
+        <!-- UNIVERSAL GUIDELINES -->
+        <div class="phase-card" id="fac-universal">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">All Programs</div>
+              <div class="phase-title">Universal Facilitator Guidelines</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">These guidelines apply to <strong>every session across every program</strong>. Review before each session.</p>
+
+            <div class="guidelines-grid">
+              <div class="guideline-item">
+                <div class="guideline-num">1.1</div>
+                <div class="guideline-body">
+                  <h4>Time Zones</h4>
+                  <p>All session times in this guide are in Eastern Time (ET). The program agenda sent to participants reflects the exact time zone in effect for each cohort. Always confirm the current time zone before each session and communicate it clearly to participants.</p>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.2</div>
+                <div class="guideline-body">
+                  <h4>Instructors</h4>
+                  <p>Instructor names and bios are not listed in this guide, as instructors vary by cohort. Before each session:</p>
+                  <ul>
+                    <li>Confirm the assigned instructor with the Program Coordinator.</li>
+                    <li>Look up their bio in the Instructor Bios reference document (SharePoint → CLEAR Learning Facilitation).</li>
+                    <li>Have the bio ready to read aloud during the introduction.</li>
+                    <li>Fill in [Instructor Name] and [Instructor Bio] placeholders in the scripts below.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.3</div>
+                <div class="guideline-body">
+                  <h4>Before Every Session — Pre-Session Checklist</h4>
+                  <ul>
+                    <li>Log into Zoom 15 minutes early.</li>
+                    <li>Admit the instructor from the waiting room and make them the Co-Host.</li>
+                    <li>Confirm all polls are loaded in Zoom. If missing, create them before participants arrive.</li>
+                    <li>For sessions with videos, have all video links open and tested in your browser.</li>
+                    <li>Have the participant guide PDF ready to drop into chat the moment the instructor begins speaking.</li>
+                    <li>Follow along with the slide deck throughout the session.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.4</div>
+                <div class="guideline-body">
+                  <h4>During Every Session — Ongoing Responsibilities</h4>
+                  <ul>
+                    <li>Monitor the chat continuously for raised hands, direct messages, and technical issues.</li>
+                    <li>If the instructor asks whether anything is in the chat, respond promptly (or confirm it is empty).</li>
+                    <li>When participants respond to instructor questions in chat: wait for a natural pause, read aloud, and confirm it has not already been mentioned.</li>
+                    <li>Post time reminders in the chat as needed.</li>
+                    <li>Camera: turn off after your opening remarks; turn back on for closing.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.5</div>
+                <div class="guideline-body">
+                  <h4>Standard Housekeeping Script</h4>
+                  <div class="script-block" style="margin-top:8px;">
+                    <span class="script-label">Script</span>
+                    "Before I turn things over to the instructor, just a few housekeeping notes: If you haven't yet, we encourage you to turn your camera on, if you're able. If you need to turn it off at any time, that is completely fine. Please keep your line muted when you're not speaking to help minimize background noise. If you have any questions over today's content, please do not hesitate to ask. If you're not comfortable unmuting, you can send your questions or comments to me directly via chat. If you'd like to unmute, please use the Raise Hand feature under the Reactions button on Zoom. When sending a chat message, toggle the blue name to CLEAR LEARNING — not to the instructor, as they will not be monitoring the chat box. I'll also be placing the participant guide in the chat shortly — it's also available in the learning portal for your reference."
+                  </div>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.6</div>
+                <div class="guideline-body">
+                  <h4>Instructor Introduction Script</h4>
+                  <div class="script-block" style="margin-top:8px;">
+                    <span class="script-label">Script</span>
+                    "Now I'd like to introduce our instructor for today, [Instructor Name]. [Read bio from Instructor Bios reference document.] Please do not hesitate to ask any questions you might have — with that being said, I will turn it over to you, [Instructor Name]!"
+                  </div>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.7</div>
+                <div class="guideline-body">
+                  <h4>Sharing the Participant Guide</h4>
+                  <p>During the first session of a program, as soon as the instructor begins speaking, paste the participant guide PDF into the Zoom chat.</p>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.8</div>
+                <div class="guideline-body">
+                  <h4>Break Script &amp; Chat Reminder</h4>
+                  <div class="script-block" style="margin-top:8px;">
+                    <span class="script-label">Break Script</span>
+                    "We're going to pause here for a short break — about 10 minutes. Please stay on the session, and I'll put the return time in the chat for you. See you back at [return time, ET]!"
+                  </div>
+                  <div class="script-block">
+                    <span class="script-label">Post-Break Return Script</span>
+                    "Welcome back, everyone! Hope you had a chance to stretch. If you could please turn your cameras back on, we are going to resume the session whenever you are ready, [Instructor Name]."
+                  </div>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.13</div>
+                <div class="guideline-body">
+                  <h4>Legal Disclaimer Script</h4>
+                  <p style="margin-bottom:8px;">Required for <strong>IRSM and DDI programs</strong> — read at the start of every workshop.</p>
+                  <div class="script-block" style="margin-top:8px;">
+                    <span class="script-label">Script</span>
+                    "The information presented in this session is generic and intended to be informational only. It is not legal advice, guidance, or direction and is not to be construed as countermanding any existing law, rule, or regulation under any circumstance. CLEAR-NCIT strongly recommends that all questions concerning the applicability of this material be resolved with your designated legal counsel before exercising any official authority."
+                  </div>
+                </div>
+              </div>
+              <div class="guideline-item">
+                <div class="guideline-num">1.14</div>
+                <div class="guideline-body">
+                  <h4>Standard Closing Script Variations</h4>
+                  <div class="script-block" style="margin-top:8px;">
+                    <span class="script-label">General Closing</span>
+                    "Thank you all for your participation in today's session. Please continue working on the self-study materials. Please do not hesitate to reach out if you have any questions."
+                  </div>
+                  <div class="script-block">
+                    <span class="script-label">With Evaluation Reminder</span>
+                    "Thank you all for your participation in today's session. There will be an evaluation that appears in Zoom once I close the session. Please do not hesitate to reach out if you have any questions."
+                  </div>
+                  <div class="script-block">
+                    <span class="script-label">With Certificate Reminder</span>
+                    "Thank you all for your participation in today's session. You will receive an email from the learning portal on how to download your certificate of completion."
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NCIT BASIC -->
+        <div class="phase-card" id="fac-ncit-basic">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+           <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">NCIT Basic Program</div>
+              <div class="phase-title">NCIT Basic — All Sessions</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">The NCIT Basic Program consists of a Welcome Session, five instructor-led content sessions, two Q&amp;A sessions, a Program Review, and an exam delivered over two weeks. All times are in Eastern Time (ET).</p>
+
+            <!-- Welcome Session -->
+            <div class="session-sub">Welcome Session</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Purpose &amp; Key Topics</span>
+              Orients new participants to program expectations, community guidelines, and the learning portal. No instructor — facilitated entirely by CLEAR Learning staff. Cover: CLEAR community guidelines and disclaimer, program agenda and session schedule, learning portal walkthrough (learner info, calendar view, participant guides, self-study, knowledge checks, module/program evaluations, instructor-led sessions, Module 5 Discussion Board, application for certification), standard release form reminder, and contact info.
+            </div>
+            <div class="fyi-box">
+              <span class="fyi-label">Facilitator Notes</span>
+              <ul>
+                <li>Session is recorded for CLEAR staff training purposes only — inform participants at the start.</li>
+                <li>Post program agenda in the chat.</li>
+                <li>Leave ample time for Q&amp;A — participants often have portal navigation questions.</li>
+                <li>Encourage email over phone for support (staff may be in sessions).</li>
+              </ul>
+            </div>
+
+            <!-- Session 1: Investigative Process -->
+            <div class="session-sub">Session 1 — Investigative Process</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>First live instructor-led session — participants receive the participant guide here.</li>
+                <li>One optional poll (Slide 19 — Investigative Process).</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the first Instructor Led session of the NCIT Basic Program! My name is [Facilitator Name], and I'll be your session facilitator for the Investigative Process session."
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 19 — Optional Poll:</strong> Investigative Process. At instructor's discretion. Also post participant guide in chat after this slide.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials. Tomorrow's session is the Week One Q&amp;A — not mandatory, but highly recommended. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <!-- Week 1 Q&A -->
+            <div class="session-sub">Week One Q&amp;A</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>10 polls (2 per module — see poll schedule below).</li>
+                <li>Toggle chat to Host &amp; Co-host only at session start.</li>
+                <li>Not mandatory; no makeup materials; slides not provided.</li>
+                <li>Covers the most commonly missed knowledge check questions for the first five modules.</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Week One Q&amp;A session of the NCIT Basic Program. This session does not have make-up materials and is not mandatory. We will be going over the most commonly missed knowledge check questions for the first five modules. There are two polls per module — not graded and answers are anonymous. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="fyi-box">
+              <span class="fyi-label">Poll Schedule — Launch one at a time, show correct answers after each</span>
+              <ul>
+                <li>Slide 2 — Professional Conduct 1 &nbsp;|&nbsp; Slide 3 — Professional Conduct 2</li>
+                <li>Slide 6 — Principles of Administrative Law 1 &nbsp;|&nbsp; Slide 7 — Principles of Administrative Law 2</li>
+                <li>Slide 10 — Investigative Process 1 &nbsp;|&nbsp; Slide 11 — Investigative Process 2</li>
+                <li>Slide 14 — Principles of Evidence 1 &nbsp;|&nbsp; Slide 15 — Principles of Evidence 2</li>
+                <li>Slide 18 — Evidence Collection, Tagging &amp; Storage 1 &nbsp;|&nbsp; Slide 19 — Evidence Collection, Tagging &amp; Storage 2</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials. The next session is tomorrow over Interviewing Techniques. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <!-- Interviewing Techniques -->
+            <div class="session-sub">Session 2 — Interviewing Techniques</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>3 polls: Slides 13, 27, and 35.</li>
+                <li>1 breakout room activity: Slide 70 (may be skipped depending on timing).</li>
+                <li>Toggle chat to Host &amp; Co-host only at session start.</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Interviewing Techniques session of the NCIT Basic Program. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 13 — Poll 1</strong> (Covering) &nbsp;|&nbsp; <strong>Slide 27 — Poll 2</strong> (Recording) &nbsp;|&nbsp; <strong>Slide 35 — Poll 3</strong> (Lying). Each at instructor's discretion.</span></div>
+            <div class="breakout-row"><span class="poll-icon">👥</span><span><strong>Slide 70 — Breakout Room.</strong> May or may not occur depending on timing. Groups of 4–5. Do NOT include yourself or the instructor. Post breakout activity from learning portal in chat before opening rooms.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials — the next session is over Report Writing. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <!-- Report Writing -->
+            <div class="session-sub">Session 3 — Report Writing</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>6 polls — leave each up until 96% response rate OR instructor says to stop.</li>
+                <li>2 activities may be placed in the chat.</li>
+                <li>Participation-heavy session — mention this to participants at the start.</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Report Writing session of the NCIT Basic Program. This is a participation-heavy session — there will be quite a few polls. Please make sure you are answering them; these are not graded and will not be on the exam. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 21</strong> — Word Usage (10 questions): remind participants to answer each before submitting.</span></div>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 22</strong> — Plain English (3 questions).</span></div>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slides 23–28</strong> — Not polls; instructor may ask participants to respond in chat.</span></div>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 31</strong> — Not a poll. Facilitator or instructor reads 12 words; participants type answers in chat. Update chat to Everyone for this exercise.</span></div>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 36</strong> — Uncritical Inference Story A (6 questions). &nbsp;<strong>Slide 37</strong> — Uncritical Inference Story B (10 questions).</span></div>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 38</strong> — Two polls: launch Factual vs. NonFactual 1, then Factual vs. NonFactual 2.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials — the next session is over Testifying in Administrative &amp; Criminal Proceedings. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <!-- Testifying + Week 2 Q&A -->
+            <div class="session-sub">Session 4 — Testifying + Week Two Q&amp;A</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>2 videos — have open in your browser before the session:<br>
+                  <strong>True Grit:</strong> <a href="https://vimeo.com/744285115?share=copy" target="_blank" style="color:var(--blue);">https://vimeo.com/744285115</a><br>
+                  <strong>My Cousin Vinny:</strong> <a href="https://vimeo.com/460199459?share=copy" target="_blank" style="color:var(--blue);">https://vimeo.com/460199459</a>
+                </li>
+                <li>10 polls in the Q&amp;A portion (Slides 33–50).</li>
+                <li>Toggle chat to Host &amp; Co-host only at session start.</li>
+                <li>Session layout: first portion covers Module 10 (Testifying); final ~30 minutes cover Week 2 Q&amp;A.</li>
+                <li>Remind participants wearing earbuds or a headset is recommended — there are videos.</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Testifying in Administrative &amp; Criminal Proceedings + Week Two Q&amp;A session of the NCIT Basic Program. This session's layout is a bit different — the first portion covers Module 10, then the last 30 minutes will be Week 2 Q&amp;A. There are two videos in this session; if you are in a shared space, earbuds or a headset are recommended. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="action-block">
+              <span class="action-label">Video Cues</span>
+              <ul>
+                <li><strong>Slide 23 — True Grit:</strong> Closed captions shown (not 100% accurate). Video is quiet at beginning but gets louder.</li>
+                <li><strong>Slide 24 — My Cousin Vinny:</strong> Louder than previous video; no closed captions.</li>
+              </ul>
+            </div>
+            <div class="fyi-box">
+              <span class="fyi-label">Week 2 Q&amp;A Poll Schedule — Launch one at a time, show correct answers after each</span>
+              <ul>
+                <li>Slide 33 — Interviewing Techniques 1 &nbsp;|&nbsp; Slide 34 — Interviewing Techniques 2</li>
+                <li>Slide 37 — Investigator Safety 1 &nbsp;|&nbsp; Slide 38 — Investigator Safety 2</li>
+                <li>Slide 41 — Overview of Inspections 1 &nbsp;|&nbsp; Slide 42 — Overview of Inspections 2</li>
+                <li>Slide 45 — Report Writing 1 &nbsp;|&nbsp; Slide 46 — Report Writing 2</li>
+                <li>Slide 49 — Testifying in Admin 1 &nbsp;|&nbsp; Slide 50 — Testifying in Admin 2</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials if you have not finished them already. Our final session is the Program Review — not mandatory but highly encouraged. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <!-- Program Review -->
+            <div class="session-sub">Program Review</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Purpose</span>
+              The Program Review is the final live session. It highlights key exam concepts and walks participants through the exam process. Session materials and recordings are NOT provided.
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good morning/afternoon everyone, and welcome to the final day of the NCIT Basic Program! Before we get started, a few important notes: We do not provide session materials or a recorded version of this session, so please take thorough notes. If you have questions or would like us to go back over something, send a message directly to me in the chat or use the Raise Hand feature — we're happy to clarify as we go. The concepts we'll discuss today are not new, but this session highlights key points that are especially important for the exam. During the first part, the instructor will review main concepts. After that, I will walk you through the exam process and what to expect. Please keep questions focused on content for now — there will be time for exam-related questions during my portion. With that, I'll turn it over to our instructor, [Instructor Name]."
+            </div>
+          </div>
+        </div>
+
+        <!-- NCIT SPECIALIZED -->
+        <div class="phase-card" id="fac-ncit-spec">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">NCIT Specialized Program</div>
+              <div class="phase-title">NCIT Specialized — All Sessions</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">Instructor-led review sessions covering advanced topics. All times are in Eastern Time (ET).</p>
+
+            <div class="session-sub">Session 1 — Cognitive Memory Recall Technique</div>
+            <div class="fyi-box"><span class="fyi-label">Pre-Session Notes</span>First instructor-led session of the NCIT Specialized program.</div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the first Instructor Led session of the NCIT Specialized program. We will be reviewing the Cognitive Memory Recall Technique today! [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials."
+            </div>
+
+            <div class="session-sub">Session 2 — Investigative Report Development: Observation Skills</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              6 polls on Slide 16 — launch one at a time in order (1 through 6). For each: Launch → End Poll → Share Results → check "Show correct answers to all" → Stop Sharing → repeat.
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Investigative Report Development Module – Observation Skills session of the NCIT Specialized Program! [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 16</strong> — 6 Sequential Polls. Launch each individually in order 1 through 6.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials, and have a great weekend."
+            </div>
+
+            <div class="session-sub">Session 3 — Investigative Report Development</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              No polls or breakout rooms. Remind participants at closing: program review is the following day; no materials provided for that session.
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! We will be reviewing the Investigative Report Development Module today! [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials, and a reminder that the program review is tomorrow — we do not provide materials for that session."
+            </div>
+
+            <div class="session-sub">Session 4 — Introduction to Behavioral Analysis Interviewing (BAI)</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes — 3 Videos</span>
+              Have all open and tested in your browser before the session:
+              <ul>
+                <li><strong>Stan Walters:</strong> <a href="https://vimeo.com/532417093/c23cb295a9" target="_blank" style="color:var(--blue);">https://vimeo.com/532417093/c23cb295a9</a></li>
+                <li><strong>BAI Mock Interview – Stress-Induced Response:</strong> <a href="https://vimeo.com/498517721?share=copy" target="_blank" style="color:var(--blue);">https://vimeo.com/498517721</a></li>
+                <li><strong>BAI Mock Interview – Normal Response:</strong> <a href="https://vimeo.com/498438557/cd055ac66d" target="_blank" style="color:var(--blue);">https://vimeo.com/498438557/cd055ac66d</a></li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! We will be reviewing the Introduction to Behavioral Analysis Interviewing! [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="action-block">
+              <span class="action-label">Video Cues</span>
+              <ul>
+                <li><strong>Slide 5 — BAI Mock Interview – Stress-Induced Response:</strong> No closed captions, volume is louder. Share screen. Immediately repeat screen-share process for the Normal Response video.</li>
+                <li><strong>Slide 5 (continued) — BAI Mock Interview – Normal Response</strong></li>
+                <li><strong>Slide 8 — Stan Walters</strong></li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials."
+            </div>
+
+            <div class="session-sub">Session 5 — Advanced Investigative Analysis</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              This instructor tends to speak quickly. If participants indicate they need a slower pace, politely relay that to the instructor.
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Advanced Investigative Analysis Module Review session of the NCIT Specialized Program! [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please continue working on the self-study materials, and have a great weekend."
+            </div>
+          </div>
+        </div>
+
+        <!-- SAB -->
+        <div class="phase-card" id="fac-sab">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Skills for the Regulatory Administrator</div>
+              <div class="phase-title">Staffing a Board (SAB) — All Modules</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">Three-module program delivered as 3-hour live sessions. All times are in Eastern Time (ET).</p>
+
+            <div class="session-sub">Module 1 — Characteristics of Regulatory Governance</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>Toggle chat to Everyone at session start.</li>
+                <li>4 large group discussions: Slides 11, 12, 34, and 38.</li>
+                <li>1 breakout activity: Slide 29 (15 minutes, groups of 3–4).</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to Module 1: Characteristics of Regulatory Governance — the Skills for the Regulatory Administrator Staffing a Board Program! My name is [Facilitator Name], and I'll be your session facilitator. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">💬</span><span><strong>Slides 11 &amp; 12 — Large Group Discussions.</strong> Instructor facilitates. Monitor for raised hands the instructor may miss. Relay any chat responses.</span></div>
+            <div class="breakout-row">
+              <span class="poll-icon">👥</span>
+              <span><strong>Slide 29 — Breakout Room (15 minutes, groups of 3–4).</strong> Do NOT include yourself or the instructor. Post in chat before opening: <em>"Think about your organization's culture and consider: What are some characteristics of weak board culture? Does your Board/Organization experience any of these? What strategies can you employ to overcome these challenges? What are some strengths in your board culture? How do these strengths help your board perform effectively? What are the biggest risks to the culture of a Board? How could you address this risk?"</em></span>
+            </div>
+            <div class="poll-row"><span class="poll-icon">💬</span><span><strong>Slides 34 &amp; 38 — Large Group Discussions.</strong> Monitor raised hands and chat; relay to instructor as needed.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please view the video in the learning portal prior to Module 2. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <div class="session-sub">Module 2 — Leading a Board: Effective Board Support</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>Toggle chat to Everyone at session start.</li>
+                <li>2 links to post in chat: Slides 8 and 22.</li>
+                <li>2 large group discussions: Slides 20 and 21.</li>
+                <li>1 breakout activity: Slide 26 (15 minutes, groups of 4–5).</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to Module 2: Leading a Board — The Effective Board Support session of the Skills for the Regulatory Administrator Staffing a Board Program! My name is [Facilitator Name], and I'll be your session facilitator. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">🔗</span><span><strong>Slide 8</strong> — Post link in chat.</span></div>
+            <div class="poll-row"><span class="poll-icon">💬</span><span><strong>Slides 20 &amp; 21 — Large Group Discussions.</strong> Monitor raised hands and chat; relay to instructor as needed.</span></div>
+            <div class="poll-row"><span class="poll-icon">🔗</span><span><strong>Slide 22</strong> — Post link in chat.</span></div>
+            <div class="breakout-row">
+              <span class="poll-icon">👥</span>
+              <span><strong>Slide 26 — Breakout Room (15 minutes, groups of 4–5).</strong> Do NOT include yourself or the instructor. Post in chat before opening: <em>"Thinking about the characteristics of a Collaborative Leader, consider: Which of these is my strength? Where do I need improvement? Share anecdotes if comfortable doing so."</em></span>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please view the video in the learning portal prior to Module 3. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <div class="session-sub">Module 3 — Tips &amp; Tactics for Staffing a Board</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>Toggle chat to Everyone at session start.</li>
+                <li>2 large group discussions: Slides 38 and 41.</li>
+                <li>No breakout room in this session.</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to Module 3: Tips &amp; Tactics for Staffing a Board — the Skills for the Regulatory Administrator Staffing a Board Program! My name is [Facilitator Name], and I'll be your session facilitator. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">💬</span><span><strong>Slides 38 &amp; 41 — Large Group Discussions.</strong> Monitor raised hands and chat; relay to instructor as needed.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please fill out the program survey in the learning portal. You will receive a certificate of completion if you attended the live sessions."
+            </div>
+          </div>
+        </div>
+
+        <!-- IRSM -->
+        <div class="phase-card" id="fac-irsm">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">IRSM Program</div>
+              <div class="phase-title">Investigating Reports of Sexual Misconduct — Both Workshops</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">Two live workshops plus self-paced materials. Participants must complete self-paced materials AND attend both workshops to receive a certificate. All times are in Eastern Time (ET).</p>
+
+            <div class="session-sub">Workshop 1</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              <ul>
+                <li>First workshop — participants receive the participant guide here.</li>
+                <li>1 breakout room activity: Slide 23 (20 minutes).</li>
+                <li>Slide 9: instructor will pose a group question — monitor chat and read responses aloud at a natural pause.</li>
+              </ul>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Investigating Reports of Sexual Misconduct, Workshop 1. My name is [Facilitator Name], and I'll be your session facilitator. Before we begin, I want to remind everyone: [Legal Disclaimer — Section 1.13.] [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="breakout-row">
+              <span class="poll-icon">👥</span>
+              <span><strong>Slide 23 — Breakout Room (20 minutes, groups of 4–5).</strong> Do NOT include yourself or the instructor. Place the transcript in the chat (also available in the learning portal) before opening rooms.</span>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. Please do not forget to complete the self-study and watch the video/read the transcript for Workshop 2 in the learning portal. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <div class="session-sub">Workshop 2</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              1 breakout room activity: Slide 21 (20 minutes).
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Investigating Reports of Sexual Misconduct, Workshop 2. Before we begin, I want to remind everyone: [Legal Disclaimer — Section 1.13.] [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="breakout-row">
+              <span class="poll-icon">👥</span>
+              <span><strong>Slide 21 — Breakout Room (20 minutes, groups of 4–5).</strong> Do NOT include yourself or the instructor. Place the transcript in the chat (also available in the learning portal) before opening rooms.</span>
+            </div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. There will be an evaluation that appears in Zoom once I close the session. A reminder: you must complete the self-paced materials and attend both workshops to receive your certificate of completion. Please allow until end of day today for certificates to be issued and attendance to be taken."
+            </div>
+          </div>
+        </div>
+
+        <!-- DDI -->
+        <div class="phase-card" id="fac-ddi">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">DDI Program</div>
+              <div class="phase-title">Drug Diversion Investigations — Both Workshops</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">Two live workshops. Participants receive a certificate of completion if they attended both sessions. All times are in Eastern Time (ET).</p>
+
+            <div class="session-sub">Workshop 1</div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Drug Diversion Investigations Workshop 1. My name is [Facilitator Name], and I'll be your session facilitator. Before we begin, I want to remind everyone: [Legal Disclaimer — Section 1.13.] [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">🔗</span><span><strong>Slide 6</strong> — Post link in chat. &nbsp; <strong>Slide 11</strong> — Post link in chat.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. There will be an evaluation that appears in Zoom once I close the session. Please do not hesitate to reach out if you have any questions."
+            </div>
+
+            <div class="session-sub">Workshop 2</div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to the Drug Diversion Investigations, Workshop 2. My name is [Facilitator Name], and I'll be your session facilitator. Before we begin, I want to remind everyone: [Legal Disclaimer — Section 1.13.] [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. There will be an evaluation that appears in Zoom once I close the session. Please do not hesitate to reach out if you have any questions. You will receive a certificate of completion in the learning portal if you attended both sessions."
+            </div>
+          </div>
+        </div>
+
+        <!-- STAND-ALONE -->
+        <div class="phase-card" id="fac-standalone">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Stand-Alone Sessions</div>
+              <div class="phase-title">Ethics &amp; Communication Skills Sessions</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <div class="fyi-box">
+              <span class="fyi-label">For Both Stand-Alone Sessions</span>
+              <ul>
+                <li>Instructor shares videos embedded in the slide deck — ensure they have shared their audio before starting.</li>
+                <li>Facilitator presents the first 5 slides before turning it over to the instructor.</li>
+              </ul>
+            </div>
+            <div class="action-block">
+              <span class="action-label">First 5 Slides — Facilitator Presents</span>
+              <ul>
+                <li><strong>Slide 1:</strong> Welcome participants; introduce yourself as facilitator.</li>
+                <li><strong>Slide 2:</strong> Webcam on, mics muted, raise hand to unmute, IM CLEAR Learning for chat questions or tech issues.</li>
+                <li><strong>Slide 3:</strong> Program disclaimer — content reflects CLEAR best practices.</li>
+                <li><strong>Slide 4:</strong> Be respectful, courteous, and professional.</li>
+                <li><strong>Slide 5:</strong> Session overview.</li>
+              </ul>
+            </div>
+
+            <div class="session-sub">Developing a Professional Attitude: Ethics for Regulatory Investigators</div>
+            <div class="fyi-box">
+              <span class="fyi-label">Pre-Session Notes</span>
+              2 poll sets: Slide 50 (16 questions) and Slide 51 (4 questions) — see slide deck for content. Ensure polls are loaded in Zoom before participants arrive.
+            </div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to Developing a Professional Attitude: Ethics for the Regulatory Investigators. My name is [Facilitator Name], and I'll be your session facilitator. Participation is key — if you have questions or relevant experience to share, please ask or share. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="poll-row"><span class="poll-icon">📊</span><span><strong>Slide 50</strong> — Poll (16 questions). &nbsp; <strong>Slide 51</strong> — Poll (4 questions). Follow standard poll procedure.</span></div>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. There will be an evaluation that appears in Zoom once I close the session. Please do not hesitate to reach out if you have any questions. You will receive an email from the learning portal on how to download your certificate of completion."
+            </div>
+
+            <div class="session-sub">Communication Skills and the Art of Persuasion</div>
+            <div class="script-block">
+              <span class="script-label">Opening Script</span>
+              "Good afternoon, everyone! Welcome to Communication Skills and the Art of Persuasion. My name is [Facilitator Name], and I'll be your session facilitator. Participation is key — if you have questions or relevant experience to share, please ask or share. [Standard housekeeping — Section 1.5.]"
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin:8px 0 4px;">[Use standard instructor introduction — Section 1.6]</p>
+            <div class="script-block">
+              <span class="script-label">Closing Script</span>
+              "Thank you all for your participation in today's session. There will be an evaluation that appears in Zoom once I close the session. Please do not hesitate to reach out if you have any questions. You will receive an email from the learning portal on how to download your certificate of completion."
+            </div>
+          </div>
+        </div>
+
+        <!-- EXAM FAQ -->
+        <div class="phase-card" id="fac-faq">
+          <div class="phase-card-header" onclick="togglePhase(this)">
+            <div class="phase-num" style="background:var(--burgundy);">✦</div>
+            <div class="phase-header-text">
+              <div class="phase-step-label">Reference</div>
+              <div class="phase-title">NCIT Exam — Frequently Asked Questions</div>
+            </div>
+            <div class="phase-chevron">▼</div>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">Use these answers during Q&amp;A sessions or when responding to participant emails about the exam.</p>
+            <div class="faq-stack">
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What is the exam format?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">The exam is pass/fail — no direct score is given to participants.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Can participants schedule for the same day?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">No. Prometric does not allow same-day scheduling — the earliest test date is the next day.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">When does the testing window open and close?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">The testing window is 2 weeks, beginning the day of the Program Review Session. Advise participants not to schedule on the last day of the window.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Can a participant test in another state?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Yes, if their agency allows it.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How can participants check their system compatibility?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Direct them to <a href="https://rpcandidate.prometric.com/" target="_blank" style="color:var(--blue);">https://rpcandidate.prometric.com/</a> — this tests their device only. They should also confirm their agency firewall/IT separately.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What ID is accepted?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Driver's license or passport is recommended. Large jewelry must be removed per Prometric security policy. No laptop on a docking station.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">When will participants receive their digital badge?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Issued within a few business days after the testing window closes — no later than 3 weeks from the Review Session.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What is required for the NCIT Basic certificate?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Passing the exam plus 1 year of regulatory investigation/inspection experience. Records do not expire if the participant waits to apply.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How does the Specialized badge/certificate work?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Pass 1–2 sections → individual badges for those sections. Pass all 3 → one badge listing all modules. No expiration on NCIT Basic or Specialized certificate.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What is the retake policy for NCIT Basic?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">If a participant fails, they may retake through Prometric after paying the $100 rescheduling fee. They do not need to retake the full course.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What is the retake policy for NCIT Specialized?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a"><ul><li>Fail 1–2 sections → retake internally with a CLEAR staff member ($50 for 1 section, $75 for 2).</li><li>Fail all 3 → retake through Prometric ($100 fee).</li></ul></div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">When does learning portal access close?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Access closes at the end of the testing window. Participants should download the eBook before then. Supplemental course recordings remain available until the course expires.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Will participants be tested on anything not in the eBook?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">No. Participants will not be tested on anything not covered in the eBook/participant guide. Knowledge Assessments are locked and allowed only once — similar to exam questions. No practice tests are available. The Review Session is not recorded.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What if the name on the certificate is wrong?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">The badge matches the name provided for the exam. Participants should contact CLEAR after receipt to make changes. Note: Prometric is instructed not to check middle names; if the middle name appears on the same line as the first name, the participant should email <a href="mailto:clearlearning@clearhq.org" style="color:var(--blue);">clearlearning@clearhq.org</a>.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What if a module shows incomplete in the portal?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Contact CLEAR Learning — staff can mark it complete.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Can participants get an extension?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">Reach out to CLEAR Learning if more time is needed.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Does CLEAR provide CEUs?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">CLEAR does not provide CEUs directly. Participants should contact <a href="mailto:clearlearning@clearhq.org" style="color:var(--blue);">clearlearning@clearhq.org</a> for a course syllabus with outlined hours.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Is there a next level after NCIT Basic or Specialized?<span class="faq-chevron">▼</span></div>
+                <div class="faq-a">There is no next NCIT level. Stand-alone Tier 3 modules are available — see <a href="https://clearhq.org" target="_blank" style="color:var(--blue);">clearhq.org</a>.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /session-stack -->
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── View routing ──
+const views = { home: 'view-home', ipt: 'view-ipt', virtual: 'view-virtual', facilitation: 'view-facilitation', tools: 'view-tools' };
+const labels = { home: 'Overview', ipt: 'In-Person Programs', virtual: 'Virtual Programs', facilitation: 'Facilitator Guides', tools: 'Tools & Platforms' };
+
+function show(id) {
+  Object.values(views).forEach(v => document.getElementById(v).classList.remove('active'));
+  document.getElementById(views[id]).classList.add('active');
+  document.getElementById('topbar-label').textContent = labels[id] || id;
+  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  closeSearch();
+  window.scrollTo(0, 0);
+}
+
+// ── Accordion toggles ──
+function togglePhase(header) { header.closest('.phase-card').classList.toggle('open'); }
+function toggleException(header) { header.closest('.exception-callout').classList.toggle('open'); }
+function togglePlatform(header) { header.closest('.platform-card').classList.toggle('open'); }
+function toggleFaq(el) { el.closest('.faq-item').classList.toggle('open'); }
+
+function openPhase(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.classList.add('open');
+  setTimeout(() => {
+  const y = card.getBoundingClientRect().top + window.scrollY - 60;
+  window.scrollTo({ top: y, behavior: 'smooth' });
+}, 50);
+}
+
+// ── Sidebar active state ──
+document.querySelector('#sidebar nav a').classList.add('active');
+document.querySelectorAll('#sidebar nav a').forEach(link => {
+  link.addEventListener('click', function() {
+    document.querySelectorAll('#sidebar nav a').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ============================================================
+// SEARCH ENGINE
+// ============================================================
+const searchIndex = [
+  // In-Person phases
+  { view: 'ipt', phaseId: 'ipt-p1', section: 'In-Person Programs', title: 'Create the Event', keywords: 'create event novi marketing instructors facilitation staff venue logistics contracts program agenda reminder email shipping supplies' },
+  { view: 'ipt', phaseId: 'ipt-p2', section: 'In-Person Programs', title: 'Set Up the Cohort', keywords: 'set up cohort sharepoint folder program agenda instructor agenda powerpoint QR codes module evaluations live sessions talentlms survey link' },
+  { view: 'ipt', phaseId: 'ipt-p3', section: 'In-Person Programs', title: 'Import the Cohort into TalentLMS', keywords: 'import cohort talentlms user import tool upload attendees welcome email live sessions register assign learners' },
+  { view: 'ipt', phaseId: 'ipt-p4', section: 'In-Person Programs', title: 'Pre-Program Reminders', keywords: 'reminder emails NCIT standard release ELPR questionnaire EQ survey annual report pre-program' },
+  { view: 'ipt', phaseId: 'ipt-p5', section: 'In-Person Programs', title: 'On-Site Cohort Management', keywords: 'on-site venue check in attendees introductory remarks attendance customer service technical support instructors shipping ELPR pre-work welcome email questionnaire EQ survey annual report' },
+  { view: 'ipt', phaseId: 'ipt-p6', section: 'In-Person Programs', title: 'Proctor the Examination', keywords: 'proctor exam examination NCIT basic review session break instructions certification application' },
+  { view: 'ipt', phaseId: 'ipt-p7', section: 'In-Person Programs', title: 'Close Out the Cohort', keywords: 'close out exam report generator credly badges certificates wufoo module evaluations attendance novi instructor emails Julie' },
+
+  // Virtual phases
+  { view: 'virtual', phaseId: 'virt-p1', section: 'Virtual Programs', title: 'Create the Event', keywords: 'create event novi welcome session zoom registration link marketing instructors facilitation cohort folder sharepoint program agenda instructor agenda powerpoint' },
+  { view: 'virtual', phaseId: 'virt-p2', section: 'Virtual Programs', title: 'Set Up the Course in TalentLMS', keywords: 'set up course talentlms live sessions zoom create welcome email template module evaluation links async asynchronous update welcome session host' },
+  { view: 'virtual', phaseId: 'virt-p3', section: 'Virtual Programs', title: 'Import the Cohort into TalentLMS', keywords: 'import cohort talentlms user import upload attendees welcome email live sessions register assign learners' },
+  { view: 'virtual', phaseId: 'virt-p4', section: 'Virtual Programs', title: 'Cohort Management', keywords: 'cohort management live sessions host attendance makeup materials recordings status update mid-program customer service ELPR pre-work questionnaire EQ survey annual report SS4R communication styles' },
+  { view: 'virtual', phaseId: 'virt-p5', section: 'Virtual Programs', title: 'Examination Window', keywords: 'examination window exam monitor reminder emails one week one day testing window assign exam complete' },
+  { view: 'virtual', phaseId: 'virt-p6', section: 'Virtual Programs', title: 'Close Out the Cohort', keywords: 'close out exam report generator credly badges certificates wufoo module evaluations attendance novi instructor emails Julie retesting' },
+
+  // Facilitator guides
+  { view: 'facilitation', phaseId: 'fac-universal', section: 'Facilitator Guides', title: 'Universal Facilitator Guidelines', keywords: 'universal guidelines time zones eastern ET instructors bio pre-session checklist zoom 15 minutes early co-host polls videos participant guide housekeeping script muted camera chat raise hand CLEAR LEARNING break script legal disclaimer closing script certificate evaluation' },
+  { view: 'facilitation', phaseId: 'fac-ncit-basic', section: 'Facilitator Guides', title: 'NCIT Basic — All Sessions', keywords: 'NCIT basic welcome session investigative process week one QA Q&A interviewing techniques report writing testifying administrative criminal proceedings week two program review polls breakout room True Grit My Cousin Vinny videos participation housekeeping opening closing script standard release portal walkthrough discussion board' },
+  { view: 'facilitation', phaseId: 'fac-ncit-spec', section: 'Facilitator Guides', title: 'NCIT Specialized — All Sessions', keywords: 'NCIT specialized cognitive memory recall technique investigative report development observation skills behavioral analysis interviewing BAI Stan Walters advanced investigative analysis polls videos opening closing script' },
+  { view: 'facilitation', phaseId: 'fac-sab', section: 'Facilitator Guides', title: 'Skills for Regulatory Administrator (SAB)', keywords: 'SAB skills regulatory administrator staffing board module 1 2 3 characteristics governance leading effective board support tips tactics breakout room large group discussion polls links chat certificate' },
+  { view: 'facilitation', phaseId: 'fac-irsm', section: 'Facilitator Guides', title: 'IRSM — Both Workshops', keywords: 'IRSM investigating reports sexual misconduct workshop 1 2 breakout room transcript legal disclaimer certificate attendance self-paced self study' },
+  { view: 'facilitation', phaseId: 'fac-ddi', section: 'Facilitator Guides', title: 'Drug Diversion Investigations (DDI)', keywords: 'DDI drug diversion investigations workshop 1 2 legal disclaimer links chat evaluation certificate attendance' },
+  { view: 'facilitation', phaseId: 'fac-standalone', section: 'Facilitator Guides', title: 'Stand-Alone Sessions', keywords: 'stand alone ethics professional attitude regulatory investigators communication skills art persuasion polls slides facilitator presents five slides videos certificate evaluation' },
+  { view: 'facilitation', phaseId: 'fac-faq', section: 'Facilitator Guides', title: 'NCIT Exam FAQ', keywords: 'exam FAQ frequently asked questions Prometric same day scheduling testing window 2 weeks pass fail digital badge certificate 1 year experience retake policy $100 $50 $75 rescheduling fee portal access eBook knowledge assessment CEUs middle name extension specialized basic sections badge expiration' },
+
+  // Tools
+  { view: 'tools', phaseId: 'plat-tools-dir', section: 'Tools & Platforms', title: 'HTML Tools Directory', keywords: 'tools directory dashboard admin tools agenda generator novi event creator welcome email templates user import NCIT standard release status report self study progress checker exam report generator user lookup litmos historical EQ survey supervisor form module survey link evaluation report master instructor bulk survey link all tools clearlearning github' },
+  { view: 'tools', phaseId: 'plat-lms', section: 'Tools & Platforms', title: 'TalentLMS', keywords: 'TalentLMS create live sessions assign learners attendance completion status recordings vimeo module evaluation links async ILT email template welcome email events engine zoom webinar classroom' },
+  { view: 'tools', phaseId: 'plat-novi', section: 'Tools & Platforms', title: 'Novi AMS', keywords: 'Novi AMS create event mark attended attendance batch actions event creator tool ticket pricing post registration email confirmation' },
+  { view: 'tools', phaseId: 'plat-autodash', section: 'Tools & Platforms', title: 'Automation Dashboard', keywords: 'automation dashboard user import tool user lookup tool status report generator final exam assignment NCIT standard release program agenda generator litmos historical data auth token' },
+  { view: 'tools', phaseId: 'plat-monkey', section: 'Tools & Platforms', title: 'Evaluations & Surveys', keywords: 'evaluations surveys module evaluation report generator master instructor workbook EQ survey emotional quotient attendee questionnaire annual report ELPR ACRG SurveyMonkey PDF excel' },
+  { view: 'tools', phaseId: 'plat-testing', section: 'Tools & Platforms', title: 'Exams & Credentials', keywords: 'exams credentials exam report generator Credly badges digital badges supervisor certification review tool payment verification NCIT basic wufoo certificate issue' },
+];
+
+function runSearch(query) {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) { closeSearch(); return; }
+
+  const results = searchIndex.filter(item =>
+    item.title.toLowerCase().includes(q) ||
+    item.keywords.toLowerCase().includes(q) ||
+    item.section.toLowerCase().includes(q)
+  );
+
+  const overlay = document.getElementById('search-results');
+  const header  = document.getElementById('search-results-header');
+  const list    = document.getElementById('search-results-list');
+
+  overlay.classList.add('visible');
+  header.innerHTML = results.length
+    ? `Showing <strong>${results.length}</strong> result${results.length !== 1 ? 's' : ''} for "<strong>${escHtml(query.trim())}</strong>"`
+    : '';
+
+  if (!results.length) {
+    list.innerHTML = `<div class="search-no-results">No results found for "<strong>${escHtml(query.trim())}</strong>"<br><span style="font-size:12px;margin-top:6px;display:block;">Try different keywords — program names, tool names, or task descriptions.</span></div>`;
+    return;
+  }
+
+  list.innerHTML = results.map(r => {
+    // Build a snippet from keywords that match
+    const words = q.split(/\s+/);
+    const kwWords = r.keywords.split(' ');
+    const matchIdx = kwWords.findIndex(w => words.some(qw => w.includes(qw)));
+    let snippet = '';
+    if (matchIdx >= 0) {
+      const start = Math.max(0, matchIdx - 3);
+      const chunk = kwWords.slice(start, start + 10).join(' ');
+      snippet = highlightMatch(chunk, q);
+    }
+    return `<div class="search-result-item" onclick="goToResult('${r.view}','${r.phaseId}')">
+      <div class="search-result-section">${escHtml(r.section)}</div>
+      <div class="search-result-title">${highlightMatch(r.title, q)}</div>
+      ${snippet ? `<div class="search-result-snippet">${snippet}…</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function highlightMatch(text, query) {
+  const words = query.split(/\s+/).filter(Boolean);
+  let out = escHtml(text);
+  words.forEach(w => {
+    const re = new RegExp(`(${escRe(w)})`, 'gi');
+    out = out.replace(re, '<mark>$1</mark>');
+  });
+  return out;
+}
+
+function goToResult(viewId, phaseId) {
+  closeSearch();
+  document.getElementById('search-input').value = '';
+  show(viewId);
+  if (phaseId) openPhase(phaseId);
+}
+
+function closeSearch() {
+  document.getElementById('search-results').classList.remove('visible');
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escRe(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Wire up search input
+const searchInput = document.getElementById('search-input');
+let searchTimer;
+searchInput.addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => runSearch(this.value), 180);
+});
+searchInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeSearch(); this.value = ''; }
+});
+// Close overlay when clicking outside it
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#search-results') && !e.target.closest('.search-wrap')) {
+    closeSearch();
+  }
+});
+</script>
+</body>
+</html>
