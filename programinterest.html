@@ -194,6 +194,48 @@ td.prog-tags{max-width:400px}
   .header{padding:12px 20px}.cfg,.status-bar,.tabs,.filter-row,.filter-actions,.search-bar,.pagination,.export-bar,.hdr-btn,.btn,.heal-panel{display:none!important}
   .tc{display:block!important}.tab-body{box-shadow:none;border:1px solid #ddd}
 }
+
+/* ── NOTIFICATION TAB ───────────────────────────────────────── */
+.notif-layout{display:grid;grid-template-columns:420px 1fr;gap:24px;align-items:start}
+.notif-panel{background:var(--light-bg);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.notif-panel-hdr{padding:14px 20px;background:var(--burgundy);color:#fff;display:flex;align-items:center;gap:9px}
+.notif-panel-hdr h3{font-size:14px;font-weight:700}
+.notif-step-badge{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.notif-panel-body{padding:20px}
+.nf{margin-bottom:16px}
+.nf label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:4px}
+.nf label .req{color:var(--burgundy)}
+.nf input,.nf select,.nf textarea{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);transition:.15s;background:#fff}
+.nf textarea{resize:vertical;min-height:72px;line-height:1.55}
+.nf input:focus,.nf select:focus,.nf textarea:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 3px rgba(221,168,56,.15)}
+.nf .hint{font-size:11px;color:var(--text-light);margin-top:3px;line-height:1.4}
+.nf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.notif-recipients-box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.notif-recipients-box h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--burgundy);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.notif-recip-count{font-size:13px;font-weight:700;color:var(--success)}
+.notif-recip-empty{font-size:12px;color:var(--text-light);font-style:italic}
+.notif-recip-scroll{max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;margin-top:8px}
+.notif-recip-scroll table{width:100%;border-collapse:collapse;font-size:11px}
+.notif-recip-scroll th{background:#f7f5f2;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text-light);padding:5px 9px;text-align:left;position:sticky;top:0}
+.notif-recip-scroll td{padding:4px 9px;border-top:1px solid var(--border);color:var(--charcoal)}
+.notif-gen-status{border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;display:none;align-items:center;gap:7px;margin-bottom:12px}
+.notif-gen-status.show{display:flex}
+.notif-gen-status.working{background:var(--gold-faint);border:1px solid var(--gold);color:var(--gold-dark)}
+.notif-gen-status.ok{background:var(--success-faint);border:1px solid var(--success);color:var(--success)}
+.notif-gen-status.err{background:#fff5f5;border:1px solid #c62828;color:#c62828}
+/* Preview pane */
+.notif-preview-wrap{position:sticky;top:20px}
+.notif-preview-bar{background:#f7f5f2;border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;padding:10px 18px;display:flex;align-items:center;gap:10px}
+.notif-preview-bar h3{font-size:13px;font-weight:700;color:var(--charcoal);flex:1}
+.notif-preview-bar select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;max-width:200px}
+.notif-preview-frame{width:100%;height:680px;border:1px solid var(--border);border-top:0;border-radius:0 0 var(--radius) var(--radius);background:#fff}
+/* Demand tab — clickable program rows */
+.prog-notify-btn{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid var(--burgundy);background:#fff;color:var(--burgundy);transition:.12s;white-space:nowrap;flex-shrink:0}
+.prog-notify-btn:hover{background:var(--burgundy);color:#fff}
+.notif-prog-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:var(--burgundy-faint);color:var(--burgundy);border:1px solid #e8c4d0;margin-bottom:14px}
+/* Section divider inside notif panel */
+.nf-divider{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);padding:10px 0 8px;border-bottom:1px solid var(--border);margin-bottom:14px}
+@media(max-width:1100px){.notif-layout{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -280,6 +322,7 @@ td.prog-tags{max-width:400px}
         <button class="tab active" onclick="switchTab('demand')">📊 Program Demand</button>
         <button class="tab" onclick="switchTab('geo')">🌎 Geographic</button>
         <button class="tab" onclick="switchTab('respondents')">👥 Respondents</button>
+        <button class="tab" onclick="switchTab('notify')" id="notifyTab">✉️ Notify Interested</button>
       </div>
 
       <!-- DEMAND TAB -->
@@ -296,10 +339,18 @@ td.prog-tags{max-width:400px}
       <div class="tc tab-body" id="tc-respondents">
         <div id="respondentsContent"></div>
       </div>
+
+      <!-- NOTIFY TAB -->
+      <div class="tc tab-body" id="tc-notify">
+        <div id="notifyContent"></div>
+      </div>
     </div>
 
   </div>
 </div>
+
+<!-- ─── JSZip for notification export ─────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <!-- ─── D3 + TopoJSON (loaded lazily when Geo tab is first rendered) ─────── -->
 <script>
@@ -788,13 +839,14 @@ function renderAll(){
   renderStats();
   if(currentTab==='demand')renderDemand();
   else if(currentTab==='geo')renderGeo();
+  else if(currentTab==='notify')renderNotify();
   else renderRespondents();
 }
 
 function switchTab(t){
   currentTab=t;currentPage=1;
-  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['demand','geo','respondents'][i]===t));
-  document.querySelectorAll('.tc').forEach((el,i)=>el.classList.toggle('active',['demand','geo','respondents'][i]===t));
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['demand','geo','respondents','notify'][i]===t));
+  document.querySelectorAll('.tc').forEach((el,i)=>el.classList.toggle('active',['demand','geo','respondents','notify'][i]===t));
   renderAll();
 }
 
@@ -852,12 +904,13 @@ function renderDemand(){
     const webSecW=Math.round(webSec/maxCount*100);
     html+=`<div class="stacked-row">
       <div class="stacked-name" title="${esc(prog)}">${esc(short)}</div>
-      <div class="stacked-track" style="max-width:600px">
+      <div class="stacked-track" style="max-width:560px">
         <div class="seg-email" style="width:${emailW}%">${c.email>0?c.email:''}</div>
         <div class="seg-web-primary" style="width:${webPrimW}%">${c.webPrimary>0?c.webPrimary:''}</div>
         <div class="seg-web" style="width:${webSecW}%">${webSec>0?webSec:''}</div>
       </div>
       <div class="stacked-total">${c.total} <span style="color:var(--text-light);font-weight:400">(${pct}%)</span></div>
+      <button class="prog-notify-btn" onclick="openNotifyForProgram(${JSON.stringify(prog)})">✉ Notify</button>
     </div>`;
   });
   html+=`</div>`; 
@@ -1294,6 +1347,506 @@ function uq(a){return[...new Set(a)].sort()}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function $(id){return document.getElementById(id)}
 function dateStamp(){return new Date().toISOString().slice(0,10)}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── NOTIFICATION TAB ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// State for the notify tab
+let notifyProgram = '';  // currently selected program key
+
+// Called from Notify button on demand rows, or from within the tab itself
+function openNotifyForProgram(prog){
+  notifyProgram = prog;
+  switchTab('notify');
+}
+
+// ─── Program marketing content ────────────────────────────────────────────────
+const PROGRAM_DATA = {
+  'Board Member Training - Introduction to Regulatory Governance': {
+    tag:'Board Development',tagColor:'#084d78',
+    headline:'Registration is Open — Your Seat at the Table Awaits',
+    subhead:'Join us for CLEAR\'s Introduction to Regulatory Governance program — designed specifically for new and returning board members who want to govern with confidence.',
+    bullets:['Understand the legal framework and ethical obligations of regulatory board service','Navigate board governance principles, voting, quorum, and decision-making','Distinguish board responsibilities from staff and agency responsibilities','Explore real-world case studies drawn from the regulatory community'],
+    who:'This program is ideal for board members, board liaisons, and agency staff who support board operations — whether you\'re newly appointed or looking to sharpen your governance foundation.',
+    cta:'Reserve Your Spot'
+  },
+  'Board Member Training - Advanced Concepts in Regulatory Governance': {
+    tag:'Board Development',tagColor:'#084d78',
+    headline:'Take Your Governance Knowledge Further',
+    subhead:'Building on foundational principles, CLEAR\'s Advanced Concepts program dives into the complex, evolving landscape of regulatory governance — where policy, law, and leadership intersect.',
+    bullets:['Analyze advanced governance models and their application across regulatory contexts','Examine stakeholder relationships and external accountability mechanisms','Address contemporary challenges: rulemaking, enforcement discretion, and board ethics','Engage in facilitated case discussion with peers from across the regulatory community'],
+    who:'Best suited for experienced board members, general counsel, executive directors, and agency leaders ready to deepen their strategic governance practice.',
+    cta:'Register Now'
+  },
+  'Board Chair Training - Getting the Most From Your Board, Skills for Effective Chairing': {
+    tag:'Leadership Development',tagColor:'#64092c',
+    headline:'Lead with Purpose — Registration Now Open',
+    subhead:'Chairing a regulatory board is one of the most demanding leadership roles in public protection. CLEAR\'s Board Chair Training equips you with the tools, techniques, and confidence to run productive meetings and build a high-functioning board.',
+    bullets:['Master meeting facilitation: agenda-setting, managing discussion, and driving decisions','Build consensus and navigate conflict among board members effectively','Develop your leadership presence and communication style as Chair','Learn strategies for engaging disengaged board members and managing difficult moments'],
+    who:'Designed for current and incoming board chairs, vice chairs, and anyone preparing to step into a board leadership role.',
+    cta:'Secure Your Registration'
+  },
+  'Executive Leadership Program for Regulators': {
+    tag:'Executive Education',tagColor:'#64092c',
+    headline:'ELPR Registration is Now Open',
+    subhead:'CLEAR\'s Executive Leadership Program for Regulators (ELPR) is a transformative multi-day experience designed for senior regulatory leaders ready to elevate their professional impact and strategic vision.',
+    bullets:['Strengthen your leadership identity and executive presence in regulatory contexts','Apply strategic planning and change management frameworks to real agency challenges','Build peer networks with senior regulators from across North America and beyond','Engage with faculty who bring deep expertise in regulatory law, governance, and leadership'],
+    who:'ELPR is designed for executive directors, deputy directors, registrars, and senior leaders of regulatory bodies who are ready to invest in their long-term professional growth.',
+    cta:'Apply for ELPR'
+  },
+  'Skills for the Regulatory Administrator - Staffing a Board': {
+    tag:'Administrative Excellence',tagColor:'#2e7d4f',
+    headline:'Registration Now Open — For the People Who Keep Boards Running',
+    subhead:'Regulatory administrators are the backbone of effective board operations. CLEAR\'s Skills for the Regulatory Administrator program offers practical, role-specific training to help you support your board with confidence and competence.',
+    bullets:['Understand the scope of the regulatory administrator\'s role and core responsibilities','Manage board meetings: minutes, agendas, records management, and public access','Navigate tricky staffing situations: conflicts of interest, recusals, and board vacancies','Build effective working relationships with board members, legal counsel, and staff'],
+    who:'Ideal for board administrators, executive assistants to boards, clerks, and operational staff who directly support regulatory boards and their meetings.',
+    cta:'Register Now'
+  },
+  'NCIT Basic Program (US and Canadian versions available)': {
+    tag:'NCIT Certification',tagColor:'#64092c',
+    headline:'NCIT Basic Program — Registration Now Open',
+    subhead:'The NCIT Basic Program is the entry point to CLEAR\'s nationally recognized regulatory investigator certification pathway. This foundational program equips new and developing investigators with the core skills and knowledge they need to conduct effective, fair, and legally defensible investigations.',
+    bullets:['Master the investigative process from complaint intake through case closure','Conduct thorough interviews and gather reliable evidence','Apply legal standards and due process requirements in a regulatory context','Develop professional documentation and report-writing skills'],
+    who:'Ideal for investigators new to regulatory work, those transitioning into investigative roles, and supervisors who want a stronger foundation in investigative practice. US and Canadian versions available.',
+    cta:'Register for NCIT Basic'
+  },
+  'NCIT Applied Investigative Techniques Program': {
+    tag:'NCIT Certification',tagColor:'#64092c',
+    headline:'Advance Your Investigative Skills — AIT Registration Open',
+    subhead:'The NCIT Applied Investigative Techniques (AIT) program takes experienced investigators deeper — into the complex, high-stakes scenarios where strong foundational knowledge meets real-world judgment.',
+    bullets:['Apply advanced interviewing and interrogation techniques in complex cases','Navigate sensitive investigations involving vulnerable populations or contested evidence','Manage multi-party cases, expert witnesses, and evidentiary challenges','Strengthen your ability to withstand legal scrutiny and administrative review'],
+    who:'Designed for investigators who have completed NCIT Basic and are ready to develop higher-order investigative skills for complex, sensitive, and high-profile cases.',
+    cta:'Register for AIT'
+  },
+  'NCIT Specialized Program': {
+    tag:'NCIT Certification',tagColor:'#64092c',
+    headline:'NCIT Specialized — Registration Now Open',
+    subhead:'The NCIT Specialized Program is designed for investigators who work in specific regulatory environments — including health professions, financial services, and other sectors with unique investigative demands and legal frameworks.',
+    bullets:['Apply investigative principles within your sector\'s specific regulatory context','Understand profession-specific legislation, standards of practice, and enforcement mechanisms','Address unique evidentiary and disclosure considerations relevant to your regulatory area','Earn your NCIT Specialized designation and advance your certification credentials'],
+    who:'Designed for regulatory investigators and their supervisors working in specialized sectors who want targeted training that goes beyond the general investigative curriculum.',
+    cta:'Register for NCIT Specialized'
+  },
+  'NCIT Workshops - Drug Diversion Investigations': {
+    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+    headline:'Drug Diversion Investigations Workshop — Registration Open',
+    subhead:'Drug diversion is one of the most complex and consequential investigations a regulatory body can undertake. This targeted workshop equips investigators with practical strategies for detecting, investigating, and documenting drug diversion within regulated professions.',
+    bullets:['Recognize the behavioral, documentation, and inventory red flags associated with drug diversion','Apply effective interview techniques specific to healthcare and pharmacy investigations','Coordinate investigations involving multiple jurisdictions, employers, and regulatory bodies','Understand chain-of-custody requirements and evidentiary standards for drug-related cases'],
+    who:'Designed for investigators in health profession regulatory bodies, pharmacy boards, nursing boards, and others who encounter drug diversion cases in their work.',
+    cta:'Register for This Workshop'
+  },
+  'NCIT Workshops - Investigating Reports of Sexual Misconduct': {
+    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+    headline:'Investigating Reports of Sexual Misconduct — Workshop Registration Open',
+    subhead:'Investigations involving sexual misconduct require exceptional skill, sensitivity, and precision. This workshop provides investigators with trauma-informed approaches and practical tools to conduct thorough, legally sound investigations of sexual misconduct complaints.',
+    bullets:['Apply trauma-informed interviewing techniques with complainants, witnesses, and respondents','Navigate disclosure challenges and assess credibility in a fair and consistent manner','Understand legal considerations including complainant rights and procedural fairness','Document findings in ways that withstand scrutiny from adjudicators, counsel, and courts'],
+    who:'Recommended for all regulatory investigators who handle or may handle complaints involving sexual misconduct, boundary violations, or abuse of trust.',
+    cta:'Register for This Workshop'
+  },
+  'NCIT Workshops - Communications and the Art of Persuasion': {
+    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+    headline:'Make Your Case — Communications Workshop Registration Now Open',
+    subhead:'Investigative work doesn\'t end when the case file closes — it culminates in reports, hearings, and presentations where the quality of your communication determines the outcome. This workshop sharpens your ability to communicate findings clearly, persuasively, and professionally.',
+    bullets:['Write investigation reports that are clear, compelling, and legally defensible','Present findings confidently in hearings, reviews, and consultations','Adapt your communication style to different audiences: panels, legal counsel, and leadership','Use the principles of persuasion to structure arguments and evidence effectively'],
+    who:'Ideal for investigators and supervisors who want to strengthen their professional communication skills — from report writing to hearing testimony.',
+    cta:'Register for This Workshop'
+  },
+  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator': {
+    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+    headline:'Ethics Workshop Registration Now Open',
+    subhead:'The ethical dimension of regulatory investigation work is never simple. This workshop explores the real dilemmas investigators face — and provides a practical framework for navigating them with integrity, fairness, and professional confidence.',
+    bullets:['Examine the ethical foundations of regulatory investigation and public protection','Navigate conflicts of interest, bias, and dual-role challenges in investigative contexts','Apply an ethical decision-making framework to ambiguous, real-world scenarios','Build the professional attitude and personal accountability that define excellent investigators'],
+    who:'Recommended for all regulatory investigators and their supervisors — ethics is foundational to every investigative role, regardless of experience level.',
+    cta:'Register for This Workshop'
+  }
+};
+
+// ─── Render the Notify Tab ─────────────────────────────────────────────────────
+function renderNotify(){
+  const d=$('notifyContent');
+
+  // Get recipients: all filteredData respondents interested in notifyProgram
+  const progRecipients = notifyProgram
+    ? filteredData.filter(r=>r.allPrograms.includes(notifyProgram) && r.email)
+    : [];
+
+  // Deduplicate by email
+  const seen=new Set();
+  const recipients = progRecipients.filter(r=>{ if(seen.has(r.email))return false; seen.add(r.email); return true; });
+
+  const pd = notifyProgram ? (PROGRAM_DATA[notifyProgram]||{}) : {};
+  const displayName = notifyProgram || '';
+
+  // Program selector options
+  const progOptions = PROGRAMS.map(p=>`<option value="${esc(p)}"${p===notifyProgram?'selected':''}>${esc(PROG_SHORT[p]||p)}</option>`).join('');
+
+  d.innerHTML=`<div class="notif-layout">
+
+    <!-- LEFT: FORM -->
+    <div>
+
+      <!-- STEP 1: PROGRAM -->
+      <div class="notif-panel" style="margin-bottom:18px">
+        <div class="notif-panel-hdr">
+          <div class="notif-step-badge">1</div>
+          <h3>Program Selection</h3>
+        </div>
+        <div class="notif-panel-body">
+          <div class="nf">
+            <label>Program <span class="req">*</span></label>
+            <select id="nSelProgram" onchange="onNotifyProgramChange()">
+              <option value="">— Select a program —</option>
+              ${progOptions}
+            </select>
+            <div class="hint">Or click <strong>✉ Notify</strong> on any program row in the Program Demand tab to pre-select.</div>
+          </div>
+          ${notifyProgram ? `<div class="notif-prog-pill">${esc(PROG_SHORT[notifyProgram]||notifyProgram)}</div>` : ''}
+        </div>
+      </div>
+
+      <!-- STEP 2: RECIPIENTS -->
+      <div class="notif-panel" style="margin-bottom:18px">
+        <div class="notif-panel-hdr">
+          <div class="notif-step-badge">2</div>
+          <h3>Recipients</h3>
+        </div>
+        <div class="notif-panel-body">
+          <div class="notif-recipients-box">
+            <h4>
+              <span>Interested respondents${notifyProgram?` — ${esc(PROG_SHORT[notifyProgram]||notifyProgram)}`:''}</span>
+              <span class="notif-recip-count" id="nRecipCount">${recipients.length ? recipients.length + ' recipient' + (recipients.length!==1?'s':'') : ''}</span>
+            </h4>
+            ${!notifyProgram ? `<p class="notif-recip-empty">Select a program above to load recipients.</p>` :
+              !recipients.length ? `<p class="notif-recip-empty">No respondents with a valid email address have indicated interest in this program under current filters.</p>` :
+              `<p style="font-size:12px;color:var(--text-light);margin-bottom:6px">Pulled automatically from ${filteredData.length} filtered respondents. Applies active dashboard filters.</p>
+              <div class="notif-recip-scroll">
+                <table>
+                  <thead><tr><th>Name</th><th>Email</th></tr></thead>
+                  <tbody>${recipients.map(r=>`<tr><td>${esc(r.name||'—')}</td><td>${esc(r.email)}</td></tr>`).join('')}</tbody>
+                </table>
+              </div>`
+            }
+          </div>
+          <div class="hint">💡 Use the dashboard filters (State, Source, Date) before opening this tab to narrow the recipient list.</div>
+        </div>
+      </div>
+
+      <!-- STEP 3: EVENT DETAILS -->
+      <div class="notif-panel" style="margin-bottom:18px">
+        <div class="notif-panel-hdr">
+          <div class="notif-step-badge">3</div>
+          <h3>Event Details</h3>
+        </div>
+        <div class="notif-panel-body">
+          <div class="nf">
+            <label>Display Program Name in Email <span class="req">*</span></label>
+            <input type="text" id="nProgramName" value="${esc(displayName)}" oninput="nRefreshPreview()">
+          </div>
+          <div class="nf-row">
+            <div class="nf">
+              <label>Start Date <span class="req">*</span></label>
+              <input type="date" id="nStartDate" oninput="nRefreshPreview()">
+            </div>
+            <div class="nf">
+              <label>End Date <span class="req">*</span></label>
+              <input type="date" id="nEndDate" oninput="nRefreshPreview()">
+            </div>
+          </div>
+          <div class="nf">
+            <label>Registration Link <span class="req">*</span></label>
+            <input type="url" id="nRegLink" placeholder="https://www.clereg.org/events/..." oninput="nRefreshPreview()">
+          </div>
+          <div class="nf">
+            <label>Registration Deadline <span class="req">*</span></label>
+            <input type="date" id="nDeadline" oninput="nRefreshPreview()">
+          </div>
+          <div class="nf-divider">Optional</div>
+          <div class="nf">
+            <label>Delivery Format</label>
+            <select id="nFormat" onchange="nRefreshPreview()">
+              <option value="In Person">In Person</option>
+              <option value="Virtual">Virtual (Zoom)</option>
+              <option value="In Person &amp; Virtual">Hybrid — In Person &amp; Virtual</option>
+            </select>
+          </div>
+          <div class="nf">
+            <label>Location <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">(leave blank if virtual)</span></label>
+            <input type="text" id="nLocation" placeholder="e.g. Denver, CO" oninput="nRefreshPreview()">
+          </div>
+          <div class="nf">
+            <label>Additional Message</label>
+            <textarea id="nExtra" rows="3" placeholder="Any additional note to include after the program description…" oninput="nRefreshPreview()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: GENERATE -->
+      <div class="notif-panel">
+        <div class="notif-panel-hdr">
+          <div class="notif-step-badge">4</div>
+          <h3>Generate &amp; Export ZIP</h3>
+        </div>
+        <div class="notif-panel-body">
+          <div class="notif-gen-status" id="nGenStatus"></div>
+          <p style="font-size:12px;color:var(--text-light);margin-bottom:14px;line-height:1.6">Each recipient gets a personalized <code style="background:#f0ede8;padding:1px 5px;border-radius:3px">[email].html</code> file. Import the ZIP into your Power Automate flow to send from the CLEAR Learning shared mailbox.</p>
+          <button class="btn btn-g" id="nBtnGenerate" onclick="nGenerateZip()" disabled style="width:100%;justify-content:center;padding:11px">
+            ⬇ Generate &amp; Download ZIP
+          </button>
+          <div style="margin-top:10px;text-align:center">
+            <button class="btn btn-s" onclick="nClearFields()" style="font-size:11px;padding:5px 12px">↺ Clear Fields</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: PREVIEW -->
+    <div class="notif-preview-wrap">
+      <div class="notif-preview-bar">
+        <h3>📧 Email Preview</h3>
+        <span style="font-size:11px;color:var(--text-light)">As:</span>
+        <select id="nPreviewSel" onchange="nRefreshPreview()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;max-width:200px">
+          ${recipients.length ? recipients.map((r,i)=>`<option value="${i}">${esc(r.name||r.email)}</option>`).join('') : '<option value="">— select program first —</option>'}
+        </select>
+      </div>
+      <iframe id="nPreviewFrame" class="notif-preview-frame" title="Email Preview"></iframe>
+    </div>
+
+  </div>`;
+
+  // Wire up change listeners on all inputs (they get recreated each renderNotify call)
+  ['nProgramName','nStartDate','nEndDate','nRegLink','nDeadline','nFormat','nLocation','nExtra'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.addEventListener('input',nCheckReady);el.addEventListener('change',nCheckReady);}
+  });
+
+  nCheckReady();
+  nRefreshPreview();
+}
+
+function onNotifyProgramChange(){
+  const sel=document.getElementById('nSelProgram');
+  if(sel){ notifyProgram=sel.value; renderNotify(); }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function nVal(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+
+function nFmtDate(val){
+  if(!val)return'';
+  const [y,m,d]=val.split('-');
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${months[parseInt(m,10)-1]} ${parseInt(d,10)}, ${y}`;
+}
+
+function nCheckReady(){
+  const ok = notifyProgram &&
+    nVal('nProgramName') && nVal('nStartDate') && nVal('nEndDate') &&
+    nVal('nRegLink') && nVal('nDeadline');
+  const btn=document.getElementById('nBtnGenerate');
+  if(btn) btn.disabled=!ok;
+}
+
+function nRefreshPreview(){
+  nCheckReady();
+  const selIdx = document.getElementById('nPreviewSel')?.value;
+  const seen=new Set();
+  const recipients = notifyProgram
+    ? filteredData.filter(r=>r.allPrograms.includes(notifyProgram)&&r.email&&!seen.has(r.email)&&seen.add(r.email))
+    : [];
+  const recipient = recipients[parseInt(selIdx,10)] || {name:'Alex Rivera',email:'a.rivera@agency.gov',firstName:'Alex'};
+  if(!recipient.firstName) recipient.firstName = (recipient.name||'').split(' ')[0]||'there';
+
+  const frame=document.getElementById('nPreviewFrame');
+  if(!frame)return;
+  const doc=frame.contentDocument||frame.contentWindow.document;
+  doc.open();doc.write(nBuildEmail(recipient));doc.close();
+}
+
+// ─── Email Builder ────────────────────────────────────────────────────────────
+function nBuildEmail(recipient){
+  const prog = notifyProgram;
+  const data = PROGRAM_DATA[prog]||{};
+  const programName = nVal('nProgramName') || prog;
+  const startDate   = nFmtDate(document.getElementById('nStartDate')?.value||'');
+  const endDate     = nFmtDate(document.getElementById('nEndDate')?.value||'');
+  const regLink     = nVal('nRegLink') || '#';
+  const deadline    = nFmtDate(document.getElementById('nDeadline')?.value||'');
+  const format      = document.getElementById('nFormat')?.value||'In Person';
+  const location    = nVal('nLocation');
+  const extra       = nVal('nExtra');
+  const firstName   = (recipient.firstName||(recipient.name||'').split(' ')[0])||'there';
+
+  const tagColor   = data.tagColor||'#64092c';
+  const tag        = data.tag||'CLEAR Learning';
+  const headline   = data.headline||`Registration is Now Open for ${programName}`;
+  const subhead    = data.subhead||`A new session of ${programName} has been scheduled and registration is now open.`;
+  const bullets    = data.bullets||[];
+  const who        = data.who||'';
+  const cta        = data.cta||'Register Now';
+
+  const locationLine = format==='Virtual'?'Virtual (Zoom)':location?`${format} · ${location}`:format;
+
+  const bulletRows = bullets.map(b=>
+    `<tr><td style="padding:0;vertical-align:top;width:18px"><div style="width:7px;height:7px;border-radius:50%;background:#64092c;margin-top:5px"></div></td><td style="padding:0 0 10px 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#333333">${b}</td></tr>`
+  ).join('');
+
+  const extraBlock = extra?`<div style="margin:0 0 24px 0;padding:14px 18px;background-color:#fdf6e3;border-left:4px solid #dda838;border-radius:4px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#484848">${extra.replace(/\n/g,'<br>')}</div>`:'';
+  const whoBlock   = who?`<p style="margin:0 0 22px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#555555;font-style:italic">${who}</p>`:'';
+  const endDateLine = startDate!==endDate && endDate?`<p style="margin:1px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#666666">through ${endDate}</p>`:'';
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="x-apple-disable-message-reformatting">
+<title>Registration Now Open: ${programName}</title>
+<!--[if mso]><style>body,table,td,p,a{font-family:Arial,Helvetica,sans-serif !important}</style><![endif]-->
+<style>
+@media screen{@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');body,p,td{font-family:'Open Sans',Arial,sans-serif!important}}
+body{margin:0;padding:0;background-color:#f4f1ed}
+table{border-collapse:collapse}
+@media only screen and (max-width:600px){.email-container{width:100%!important}.mpad{padding-left:20px!important;padding-right:20px!important}}
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f1ed">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f4f1ed">
+<tr><td style="padding:28px 10px">
+<table class="email-container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin:0 auto;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10)">
+
+  <!-- HEADER -->
+  <tr><td style="background:linear-gradient(135deg,#64092c 0%,#8a1e4a 100%);padding:28px 40px 0 40px">
+    <img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" alt="CLEAR Learning" width="110" height="auto" style="display:block;height:auto;background-color:#ffffff;padding:10px 14px;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.22)">
+  </td></tr>
+  <tr><td style="background:linear-gradient(135deg,#64092c 0%,#8a1e4a 100%);padding:12px 40px 0 40px">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:${tagColor};border-radius:3px;padding:3px 10px">
+        <span style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.8px">${tag}</span>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="background:linear-gradient(135deg,#64092c 0%,#8a1e4a 100%);padding:12px 40px 32px 40px">
+    <h1 style="margin:0;font-family:'Open Sans',Arial,sans-serif;font-size:25px;font-weight:700;color:#fff;line-height:1.25">${headline}</h1>
+  </td></tr>
+
+  <!-- GOLD BAR -->
+  <tr><td style="height:5px;background:linear-gradient(90deg,#dda838,#f0c060)"></td></tr>
+
+  <!-- EVENT STRIP -->
+  <tr><td style="background-color:#fdf6e3;padding:16px 40px">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr>
+      <td style="width:33%;padding-right:12px;border-right:1px solid #e8d080">
+        <p style="margin:0;font-family:Arial,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#b8860b">Dates</p>
+        <p style="margin:4px 0 0 0;font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#333">${startDate||'TBD'}</p>
+        ${endDateLine}
+      </td>
+      <td style="width:34%;padding:0 12px;border-right:1px solid #e8d080">
+        <p style="margin:0;font-family:Arial,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#b8860b">Format</p>
+        <p style="margin:4px 0 0 0;font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#333">${locationLine}</p>
+      </td>
+      <td style="width:33%;padding-left:12px">
+        <p style="margin:0;font-family:Arial,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#b8860b">Registration Closes</p>
+        <p style="margin:4px 0 0 0;font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#c62828">${deadline||'TBD'}</p>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- BODY -->
+  <tr><td class="mpad" style="padding:34px 40px 8px 40px">
+    <p style="margin:0 0 18px 0;font-family:'Open Sans',Arial,sans-serif;font-size:15px;line-height:1.6;color:#333">Hi ${firstName},</p>
+    <p style="margin:0 0 18px 0;font-family:'Open Sans',Arial,sans-serif;font-size:14px;line-height:1.65;color:#444">Thank you for expressing your interest in <strong>${programName}</strong>. We have great news — a session has been scheduled and registration is now open!</p>
+    <p style="margin:0 0 20px 0;font-family:'Open Sans',Arial,sans-serif;font-size:14px;line-height:1.65;color:#444">${subhead}</p>
+  </td></tr>
+
+  ${bullets.length?`<tr><td class="mpad" style="padding:4px 40px 8px 40px">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#fdf0f4;border-radius:6px"><tr><td style="padding:18px 22px 8px 22px">
+      <p style="margin:0 0 12px 0;font-family:Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#64092c">What You'll Gain</p>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">${bulletRows}</table>
+    </td></tr></table>
+  </td></tr>`:''}
+
+  <tr><td class="mpad" style="padding:22px 40px 8px 40px">
+    ${whoBlock}${extraBlock}
+  </td></tr>
+
+  <!-- CTA -->
+  <tr><td class="mpad" style="padding:8px 40px 34px 40px;text-align:center">
+    <p style="margin:0 0 8px 0;font-family:Arial,sans-serif;font-size:13px;color:#666">Registration closes <strong style="color:#c62828">${deadline||'soon'}</strong> — don't miss your spot.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:14px auto 0 auto"><tr>
+      <td style="border-radius:6px;background-color:#64092c">
+        <a href="${regLink}" target="_blank" style="display:inline-block;padding:14px 34px;font-family:Arial,sans-serif;font-size:15px;font-weight:700;color:#fff;text-decoration:none;border-radius:6px;background-color:#64092c">${cta} &rarr;</a>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <tr><td style="padding:0 40px"><hr style="border:0;border-top:1px solid #e8e4df;margin:0"></td></tr>
+
+  <!-- QUESTIONS -->
+  <tr><td class="mpad" style="padding:22px 40px">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f7f5f2;border-radius:6px"><tr><td style="padding:16px 20px">
+      <p style="margin:0 0 5px 0;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#484848">Questions?</p>
+      <p style="margin:0;font-family:Arial,sans-serif;font-size:13px;line-height:1.55;color:#555">Contact the CLEAR Learning team at <a href="mailto:clearlearning@clearhq.org" style="color:#64092c;font-weight:600">clearlearning@clearhq.org</a>.</p>
+    </td></tr></table>
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr><td style="background-color:#64092c;padding:28px 40px;text-align:center">
+    <img src="https://assets-002.noviams.com/novi-file-uploads/clear/graphics/CLEAR_Learning_New.png" alt="CLEAR Learning" width="80" height="auto" style="display:block;margin:0 auto 14px;height:auto;background-color:#ffffff;padding:8px 12px;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,0.22)">
+    <p style="margin:0 0 5px;font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.7)">Council on Licensure, Enforcement and Regulation</p>
+    <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.5)">108 Wind Haven Drive, Suite A · Nicholasville, KY 40356</p>
+    <p style="margin:12px 0 0;font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.45)">You received this email because you expressed interest in this program.</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+// ─── Generate ZIP ──────────────────────────────────────────────────────────────
+async function nGenerateZip(){
+  if(!notifyProgram){alert('Please select a program.');return;}
+  const seen=new Set();
+  const recipients=filteredData.filter(r=>r.allPrograms.includes(notifyProgram)&&r.email&&!seen.has(r.email)&&seen.add(r.email));
+  if(!recipients.length){alert('No recipients with email addresses found for this program.');return;}
+
+  const status=document.getElementById('nGenStatus');
+  if(status){status.className='notif-gen-status show working';status.textContent='⏳ Generating email files…';}
+  const btn=document.getElementById('nBtnGenerate');
+  if(btn)btn.disabled=true;
+
+  await new Promise(r=>setTimeout(r,40));
+
+  try{
+    const zip=new JSZip();
+    const progSlug=(nVal('nProgramName')||notifyProgram).replace(/[^a-zA-Z0-9]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+    const folder=zip.folder(progSlug+'-notifications');
+    for(const r of recipients){
+      if(!r.firstName) r.firstName=(r.name||'').split(' ')[0]||'there';
+      const fname=r.email.replace(/[^a-zA-Z0-9@._\-]/g,'-')+'.html';
+      folder.file(fname, nBuildEmail(r));
+    }
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=progSlug+'-notifications-'+dateStamp()+'.zip';a.click();
+    URL.revokeObjectURL(url);
+    if(status){status.className='notif-gen-status show ok';status.textContent=`✓ ${recipients.length} email file${recipients.length!==1?'s':''} exported successfully.`;}
+  }catch(err){
+    if(status){status.className='notif-gen-status show err';status.textContent='✕ Error: '+err.message;}
+    console.error(err);
+  }
+  if(btn)btn.disabled=false;
+}
+
+function nClearFields(){
+  ['nProgramName','nStartDate','nEndDate','nRegLink','nDeadline','nLocation','nExtra'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const fmt=document.getElementById('nFormat');if(fmt)fmt.value='In Person';
+  nCheckReady();nRefreshPreview();
+}
+// ── END NOTIFICATION TAB ──────────────────────────────────────────────────────
+
 </script>
 </body>
 </html>
