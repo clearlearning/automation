@@ -388,6 +388,10 @@ const PROG_SHORT = {
   'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator': 'NCIT W ETHICS'
 };
 
+// ─── FIX 1: Added "NCIT Workshops -" aliases for all four workshops ───────────
+// SurveyMonkey returns "NCIT Workshops - …" but our canonical names use
+// "NCIT Subject Matter Workshop - …". These aliases cover both the custom
+// variable path (cv.Program) AND the multiple-choice answer text path.
 const PROGRAM_CV_MAP={
   'irg webinar':                    'Board Member Training - Introduction to Regulatory Governance',
   'acrg':                           'Board Member Training - Advanced Concepts in Regulatory Governance',
@@ -400,12 +404,16 @@ const PROGRAM_CV_MAP={
   'ncit w drug diversion':          'NCIT Subject Matter Workshop - Drug Diversion Investigations',
   'ncit w irsm':                    'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct',
   'ncit w communication':           'NCIT Subject Matter Workshop - Communications and the Art of Persuasion',
-  'ncit w ethics':                  'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
-// Workshop aliases — SurveyMonkey answer text uses "NCIT Workshops -" not "NCIT Subject Matter Workshop -"
-  'ncit workshops - drug diversion investigations':          'NCIT Subject Matter Workshop - Drug Diversion Investigations',
-  'ncit workshops - investigating reports of sexual misconduct': 'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct',
-  'ncit workshops - communications and the art of persuasion':  'NCIT Subject Matter Workshop - Communications and the Art of Persuasion',
-  'ncit workshops - developing a professional attitude: ethics and the regulatory investigator': 'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
+  'ncit w ethics':                  'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator',
+  // SurveyMonkey multiple-choice answer text aliases
+  'ncit workshops - drug diversion investigations':
+    'NCIT Subject Matter Workshop - Drug Diversion Investigations',
+  'ncit workshops - investigating reports of sexual misconduct':
+    'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct',
+  'ncit workshops - communications and the art of persuasion':
+    'NCIT Subject Matter Workshop - Communications and the Art of Persuasion',
+  'ncit workshops - developing a professional attitude: ethics and the regulatory investigator':
+    'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
 };
 
 function resolveProgram(raw){
@@ -773,7 +781,10 @@ function normalize(r,source){
       if(qInfo.family==='multiple_choice'){
         (rq.answers||[]).forEach(a=>{
           const choiceText=(a.choice_id&&qInfo.choices[a.choice_id])||'';
-          if(choiceText)programs.push(choiceText);
+          // ─── FIX 2: Run every multiple-choice answer through resolveProgram ──
+          // so that "NCIT Workshops - …" answer text gets mapped to the canonical
+          // "NCIT Subject Matter Workshop - …" name via PROGRAM_CV_MAP aliases.
+          if(choiceText) programs.push(resolveProgram(choiceText)||choiceText);
         });
       }
     });
@@ -902,7 +913,6 @@ function renderDemand(){
   sorted.forEach(([prog,c])=>{
     const pct=Math.round((c.total/filteredData.length)*100);
     const short=PROG_SHORT[prog]||prog;
-    // Split web into primary (gold) and secondary (blue) segments
     const webSec=c.web-c.webPrimary;
     const emailW=Math.round(c.email/maxCount*100);
     const webPrimW=Math.round(c.webPrimary/maxCount*100);
@@ -918,7 +928,7 @@ function renderDemand(){
       <button class="prog-notify-btn" onclick="openNotifyForProgram(${JSON.stringify(prog)})">✉ Notify</button>
     </div>`;
   });
-  html+=`</div>`; 
+  html+=`</div>`;
 
   html+=`<div class="sec-title" style="margin-top:32px">By Source</div><div class="source-grid">`;
   ['email','web'].forEach(src=>{
@@ -948,8 +958,6 @@ function renderDemand(){
 
 // ─── Geographic Tab ───────────────────────────────────────────────────────────
 
-// Mapping: state/province abbreviation → canonical map key
-// US states: us-atlas uses properties.name (full name), so we need abbr→fullName
 const STATE_FULL = {
   'AL':'Alabama','AK':'Alaska','AZ':'Arizona','AR':'Arkansas','CA':'California',
   'CO':'Colorado','CT':'Connecticut','DE':'Delaware','FL':'Florida','GA':'Georgia',
@@ -965,7 +973,6 @@ const STATE_FULL = {
   'AS':'American Samoa','MP':'Northern Mariana Islands'
 };
 
-// Canadian provinces: datamaps uses properties.name
 const CA_PROV_FULL = {
   'AB':'Alberta','BC':'British Columbia','MB':'Manitoba','NB':'New Brunswick',
   'NL':'Newfoundland and Labrador','NS':'Nova Scotia','NT':'Northwest Territories',
@@ -973,14 +980,12 @@ const CA_PROV_FULL = {
   'SK':'Saskatchewan','YT':'Yukon'
 };
 
-// North America-centric countries that are NOT US or Canada (for "other" section)
 const NORTH_AMERICA_COUNTRIES = new Set(['United States','Canada','USA','US','U.S.','U.S.A.']);
 
 function renderGeo(){
   const d=$('geoContent');
   if(!filteredData.length){d.innerHTML=`<div class="empty"><div class="icon">🌎</div><p>No data.</p></div>`;return;}
 
-  // Count by state abbr
   const stateCounts={};
   const countryCounts={};
   const cityCounts={};
@@ -996,7 +1001,6 @@ function renderGeo(){
     .sort((a,b)=>b[1]-a[1]);
   const total=filteredData.length;
 
-  // Build HTML skeleton first, then render map
   d.innerHTML=`
     <div class="sec-title">Response Heat Map — US &amp; Canada</div>
     <div class="map-container" id="mapWrap">
@@ -1019,7 +1023,6 @@ function renderGeo(){
       <button class="btn btn-e" onclick="exportGeoCSV()">⬇ Export Geographic CSV</button>
     </div>`;
 
-  // Fill grids
   if(intlCountries.length){
     $('intlGrid').innerHTML=intlCountries.map(([c,n])=>
       `<div class="geo-card"><div class="geo-place">${esc(c)}</div><div class="geo-count">${n}</div><div class="geo-pct">${Math.round(n/total*100)}% of responses</div></div>`
@@ -1033,12 +1036,10 @@ function renderGeo(){
     `<div class="geo-card"><div class="geo-place">${esc(c)}</div><div class="geo-count">${n}</div><div class="geo-pct">${Math.round(n/total*100)}%</div></div>`
   ).join('');
 
-  // Render D3 map
   renderNAMap(stateCounts, total);
 }
 
 function renderNAMap(stateCounts, total){
-  // Load D3 + TopoJSON if not already loaded
   function loadScript(src){
     return new Promise((res,rej)=>{
       if(document.querySelector(`script[src="${src}"]`)){res();return;}
@@ -1068,9 +1069,8 @@ function drawNAMap(usData, canData, stateCounts, total){
   const wrap=$('mapSvgWrap');
   wrap.innerHTML='';
 
-  // Canvas — leave 130px at bottom for AK/HI/PR insets
   const W=960, H=660;
-  const INSET_TOP=H-125; // y where inset strip begins
+  const INSET_TOP=H-125;
   const tip=$('mapTip');
 
   const allCounts=Object.values(stateCounts);
@@ -1112,17 +1112,10 @@ function drawNAMap(usData, canData, stateCounts, total){
 
   svg.append('rect').attr('width',W).attr('height',H).attr('fill','#919191').attr('rx',8);
 
-  // ── Clip region for mainland — exclude inset strip at bottom ──
   svg.append('defs').append('clipPath').attr('id','mainClip')
     .append('rect').attr('width',W).attr('height',INSET_TOP-2);
   const mainG=svg.append('g').attr('clip-path','url(#mainClip)');
 
-  // ── Mainland projection ──
-  // Use fitExtent on a bounding-box feature covering US+Canada (cropped ~67°N to drop
-  // the uninhabited arctic tops of NU/YT/NT while keeping their southern settled areas).
-  // fitExtent figures out scale/translate automatically — no guessing.
-  // Fit projection to actual feature data so the continent fills the canvas.
-  // Declare all feature vars here so both Canada and US renders can reference them.
   const usFeatures=topojson.feature(usData, usData.objects.states).features;
   const insetIds=new Set(['02','15']);
   const mainlandFeats=usFeatures.filter(f=>!insetIds.has(String(f.id).padStart(2,'0')));
@@ -1133,10 +1126,7 @@ function drawNAMap(usData, canData, stateCounts, total){
   const canFeatures=(canData&&canData.objects&&canData.objects.can)
     ?topojson.feature(canData,canData.objects.can).features:[];
 
-  // Fit to the union of mainland US + Canada so the projection fills the available space.
-  // Exclude PR(72) and other non-mainland territories from the fit so they don't
-  // pull the bounding box off-center. The continent features alone define the extent.
-  const naIds=new Set(['60','66','69','72','78']); // AS, GU, MP, PR, VI
+  const naIds=new Set(['60','66','69','72','78']);
   const continentFeats=mainlandFeats.filter(f=>!naIds.has(String(f.id).padStart(2,'0')));
   const fitCollection={type:'FeatureCollection',features:[...continentFeats,...canFeatures]};
   const mainProj=d3.geoConicEqualArea()
@@ -1145,7 +1135,6 @@ function drawNAMap(usData, canData, stateCounts, total){
     .fitExtent([[4,4],[W-4,INSET_TOP-6]], fitCollection);
   const mainPath=d3.geoPath().projection(mainProj);
 
-  // Canada provinces
   if(canFeatures.length){
     mainG.append('g').attr('class','ca-provinces')
       .selectAll('path').data(canFeatures).join('path')
@@ -1164,7 +1153,6 @@ function drawNAMap(usData, canData, stateCounts, total){
       .on('mouseleave',()=>tip.style.display='none');
   }
 
-
   mainG.append('g').attr('class','us-states')
     .selectAll('path').data(mainlandFeats).join('path')
     .attr('d',mainPath)
@@ -1180,7 +1168,6 @@ function drawNAMap(usData, canData, stateCounts, total){
     })
     .on('mouseleave',()=>tip.style.display='none');
 
-  // Interior US borders
   mainG.append('path')
     .datum(topojson.mesh(usData,usData.objects.states,(a,b)=>{
       const ai=String(a.id).padStart(2,'0'), bi=String(b.id).padStart(2,'0');
@@ -1188,12 +1175,9 @@ function drawNAMap(usData, canData, stateCounts, total){
     }))
     .attr('d',mainPath).attr('fill','none').attr('stroke','#fff').attr('stroke-width',0.4);
 
-  // ── Inset strip ──────────────────────────────────────────────────────────────
-  // Divider line
   svg.append('line').attr('x1',0).attr('y1',INSET_TOP).attr('x2',W).attr('y2',INSET_TOP)
     .attr('stroke','#b0c8d8').attr('stroke-width',0.8).attr('stroke-dasharray','4,3');
 
-  // Helper: draw one inset box + fitted feature
   function drawInset(feat, abbrKey, label, x, y, w, h, projOverride){
     if(!feat) return;
     svg.append('rect').attr('x',x).attr('y',y).attr('width',w).attr('height',h)
@@ -1201,10 +1185,7 @@ function drawNAMap(usData, canData, stateCounts, total){
     svg.append('text').attr('x',x+5).attr('y',y+h-5)
       .attr('font-size',9).attr('fill','#fff').attr('font-family','Open Sans,sans-serif')
       .text(label);
-    // Allow caller to pass a pre-configured projection (e.g. conic for Alaska)
-    // otherwise default to Mercator fitExtent which works well for compact shapes
     const iProj=projOverride||d3.geoMercator().fitExtent([[x+4,y+4],[x+w-4,y+h-14]],feat);
-    if(!projOverride) {} // already set
     const iPath=d3.geoPath().projection(iProj);
     const count=stateCounts[abbrKey]||0;
     svg.append('path').datum(feat)
@@ -1215,28 +1196,22 @@ function drawNAMap(usData, canData, stateCounts, total){
       .on('mouseleave',()=>tip.style.display='none');
   }
 
-  // Alaska needs a conic projection to render at correct relative size
-  // (Mercator massively distorts it). Fit a conic to AK then use that.
   function makeAKProj(x,y,w,h){
     return d3.geoConicEqualArea()
       .rotate([153,0]).parallels([55,65])
       .fitExtent([[x+4,y+4],[x+w-4,y+h-14]], akFeat);
   }
 
-  // Three insets spread across the bottom strip
-  // Alaska ~200px wide, Hawaii ~160px, Puerto Rico ~120px — spaced evenly
   const IY=INSET_TOP+5, IH=H-INSET_TOP-8;
   drawInset(akFeat,'AK','Alaska',       6,        IY, 210, IH, makeAKProj(6,IY,210,IH));
   drawInset(hiFeat,'HI','Hawaii',       222,      IY, 170, IH);
   drawInset(prFeat,'PR','Puerto Rico',  398,      IY, 130, IH);
 
-  // Note about other territories
   svg.append('text')
     .attr('x',W-8).attr('y',H-8).attr('text-anchor','end')
     .attr('font-size',9).attr('fill','rgba(100,9,44,0.45)').attr('font-family','Open Sans,sans-serif')
     .text('GU · VI · AS · MP not shown');
 
-  // ── Legend ──
   const legEl=$('mapLegend');
   const steps=6;
   legEl.innerHTML='<span style="font-size:11px;color:var(--text-light);margin-right:8px">0</span>';
@@ -1357,16 +1332,13 @@ function dateStamp(){return new Date().toISOString().slice(0,10)}
 // ─── NOTIFICATION TAB ─────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// State for the notify tab
-let notifyProgram = '';  // currently selected program key
+let notifyProgram = '';
 
-// Called from Notify button on demand rows, or from within the tab itself
 function openNotifyForProgram(prog){
   notifyProgram = prog;
   switchTab('notify');
 }
 
-// ─── Program marketing content ────────────────────────────────────────────────
 const PROGRAM_DATA = {
   'Board Member Training - Introduction to Regulatory Governance': {
     tag:'Board Development',tagColor:'#084d78',
@@ -1470,19 +1442,16 @@ const PROGRAM_DATA = {
 function renderNotify(){
   const d=$('notifyContent');
 
-  // Get recipients: all filteredData respondents interested in notifyProgram
   const progRecipients = notifyProgram
     ? filteredData.filter(r=>r.allPrograms.includes(notifyProgram) && r.email)
     : [];
 
-  // Deduplicate by email
   const seen=new Set();
   const recipients = progRecipients.filter(r=>{ if(seen.has(r.email))return false; seen.add(r.email); return true; });
 
   const pd = notifyProgram ? (PROGRAM_DATA[notifyProgram]||{}) : {};
   const displayName = notifyProgram || '';
 
-  // Program selector options
   const progOptions = PROGRAMS.map(p=>`<option value="${esc(p)}"${p===notifyProgram?'selected':''}>${esc(PROG_SHORT[p]||p)}</option>`).join('');
 
   d.innerHTML=`<div class="notif-layout">
@@ -1619,7 +1588,6 @@ function renderNotify(){
 
   </div>`;
 
-  // Wire up change listeners on all inputs (they get recreated each renderNotify call)
   ['nProgramName','nStartDate','nEndDate','nRegLink','nDeadline','nFormat','nLocation','nExtra'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.addEventListener('input',nCheckReady);el.addEventListener('change',nCheckReady);}
@@ -1634,7 +1602,6 @@ function onNotifyProgramChange(){
   if(sel){ notifyProgram=sel.value; renderNotify(); }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function nVal(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
 
 function nFmtDate(val){
@@ -1668,7 +1635,6 @@ function nRefreshPreview(){
   doc.open();doc.write(nBuildEmail(recipient));doc.close();
 }
 
-// ─── Email Builder ────────────────────────────────────────────────────────────
 function nBuildEmail(recipient){
   const prog = notifyProgram;
   const data = PROGRAM_DATA[prog]||{};
@@ -1810,7 +1776,6 @@ table{border-collapse:collapse}
 </html>`;
 }
 
-// ─── Generate ZIP ──────────────────────────────────────────────────────────────
 async function nGenerateZip(){
   if(!notifyProgram){alert('Please select a program.');return;}
   const seen=new Set();
