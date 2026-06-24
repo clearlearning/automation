@@ -367,10 +367,10 @@ const PROGRAMS = [
   'NCIT Basic Program (US and Canadian versions available)',
   'NCIT Applied Investigative Techniques Program',
   'NCIT Specialized Program',
-  'NCIT Workshops - Drug Diversion Investigations',
-  'NCIT Workshops - Investigating Reports of Sexual Misconduct',
-  'NCIT Workshops - Communications and the Art of Persuasion',
-  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
+  'NCIT Subject Matter Workshop - Drug Diversion Investigations',
+  'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct',
+  'NCIT Subject Matter Workshop - Communications and the Art of Persuasion',
+  'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
 ];
 
 const PROG_SHORT = {
@@ -382,10 +382,10 @@ const PROG_SHORT = {
   'NCIT Basic Program (US and Canadian versions available)': 'NCIT B',
   'NCIT Applied Investigative Techniques Program': 'NCIT AIT',
   'NCIT Specialized Program': 'NCIT S',
-  'NCIT Workshops - Drug Diversion Investigations': 'NCIT W DDI',
-  'NCIT Workshops - Investigating Reports of Sexual Misconduct': 'NCIT W IRSM',
-  'NCIT Workshops - Communications and the Art of Persuasion': 'NCIT W COMMS',
-  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator': 'NCIT W ETHICS'
+  'NCIT Subject Matter Workshop - Drug Diversion Investigations': 'NCIT W DDI',
+  'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct': 'NCIT W IRSM',
+  'NCIT Subject Matter Workshop - Communications and the Art of Persuasion': 'NCIT W COMMS',
+  'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator': 'NCIT W ETHICS'
 };
 
 const PROGRAM_CV_MAP={
@@ -397,10 +397,10 @@ const PROGRAM_CV_MAP={
   'ncit b':                         'NCIT Basic Program (US and Canadian versions available)',
   'ncit ait':                       'NCIT Applied Investigative Techniques Program',
   'ncit s':                         'NCIT Specialized Program',
-  'ncit w drug diversion':          'NCIT Workshops - Drug Diversion Investigations',
-  'ncit w irsm':                    'NCIT Workshops - Investigating Reports of Sexual Misconduct',
-  'ncit w communication':           'NCIT Workshops - Communications and the Art of Persuasion',
-  'ncit w ethics':                  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
+  'ncit w drug diversion':          'NCIT Subject Matter Workshop - Drug Diversion Investigations',
+  'ncit w irsm':                    'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct',
+  'ncit w communication':           'NCIT Subject Matter Workshop - Communications and the Art of Persuasion',
+  'ncit w ethics':                  'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator'
 };
 
 function resolveProgram(raw){
@@ -1374,7 +1374,7 @@ const PROGRAM_DATA = {
   'Board Member Training - Advanced Concepts in Regulatory Governance': {
     tag:'Board Development',tagColor:'#084d78',
     headline:'Take Your Governance Knowledge Further',
-    subhead:'Building on foundational principles, CLEAR\'s Advanced Concepts program dives into the complex, evolving landscape of regulatory governance — where policy, law, and leadership intersect.',
+    subhead:'Building on foundational principles, CLEAR\'s Advanced Concepts in Regulatory Governance program dives into the complex, evolving landscape of regulatory governance — where policy, law, and leadership intersect.',
     bullets:['Analyze advanced governance models and their application across regulatory contexts','Examine stakeholder relationships and external accountability mechanisms','Address contemporary challenges: rulemaking, enforcement discretion, and board ethics','Engage in facilitated case discussion with peers from across the regulatory community'],
     who:'Best suited for experienced board members, general counsel, executive directors, and agency leaders ready to deepen their strategic governance practice.',
     cta:'Register Now'
@@ -1390,7 +1390,7 @@ const PROGRAM_DATA = {
   'Executive Leadership Program for Regulators': {
     tag:'Executive Education',tagColor:'#64092c',
     headline:'ELPR Registration is Now Open',
-    subhead:'CLEAR\'s Executive Leadership Program for Regulators (ELPR) is a transformative multi-day experience designed for senior regulatory leaders ready to elevate their professional impact and strategic vision.',
+    subhead:'CLEAR\'s Executive Leadership Program for Regulators (ELPR) is a transformative multi-day program designed for senior regulatory leaders ready to elevate their professional impact and strategic vision.',
     bullets:['Strengthen your leadership identity and executive presence in regulatory contexts','Apply strategic planning and change management frameworks to real agency challenges','Build peer networks with senior regulators from across North America and beyond','Engage with faculty who bring deep expertise in regulatory law, governance, and leadership'],
     who:'ELPR is designed for executive directors, deputy directors, registrars, and senior leaders of regulatory bodies who are ready to invest in their long-term professional growth.',
     cta:'Apply for ELPR'
@@ -1427,32 +1427,32 @@ const PROGRAM_DATA = {
     who:'Designed for regulatory investigators and their supervisors working in specialized sectors who want targeted training that goes beyond the general investigative curriculum.',
     cta:'Register for NCIT Specialized'
   },
-  'NCIT Workshops - Drug Diversion Investigations': {
-    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+  'NCIT Subject Matter Workshop - Drug Diversion Investigations': {
+    tag:'NCIT Subject Matter Workshop',tagColor:'#5c3a6e',
     headline:'Drug Diversion Investigations Workshop — Registration Open',
     subhead:'Drug diversion is one of the most complex and consequential investigations a regulatory body can undertake. This targeted workshop equips investigators with practical strategies for detecting, investigating, and documenting drug diversion within regulated professions.',
     bullets:['Recognize the behavioral, documentation, and inventory red flags associated with drug diversion','Apply effective interview techniques specific to healthcare and pharmacy investigations','Coordinate investigations involving multiple jurisdictions, employers, and regulatory bodies','Understand chain-of-custody requirements and evidentiary standards for drug-related cases'],
     who:'Designed for investigators in health profession regulatory bodies, pharmacy boards, nursing boards, and others who encounter drug diversion cases in their work.',
     cta:'Register for This Workshop'
   },
-  'NCIT Workshops - Investigating Reports of Sexual Misconduct': {
-    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+  'NCIT Subject Matter Workshop - Investigating Reports of Sexual Misconduct': {
+    tag:'NCIT Subject Matter Workshop',tagColor:'#5c3a6e',
     headline:'Investigating Reports of Sexual Misconduct — Workshop Registration Open',
     subhead:'Investigations involving sexual misconduct require exceptional skill, sensitivity, and precision. This workshop provides investigators with trauma-informed approaches and practical tools to conduct thorough, legally sound investigations of sexual misconduct complaints.',
     bullets:['Apply trauma-informed interviewing techniques with complainants, witnesses, and respondents','Navigate disclosure challenges and assess credibility in a fair and consistent manner','Understand legal considerations including complainant rights and procedural fairness','Document findings in ways that withstand scrutiny from adjudicators, counsel, and courts'],
     who:'Recommended for all regulatory investigators who handle or may handle complaints involving sexual misconduct, boundary violations, or abuse of trust.',
     cta:'Register for This Workshop'
   },
-  'NCIT Workshops - Communications and the Art of Persuasion': {
-    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+  'NCIT Subject Matter Workshop - Communications and the Art of Persuasion': {
+    tag:'NCIT Subject Matter Workshop',tagColor:'#5c3a6e',
     headline:'Make Your Case — Communications Workshop Registration Now Open',
     subhead:'Investigative work doesn\'t end when the case file closes — it culminates in reports, hearings, and presentations where the quality of your communication determines the outcome. This workshop sharpens your ability to communicate findings clearly, persuasively, and professionally.',
     bullets:['Write investigation reports that are clear, compelling, and legally defensible','Present findings confidently in hearings, reviews, and consultations','Adapt your communication style to different audiences: panels, legal counsel, and leadership','Use the principles of persuasion to structure arguments and evidence effectively'],
     who:'Ideal for investigators and supervisors who want to strengthen their professional communication skills — from report writing to hearing testimony.',
     cta:'Register for This Workshop'
   },
-  'NCIT Workshops - Developing a Professional Attitude: Ethics and the Regulatory Investigator': {
-    tag:'NCIT Workshop',tagColor:'#5c3a6e',
+  'NCIT Subject Matter Workshop - Developing a Professional Attitude: Ethics and the Regulatory Investigator': {
+    tag:'NCIT Subject Matter Workshop',tagColor:'#5c3a6e',
     headline:'Ethics Workshop Registration Now Open',
     subhead:'The ethical dimension of regulatory investigation work is never simple. This workshop explores the real dilemmas investigators face — and provides a practical framework for navigating them with integrity, fairness, and professional confidence.',
     bullets:['Examine the ethical foundations of regulatory investigation and public protection','Navigate conflicts of interest, bias, and dual-role challenges in investigative contexts','Apply an ethical decision-making framework to ambiguous, real-world scenarios','Build the professional attitude and personal accountability that define excellent investigators'],
