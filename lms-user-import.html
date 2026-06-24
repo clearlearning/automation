@@ -472,22 +472,6 @@ document.getElementById('noviProductPullBtn').addEventListener('click',async()=>
       offset+=pageSize;
     }
 
-    // Pull product-purchases to get the set of paid open line item IDs
-    setNoviPullStatus('Cross-checking payment status...','info');
-    let paidItemIds=new Set();
-    try{
-      let ppOffset=0;
-      while(true){
-        const res2=await noviCall('/api/products/product-purchases?pageSize='+pageSize+'&offset='+ppOffset+'&productGuid='+productId+'&orderStatus=Open');
-        const page2=Array.isArray(res2)?res2:(res2.Results||[]);
-        page2.forEach(item=>{if(item.OrderItemUniqueID)paidItemIds.add(item.OrderItemUniqueID.toLowerCase());});
-        if(page2.length<pageSize)break;
-        ppOffset+=pageSize;
-      }
-    }catch(e){console.warn('Could not fetch product-purchases:',e.message);}
-
-    console.log('Paid item IDs:',paidItemIds.size,[...paidItemIds]);
-
     // Custom fields on OrderItems are a keyed object: item.CustomFields["Field Name"].Value
     function getCF(item, fieldName){
       const cf=item.CustomFields||{};
@@ -500,20 +484,15 @@ document.getElementById('noviProductPullBtn').addEventListener('click',async()=>
     const sample=allOrders[0]||{};
     const itemsField=('OrderItems' in sample)?'OrderItems':('Items' in sample)?'Items':('LineItems' in sample)?'LineItems':'OrderItems';
 
-    // Keep Open orders with at least one paid line item for this product
+    // Keep all Open orders containing this product
     const productOrders=allOrders.filter(o=>{
       if((o.OrderStatus||'')!=='Open')return false;
       const items=o[itemsField]||[];
-      return items.some(item=>{
-        const pid=(item.ProductUniqueId||item.ProductUniqueID||'').toLowerCase();
-        if(pid!==productId.toLowerCase())return false;
-        if(paidItemIds.size>0)return paidItemIds.has((item.OrderItemUniqueID||item.OrderItemUniqueId||'').toLowerCase());
-        return true;
-      });
+      return items.some(item=>(item.ProductUniqueId||item.ProductUniqueID||'').toLowerCase()===productId.toLowerCase());
     });
 
     if(!productOrders.length){
-      setNoviPullStatus('No paid open orders found for this product. ('+allOrders.length+' total orders scanned)','error');
+      setNoviPullStatus('No open orders found for this product. ('+allOrders.length+' total orders scanned)','error');
       btn.disabled=false;btn.textContent='Pull Orders';
       return;
     }
@@ -524,9 +503,7 @@ document.getElementById('noviProductPullBtn').addEventListener('click',async()=>
       const items=o[itemsField]||[];
       const matchingItems=items.filter(item=>{
         const pid=(item.ProductUniqueId||item.ProductUniqueID||'').toLowerCase();
-        if(pid!==productId.toLowerCase())return false;
-        if(paidItemIds.size>0)return paidItemIds.has((item.OrderItemUniqueID||item.OrderItemUniqueId||'').toLowerCase());
-        return true;
+        return pid===productId.toLowerCase();
       });
 
       const purch=o.Purchaser||{};
@@ -565,9 +542,9 @@ document.getElementById('noviProductPullBtn').addEventListener('click',async()=>
 
     const totalUnits=mapped.length;
     const skipped=productOrders.length-totalUnits;
-    let msg='Loaded <strong>'+totalUnits+'</strong> user(s) from <strong>'+productOrders.length+'</strong> paid open order(s).';
-    msg+=' <span style="color:#888;">('+allOrders.length+' total orders scanned; '+paidItemIds.size+' paid line items confirmed)</span>';
+    let msg='Loaded <strong>'+totalUnits+'</strong> user(s) from <strong>'+productOrders.length+'</strong> open order(s). ('+allOrders.length+' total orders scanned)';
     if(skipped>0)msg+=' <span style="color:#f57f17;">('+skipped+' skipped — no email)</span>';
+    msg+='<br><span style="color:#b85c00;">⚠️ Payment status cannot be verified via API. Please <a href="https://www.clearhq.org/admin/ecommerce/order-list" target="_blank">check Novi</a> and deselect any unpaid orders before provisioning.</span>';
     setNoviPullStatus(msg,'success');
     setFS('','');
     renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
