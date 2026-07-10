@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Program Task Calendar Generator</title>
+<style>
+  :root{
+    --burgundy:#64092C;
+    --gold:#DDA838;
+    --charcoal:#484848;
+    --blue:#084D78;
+    --bg:#f7f5f3;
+    --border:#ddd;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Open Sans','Trebuchet MS',sans-serif;
+    background:var(--bg);
+    color:var(--charcoal);
+    margin:0;
+    padding:0;
+  }
+  header{
+    background:var(--burgundy);
+    color:#fff;
+    padding:20px 30px;
+    border-bottom:5px solid var(--gold);
+  }
+  header h1{margin:0;font-size:22px;font-weight:600;}
+  header p{margin:4px 0 0;font-size:13px;color:#f0d9e0;}
+  .container{max-width:1020px;margin:0 auto;padding:24px 20px 60px;}
+  .tabs{display:flex;gap:2px;margin-bottom:20px;}
+  .tab-btn{
+    flex:1;padding:10px 14px;background:#eee;border:none;cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--charcoal);
+    border-bottom:3px solid transparent;
+  }
+  .tab-btn.active{background:#fff;border-bottom:3px solid var(--gold);color:var(--burgundy);}
+  .panel{display:none;background:#fff;border:1px solid var(--border);border-radius:4px;padding:20px;}
+  .panel.active{display:block;}
+  label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px;color:var(--charcoal);}
+  input[type=text], input[type=date], input[type=time], input[type=number], select{
+    width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:3px;font-family:inherit;font-size:14px;
+  }
+  input:disabled{background:#f0f0f0;color:#aaa;}
+  .row{display:flex;gap:14px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:200px;}
+  button.primary{
+    background:var(--burgundy);color:#fff;border:none;padding:10px 18px;border-radius:3px;
+    font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:16px;
+  }
+  button.primary:hover{background:#4c0722;}
+  button.secondary{
+    background:#fff;color:var(--blue);border:1px solid var(--blue);padding:7px 12px;border-radius:3px;
+    font-family:inherit;font-size:13px;cursor:pointer;
+  }
+  button.secondary:hover{background:#eef4f8;}
+  button.danger{
+    background:#fff;color:#a33;border:1px solid #a33;padding:4px 8px;border-radius:3px;
+    font-family:inherit;font-size:12px;cursor:pointer;
+  }
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;}
+  th{
+    background:var(--blue);color:#fff;text-align:left;padding:8px;font-weight:600;
+  }
+  td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:nth-child(even) td{background:#faf9f7;}
+  td input, td select{padding:4px 6px;font-size:13px;}
+  .timing-tag{
+    display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;
+  }
+  .timing-before{background:var(--blue);}
+  .timing-start{background:var(--gold);color:#4a3a10;}
+  .timing-mid{background:#6b6b6b;}
+  .timing-end{background:#b5872e;color:#3a2c0d;}
+  .timing-after{background:var(--burgundy);}
+  .section-title{
+    font-size:15px;font-weight:700;color:var(--burgundy);margin:24px 0 6px;
+    border-bottom:2px solid var(--gold);padding-bottom:4px;
+  }
+  .hint{font-size:12px;color:#777;margin-top:4px;}
+  .add-row-btn{margin-top:8px;}
+  .type-select-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:6px;}
+  .type-select-row > div{flex:1;}
+  .status-msg{
+    margin-top:12px;padding:8px 12px;border-radius:3px;font-size:13px;display:none;
+  }
+  .status-msg.show{display:block;}
+  .status-msg.ok{background:#e7f6ea;color:#1e6b30;border:1px solid #b7e2c1;}
+  .status-msg.err{background:#fce8e8;color:#a33;border:1px solid #eab8b8;}
+  .checkbox-cell{text-align:center;}
+  .drag-handle{cursor:grab;font-size:15px;letter-spacing:-2px;user-select:none;padding:4px 8px;color:var(--blue);}
+  .drag-handle.disabled{color:#ccc;cursor:default;}
+  tr.dragging{opacity:0.35;}
+  tr.drag-target-row{background:#eef4f8 !important;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Program Task Calendar Generator</h1>
+  <p>Generate all-day, free-status calendar invites (.ics) for program setup, hosting, and close-out tasks — ready for the shared calendar.</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="generate">Generate Invites</button>
+    <button class="tab-btn" data-tab="manage">Manage Task Templates</button>
+  </div>
+
+  <!-- GENERATE TAB -->
+  <div class="panel active" id="panel-generate">
+
+    <div class="row">
+      <div>
+        <label>Program Type</label>
+        <select id="programTypeSelect"></select>
+      </div>
+      <div>
+        <label>Specific Program Name / Instance</label>
+        <input type="text" id="programName" placeholder="e.g. NCIT Basic US – Denver – Oct 2026">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Program Start Date</label>
+        <input type="date" id="startDate">
+      </div>
+      <div>
+        <label>Program End Date</label>
+        <input type="date" id="endDate">
+        <p class="hint">Leave blank for a single-day program — it'll be treated as the same as the start date.</p>
+      </div>
+    </div>
+
+    <button class="secondary" id="loadTasksBtn" style="margin-top:14px;">Load / Recalculate Tasks</button>
+
+    <div class="section-title">Task Preview — edit anything before generating</div>
+    <p class="hint">Uncheck a row to exclude it. Dates recalculate from Start/End Date when you click "Load / Recalculate," but you can hand-edit any date, name, or reminder after that. Prep tasks (before the event) that land on a Friday, Saturday, or Sunday move back to the Thursday before; close-out tasks (after the event) move forward to the following Monday. Start Date, End Date, Midpoint, and "day of program" tasks are never moved since those are the actual event.</p>
+
+    <table id="previewTable">
+      <thead>
+        <tr>
+          <th style="width:32px;">✓</th>
+          <th style="width:100px;">Timing</th>
+          <th>Task</th>
+          <th style="width:130px;">Date</th>
+          <th style="width:110px;">Reminder (days before)</th>
+          <th style="width:90px;">Reminder time</th>
+        </tr>
+      </thead>
+      <tbody id="previewBody"></tbody>
+    </table>
+
+    <button class="primary" id="generateBtn">Download Calendar Invites (.ics)</button>
+    <div class="status-msg" id="genStatus"></div>
+  </div>
+
+  <!-- MANAGE TAB -->
+  <div class="panel" id="panel-manage">
+
+    <div id="syncBar" style="display:flex;justify-content:space-between;align-items:center;background:#f0f4f7;border:1px solid var(--border);border-radius:3px;padding:8px 12px;margin-bottom:16px;font-size:13px;">
+      <span id="syncStatusText">Loading templates…</span>
+      <button class="secondary" id="reloadSharedBtn" style="padding:4px 10px;font-size:12px;">Reload shared templates</button>
+    </div>
+
+    <div class="type-select-row">
+      <div>
+        <label>Program Type</label>
+        <select id="manageTypeSelect"></select>
+      </div>
+      <div>
+        <button class="secondary" id="renameTypeBtn">Rename</button>
+        <button class="danger" id="deleteTypeBtn">Delete type</button>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <input type="text" id="newTypeName" placeholder="New program type name">
+      </div>
+      <div style="flex:0 0 auto;">
+        <button class="secondary" id="addTypeBtn">+ Add new program type</button>
+      </div>
+    </div>
+
+    <div class="section-title">Task List for Selected Program Type</div>
+    <p class="hint">Timing: <strong>Relative</strong> uses the offset field — negative days count back from Start Date, positive days count forward from End Date, 0 means Start Date. <strong>Start Date</strong>, <strong>End Date</strong>, and <strong>Midpoint</strong> ignore the offset field and land exactly on that date.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px;">Order</th>
+          <th style="width:130px;">Timing</th>
+          <th style="width:90px;">Offset (days)</th>
+          <th>Task</th>
+          <th style="width:100px;">Reminder (days before)</th>
+          <th style="width:90px;">Reminder time</th>
+          <th style="width:40px;"></th>
+        </tr>
+      </thead>
+      <tbody id="tasksBody"></tbody>
+    </table>
+    <button class="secondary add-row-btn" id="addTaskBtn">+ Add task</button>
+    <button class="secondary add-row-btn" id="reorderToggleBtn">Reorder Tasks (Drag &amp; Drop)</button>
+
+    <div style="margin-top:20px;">
+      <button class="primary" id="saveTemplatesBtn">Save Templates</button>
+      <div class="status-msg" id="manageStatus"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Utility ---------- */
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function mk(anchor, offset, name, reminderDays, reminderTime){
+  return { id: uid(), anchor, offsetDays: offset, name, reminderDays: (reminderDays===undefined?0:reminderDays), reminderTime: reminderTime||'09:00' };
+}
+
+/* ---------- Default program type task lists ---------- */
+function defaultProgramTypes(){
+  const ncitBIPT = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-30,'Coordinate hotel and travel arrangements with instructors'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate QR codes for Module Evaluations & Update slide decks'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks to instructors'),
+    mk('relative',-11,'Update welcome email template with cohort specific information'),
+    mk('relative',-7,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',-5,'Check standard release completion and send reminder'),
+    mk('relative',5,'Take attendance in talentlms, pull exam reports, issue digital badges and certificates as appropriate'),
+    mk('relative',5,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',5,'Mark attendance in Novi')
+  ];
+
+  const ncitSIPT = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-30,'Coordinate hotel and travel arrangements with instructors'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate QR codes for Module Evaluations & Update slide decks'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks to instructors'),
+    mk('relative',-11,'Update welcome email template with cohort specific information'),
+    mk('relative',-7,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',-5,'Check standard release completion and send reminder'),
+    mk('relative',5,'Take attendance in talentlms, pull exam reports, issue digital badges'),
+    mk('relative',5,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',5,'Mark attendance in Novi')
+  ];
+
+  const ncitAITIPT = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-30,'Coordinate hotel and travel arrangements with instructors'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate QR codes for Module Evaluations & Update slide decks'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks to instructors'),
+    mk('relative',-14,'Update welcome email template with cohort specific information'),
+    mk('relative',-14,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',-5,'Check standard release completion and send reminder'),
+    mk('relative',5,'Take attendance in talentlms'),
+    mk('relative',5,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',5,'Mark attendance in Novi')
+  ];
+
+  const elprIPT = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-30,'Coordinate hotel and travel arrangements with instructors'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate QR codes for Module Evaluations & Update slide decks'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks to instructors'),
+    mk('relative',-14,'Update welcome email template with cohort specific information'),
+    mk('relative',-14,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',-5,'Pull EQ and Questionnaire report, send EQ responses to learners and EQ and Questionnaire report to instructors, send uploaded annual reports to instructors'),
+    mk('relative',0,'Check-in on Day 1'),
+    mk('relative',5,'Take attendance in talentlms, and issue certificates as appropriate'),
+    mk('relative',5,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',5,'Mark attendance in Novi')
+  ];
+
+  const ncitBV = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate links for Module Evaluations. Update zoom sessions and LMS evaluation modules with survey links'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks, agenda, meeting invites, and zoom links to instructors'),
+    mk('relative',-11,'Update welcome email template with cohort specific information'),
+    mk('start',null,'Host Welcome Session'),
+    mk('start',null,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('midpoint',null,'Send mid-program status report email'),
+    mk('end',null,"Assign final exam to completed participants, send final program status report email to those who haven't completed required components"),
+    mk('relative',5,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',7,'Pull exam report, send reminder emails as needed'),
+    mk('relative',14,'Pull final exam report, issue digital badges and certificates as appropriate'),
+    mk('relative',14,'Mark attendance in Novi')
+  ];
+
+  const ncitSV = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate links for Module Evaluations. Update zoom sessions and LMS evaluation modules with survey links'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks, agenda, meeting invites, and zoom links to instructors'),
+    mk('relative',-4,'Update welcome email template with cohort specific information'),
+    mk('start',null,'Host Welcome Session'),
+    mk('start',null,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('midpoint',null,'Send mid-program status report email'),
+    mk('end',null,"Assign final exam to completed participants, send final program status report email to those who haven't completed required components"),
+    mk('relative',5,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',7,'Pull exam report, send reminder emails as needed'),
+    mk('relative',14,'Pull final exam report, issue digital badges as appropriate'),
+    mk('relative',14,'Mark attendance in Novi')
+  ];
+
+  const ncitWorkshopsCommsEthicsV = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-14,'Create Live sessions'),
+    mk('relative',-14,'Generate links for Module Evaluations. Update zoom sessions with survey links'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks, agenda, meeting invites, and zoom links to instructors'),
+    mk('relative',-11,'Update welcome email template with cohort specific information'),
+    mk('relative',-7,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',1,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',1,'Mark attendance in Novi')
+  ];
+
+  const ncitWorkshopsDrugDiversionIRSMV = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-14,'Generate links for Module Evaluations. Update zoom sessions with survey links'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks, agenda, meeting invites, and zoom links to instructors'),
+    mk('relative',-11,'Update welcome email template with cohort specific information'),
+    mk('relative',-7,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',1,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',1,'Pull exam report, send reminder emails as needed'),
+    mk('relative',1,'Mark attendance in Novi')
+  ];
+
+  const elprV = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-20,'Create Live sessions and activate/deactivate instructor bios'),
+    mk('relative',-14,'Generate links for Module Evaluations & Update sessions in zoom and eval modules in talent'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks to instructors'),
+    mk('relative',-14,'Update welcome email template with cohort specific information'),
+    mk('relative',-14,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',-5,'Pull EQ and Questionnaire report, send EQ responses to learners and EQ and Questionnaire report to instructors, send uploaded annual reports to instructors'),
+    mk('relative',1,'Take attendance in talentlms, and issue certificates as appropriate'),
+    mk('relative',1,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',1,'Mark attendance in Novi')
+  ];
+
+  const threeVWorkshopTemplate = [
+    mk('relative',-90,'Schedule Program'),
+    mk('relative',-90,'Identify instructor/s'),
+    mk('relative',-90,'Identify facilitator'),
+    mk('relative',-60,'Create Program Agenda'),
+    mk('relative',-60,'Create Instructor Agenda'),
+    mk('relative',-60,'Create Novi event'),
+    mk('relative',-20,'Create Live sessions and activate/deactivate instructor bios'),
+    mk('relative',-14,'Generate QR codes for Module Evaluations & Update slide decks'),
+    mk('relative',-14,'Reset results for all sli.do Polls'),
+    mk('relative',-14,'Make sure all sli.do polls are active'),
+    mk('relative',-14,'Send slide decks to instructors'),
+    mk('relative',-14,'Update welcome email template with cohort specific information'),
+    mk('relative',-14,'Import users from Novi to TalentLMS & Assign to live sessions'),
+    mk('relative',-5,'Pull and send pre-program questionnaire report to instructors'),
+    mk('relative',1,'Take attendance in talentlms, and issue certificates as appropriate'),
+    mk('relative',1,'Pull module evaluation reports and send instructor evaluation pdfs to instructors'),
+    mk('relative',1,'Mark attendance in Novi')
+  ];
+
+  return {
+    'NCIT B IPT': ncitBIPT,
+    'NCIT S IPT': ncitSIPT,
+    'NCIT AIT IPT': ncitAITIPT,
+    'ELPR IPT': elprIPT,
+    'NCIT B V': ncitBV,
+    'NCIT S V': ncitSV,
+    'NCIT Workshops (Communications & Ethics Workshops) V': ncitWorkshopsCommsEthicsV,
+    'NCIT Workshops (Drug Diversion & IRSM Workshops) V': ncitWorkshopsDrugDiversionIRSMV,
+    'ELPR V': elprV,
+    'ACRG V': threeVWorkshopTemplate.map(t=>({...t, id:uid()})),
+    'GMFYB V': threeVWorkshopTemplate.map(t=>({...t, id:uid()})),
+    'SRASAB V': threeVWorkshopTemplate.map(t=>({...t, id:uid()}))
+  };
+}
+
+/* ---------- Shared template sync (existing clear-lms-proxy /kv route) ----------
+   Fill these in with your actual proxy domain and auth token.
+   Uses the existing generic GET/PUT /kv?key=... route already in clear-lms-proxy —
+   no new worker or deploy needed. */
+const PROXY_BASE = 'https://clear-lms-proxy.avance.workers.dev';
+const AUTH_TOKEN_HEADER = 'ClearHQ108WH:)abcxyz';
+const TEMPLATES_KV_KEY = 'program_task_calendar_templates';
+
+const STORAGE_KEY_TYPES = 'ptc_programTypes_v2';
+
+function cacheLocally(programTypesVal){
+  try{ localStorage.setItem(STORAGE_KEY_TYPES, JSON.stringify(programTypesVal)); }catch(e){}
+}
+function loadLocalCache(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY_TYPES);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+
+async function fetchSharedTemplates(){
+  if(!PROXY_BASE) return null;
+  const res = await fetch(`${PROXY_BASE}/kv?key=${encodeURIComponent(TEMPLATES_KV_KEY)}`, {
+    headers: { 'X-Auth-Token': AUTH_TOKEN_HEADER },
+    cache: 'no-store'
+  });
+  if(!res.ok) throw new Error('Fetch failed: ' + res.status);
+  const data = await res.json();
+  if(!data.value || typeof data.value.programTypes !== 'object'){
+    return null; // key not set yet — caller falls back to defaults
+  }
+  return data.value.programTypes;
+}
+
+async function pushSharedTemplates(programTypesVal){
+  if(!PROXY_BASE) return { ok:false, reason:'no-api' };
+  const res = await fetch(`${PROXY_BASE}/kv`, {
+    method:'PUT',
+    headers:{ 'Content-Type':'application/json', 'X-Auth-Token': AUTH_TOKEN_HEADER },
+    body: JSON.stringify({ key: TEMPLATES_KV_KEY, value: { programTypes: programTypesVal } })
+  });
+  if(!res.ok) throw new Error('Save failed: ' + res.status);
+  return { ok:true };
+}
+
+let programTypes = defaultProgramTypes();
+let currentManageType = Object.keys(programTypes)[0] || null;
+
+/* ---------- Date helpers ---------- */
+function parseDateInput(str){
+  const [y,m,d] = str.split('-').map(Number);
+  return new Date(Date.UTC(y, m-1, d));
+}
+function addDaysUTC(date, days){
+  const d = new Date(date.getTime());
+  d.setUTCDate(d.getUTCDate()+days);
+  return d;
+}
+function daysBetweenUTC(a,b){
+  return Math.round((b.getTime()-a.getTime())/86400000);
+}
+function midpointUTC(start, end){
+  const span = daysBetweenUTC(start,end);
+  return addDaysUTC(start, Math.floor(span/2));
+}
+function fmtDateForInput(date){
+  const y=date.getUTCFullYear();
+  const m=String(date.getUTCMonth()+1).padStart(2,'0');
+  const d=String(date.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function fmtICSDate(date){
+  const y=date.getUTCFullYear();
+  const m=String(date.getUTCMonth()+1).padStart(2,'0');
+  const d=String(date.getUTCDate()).padStart(2,'0');
+  return `${y}${m}${d}`;
+}
+function fmtICSDateTimeUTC(date){
+  return date.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+}
+function reminderTriggerUTC(eventDateUTC, reminderDaysBefore, reminderTime){
+  const remDate = addDaysUTC(eventDateUTC, -Math.abs(reminderDaysBefore||0));
+  const [hh,mm] = (reminderTime||'09:00').split(':').map(Number);
+  const local = new Date(remDate.getUTCFullYear(), remDate.getUTCMonth(), remDate.getUTCDate(), hh||0, mm||0, 0);
+  return local;
+}
+function escapeICS(str){
+  return String(str).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+
+/* ---------- Task date / timing logic ---------- */
+function adjustForWeekendBefore(date){
+  // Prep tasks due before the event: roll Fri/Sat/Sun back to the Thursday before.
+  const dow = date.getUTCDay(); // 0=Sun, 5=Fri, 6=Sat
+  if(dow === 5) return addDaysUTC(date, -1);
+  if(dow === 6) return addDaysUTC(date, -2);
+  if(dow === 0) return addDaysUTC(date, -3);
+  return date;
+}
+function adjustForWeekendAfter(date){
+  // Close-out tasks due after the event: roll Fri/Sat/Sun forward to the following Monday.
+  const dow = date.getUTCDay();
+  if(dow === 5) return addDaysUTC(date, 3);
+  if(dow === 6) return addDaysUTC(date, 2);
+  if(dow === 0) return addDaysUTC(date, 1);
+  return date;
+}
+function computeTaskDateUTC(task, start, end){
+  // Actual program dates (Start Date, End Date, Midpoint, or a 0-offset "day of program") are never
+  // moved — they represent the real event, which happens whatever day of the week it falls on.
+  if(task.anchor === 'start') return new Date(start.getTime());
+  if(task.anchor === 'end') return new Date(end.getTime());
+  if(task.anchor === 'midpoint') return midpointUTC(start, end);
+
+  // relative — internal prep/close-out tasks get nudged off Fri/Sat/Sun
+  const offset = Number(task.offsetDays)||0;
+  if(offset < 0) return adjustForWeekendBefore(addDaysUTC(start, offset));
+  if(offset === 0) return new Date(start.getTime()); // day-of-program task, don't move
+  return adjustForWeekendAfter(addDaysUTC(end, offset));
+}
+function timingLabel(task){
+  if(task.anchor==='start') return {text:'Start Date', cls:'timing-start'};
+  if(task.anchor==='end') return {text:'End Date', cls:'timing-end'};
+  if(task.anchor==='midpoint') return {text:'Midpoint', cls:'timing-mid'};
+  const offset = Number(task.offsetDays)||0;
+  if(offset < 0) return {text:`${offset}d (before start)`, cls:'timing-before'};
+  if(offset === 0) return {text:'Start Date', cls:'timing-start'};
+  return {text:`+${offset}d (after end)`, cls:'timing-after'};
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------- Populate program type dropdowns ---------- */
+function refreshTypeDropdowns(){
+  const genSel = document.getElementById('programTypeSelect');
+  const manSel = document.getElementById('manageTypeSelect');
+  const types = Object.keys(programTypes);
+
+  const prevGenVal = genSel.value;
+  genSel.innerHTML = types.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if(types.includes(prevGenVal)) genSel.value = prevGenVal;
+
+  manSel.innerHTML = types.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if(currentManageType && types.includes(currentManageType)){
+    manSel.value = currentManageType;
+  } else if(types.length){
+    currentManageType = types[0];
+    manSel.value = currentManageType;
+  } else {
+    currentManageType = null;
+  }
+}
+
+/* ---------- Generate tab: preview table ---------- */
+let previewRows = [];
+let previewStart = null, previewEnd = null;
+
+function loadPreview(){
+  const typeName = document.getElementById('programTypeSelect').value;
+  const startStr = document.getElementById('startDate').value;
+  const endStr = document.getElementById('endDate').value;
+  if(!startStr){
+    alert('Pick a program start date first.');
+    return;
+  }
+  const start = parseDateInput(startStr);
+  const end = endStr ? parseDateInput(endStr) : start;
+  if(end.getTime() < start.getTime()){
+    alert('End date is before start date — double check the dates.');
+    return;
+  }
+  previewStart = start; previewEnd = end;
+
+  const tasks = programTypes[typeName] || [];
+  previewRows = tasks.map(t=>({
+    id: uid(),
+    include: true,
+    anchor: t.anchor,
+    offsetDays: t.offsetDays,
+    name: t.name,
+    dateUTC: computeTaskDateUTC(t, start, end),
+    reminderDays: t.reminderDays,
+    reminderTime: t.reminderTime || '09:00'
+  }));
+  renderPreviewTable();
+}
+
+function renderPreviewTable(){
+  const body = document.getElementById('previewBody');
+  body.innerHTML = '';
+  previewRows.forEach(row=>{
+    const tag = timingLabel(row);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="checkbox-cell"><input type="checkbox" ${row.include?'checked':''} data-field="include" data-id="${row.id}"></td>
+      <td><span class="timing-tag ${tag.cls}">${tag.text}</span></td>
+      <td><input type="text" value="${row.name.replace(/"/g,'&quot;')}" data-field="name" data-id="${row.id}"></td>
+      <td><input type="date" value="${fmtDateForInput(row.dateUTC)}" data-field="date" data-id="${row.id}"></td>
+      <td><input type="number" min="0" value="${row.reminderDays}" data-field="reminderDays" data-id="${row.id}"></td>
+      <td><input type="time" value="${row.reminderTime}" data-field="reminderTime" data-id="${row.id}"></td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+document.getElementById('previewBody').addEventListener('input', (e)=>{
+  const id = e.target.dataset.id;
+  const field = e.target.dataset.field;
+  const row = previewRows.find(r=>r.id===id);
+  if(!row) return;
+  if(field==='include') row.include = e.target.checked;
+  else if(field==='name') row.name = e.target.value;
+  else if(field==='date') row.dateUTC = parseDateInput(e.target.value);
+  else if(field==='reminderDays') row.reminderDays = Number(e.target.value);
+  else if(field==='reminderTime') row.reminderTime = e.target.value;
+});
+
+document.getElementById('loadTasksBtn').addEventListener('click', loadPreview);
+
+/* ---------- ICS generation ---------- */
+function buildICS(programName, rows){
+  const lines = [];
+  lines.push('BEGIN:VCALENDAR');
+  lines.push('VERSION:2.0');
+  lines.push('PRODID:-//CLEAR Learning//Program Task Calendar Generator//EN');
+  lines.push('CALSCALE:GREGORIAN');
+
+  rows.filter(r=>r.include).forEach(row=>{
+    const dtstart = fmtICSDate(row.dateUTC);
+    const dtend = fmtICSDate(addDaysUTC(row.dateUTC,1));
+    const dtstamp = fmtICSDateTimeUTC(new Date());
+    const eventUid = `${Date.now()}-${uid()}@clear-hq.org`;
+
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${eventUid}`);
+    lines.push(`DTSTAMP:${dtstamp}`);
+    lines.push(`DTSTART;VALUE=DATE:${dtstart}`);
+    lines.push(`DTEND;VALUE=DATE:${dtend}`);
+    lines.push(`SUMMARY:${escapeICS(row.name)}`);
+    lines.push(`DESCRIPTION:${escapeICS(programName)}`);
+    lines.push('TRANSP:TRANSPARENT');
+    lines.push('X-MICROSOFT-CDO-BUSYSTATUS:FREE');
+    lines.push('X-MICROSOFT-CDO-ALLDAYEVENT:TRUE');
+    lines.push('CLASS:PUBLIC');
+
+    if(row.reminderDays !== null && row.reminderDays !== undefined && row.reminderDays !== ''){
+      const trig = reminderTriggerUTC(row.dateUTC, row.reminderDays, row.reminderTime);
+      lines.push('BEGIN:VALARM');
+      lines.push('ACTION:DISPLAY');
+      lines.push(`DESCRIPTION:${escapeICS(row.name)}`);
+      lines.push(`TRIGGER;VALUE=DATE-TIME:${fmtICSDateTimeUTC(trig)}`);
+      lines.push('END:VALARM');
+    }
+    lines.push('END:VEVENT');
+  });
+
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
+function downloadICS(filename, content){
+  const blob = new Blob([content], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  const statusEl = document.getElementById('genStatus');
+  const programName = document.getElementById('programName').value.trim();
+  if(!programName){
+    statusEl.textContent = 'Enter a program name first.';
+    statusEl.className = 'status-msg show err';
+    return;
+  }
+  if(!previewRows.length){
+    statusEl.textContent = 'Click "Load / Recalculate Tasks" first.';
+    statusEl.className = 'status-msg show err';
+    return;
+  }
+  const included = previewRows.filter(r=>r.include);
+  if(!included.length){
+    statusEl.textContent = 'At least one task needs to be checked.';
+    statusEl.className = 'status-msg show err';
+    return;
+  }
+  const ics = buildICS(programName, previewRows);
+  const safeName = programName.replace(/[^a-z0-9\-_ ]/gi,'').trim().replace(/\s+/g,'_') || 'program';
+  downloadICS(`${safeName}_task_calendar.ics`, ics);
+  statusEl.textContent = `Downloaded ${included.length} event(s) as an .ics file — import it into the shared calendar.`;
+  statusEl.className = 'status-msg show ok';
+});
+
+/* ---------- Manage tab: tasks for selected program type ---------- */
+let reorderMode = false;
+
+function renderTasksTable(){
+  const body = document.getElementById('tasksBody');
+  body.innerHTML = '';
+  if(!currentManageType || !programTypes[currentManageType]) return;
+
+  const list = programTypes[currentManageType];
+  list.forEach((t, idx)=>{
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-task-id', t.id);
+    tr.draggable = false;
+    const isRelative = t.anchor === 'relative';
+    const atTop = idx === 0;
+    const atBottom = idx === list.length - 1;
+
+    const orderCellHtml = reorderMode
+      ? `<span class="drag-handle" data-id="${t.id}" title="Drag to reorder">⠿⠿</span>`
+      : `<span style="font-weight:600;color:var(--charcoal);">${idx + 1}</span>`;
+
+    tr.innerHTML = `
+      <td style="white-space:nowrap;">${orderCellHtml}</td>
+      <td>
+        <select data-field="anchor" data-id="${t.id}">
+          <option value="relative" ${t.anchor==='relative'?'selected':''}>Relative offset</option>
+          <option value="start" ${t.anchor==='start'?'selected':''}>Start Date</option>
+          <option value="end" ${t.anchor==='end'?'selected':''}>End Date</option>
+          <option value="midpoint" ${t.anchor==='midpoint'?'selected':''}>Midpoint</option>
+        </select>
+      </td>
+      <td><input type="number" value="${t.offsetDays===null||t.offsetDays===undefined?0:t.offsetDays}" data-field="offsetDays" data-id="${t.id}" ${isRelative?'':'disabled'}></td>
+      <td><input type="text" value="${t.name.replace(/"/g,'&quot;')}" data-field="name" data-id="${t.id}"></td>
+      <td><input type="number" min="0" value="${t.reminderDays}" data-field="reminderDays" data-id="${t.id}"></td>
+      <td><input type="time" value="${t.reminderTime}" data-field="reminderTime" data-id="${t.id}"></td>
+      <td>${reorderMode ? '' : `<button class="danger" data-action="remove-task" data-id="${t.id}">✕</button>`}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+document.getElementById('tasksBody').addEventListener('input', (e)=>{
+  if(!currentManageType) return;
+  const id = e.target.dataset.id, field = e.target.dataset.field;
+  const t = programTypes[currentManageType].find(x=>x.id===id);
+  if(!t || !field) return;
+  if(field==='offsetDays' || field==='reminderDays') t[field] = Number(e.target.value);
+  else t[field] = e.target.value;
+  if(field==='anchor') renderTasksTable();
+});
+document.getElementById('tasksBody').addEventListener('click', (e)=>{
+  if(!currentManageType) return;
+  const action = e.target.dataset.action;
+  const id = e.target.dataset.id;
+  if(!action) return;
+  const list = programTypes[currentManageType];
+  const idx = list.findIndex(t=>t.id===id);
+  if(idx === -1) return;
+
+  if(action === 'remove-task'){
+    list.splice(idx, 1);
+    renderTasksTable();
+  } else if(action === 'move-up' && idx > 0){
+    [list[idx-1], list[idx]] = [list[idx], list[idx-1]];
+    renderTasksTable();
+  } else if(action === 'move-down' && idx < list.length - 1){
+    [list[idx], list[idx+1]] = [list[idx+1], list[idx]];
+    renderTasksTable();
+  }
+});
+document.getElementById('addTaskBtn').addEventListener('click', ()=>{
+  if(!currentManageType){
+    alert('Add a program type first.');
+    return;
+  }
+  programTypes[currentManageType].push(mk('relative', 0, 'New task'));
+  renderTasksTable();
+});
+
+/* ---------- Drag-and-drop reordering ---------- */
+function getDragAfterElement(container, y){
+  const rows = [...container.querySelectorAll('tr:not(.dragging)')];
+  return rows.reduce((closest, row)=>{
+    const box = row.getBoundingClientRect();
+    const offset = y - box.top - box.height/2;
+    if(offset < 0 && offset > closest.offset){
+      return { offset, element: row };
+    }
+    return closest;
+  }, { offset: -Infinity, element: null }).element;
+}
+
+function commitDomOrderToData(){
+  if(!currentManageType) return;
+  const tbody = document.getElementById('tasksBody');
+  const order = [...tbody.querySelectorAll('tr')].map(tr=>tr.getAttribute('data-task-id'));
+  const list = programTypes[currentManageType];
+  const byId = Object.fromEntries(list.map(t=>[t.id, t]));
+  programTypes[currentManageType] = order.map(id=>byId[id]).filter(Boolean);
+}
+
+const tasksBodyEl = document.getElementById('tasksBody');
+
+tasksBodyEl.addEventListener('mousedown', (e)=>{
+  if(!reorderMode) return;
+  if(!e.target.classList.contains('drag-handle')) return;
+  const tr = e.target.closest('tr');
+  if(tr) tr.draggable = true;
+});
+
+tasksBodyEl.addEventListener('dragstart', (e)=>{
+  if(!reorderMode) return;
+  const tr = e.target.closest('tr');
+  if(!tr) return;
+  tr.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', tr.getAttribute('data-task-id'));
+});
+
+tasksBodyEl.addEventListener('dragover', (e)=>{
+  if(!reorderMode) return;
+  e.preventDefault();
+  const draggingEl = tasksBodyEl.querySelector('tr.dragging');
+  if(!draggingEl) return;
+  const afterEl = getDragAfterElement(tasksBodyEl, e.clientY);
+  if(afterEl == null){
+    tasksBodyEl.appendChild(draggingEl);
+  } else if(afterEl !== draggingEl){
+    tasksBodyEl.insertBefore(draggingEl, afterEl);
+  }
+});
+
+tasksBodyEl.addEventListener('dragend', (e)=>{
+  const tr = e.target.closest('tr');
+  if(tr){
+    tr.classList.remove('dragging');
+    tr.draggable = false;
+  }
+  commitDomOrderToData();
+});
+
+function exitReorderModeIfActive(){
+  if(!reorderMode) return;
+  reorderMode = false;
+  const btn = document.getElementById('reorderToggleBtn');
+  if(btn) btn.textContent = 'Reorder Tasks (Drag & Drop)';
+}
+
+document.getElementById('reorderToggleBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('reorderToggleBtn');
+  const statusEl = document.getElementById('manageStatus');
+
+  if(!reorderMode){
+    reorderMode = true;
+    btn.textContent = 'Done Reordering (Save & Lock)';
+    renderTasksTable();
+  } else {
+    commitDomOrderToData();
+    reorderMode = false;
+    btn.textContent = 'Reorder Tasks (Drag & Drop)';
+    renderTasksTable();
+    await saveTemplates(statusEl);
+  }
+});
+
+document.getElementById('manageTypeSelect').addEventListener('change', (e)=>{
+  currentManageType = e.target.value;
+  exitReorderModeIfActive();
+  renderTasksTable();
+});
+
+document.getElementById('addTypeBtn').addEventListener('click', ()=>{
+  const nameInput = document.getElementById('newTypeName');
+  const name = nameInput.value.trim();
+  if(!name){ alert('Enter a name for the new program type.'); return; }
+  if(programTypes[name]){ alert('That program type already exists.'); return; }
+  programTypes[name] = [];
+  currentManageType = name;
+  nameInput.value = '';
+  exitReorderModeIfActive();
+  refreshTypeDropdowns();
+  renderTasksTable();
+});
+
+document.getElementById('renameTypeBtn').addEventListener('click', ()=>{
+  if(!currentManageType) return;
+  const newName = prompt('Rename program type:', currentManageType);
+  if(!newName || newName===currentManageType) return;
+  if(programTypes[newName]){ alert('That name already exists.'); return; }
+  programTypes[newName] = programTypes[currentManageType];
+  delete programTypes[currentManageType];
+  currentManageType = newName;
+  exitReorderModeIfActive();
+  refreshTypeDropdowns();
+  renderTasksTable();
+});
+
+document.getElementById('deleteTypeBtn').addEventListener('click', ()=>{
+  if(!currentManageType) return;
+  if(!confirm(`Delete program type "${currentManageType}" and its tasks?`)) return;
+  delete programTypes[currentManageType];
+  currentManageType = Object.keys(programTypes)[0] || null;
+  exitReorderModeIfActive();
+  refreshTypeDropdowns();
+  renderTasksTable();
+});
+
+async function saveTemplates(statusEl){
+  cacheLocally(programTypes);
+  if(!PROXY_BASE){
+    if(statusEl){
+      statusEl.textContent = 'Templates saved to this browser only (no shared library configured — see PROXY_BASE at top of the script).';
+      statusEl.className = 'status-msg show ok';
+    }
+    return;
+  }
+  if(statusEl){
+    statusEl.textContent = 'Saving to shared library…';
+    statusEl.className = 'status-msg show ok';
+  }
+  try{
+    await pushSharedTemplates(programTypes);
+    if(statusEl){
+      statusEl.textContent = 'Saved — every coworker using this tool will now see these templates.';
+      statusEl.className = 'status-msg show ok';
+    }
+    setSyncStatus('Synced with shared library just now.');
+  }catch(err){
+    if(statusEl){
+      statusEl.textContent = 'Could not reach the shared library. Saved to this browser only for now — try again when back online.';
+      statusEl.className = 'status-msg show err';
+    }
+  }
+}
+
+document.getElementById('saveTemplatesBtn').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('manageStatus');
+  await saveTemplates(statusEl);
+});
+
+document.getElementById('reloadSharedBtn').addEventListener('click', async ()=>{
+  await initTemplates(true);
+});
+
+function setSyncStatus(text){
+  document.getElementById('syncStatusText').textContent = text;
+}
+
+async function initTemplates(isManualReload){
+  if(!PROXY_BASE){
+    const cached = loadLocalCache();
+    if(cached) programTypes = cached;
+    setSyncStatus('Single-device mode — templates are saved to this browser only.');
+  } else {
+    setSyncStatus(isManualReload ? 'Reloading shared templates…' : 'Loading shared templates…');
+    try{
+      const shared = await fetchSharedTemplates();
+      if(shared){
+        programTypes = shared;
+        cacheLocally(programTypes);
+        setSyncStatus('Synced with shared library.');
+      } else {
+        setSyncStatus('Shared library is empty — showing default examples. Save once to publish them.');
+      }
+    }catch(err){
+      const cached = loadLocalCache();
+      if(cached){
+        programTypes = cached;
+        setSyncStatus('Could not reach shared library — showing last cached copy from this browser.');
+      } else {
+        setSyncStatus('Could not reach shared library and no local cache found — showing default examples.');
+      }
+    }
+  }
+  currentManageType = Object.keys(programTypes)[0] || null;
+  refreshTypeDropdowns();
+  renderTasksTable();
+}
+
+/* ---------- Init ---------- */
+document.getElementById('startDate').valueAsDate = new Date();
+initTemplates(false);
+</script>
+
+</body>
+</html>
