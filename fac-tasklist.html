@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Program Task Calendar Generator</title>
+<title>Facilitator Task List Reminders</title>
 <style>
   :root{
     --burgundy:#64092C;
@@ -98,7 +98,7 @@
 <body>
 
 <header>
-  <h1>Program Task Calendar Generator</h1>
+  <h1>Facilitator Task List Reminders</h1>
   <p>Generate all-day, free-status calendar invites (.ics) for program setup, hosting, and close-out tasks — ready for the shared calendar.</p>
 </header>
 
@@ -119,7 +119,7 @@
       </div>
       <div>
         <label>Specific Program Name / Instance</label>
-        <input type="text" id="programName" placeholder="e.g. NCIT Basic US – Denver – Oct 2026">
+        <input type="text" id="programName" placeholder="e.g. 2026.06.14 NCIT B US Open">
       </div>
     </div>
     <div class="row">
@@ -677,7 +677,7 @@ function buildICS(programName, rows){
   const lines = [];
   lines.push('BEGIN:VCALENDAR');
   lines.push('VERSION:2.0');
-  lines.push('PRODID:-//CLEAR Learning//Program Task Calendar Generator//EN');
+  lines.push('PRODID:-//CLEAR Learning//Facilitator Task List Reminders//EN');
   lines.push('CALSCALE:GREGORIAN');
 
   rows.filter(r=>r.include).forEach(row=>{
