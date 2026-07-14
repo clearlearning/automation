@@ -25,7 +25,7 @@
   /* Grid */
   .grid-section{max-width:1100px;margin:0 auto;padding:40px 40px 60px;}
   .section-label{font-family:'Open Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--burgundy);margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--gold);}
-  .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-bottom:40px;}
+  .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-bottom:40px;}
 
   /* Card */
   .card{background:var(--white);border-radius:8px;border:1px solid var(--gray-mid);overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;text-decoration:none;color:inherit;position:relative;}
@@ -91,7 +91,7 @@
       <div class="card-body">
         <div class="card-icon">🗓️</div>
         <div class="card-title">Facilitator Task List Reminders</div>
-        <div class="card-desc">Allows you to generate event invites to save to the CLEAR Learning calendar for all tasks related to managing a cohort. Select the program and start/end dates and the cohort tasklist will generate with the dates the tasks need to be completed by.</div>
+        <div class="card-desc">Generate calendar events for all cohort management tasks.</div>
       </div>
       <div class="card-footer"><span class="card-tag">Cohort Task List</span><span class="card-arrow">&rarr;</span></div>
     </a>
@@ -101,7 +101,7 @@
       <div class="card-body">
         <div class="card-icon">🗓️</div>
         <div class="card-title">Program Agenda Generator</div>
-        <div class="card-desc">Populate session dates and times into agenda templates customized by program. This tool currently supports all virtual programs and the NCIT Basic, Specialized and AIT in-person programs.</div>
+        <div class="card-desc">Populate session dates and times into agenda templates customized by program.</div>
       </div>
       <div class="card-footer"><span class="card-tag">Agenda Templates</span><span class="card-arrow">&rarr;</span></div>
     </a>
@@ -123,7 +123,7 @@
         <div class="card-title">Welcome Email Template Generator</div>
         <div class="card-desc">Generate welcome emails for programs with cohort specific information.</div>
       </div>
-      <div class="card-footer"><span class="card-tag">Cohort Import</span><span class="card-arrow">&rarr;</span></div>
+      <div class="card-footer"><span class="card-tag">Notifications</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
     <a href="https://clearlearning.github.io/automation/lms-user-import.html" class="card">
@@ -141,9 +141,19 @@
       <div class="card-body">
         <div class="card-icon">&#128231;</div>
         <div class="card-title">NCIT Standard Release Status Report</div>
-        <div class="card-desc">Track Standard Release completion by cohort and generate reminder emails for attendees who haven't completed the requirement prior to their training program start date.</div>
+        <div class="card-desc">Track Standard Release completion and generate reminder emails.</div>
       </div>
-      <div class="card-footer"><span class="card-tag">Cohort Import</span><span class="card-arrow">&rarr;</span></div>
+      <div class="card-footer"><span class="card-tag">Eligibility</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+    <a href="https://clearlearning.github.io/automation/lms-user-lookup.html" class="card">
+      <div class="card-stripe blue"></div>
+      <div class="card-body">
+        <div class="card-icon">&#128269;</div>
+        <div class="card-title">User Lookup Tool</div>
+        <div class="card-desc">Search for individual users in TalentLMS to view course progress and exam scores.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Search Users</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
     <a href="https://clearlearning.github.io/automation/lms-status-reporting.html" class="card">
@@ -151,9 +161,9 @@
       <div class="card-body">
         <div class="card-icon">&#128202;</div>
         <div class="card-title">Status Report Generator</div>
-        <div class="card-desc">Pull student progress from TalentLMS, generate branded status report emails, and export Mail merge files for distribution.</div>
+        <div class="card-desc">Generate and export branded status report email files for distribution.</div>
       </div>
-      <div class="card-footer"><span class="card-tag">Cohort Management</span><span class="card-arrow">&rarr;</span></div>
+      <div class="card-footer"><span class="card-tag">Learner Support</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
     <a href="https://clearlearning.github.io/automation/scorm-reader.html" class="card">
@@ -161,7 +171,7 @@
       <div class="card-body">
         <div class="card-icon">🙋</div>
         <div class="card-title">Self-Study Progress Checker</div>
-        <div class="card-desc">Allows you to identify what elements of a self-study module a learner has completed, and what is left to do. Use this tool when a learner says they have completed a module but the status isn't updating to confirm why.</div>
+        <div class="card-desc">Identify what elements of a self-study module a learner has completed, and what is left to do.</div>
       </div>
       <div class="card-footer"><span class="card-tag">Learner Support</span><span class="card-arrow">&rarr;</span></div>
     </a>
@@ -171,19 +181,9 @@
       <div class="card-body">
         <div class="card-icon">&#128202;</div>
         <div class="card-title">Exam Report Generator</div>
-        <div class="card-desc">Pull exam results from TalentLMS, analyze question performance, import payment data, and generate Credly badge export files.</div>
+        <div class="card-desc">Pull exam results from TalentLMS, analyze question performance, import payment data, and issue Credly badges.</div>
       </div>
       <div class="card-footer"><span class="card-tag">Badge Distribution</span><span class="card-arrow">&rarr;</span></div>
-    </a>
-
-    <a href="https://clearlearning.github.io/automation/lms-user-lookup.html" class="card">
-      <div class="card-stripe blue"></div>
-      <div class="card-body">
-        <div class="card-icon">&#128269;</div>
-        <div class="card-title">User Lookup Tool</div>
-        <div class="card-desc">Search users in TalentLMS, review course progress with module-level status markers, view exam scores, manage course completions, and assign certificates.</div>
-      </div>
-      <div class="card-footer"><span class="card-tag">Certificates</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
     <a href="https://clearlearning.github.io/automation/litmos-lookup.html" class="card">
@@ -193,7 +193,7 @@
         <div class="card-title">Litmos Historical Data</div>
         <div class="card-desc">Search historical data by user, course, cohort, etc for courses completed before April 2023.</div>
       </div>
-      <div class="card-footer"><span class="card-tag">Pre 2023 Historical Reference</span><span class="card-arrow">&rarr;</span></div>
+      <div class="card-footer"><span class="card-tag">Pre 2023 Reference</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
   </div>
@@ -206,7 +206,7 @@
       <div class="card-body">
         <div class="card-icon">&#128203;</div>
         <div class="card-title">EQ Survey Report Generator</div>
-        <div class="card-desc">Generate the EQ Survey Report emails that go to Attendees and Instructors for the ELPR programs, and to the subscribers to the So, You Think You Want to be a Board or Council Member? program.</div>
+        <div class="card-desc">Generate EQ Survey Report emails for Attendees and Instructors for the ELPR programs, and subscribers to the SYTYWTBABCM? program.</div>
       </div>
       <div class="card-footer"><span class="card-tag">ELPR</span> <span class="card-tag">SYTYWTB</span><span class="card-arrow">&rarr;</span></div>
     </a>
@@ -218,7 +218,7 @@
         <div class="card-title">NCIT Basic Supervisor Form Response Dashboard</div>
         <div class="card-desc">Review the supervisor form responses for the NCIT Basic program.</div>
       </div>
-      <div class="card-footer"><span class="card-tag">NCITB</span> <span class="card-tag">Supervisor Form</span><span class="card-arrow">&rarr;</span></div>
+      <div class="card-footer"><span class="card-tag">Certificates</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
   </div>
@@ -231,13 +231,23 @@
       <div class="card-body">
         <div class="card-icon">🔗</div>
         <div class="card-title">Module Survey Link Generator</div>
-        <div class="card-desc">Create the unique links for module reviews of instructor-led sessions. These links will be added to the <strong>Survey</strong> tab of the meeting in Zoom.</div>
+        <div class="card-desc">Create links and QR codes for module reviews for async and ILT modules/sessions.</div>
+      </div>
+      <div class="card-footer"><span class="card-tag">Evaluations</span><span class="card-arrow">&rarr;</span></div>
+    </a>
+
+    <a href="https://clearlearning.github.io/automation/surveylink-bulkgen.html" class="card">
+      <div class="card-stripe gold"></div>
+      <div class="card-body">
+        <div class="card-icon">🔗</div>
+        <div class="card-title">Bulk Survey Link Generator</div>
+        <div class="card-desc">Create multiple survey links & QR codes at once. Used with Survey Monkey evaluations containing custom variable fields.</div>
       </div>
       <div class="card-footer"><span class="card-tag">Evaluations</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
     <a href="https://clearlearning.github.io/automation/mod-eval-reports.html" class="card">
-      <div class="card-stripe gold"></div>
+      <div class="card-stripe blue"></div>
       <div class="card-body">
         <div class="card-icon">&#128203;</div>
         <div class="card-title">Evaluation Report Dashboard</div>
@@ -247,23 +257,13 @@
     </a>
 
     <a href="https://clearlearning.github.io/automation/evaldataupdater.html" class="card">
-      <div class="card-stripe blue"></div>
+      <div class="card-stripe burgundy"></div>
       <div class="card-body">
         <div class="card-icon">&#128260;</div>
         <div class="card-title">Master Instructor Evaluation Update Tool</div>
-        <div class="card-desc">Update the instructor master workbook with new SurveyMonkey evaluation exports, syncing response data across evaluation cycles.</div>
+        <div class="card-desc">Update the instructor master workbook after each program.</div>
       </div>
       <div class="card-footer"><span class="card-tag">Data Sync</span><span class="card-arrow">&rarr;</span></div>
-    </a>
-
-    <a href="https://clearlearning.github.io/automation/surveylink-bulkgen.html" class="card">
-      <div class="card-stripe burgundy"></div>
-      <div class="card-body">
-        <div class="card-icon">🔗</div>
-        <div class="card-title">Bulk Survey Link Generator</div>
-        <div class="card-desc">Create survey links & QR codes for multiple sessions, modules, programs and/or events at once. Used with Survey Monkey evaluations containing custom variable fields.</div>
-      </div>
-      <div class="card-footer"><span class="card-tag">Evaluations</span><span class="card-arrow">&rarr;</span></div>
     </a>
 
   </div>
