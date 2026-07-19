@@ -264,7 +264,7 @@ tbody tr.excluded td{text-decoration:line-through;color:#aaa;}
         <div class="form-group">
           <label>Deadline Language</label>
           <input type="text" id="deadlinePreview" readonly style="background:#f5f5f5;color:#484848;" value="prior to checking in on [start date]">
-          <span class="inline-note" id="deadlineNote">In-person: prior to checking in on [date] &nbsp;|&nbsp; Online: before your program starts on [date]</span>
+          <span class="inline-note" id="deadlineNote">In-person: prior to checking in on [date] &nbsp;|&nbsp; Online: before your first live session on [date]</span>
         </div>
       </div>
       <div class="btn-row">
@@ -689,14 +689,14 @@ document.getElementById('startDate').addEventListener('input', updateDeadlinePre
 function updateDeadlinePreview() {
   const d = document.getElementById('startDate').value.trim();
   const cfg = COURSE_CONFIG[S.selectedCourseId] || {};
-  const deadline = d ? getDeadline(cfg.inPerson, d) : (cfg.inPerson !== false ? 'prior to checking in on [start date]' : 'before your program starts on [start date]');
+  const deadline = d ? getDeadline(cfg.inPerson, d) : (cfg.inPerson !== false ? 'prior to checking in on [start date]' : 'before your first live session on [start date]');
   document.getElementById('deadlinePreview').value = deadline;
 }
 
 function getDeadline(inPerson, date) {
   return inPerson !== false
     ? 'prior to checking in on ' + date
-    : 'before your program starts on ' + date;
+    : 'before your first live session on ' + date;
 }
 
 // ─────────────────────────────────────────────────
