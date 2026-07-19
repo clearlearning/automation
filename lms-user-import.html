@@ -512,7 +512,11 @@ document.getElementById('noviProductPullBtn').addEventListener('click',async()=>
       const addr=o.ShippingAddress||{};
       const st=(addr.StateProvince||'').trim();
       const cn=inferCountry(st,(addr.Country||'').trim());
-      const orderBase={company:'',jobTitle:'',state:st,country:cn,city:(addr.City||'').trim(),zip:(addr.ZipCode||addr['Zip Code']||'').trim(),registrationDate:(o.PurchasedOn||'').toString().trim()};
+      // Paid = a QuickBooks Sales Receipt exists for this order. An order can have a
+      // QBInvoiceID (billed) with no QBSalesReceiptID (not yet paid) — invoice alone
+      // does not mean paid. This mirrors the logic already used in Exam Report Generator.
+      const paid=o.QBSalesReceiptID?'Yes':'No';
+      const orderBase={company:'',jobTitle:'',state:st,country:cn,city:(addr.City||'').trim(),zip:(addr.ZipCode||addr['Zip Code']||'').trim(),registrationDate:(o.PurchasedOn||'').toString().trim(),paid:paid};
 
       for(const item of matchingItems){
         const qty=Math.max(1,parseInt(item.Quantity)||1);
@@ -537,14 +541,20 @@ document.getElementById('noviProductPullBtn').addEventListener('click',async()=>
 
     STATE.attendees=mapped;
     STATE.importUsers=STATE.attendees.map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
-    STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
+    // Default-select only confirmed-paid rows (QBSalesReceiptID present). Unpaid rows still
+    // load and stay visible so nothing is hidden, but they start unchecked so they can't be
+    // provisioned by accident — override the checkbox by hand if a specific case needs it.
+    STATE.selectedUsers=new Set(STATE.importUsers.map((u,i)=>u.paid==='Yes'?i:null).filter(i=>i!==null));
     STATE.sortCol='';STATE.sortDir=1;
 
     const totalUnits=mapped.length;
     const skipped=productOrders.length-totalUnits;
+    const paidCount=STATE.importUsers.filter(u=>u.paid==='Yes').length;
+    const unpaidCount=totalUnits-paidCount;
     let msg='Loaded <strong>'+totalUnits+'</strong> user(s) from <strong>'+productOrders.length+'</strong> open order(s). ('+allOrders.length+' total orders scanned)';
     if(skipped>0)msg+=' <span style="color:#f57f17;">('+skipped+' skipped — no email)</span>';
-    msg+='<br><span style="color:#b85c00;">⚠️ Payment status cannot be verified via API. Please <a href="https://www.clearhq.org/admin/ecommerce/order-list" target="_blank">check Novi</a> and deselect any unpaid orders before provisioning.</span>';
+    msg+='<br><strong style="color:var(--green);">'+paidCount+' confirmed paid</strong> (QuickBooks sales receipt on file) — selected by default.';
+    if(unpaidCount>0)msg+=' <strong style="color:#b85c00;">'+unpaidCount+' invoiced but not yet confirmed paid</strong> — loaded but left unchecked; review before including.';
     setNoviPullStatus(msg,'success');
     setFS('','');
     renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
@@ -607,6 +617,7 @@ function renderPreview(){
   const filterVal=(document.getElementById('previewFilter')||{}).value||'';
   const filt=filterVal.toLowerCase().trim();
   const showDate=STATE.mode==='existing';
+  const showPaid=STATE.importUsers.some(u=>u.paid==='Yes'||u.paid==='No');
 
   let indexed=STATE.importUsers.map((u,i)=>({u,i}));
   if(filt)indexed=indexed.filter(({u})=>(u.firstName+' '+u.lastName+' '+u.email).toLowerCase().includes(filt));
@@ -632,6 +643,7 @@ function renderPreview(){
     +'<th style="'+thStyle+'" onclick="sortBy(\'email\')">Email'+arrow('email')+'</th>'
     +'<th>Organization</th><th>Title</th><th>State</th><th>Country</th>'
     +(showDate?'<th style="'+thStyle+'" onclick="sortBy(\'regDate\')">Registered'+arrow('regDate')+'</th>':'')
+    +(showPaid?'<th>Paid</th>':'')
     +'<th>Password</th>'
     +'</tr></thead><tbody>';
 
@@ -645,6 +657,7 @@ function renderPreview(){
       +'<td>'+esc(u.email)+'</td>'
       +'<td>'+esc(u.company)+'</td><td>'+esc(u.jobTitle)+'</td><td>'+esc(u.state)+'</td><td>'+esc(u.country)+'</td>'
       +(showDate?'<td style="white-space:nowrap;font-size:12px;">'+esc(regDisplay)+'</td>':'')
+      +(showPaid?'<td>'+(u.paid==='Yes'?'<span class="badge badge-paid">Paid</span>':u.paid==='No'?'<span class="badge" style="background:var(--amber-bg);color:var(--amber);">Unconfirmed</span>':'')+'</td>':'')
       +'<td style="font-family:monospace;font-size:11px;">'+esc(u.password)+'</td>'
       +'</tr>';
   });
