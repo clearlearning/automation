@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
@@ -26,9 +27,9 @@
       --color-border: #d4d1ca;
       --color-text: #28251d;
       --color-muted: #6f6d67;
-      --color-primary: #01696f;
-      --color-primary-hover: #0c4e54;
-      --color-primary-soft: #dcebea;
+      --color-primary: #64092c;
+      --color-primary-hover: #46061F;
+      --color-primary-soft: #E4E4E4;
       --color-success: #2e6b3b;
       --color-success-soft: #deeddc;
       --color-warning: #8b5a14;
@@ -111,6 +112,19 @@
       align-items: center;
       justify-content: center;
     }
+    .bulk-qr-thumb {
+      width: 70px;
+      height: 70px;
+      flex-shrink: 0;
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .bulk-qr-thumb canvas, .bulk-qr-thumb img { display: block; width: 100%; height: 100%; }
     #qrcode canvas, #qrcode img {
       display: block;
       max-width: 100%;
@@ -155,9 +169,68 @@
       <h1>SurveyMonkey Link Generator</h1>
       <p style="margin-bottom: 10px;">Select a survey type, enter any values you want to include, and the tool will generate a matching survey link and QR code while removing blank variables automatically.</p>
       <p><strong>REMINDER:</strong> Make sure you select the correct survey type. <strong>Instructor Evaluations</strong> are for any ILT program (both virtual and in-person), <strong>Asynchronous Modules</strong> are any self-study module in the CLEAR Learning portal.</p>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn-primary" id="modeSingleBtn" type="button" onclick="setBulkMode(false)">Single Link</button>
+        <button class="btn-secondary" id="modeBulkBtn" type="button" onclick="setBulkMode(true)">Bulk — Whole Program</button>
+      </div>
     </section>
 
-    <section class="grid">
+    <section class="card" id="bulkCard" style="display:none;margin-bottom:var(--space-6)">
+      <h2>Whole-Program Bulk Generator</h2>
+      <p class="hint" style="margin-bottom:var(--space-4)">Pick a program and delivery method — the module list and required survey method for each module come from your program/module reference, no guessing.</p>
+
+      <div class="field" style="display:flex;gap:1rem">
+        <div style="flex:2"><label for="bulkProgram">Program</label><select id="bulkProgram"><option value="">Select a program…</option></select></div>
+        <div style="flex:1" id="bulkDeliveryWrap"><label for="bulkDelivery">Delivery</label><select id="bulkDelivery"><option value="">—</option></select></div>
+      </div>
+      <div class="field" id="bulkVersionWrap" style="display:none">
+        <label for="bulkVersion">Version</label>
+        <select id="bulkVersion"></select>
+      </div>
+      <div class="field" style="display:flex;gap:1rem">
+        <div style="flex:1"><label>Course (auto)</label><input type="text" id="bulkCourse" readonly style="background:#f0efea"></div>
+      </div>
+
+      <div class="card" style="background:#fdfcf9;padding:1rem 1.25rem;margin:1rem 0;">
+        <h2 style="font-size:var(--text-lg);margin-bottom:0.75rem">Cohort Code Generator</h2>
+        <div class="field" style="display:flex;gap:1rem">
+          <div style="flex:1"><label for="ccDate">Start Date</label><input type="date" id="ccDate"></div>
+          <div style="flex:1" id="ccCityWrap"><label for="ccCity">City, ST</label><input type="text" id="ccCity" placeholder="e.g. Chicago, IL"></div>
+          <div style="flex:1"><label for="ccStatus">Status</label><select id="ccStatus"><option>Open</option><option>Closed</option></select></div>
+        </div>
+        <div class="field">
+          <label for="bulkCohort">Cohort Code</label>
+          <input type="text" id="bulkCohort" placeholder="Fill in the fields above to build this automatically" style="font-family:'Courier New',monospace">
+          <div class="hint">Auto-built from the format for this program/delivery. You can still edit it by hand if a program needs something the generator doesn't cover.</div>
+        </div>
+      </div>
+
+      <div class="actions"><button class="btn-primary" id="loadBulkProgramBtn" type="button">Load Program</button></div>
+      <div id="bulkLoadStatus" class="status"></div>
+
+      <div id="bulkModuleWrap" style="display:none;margin-top:var(--space-6)">
+        <h2 style="font-size:var(--text-lg)">Modules &amp; Sessions</h2>
+        <p class="hint" style="margin-bottom:var(--space-3)">Method is fixed per module for this program/delivery combination. Add an instructor for each instructor-led row — since names are formatted "Last, First", separate multiple instructors with a semicolon (<code>;</code>) to generate one link per instructor for that module.</p>
+        <div id="bulkModuleList" style="display:grid;gap:0.75rem"></div>
+        <div class="actions" style="margin-top:var(--space-4)">
+          <button class="btn-primary" id="generateBulkBtn" type="button">Generate All Links &amp; QR Codes</button>
+        </div>
+      </div>
+
+      <div id="bulkOutputWrap" style="display:none;margin-top:var(--space-6)">
+        <h2 style="font-size:var(--text-lg)">Generated Links</h2>
+        <div class="actions" style="margin-bottom:var(--space-3)">
+          <span class="hint" id="bulkOutputCount" style="align-self:center"></span>
+          <button class="btn-secondary" id="bulkCopyAllBtn" type="button">Copy all links</button>
+          <button class="btn-secondary" id="bulkZipBtn" type="button">⬇ Download all QR codes (zip)</button>
+          <button class="btn-secondary" id="bulkWordBtn" type="button">📄 Export to Word</button>
+        </div>
+        <div id="bulkLinkList" style="display:grid;gap:0.6rem"></div>
+        <div id="bulkOutputStatus" class="status"></div>
+      </div>
+    </section>
+
+    <section class="grid" id="singleGrid">
       <div class="card">
         <h2>Variables</h2>
 
@@ -444,6 +517,421 @@
       updateOutput();
     }
 
+    // ── Bulk mode: whole-program generation, driven by an authoritative
+    // program/module/cohort-code reference (not derived/guessed from other tools) ──
+
+    const PROGRAM_LIBRARY = {
+      ncitb: { label: 'NCIT Basic', course: 'NCITB', cohortTag: 'NCIT B', hasVersion: true, versions: ['US', 'CAN'],
+        delivery: {
+          vt: { label: 'Virtual', modules: [
+            {code:'M01',method:'Async'},{code:'M02',method:'Async'},{code:'M04',method:'Async'},{code:'M05',method:'Async'},{code:'M07',method:'Async'},{code:'M08',method:'Async'},
+            {code:'M03',method:'V-ILT'},{code:'M06',method:'V-ILT'},{code:'M09',method:'V-ILT'},{code:'M10',method:'V-ILT'}
+          ]},
+          ipt: { label: 'In-Person', modules: ['M01','M02','M03','M04','M05','M06','M07','M08','M09','M10'].map(c => ({code:c, method:'IPT-ILT'})) }
+        }
+      },
+      ncits: { label: 'NCIT Specialized', course: 'NCITS', cohortTag: 'NCIT S', hasVersion: false,
+        delivery: {
+          vt: { label: 'Virtual', modules: [
+            {code:'M01',method:'Async'},{code:'M02',method:'Async'},{code:'M03',method:'Async'},
+            {code:'AIS-S1',method:'V-ILT'},{code:'AIS-S2',method:'V-ILT'},{code:'AIA-S1',method:'V-ILT'},{code:'IRD-S1',method:'V-ILT'},{code:'IRD-S2',method:'V-ILT'}
+          ]},
+          ipt: { label: 'In-Person', modules: ['M01','M02','M03'].map(c => ({code:c, method:'IPT-ILT'})) }
+        }
+      },
+      ncitw: { label: 'NCIT Workshops', course: 'NCITW', cohortTag: 'NCIT W', hasVersion: true,
+        versions: ['DDI', 'IRSM', 'Comms', 'Ethics'],
+        modulesByVersion: { DDI: ['WS1','WS2'], IRSM: ['WS1','WS2'], Comms: ['WS1'], Ethics: ['WS1'] },
+        delivery: {
+          vt: { label: 'Virtual', modulesFromVersion: true, vtMethod: 'V-ILT' },
+          ipt: { label: 'In-Person', modules: [] } // no modules for IPT workshops
+        }
+      },
+      ncitait: { label: 'NCIT AIT', course: 'NCITAIT', cohortTag: 'NCIT AIT', hasVersion: false,
+        delivery: { ipt: { label: 'In-Person', modules: ['M01','M02','M03','M04','M05','M06'].map(c => ({code:c, method:'IPT-ILT'})) } }
+      },
+      acrg: { label: 'ACRG', course: 'ACRG', cohortTag: 'ACRG', hasVersion: false, multiInstructor: true,
+        delivery: {
+          ipt: { label: 'In-Person', modules: ['M01','M02','M03'].map(c => ({code:c, method:'IPT-ILT'})) },
+          vt: { label: 'Virtual', modules: [
+            {code:'M01',method:'Async'},{code:'M02',method:'Async'},{code:'M03',method:'Async'},
+            {code:'M01',method:'V-ILT'},{code:'M02',method:'V-ILT'},{code:'M03',method:'V-ILT'}
+          ]}
+        }
+      },
+      bct: { label: 'Getting the Most from Your Board', course: 'BCT', cohortTag: 'BCT', hasVersion: false,
+        delivery: { vt: { label: 'Virtual', modules: ['M01','M02','M03','M04'].map(c => ({code:c, method:'V-ILT'})) } }
+      },
+      elpr: { label: 'ELPR', course: 'ELPR', cohortTag: 'ELPR', hasVersion: false, multiInstructor: true,
+        delivery: {
+          vt: { label: 'Virtual', modules: [
+            {code:'M01',method:'Async'},{code:'M02',method:'Async'},{code:'M03',method:'Async'},{code:'M04',method:'Async'},
+            {code:'M01',method:'V-ILT'},{code:'M02',method:'V-ILT'},{code:'M03',method:'V-ILT'},{code:'M04',method:'V-ILT'}
+          ]},
+          ipt: { label: 'In-Person', modules: ['M01','M02','M03','M04'].map(c => ({code:c, method:'IPT-ILT'})) }
+        }
+      },
+      srasab: { label: 'SRA SAB', course: 'SRASAB', cohortTag: 'SRASAB', hasVersion: false,
+        delivery: {
+          vt: { label: 'Virtual', modules: ['M01','M02','M03'].map(c => ({code:c, method:'V-ILT'})) }
+          // IPT cohort-code format was given, but no IPT module list was — add it here once you send it.
+        }
+      },
+      ss4r: { label: 'Soft Skills for Regulators', course: 'SS4R', cohortTag: 'SS4R', hasVersion: false,
+        delivery: {
+          vt: { label: 'Virtual', modules: [
+            ...['M01','M02','M03','M04','M05','M06','M07','M08','M09'].map(c => ({code:c, method:'Async'})),
+            ...['S1','S2','S3','S4'].map(c => ({code:c, method:'V-ILT'}))
+          ]}
+          // Same note as SRA SAB — IPT cohort-code format given, IPT module list not yet.
+        }
+      }
+    };
+
+    function getModulesFor(progKey, delivery, version) {
+      const prog = PROGRAM_LIBRARY[progKey];
+      const d = prog.delivery[delivery];
+      if (!d) return [];
+      if (d.modulesFromVersion) {
+        if (!version || !prog.modulesByVersion[version]) return [];
+        return prog.modulesByVersion[version].map(c => ({ code: c, method: d.vtMethod }));
+      }
+      return d.modules || [];
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function buildCohortCode() {
+      const progKey = document.getElementById('bulkProgram').value;
+      const delivery = document.getElementById('bulkDelivery').value;
+      const prog = PROGRAM_LIBRARY[progKey];
+      if (!prog || !delivery) return '';
+      const dateVal = document.getElementById('ccDate').value; // yyyy-mm-dd
+      const status = document.getElementById('ccStatus').value;
+      const version = document.getElementById('bulkVersion').value;
+      const city = document.getElementById('ccCity').value.trim();
+
+      const parts = [];
+      if (dateVal) {
+        const [y, m, d] = dateVal.split('-');
+        parts.push(`${y}.${m}.${d}`);
+      }
+      parts.push(prog.cohortTag);
+      if (prog.hasVersion && version) parts.push(version);
+      if (delivery === 'ipt' && city) parts.push(city);
+      parts.push(status);
+      return parts.join(' ');
+    }
+
+    function recomputeCohortCode() {
+      document.getElementById('bulkCohort').value = buildCohortCode();
+    }
+
+    let bulkModuleRows = [];
+    let bulkMultiInstructors = {};
+
+    function instructorOptionsHtml() {
+      const list = variables.find(v => v.key === 'Instructor').suggestions;
+      return '<option value="" disabled selected>Select instructor</option>'
+        + list.map(name => `<option value="${name}">${name}</option>`).join('');
+    }
+
+    function renderInstructorChips(i) {
+      const container = document.getElementById('bulk_instr_chips_' + i);
+      const names = bulkMultiInstructors[i] || [];
+      container.innerHTML = names.map(name => `
+        <span style="display:inline-flex;align-items:center;gap:0.35rem;background:var(--color-primary-soft);color:var(--color-primary-hover);border-radius:20px;padding:0.25rem 0.4rem 0.25rem 0.75rem;font-size:0.85rem;">
+          ${name}
+          <button type="button" onclick="removeBulkInstructor(${i}, '${name.replace(/'/g, "\\'")}')" style="border:none;background:none;cursor:pointer;font-weight:700;color:var(--color-primary-hover);padding:0 4px;">×</button>
+        </span>`).join('');
+    }
+
+    function addBulkInstructor(i) {
+      const sel = document.getElementById('bulk_instr_pick_' + i);
+      const name = sel.value;
+      if (!name) return;
+      if (!bulkMultiInstructors[i]) bulkMultiInstructors[i] = [];
+      if (!bulkMultiInstructors[i].includes(name)) bulkMultiInstructors[i].push(name);
+      sel.value = '';
+      renderInstructorChips(i);
+    }
+
+    function removeBulkInstructor(i, name) {
+      bulkMultiInstructors[i] = (bulkMultiInstructors[i] || []).filter(n => n !== name);
+      renderInstructorChips(i);
+    }
+
+    function initBulkMode() {
+      const progSel = document.getElementById('bulkProgram');
+      Object.keys(PROGRAM_LIBRARY).forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key; opt.textContent = PROGRAM_LIBRARY[key].label;
+        progSel.appendChild(opt);
+      });
+
+      function refreshDeliveryOptions() {
+        const prog = PROGRAM_LIBRARY[progSel.value];
+        const delSel = document.getElementById('bulkDelivery');
+        delSel.innerHTML = '';
+        if (!prog) { delSel.innerHTML = '<option value="">—</option>'; return; }
+        Object.keys(prog.delivery).forEach(key => {
+          const opt = document.createElement('option');
+          opt.value = key; opt.textContent = prog.delivery[key].label;
+          delSel.appendChild(opt);
+        });
+        document.getElementById('bulkCourse').value = prog.course;
+
+        const vWrap = document.getElementById('bulkVersionWrap');
+        const vSel = document.getElementById('bulkVersion');
+        vSel.innerHTML = '';
+        if (prog.hasVersion) {
+          prog.versions.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; vSel.appendChild(o); });
+          vWrap.style.display = 'block';
+        } else {
+          vWrap.style.display = 'none';
+        }
+        refreshCityVisibility();
+        recomputeCohortCode();
+      }
+
+      function refreshCityVisibility() {
+        const delivery = document.getElementById('bulkDelivery').value;
+        document.getElementById('ccCityWrap').style.display = delivery === 'ipt' ? 'block' : 'none';
+      }
+
+      progSel.addEventListener('change', refreshDeliveryOptions);
+      document.getElementById('bulkDelivery').addEventListener('change', () => { refreshCityVisibility(); recomputeCohortCode(); });
+      document.getElementById('bulkVersion').addEventListener('change', recomputeCohortCode);
+      ['ccDate', 'ccCity', 'ccStatus'].forEach(id => document.getElementById(id).addEventListener('input', recomputeCohortCode));
+
+      document.getElementById('loadBulkProgramBtn').addEventListener('click', () => {
+        const progKey = progSel.value;
+        const delivery = document.getElementById('bulkDelivery').value;
+        const version = document.getElementById('bulkVersion').value;
+        const status = document.getElementById('bulkLoadStatus');
+        const prog = PROGRAM_LIBRARY[progKey];
+        if (!prog || !delivery) { status.textContent = 'Select a program and delivery method first.'; status.className = 'status show'; return; }
+        if (prog.hasVersion && !version) { status.textContent = 'Select a version first.'; status.className = 'status show'; return; }
+
+        bulkModuleRows = getModulesFor(progKey, delivery, version);
+        if (!bulkModuleRows.length) {
+          status.textContent = 'No modules are defined for this program/delivery combination yet — this reference needs to be filled in before links can be generated here.';
+          status.className = 'status show notice';
+          document.getElementById('bulkModuleWrap').style.display = 'none';
+          return;
+        }
+        status.className = 'status';
+
+        const listEl = document.getElementById('bulkModuleList');
+        const multi = !!prog.multiInstructor;
+        bulkMultiInstructors = {};
+        listEl.innerHTML = bulkModuleRows.map((r, i) => {
+          if (r.method === 'Async') {
+            return `<div class="field" style="display:flex;gap:0.75rem;align-items:end;margin-bottom:0;padding:10px;border:1px solid var(--color-border);border-radius:8px;">
+              <div style="flex:1"><label style="font-weight:400">${r.code}<br><span class="hint">${r.method}</span></label></div>
+              <div style="flex:2"></div>
+            </div>`;
+          }
+          if (multi) {
+            return `<div class="field" style="margin-bottom:0;padding:10px;border:1px solid var(--color-border);border-radius:8px;">
+              <label style="font-weight:400">${r.code}<br><span class="hint">${r.method}</span></label>
+              <div style="display:flex;gap:0.5rem;margin-top:0.4rem;">
+                <select id="bulk_instr_pick_${i}" style="flex:1">${instructorOptionsHtml()}</select>
+                <button type="button" class="btn-secondary btn-sm" onclick="addBulkInstructor(${i})">+ Add</button>
+              </div>
+              <div id="bulk_instr_chips_${i}" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;"></div>
+            </div>`;
+          }
+          return `<div class="field" style="display:flex;gap:0.75rem;align-items:end;margin-bottom:0;padding:10px;border:1px solid var(--color-border);border-radius:8px;">
+            <div style="flex:1"><label style="font-weight:400">${r.code}<br><span class="hint">${r.method}</span></label></div>
+            <div style="flex:2"><label>Instructor</label><select id="bulk_instr_${i}">${instructorOptionsHtml()}</select></div>
+          </div>`;
+        }).join('');
+        document.getElementById('bulkModuleWrap').style.display = 'block';
+      });
+
+      document.getElementById('generateBulkBtn').addEventListener('click', () => {
+        const progKey = progSel.value;
+        const prog = PROGRAM_LIBRARY[progKey];
+        if (!prog || !bulkModuleRows.length) return;
+        const course = document.getElementById('bulkCourse').value.trim();
+        const version = document.getElementById('bulkVersion').value.trim();
+        const cohort = document.getElementById('bulkCohort').value.trim();
+        const multi = !!prog.multiInstructor;
+
+        const out = [];
+        bulkModuleRows.forEach((r, i) => {
+          const activeSurvey = r.method === 'Async' ? surveyConfigs.async : surveyConfigs.instructor;
+          let instructors;
+          if (r.method === 'Async') {
+            instructors = [''];
+          } else if (multi) {
+            instructors = (bulkMultiInstructors[i] && bulkMultiInstructors[i].length) ? bulkMultiInstructors[i] : [''];
+          } else {
+            const picked = document.getElementById('bulk_instr_' + i).value;
+            instructors = [picked || ''];
+          }
+          instructors.forEach(instructor => {
+            const params = new URLSearchParams();
+            if (course) params.append('course', course);
+            if (version) params.append('version', version);
+            if (r.method) params.append('method', r.method);
+            if (r.code) params.append('module_name', r.code);
+            if (instructor) params.append('Instructor', instructor);
+            if (cohort) params.append('Cohort', cohort);
+            const query = params.toString();
+            out.push({
+              label: r.code + (instructor ? ` — ${instructor}` : ''),
+              moduleName: r.code, instructor, moduleType: r.method, cohort,
+              needsQr: r.method === 'IPT-ILT',
+              url: query ? `${activeSurvey.baseUrl}?${query}` : activeSurvey.baseUrl
+            });
+          });
+        });
+        window.bulkGenerated = out;
+        renderBulkOutput();
+      });
+
+      document.getElementById('bulkCopyAllBtn').addEventListener('click', () => {
+        const text = window.bulkGenerated.map(l => `${l.label}\t${l.url}`).join('\n');
+        navigator.clipboard.writeText(text).then(() => bulkStatus('✓ Copied all links.', 'success'));
+      });
+
+      document.getElementById('bulkZipBtn').addEventListener('click', async () => {
+        const qrItems = window.bulkGenerated.filter(item => item.needsQr);
+        if (!qrItems.length) { bulkStatus('No in-person (IPT-ILT) sessions in this batch — nothing to make a QR code for. Virtual and async links are click-only.', 'notice'); return; }
+        const btn = document.getElementById('bulkZipBtn');
+        btn.disabled = true; btn.textContent = 'Preparing zip…';
+        try {
+          const zip = new JSZip();
+          const folder = zip.folder('QR_Codes');
+          const usedNames = {};
+          await Promise.all(qrItems.map((item) => new Promise(resolve => {
+            const div = document.createElement('div');
+            Object.assign(div.style, { position: 'absolute', left: '-9999px' });
+            document.body.appendChild(div);
+            new QRCode(div, { text: item.url, width: 400, height: 400, colorDark: '#111111', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+            setTimeout(() => {
+              const canvas = div.querySelector('canvas');
+              const parts = [item.cohort, item.moduleName, item.instructor].filter(Boolean);
+              let base = 'QR_' + parts.join('_').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+              if (usedNames[base]) { usedNames[base]++; base += '_' + usedNames[base]; } else { usedNames[base] = 1; }
+              const filename = base + '.png';
+              if (canvas) canvas.toBlob(blob => { folder.file(filename, blob); document.body.removeChild(div); resolve(); }, 'image/png');
+              else { document.body.removeChild(div); resolve(); }
+            }, 150);
+          })));
+          const blob = await zip.generateAsync({ type: 'blob' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); a.download = 'QR_Codes.zip'; a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+          bulkStatus(`✓ Downloaded ${qrItems.length} QR code(s) (in-person sessions only).`, 'success');
+        } catch (err) { bulkStatus('ZIP failed: ' + err.message, 'error'); }
+        btn.disabled = false; btn.textContent = '⬇ Download all QR codes (zip)';
+      });
+
+      document.getElementById('bulkWordBtn').addEventListener('click', () => {
+        const cohort = document.getElementById('bulkCohort').value.trim();
+        const groups = groupBulkLinks(window.bulkGenerated);
+        const sections = Object.keys(groups).map(methodLabel => `
+          <h3 style="color:#64092c;margin-top:18px;">${methodLabel}</h3>
+          <table style="border-collapse:collapse;width:100%;table-layout:fixed;">
+            <colgroup><col style="width:14%"><col style="width:12%"><col style="width:20%"><col style="width:54%"></colgroup>
+            <tr style="background:#64092c;color:#fff;">
+              <th style="padding:6px 8px;border:1px solid #ccc;text-align:left;">Module</th>
+              <th style="padding:6px 8px;border:1px solid #ccc;text-align:left;">Method</th>
+              <th style="padding:6px 8px;border:1px solid #ccc;text-align:left;">Instructor</th>
+              <th style="padding:6px 8px;border:1px solid #ccc;text-align:left;">Link</th>
+            </tr>
+            ${groups[methodLabel].map(l => `<tr>
+              <td style="padding:6px 8px;border:1px solid #ccc;word-wrap:break-word;">${l.moduleName}</td>
+              <td style="padding:6px 8px;border:1px solid #ccc;word-wrap:break-word;">${l.moduleType}</td>
+              <td style="padding:6px 8px;border:1px solid #ccc;word-wrap:break-word;">${l.instructor}</td>
+              <td style="padding:6px 8px;border:1px solid #ccc;word-wrap:break-word;word-break:break-all;font-size:9pt;"><a href="${l.url}">${l.url}</a></td>
+            </tr>`).join('')}
+          </table>`).join('');
+        const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>Survey Links</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>
+<w:PageSetup><w:PageSize w:Orient="Landscape"/><w:PageMargins w:Top="720" w:Bottom="720" w:Left="720" w:Right="720"/></w:PageSetup>
+</w:WordDocument></xml><![endif]-->
+<style>@page { size: landscape; margin: 0.5in; } body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; } table { word-wrap: break-word; }</style>
+</head>
+<body>
+<h2 style="color:#64092c;">Survey Links — ${cohort}</h2>
+${sections}
+</body></html>`;
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const filenameSafe = (cohort || 'survey-links').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = `survey-links-${filenameSafe || 'untitled'}.doc`; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        bulkStatus('✓ Word document downloaded.', 'success');
+      });
+    }
+
+    function bulkStatus(msg, type) {
+      const el = document.getElementById('bulkOutputStatus');
+      el.textContent = msg; el.className = `status show ${type || ''}`.trim();
+    }
+
+    // Groups generated links by method so IPT-ILT, V-ILT, and Async are never
+    // visually mixed together when a program produces more than one type.
+    function groupBulkLinks(items) {
+      const order = ['IPT-ILT', 'V-ILT', 'Async'];
+      const labels = { 'IPT-ILT': 'In-Person Instructor-Led (QR code)', 'V-ILT': 'Virtual Instructor-Led (link only)', 'Async': 'Self-Paced / Async (link only)' };
+      const groups = {};
+      order.forEach(m => {
+        const matches = items.filter(i => i.moduleType === m);
+        if (matches.length) groups[labels[m]] = matches;
+      });
+      // catch any method not in the standard three (shouldn't normally happen)
+      items.forEach(i => {
+        if (!order.includes(i.moduleType)) {
+          const key = i.moduleType || 'Other';
+          groups[key] = (groups[key] || []).concat([i]);
+        }
+      });
+      return groups;
+    }
+
+    function renderBulkOutput() {
+      document.getElementById('bulkOutputCount').textContent = `${window.bulkGenerated.length} links generated`;
+      const list = document.getElementById('bulkLinkList');
+      const groups = groupBulkLinks(window.bulkGenerated);
+      list.innerHTML = Object.keys(groups).map(groupLabel => `
+        <div>
+          <div style="font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--color-primary);margin:12px 0 6px;">${groupLabel}</div>
+          <div style="display:grid;gap:0.6rem;">
+            ${groups[groupLabel].map(item => `
+              <div style="border:1px solid var(--color-border);border-radius:8px;padding:10px 14px;display:flex;gap:12px;align-items:center;">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:700;font-size:0.9rem;">${item.label}</div>
+                  <div class="hint" style="word-break:break-all;">${item.url}</div>
+                </div>
+                ${item.needsQr ? `<div class="bulk-qr-thumb" id="bulk-qr-${groups[groupLabel].indexOf(item)}-${groupLabel.replace(/[^a-z0-9]/gi,'')}"></div>` : ''}
+              </div>`).join('')}
+          </div>
+        </div>`).join('');
+      // render QR thumbnails only for IPT-ILT rows
+      Object.keys(groups).forEach(groupLabel => {
+        groups[groupLabel].forEach((item, idx) => {
+          if (!item.needsQr) return;
+          const el = document.getElementById(`bulk-qr-${idx}-${groupLabel.replace(/[^a-z0-9]/gi,'')}`);
+          if (el) new QRCode(el, { text: item.url, width: 70, height: 70, colorDark: '#111111', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        });
+      });
+      document.getElementById('bulkOutputWrap').style.display = 'block';
+      document.getElementById('bulkOutputWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function setBulkMode(bulk) {
+      document.getElementById('modeSingleBtn').className = bulk ? 'btn-secondary' : 'btn-primary';
+      document.getElementById('modeBulkBtn').className = bulk ? 'btn-primary' : 'btn-secondary';
+      document.getElementById('singleGrid').style.display = bulk ? 'none' : 'grid';
+      document.getElementById('bulkCard').style.display = bulk ? 'block' : 'none';
+    }
+
     surveyTypeEl.addEventListener('change', buildFields);
     document.getElementById('copyBtn').addEventListener('click', copyLink);
     document.getElementById('clearBtn').addEventListener('click', clearAll);
@@ -451,6 +939,7 @@
     document.getElementById('downloadQrBtn').addEventListener('click', downloadQr);
 
     buildFields();
+    initBulkMode();
   </script>
 </body>
 </html>
