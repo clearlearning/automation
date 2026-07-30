@@ -274,7 +274,7 @@
           <div class="form-group" style="flex:0 0 160px;"><label>Daily Start Time</label><select id="ipStartTime" onchange="onIpSettingChange()"><option value="07:00">7:00 AM</option><option value="07:30">7:30 AM</option><option value="08:00" selected>8:00 AM</option><option value="08:30">8:30 AM</option><option value="09:00">9:00 AM</option><option value="09:30">9:30 AM</option><option value="10:00">10:00 AM</option></select></div>
           <div class="form-group" style="flex:1;"><label>Location</label><input type="text" id="ipLocation" placeholder="e.g. Austin, TX"></div>
         </div>
-        <span class="inline-note">Set Day 1 date and daily start time. All session times auto-adjust based on the start time offset from the default. Assign instructors per session in the table below.</span>
+        <span class="inline-note">Set Day 1 date and daily start time. All session times auto-adjust based on the start time offset from the default. Assign instructors per session in the table below. You can also edit any session's Start or End time directly for a custom schedule — a "custom" tag and reset button will appear on rows you've adjusted.</span>
       </div>
     </div>
   </div>
@@ -586,6 +586,32 @@ function offsetTime(origTime,defaultStart,newStart){
   const offset=timeToMin(newStart)-timeToMin(defaultStart);
   return minToTime(timeToMin(origTime)+offset);
 }
+function parseTimeInput(str){
+  if(!str)return null;
+  str=str.trim();
+  if(!str)return null;
+  let m=str.match(/^(\d{1,2})(?:[:.]([0-5]\d))?\s*([AaPp])\.?[Mm]?\.?$/);
+  if(m){
+    let h=parseInt(m[1],10),mm=m[2]?parseInt(m[2],10):0,ap=m[3].toLowerCase();
+    if(h<1||h>12)return null;
+    if(ap==='p'&&h!==12)h+=12;
+    if(ap==='a'&&h===12)h=0;
+    return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  m=str.match(/^(\d{1,2})([0-5]\d)\s*([AaPp])\.?[Mm]?\.?$/);
+  if(m){
+    let h=parseInt(m[1],10),mm=parseInt(m[2],10),ap=m[3].toLowerCase();
+    if(h<1||h>12)return null;
+    if(ap==='p'&&h!==12)h+=12;
+    if(ap==='a'&&h===12)h=0;
+    return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  m=str.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if(m)return String(parseInt(m[1],10)).padStart(2,'0')+':'+m[2];
+  m=str.match(/^([01]?\d|2[0-3])([0-5]\d)$/);
+  if(m&&str.length>=3)return String(parseInt(m[1],10)).padStart(2,'0')+':'+m[2];
+  return null;
+}
 
 // ═══════════════════════════════════════════════════════
 // COURSE SELECTION
@@ -636,7 +662,15 @@ function onCourseSelect(cId){
 // IN-PERSON ROW BUILD
 // ═══════════════════════════════════════════════════════
 function buildInPersonRows(){
-  const prevInst={};rows.forEach(r=>{if(r.displayName&&r.instructor)prevInst[r.displayName]=r.instructor;});
+  const prevInst={};
+  const prevTimes={};
+  rows.forEach(r=>{
+    if(r.isDayHeader)return;
+    if(r.displayName&&r.instructor)prevInst[r.displayName]=r.instructor;
+    if(r._posKey&&(r.startTimeEdited||r.endTimeEdited)){
+      prevTimes[r._posKey]={start:r.startTime,end:r.endTime,startEdited:r.startTimeEdited,endEdited:r.endTimeEdited};
+    }
+  });
   rows=[];
   const startDate=document.getElementById('ipStartDate').value;
   const newStart=document.getElementById('ipStartTime').value;
@@ -646,12 +680,17 @@ function buildInPersonRows(){
     if(startDate){const d=new Date(startDate+'T12:00:00');d.setDate(d.getDate()+di);dateStr=d.toISOString().split('T')[0];}
     const dateLabel=dateStr?fmtDate(dateStr):'[Set start date]';
     rows.push({id:++_rowId,isDayHeader:true,dayLabel:day.label,dateLabel:dateLabel,dateStr:dateStr});
-    day.sessions.forEach(s=>{
+    day.sessions.forEach((s,si)=>{
+      const posKey=di+'-'+si;
       const adjStart=offsetTime(s.start,defStart,newStart);
       const adjEnd=offsetTime(s.end,defStart,newStart);
+      const prev=prevTimes[posKey];
+      const startTime=(prev&&prev.startEdited)?prev.start:adjStart;
+      const endTime=(prev&&prev.endEdited)?prev.end:adjEnd;
       rows.push({id:++_rowId,isDayHeader:false,isILT:true,platform:'In-Person',displayName:s.topic,
-        startTime:adjStart,endTime:adjEnd,date:dateStr,isBreak:s.isBreak||false,
-        title:null,topicsHtml:null,instructor:prevInst[s.topic]||'',zoomLink:'',selected:false});
+        startTime:startTime,endTime:endTime,date:dateStr,isBreak:s.isBreak||false,
+        title:null,topicsHtml:null,instructor:prevInst[s.topic]||'',zoomLink:'',selected:false,
+        _posKey:posKey,startTimeEdited:!!(prev&&prev.startEdited),endTimeEdited:!!(prev&&prev.endEdited)});
     });
   });
 }
@@ -682,9 +721,13 @@ function renderTable(){
     }
     if(isIP){
       tr.className='row-ilt';
-      const startD=fmtTime(row.startTime);const endD=fmtTime(row.endTime);
+      const isCustom=row.startTimeEdited||row.endTimeEdited;
+      const customBadge=isCustom?'<span class="dur-badge dur-edited" title="Manually adjusted from the default schedule">custom</span>':'';
+      const resetBtn=isCustom?'<button onclick="resetIpRowTime('+i+')" title="Reset to default schedule" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;line-height:1;padding:2px 4px;margin-left:2px;" onmouseenter="this.style.color=\'var(--fail-red)\'" onmouseleave="this.style.color=\'#bbb\'">\u21bb</button>':'';
+      const startCell='<td><input type="text" class="tbl-input time-native" placeholder="8:00 AM" value="'+esc(fmtTime(row.startTime))+'" onchange="updIpStart('+i+',this.value)"></td>';
+      const endCell='<td><div style="display:flex;align-items:center;gap:4px;"><input type="text" class="tbl-input time-native" placeholder="8:00 AM" value="'+esc(fmtTime(row.endTime))+'" onchange="updIpEnd('+i+',this.value)">'+customBadge+resetBtn+'</div></td>';
       const instCell=row.isBreak?'<td></td>':'<td><select class="tbl-select" style="min-width:160px;" onchange="upd('+i+',\'instructor\',this.value)">'+instOptions(row.instructor)+'</select></td>';
-      tr.innerHTML='<td style="white-space:nowrap;">'+esc(startD)+'</td><td style="text-align:center;color:#bbb;">\u2013</td><td style="white-space:nowrap;">'+esc(endD)+'</td>'+instCell+'<td>'+esc(row.displayName)+'</td>';
+      tr.innerHTML=startCell+'<td style="text-align:center;color:#bbb;">\u2013</td>'+endCell+instCell+'<td>'+esc(row.displayName)+'</td>';
     } else {
       tr.className=(row.isILT?'row-ilt':'row-portal')+(row.selected?' row-selected':'');
       const ck='<td class="col-check"><input type="checkbox" '+(row.selected?'checked':'')+' onchange="toggleRow('+i+',this.checked)"></td>';
@@ -698,8 +741,8 @@ function renderTable(){
         const durLabel=dur?(dur>=60?Math.floor(dur/60)+(dur%60?'h '+(dur%60)+'m':'h'):(dur+'m')):'';
         const badgeCls=row.endTimeEdited?'dur-badge dur-edited':'dur-badge';
         const durBadge=durLabel?'<span class="'+badgeCls+'" title="'+(row.endTimeEdited?'End time manually edited':'Auto-calculated from duration')+'">\u23F1 '+durLabel+'</span>':'';
-        const startCell='<td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.startTime||'')+'" onchange="updStart('+i+',this.value)"><span class="tz-tag">'+tz+'</span></div></td>';
-        const endCell='<td><div style="display:flex;align-items:center;gap:5px;"><input type="time" class="tbl-input time-native" step="900" value="'+(row.endTime||'')+'" onchange="updEnd('+i+',this.value)"><span class="tz-tag">'+tz+'</span>'+durBadge+'</div></td>';
+        const startCell='<td><div style="display:flex;align-items:center;gap:5px;"><input type="text" class="tbl-input time-native" placeholder="8:00 AM" value="'+esc(fmtTime(row.startTime))+'" onchange="updStart('+i+',this.value)"><span class="tz-tag">'+tz+'</span></div></td>';
+        const endCell='<td><div style="display:flex;align-items:center;gap:5px;"><input type="text" class="tbl-input time-native" placeholder="8:00 AM" value="'+esc(fmtTime(row.endTime))+'" onchange="updEnd('+i+',this.value)"><span class="tz-tag">'+tz+'</span>'+durBadge+'</div></td>';
         const zoomCell='<td><input type="text" class="tbl-input" placeholder="https://zoom.us/j/\u2026" style="min-width:200px;" value="'+esc(row.zoomLink||'')+'" onchange="upd('+i+',\'zoomLink\',this.value)"></td>';
         tr.innerHTML=ck+'<td><input type="date" class="tbl-input" value="'+row.date+'" onchange="upd('+i+',\'date\',this.value)"></td>'+startCell+endCell+pl+inst+zoomCell+nm+dl;
         iltIdx++;
@@ -716,17 +759,34 @@ function renderTable(){
 // ═══════════════════════════════════════════════════════
 function upd(i,f,v){rows[i][f]=v;}
 function updStart(i,v){
-  rows[i].startTime=v;
+  const parsed=parseTimeInput(v);
+  if(!parsed){renderTable();return;}
+  rows[i].startTime=parsed;
   rows[i].startTimeEdited=true;
   if(!rows[i].endTimeEdited&&selectedCourse){
     let iltIdx=0;
     for(let j=0;j<i;j++){if(rows[j].isILT&&!rows[j].isDayHeader)iltIdx++;}
     const dur=getDuration(selectedCourse.id,rows[i].displayName,iltIdx);
-    if(dur)rows[i].endTime=calcEndTime(v,dur);
+    if(dur)rows[i].endTime=calcEndTime(parsed,dur);
   }
   renderTable();
 }
-function updEnd(i,v){rows[i].endTime=v;rows[i].endTimeEdited=true;renderTable();}
+function updEnd(i,v){
+  const parsed=parseTimeInput(v);
+  if(!parsed){renderTable();return;}
+  rows[i].endTime=parsed;rows[i].endTimeEdited=true;renderTable();
+}
+function updIpStart(i,v){
+  const parsed=parseTimeInput(v);
+  if(!parsed){renderTable();return;}
+  rows[i].startTime=parsed;rows[i].startTimeEdited=true;renderTable();
+}
+function updIpEnd(i,v){
+  const parsed=parseTimeInput(v);
+  if(!parsed){renderTable();return;}
+  rows[i].endTime=parsed;rows[i].endTimeEdited=true;renderTable();
+}
+function resetIpRowTime(i){rows[i].startTimeEdited=false;rows[i].endTimeEdited=false;buildInPersonRows();renderTable();}
 function updPlatform(i,v){rows[i].platform=v;rows[i].isILT=(v==='Zoom'||v==='Teams');if(!rows[i].isILT)rows[i].instructor='';renderTable();updateIltCount();}
 function removeRow(i){rows.splice(i,1);renderTable();updateIltCount();}
 function addManualRow(){rows.push({id:++_rowId,displayName:'New Session',isILT:true,platform:'Zoom',title:null,topicsHtml:null,date:'',startTime:getDefaultTime24(),endTime:'',instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false});renderTable();updateIltCount();}
