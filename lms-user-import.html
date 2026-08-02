@@ -3,529 +3,1351 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLEAR Learning Subscriber Registration Form</title>
+<title>TalentLMS User Import Tool</title>
 <link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Trebuchet+MS&display=swap');
-  :root{--burgundy:#64092c;--burgundy-light:#8a1e4a;--gold:#dda838;--gold-light:#f0c96a;--blue:#084d78;--blue-light:#0a6ba8;--gray:#484848;--gray-light:#f4f4f5;--gray-mid:#e0e0e0;--white:#ffffff;--green:#2e7d32;--green-bg:#e8f5e9;--red:#c62828;--red-bg:#ffebee;--amber:#b85c00;--amber-bg:#fff8e1;--radius:6px;--shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-lg:0 4px 16px rgba(0,0,0,0.12);}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Open Sans',sans-serif;color:var(--gray);background:var(--gray-light);min-height:100vh;}
-  h1,h2,h3,h4{font-family:'Trebuchet MS','Open Sans',sans-serif;}
-  .header{background:linear-gradient(135deg,var(--burgundy) 0%,var(--burgundy-light) 100%);color:var(--white);padding:28px 32px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-lg);}
-  .header img{width:44px;height:44px;border-radius:8px;background:#fff;padding:4px;flex-shrink:0;}
-  .header h1{font-size:21px;font-weight:700;}
-  .header p{font-size:13px;opacity:0.9;margin-top:2px;}
-  .main{max-width:1100px;margin:0 auto;padding:28px 24px 64px;}
-  .intro{background:var(--white);border-left:4px solid var(--gold);border-radius:var(--radius);padding:18px 22px;margin-bottom:24px;box-shadow:var(--shadow);font-size:14px;line-height:1.6;}
-  .panel{background:var(--white);border-radius:var(--radius);padding:26px 28px;box-shadow:var(--shadow);margin-bottom:22px;}
-  .panel h2{font-size:16px;color:var(--burgundy);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
-  .step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--burgundy);color:#fff;border-radius:50%;font-size:12px;font-weight:700;flex-shrink:0;}
-  .form-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
-  .form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:220px;}
+  :root{--burgundy:#64092c;--burgundy-light:#8a1e4a;--gold:#dda838;--gold-light:#f0c96a;--blue:#084d78;--blue-light:#0a6ba8;--gray:#484848;--gray-light:#f4f4f5;--gray-mid:#e0e0e0;--white:#ffffff;--green:#2e7d32;--green-bg:#e8f5e9;--red:#c62828;--red-bg:#ffebee;--amber:#f57f17;--amber-bg:#fff8e1;--radius:6px;--shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-lg:0 4px 16px rgba(0,0,0,0.12);}
+  *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Open Sans',sans-serif;color:var(--gray);background:var(--gray-light);min-height:100vh;}h1,h2,h3,h4{font-family:'Trebuchet MS','Open Sans',sans-serif;}
+  .header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-light) 100%);color:var(--white);padding:24px 32px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-lg);}
+  .header-icon{width:48px;height:48px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+  .header h1{font-size:22px;font-weight:700;}.header p{font-size:13px;opacity:0.85;margin-top:2px;}.main{max-width:1400px;margin:0 auto;padding:24px 32px 48px;}
+  .panel{background:var(--white);border-radius:var(--radius);padding:28px 32px;box-shadow:var(--shadow);margin-bottom:24px;}
+  .panel h2{font-size:17px;color:var(--blue);margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+  .panel-section{border:1px solid var(--gray-mid);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .panel-section h3{font-size:14px;color:var(--burgundy);margin-bottom:12px;}
+  .form-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;}
+  .form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px;}
   .form-group label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;}
-  .form-group .req{color:var(--burgundy);}
   .form-group input,.form-group select{padding:10px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:14px;font-family:'Open Sans',sans-serif;transition:border-color 0.2s;}
   .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1);}
-  .form-group .hint{font-size:12px;color:#888;line-height:1.4;}
-  .form-group .field-error{font-size:12px;color:var(--red);display:none;}
-  .form-group.invalid input,.form-group.invalid select{border-color:var(--red);background:var(--red-bg);}
-  .form-group.invalid .field-error{display:block;}
-  .btn{padding:11px 26px;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;font-family:'Open Sans',sans-serif;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;}
+  .form-group input:disabled{background:#f0f0f0;color:#aaa;}.inline-note{font-size:12px;color:#888;margin-top:2px;line-height:1.4;}
+  .connection-status{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
+  .connection-status.connected{background:var(--green-bg);color:var(--green);}.connection-status.disconnected{background:var(--red-bg);color:var(--red);}.connection-status.loading{background:var(--amber-bg);color:var(--amber);}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}.dot.green{background:var(--green);}.dot.red{background:var(--red);}.dot.amber{background:var(--amber);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .search-select{position:relative;}.search-select input{width:100%;padding:10px 14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:14px;font-family:'Open Sans',sans-serif;background:var(--white);}
+  .search-select input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(8,77,120,0.1);}.search-select input:disabled{background:#f0f0f0;color:#aaa;}
+  .search-select .dropdown{position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--white);border:1.5px solid var(--blue);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:220px;overflow-y:auto;box-shadow:var(--shadow-lg);display:none;}
+  .search-select .dropdown.open{display:block;}.search-select .dropdown .opt{padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-light);}
+  .search-select .dropdown .opt:hover{background:#e3f2fd;}.search-select .dropdown .no-match{padding:9px 14px;font-size:13px;color:#999;font-style:italic;}
+  .drop-zone{border:2px dashed var(--gray-mid);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--gray-light);margin-bottom:16px;}
+  .drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:rgba(8,77,120,0.04);}
+  .drop-zone .icon{font-size:36px;margin-bottom:8px;}.drop-zone p{font-size:14px;color:var(--gray);}.drop-zone .sub{font-size:12px;color:#999;margin-top:4px;}
+  .btn{padding:11px 28px;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;font-family:'Open Sans',sans-serif;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;}
   .btn-primary{background:var(--blue);color:var(--white);}.btn-primary:hover{background:var(--blue-light);}.btn-primary:disabled{background:#aaa;cursor:not-allowed;}
   .btn-secondary{background:var(--white);color:var(--blue);border:1.5px solid var(--blue);}.btn-secondary:hover{background:rgba(8,77,120,0.05);}
   .btn-gold{background:var(--gold);color:var(--burgundy);}.btn-gold:hover{background:var(--gold-light);}
-  .btn-burgundy{background:var(--burgundy);color:var(--white);font-size:15px;padding:13px 32px;}.btn-burgundy:hover{background:var(--burgundy-light);}.btn-burgundy:disabled{background:#aaa;cursor:not-allowed;}
-  .btn-sm{padding:7px 14px;font-size:12px;}
-  .btn-outline-danger{background:transparent;color:var(--red);border:1px solid transparent;}
-  .upload-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px;padding:16px;background:var(--gray-light);border-radius:var(--radius);border:1px dashed var(--gray-mid);}
-  .upload-row .divider{color:#aaa;font-size:12px;}
-  .license-counter{display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:14px;padding:10px 16px;border-radius:var(--radius);background:var(--gray-light);}
-  .license-counter.over{background:var(--amber-bg);color:var(--amber);font-weight:600;}
-  .table-wrap{overflow-x:auto;border:1px solid var(--gray-mid);border-radius:var(--radius);}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  thead th{background:var(--blue);color:var(--white);padding:10px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;}
-  tbody td{padding:6px 8px;border-bottom:1px solid var(--gray-mid);vertical-align:top;}
-  tbody tr:nth-child(even){background:#fafafa;}
-  tbody td input{width:100%;padding:7px 9px;border:1.5px solid transparent;border-radius:4px;font-size:13px;font-family:'Open Sans',sans-serif;background:transparent;}
-  tbody td input:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 2px rgba(8,77,120,0.1);}
-  tbody td input.cell-error{border-color:var(--red);background:var(--red-bg);}
-  .row-num{color:#999;font-size:12px;text-align:center;width:28px;}
-  .row-remove{cursor:pointer;color:var(--red);font-weight:700;font-size:15px;text-align:center;width:28px;user-select:none;}
-  .row-remove:hover{color:var(--burgundy);}
-  .status-bar{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-top:14px;display:none;line-height:1.5;}
+  .btn-burgundy{background:var(--burgundy);color:var(--white);}.btn-burgundy:hover{background:var(--burgundy-light);}
+  .btn-sm{padding:7px 16px;font-size:12px;}
+  .status-bar{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-top:12px;display:none;}
   .status-bar.info{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;display:block;}
   .status-bar.success{background:var(--green-bg);color:var(--green);border:1px solid #a5d6a7;display:block;}
   .status-bar.error{background:var(--red-bg);color:var(--red);border:1px solid #ef9a9a;display:block;}
-  .submit-bar{display:flex;align-items:center;gap:16px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px;}
-  .submit-note{font-size:12px;color:#888;flex:1;min-width:200px;}
-  .confirmation{text-align:center;padding:48px 24px;}
-  .confirmation .icon{font-size:52px;margin-bottom:14px;}
-  .confirmation h2{color:var(--green);font-size:22px;margin-bottom:10px;}
-  .confirmation p{font-size:14px;color:var(--gray);margin-bottom:6px;line-height:1.6;}
-  .confirmation .ref{display:inline-block;margin-top:14px;padding:10px 20px;background:var(--gray-light);border-radius:var(--radius);font-family:monospace;font-size:14px;font-weight:700;color:var(--burgundy);}
+  .summary-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+  .summary-card{flex:1;min-width:120px;background:var(--gray-light);border-radius:var(--radius);padding:14px;text-align:center;}
+  .summary-card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:4px;}.summary-card .val{font-size:22px;font-weight:700;color:var(--blue);}
+  .table-wrap{overflow-x:auto;border:1px solid var(--gray-mid);border-radius:var(--radius);max-height:500px;overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;}
+  thead th{background:var(--blue);color:var(--white);padding:10px 12px;text-align:left;font-weight:600;font-size:11px;position:sticky;top:0;z-index:2;}
+  tbody td{padding:8px 12px;border-bottom:1px solid var(--gray-mid);}tbody tr:hover{background:rgba(8,77,120,0.03);}tbody tr:nth-child(even){background:#fafafa;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;}.badge-paid{background:var(--green-bg);color:var(--green);}
+  .badge-new{background:#e3f2fd;color:#1565c0;}.badge-review{background:var(--amber-bg);color:var(--amber);}.badge-provisioned{background:var(--green-bg);color:var(--green);}.badge-rejected{background:var(--red-bg);color:var(--red);}
+  .badge-pending{background:var(--gray-mid);color:#666;}.badge-created,.badge-provisioned-status{background:var(--green-bg);color:var(--green);}.badge-failed{background:var(--red-bg);color:var(--red);}
+  .course-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:32px;}
+  .course-chip{background:var(--green-bg);border:1px solid #a5d6a7;padding:5px 12px;border-radius:20px;font-size:12px;display:flex;align-items:center;gap:6px;color:var(--green);font-weight:600;}
+  .course-chip .remove{cursor:pointer;font-weight:700;font-size:14px;line-height:1;color:var(--red);}
+  .progress-wrap{height:8px;background:var(--gray-mid);border-radius:4px;overflow:hidden;margin:12px 0 8px;}.progress-fill{height:100%;background:var(--blue);border-radius:4px;transition:width 0.4s ease;}.progress-text{font-size:12px;color:#888;}
   .hidden{display:none!important;}
-  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .honeypot{position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden;}
-  @media(max-width:768px){.header{padding:18px;}.main{padding:16px;}.panel{padding:18px;}}
+  .mode-tabs{display:flex;gap:0;margin-bottom:16px;border:1.5px solid var(--blue);border-radius:var(--radius);overflow:hidden;}
+  .mode-tab{flex:1;padding:10px 18px;font-size:13px;font-weight:600;font-family:'Open Sans',sans-serif;border:none;background:var(--white);color:var(--blue);cursor:pointer;transition:all 0.2s;text-align:center;}
+  .mode-tab:first-child{border-right:1.5px solid var(--blue);}
+  .mode-tab.active{background:var(--blue);color:var(--white);}
+  .mode-tab:hover:not(.active){background:rgba(8,77,120,0.07);}
+  .existing-group-info{background:#e3f2fd;border:1px solid #90caf9;border-radius:var(--radius);padding:12px 16px;font-size:13px;color:#1565c0;margin-top:8px;display:none;}
+  .existing-group-info.visible{display:block;}
+  .source-tabs{display:flex;gap:0;margin-bottom:14px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);overflow:hidden;}
+  .source-tab{flex:1;padding:8px 14px;font-size:12px;font-weight:600;font-family:'Open Sans',sans-serif;border:none;background:var(--white);color:var(--gray);cursor:pointer;transition:all 0.2s;text-align:center;}
+  .source-tab:not(:last-child){border-right:1.5px solid var(--gray-mid);}
+  .source-tab.active{background:var(--burgundy);color:var(--white);}
+  .source-tab:hover:not(.active){background:rgba(100,9,44,0.06);}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}
+  @media(max-width:768px){.header{padding:16px;}.main{padding:16px;}.panel{padding:16px;}.form-row{flex-direction:column;}}
+</style>
+</head>
+<body>
+<div class="header"><div class="header-icon">&#128100;</div><div><h1>TalentLMS User Import Interface</h1><p>Process attendee data, generate TalentLMS import files, and provision users via API</p></div></div>
+<div class="main">
+  <div class="panel">
+    <h2>&#9881;&#65039; Setup</h2>
+    <div class="panel-section">
+      <h3>1. API Connection</h3>
+      <div class="form-row">
+        <div class="form-group" style="flex:2;"><label>Worker URL</label><input type="text" id="workerUrl" value="https://clear-lms-proxy.avance.workers.dev"><span class="inline-note">Pre-configured. Do not change unless instructed.</span></div>
+        <div class="form-group" style="flex:1;"><label>Auth Token</label><input type="password" id="authToken" placeholder="Enter access token (first time only)"></div>
+        <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="connectBtn">Test Connection</button></div>
+      </div>
+      <div class="connection-status disconnected" id="connectionStatus"><span class="dot red"></span> Not connected</div>
+    </div>
+    <div class="panel-section">
+      <h3>2. Attendee Data Source</h3>
+
+      <!-- Novi Live Pull -->
+      <div style="border:1px solid var(--gray-mid);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--burgundy);margin-bottom:12px;">&#127760; Pull from Novi AMS</div>
+        <div class="form-row" style="margin-bottom:10px;">
+          <div class="form-group" style="flex:1;"><label>Novi Auth Token</label><input type="password" id="noviToken" placeholder="Enter Novi token (first time only)"><span class="inline-note">Stored locally — enter once.</span></div>
+          <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-secondary" id="noviConnectBtn">Connect</button></div>
+        </div>
+        <div class="connection-status disconnected" id="noviConnectionStatus" style="margin-bottom:12px;"><span class="dot red"></span> Not connected to Novi</div>
+
+        <!-- Source type tabs -->
+        <div class="source-tabs">
+          <button class="source-tab active" id="srcTabEvent" onclick="setNoviSource('event')">&#128197; Event Registrations</button>
+          <button class="source-tab" id="srcTabProduct" onclick="setNoviSource('product')">&#128722; Product Orders</button>
+          <button class="source-tab" id="srcTabSubreg" onclick="setNoviSource('subreg')">&#128230; Bulk Product Orders</button>
+        </div>
+
+        <!-- Event panel -->
+        <div id="noviEventPanel">
+          <div class="form-row" style="margin-bottom:10px;">
+            <div class="form-group" style="flex:1;"><label>Novi Event</label><div class="search-select"><input type="text" id="noviEventInput" placeholder="Connect to Novi first" disabled><div class="dropdown" id="noviEventDropdown"></div></div><input type="hidden" id="noviEventValue"></div>
+            <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-primary" id="noviPullBtn" disabled>Pull Attendees</button></div>
+          </div>
+        </div>
+
+        <!-- Product orders panel -->
+        <div id="noviProductPanel" class="hidden">
+          <div class="form-row" style="margin-bottom:4px;">
+            <div class="form-group" style="flex:1;">
+              <label>Product</label>
+              <div class="search-select">
+                <input type="text" id="noviProductInput" placeholder="Connect to Novi first" disabled>
+                <div class="dropdown" id="noviProductDropdown"></div>
+              </div>
+              <input type="hidden" id="noviProductValue">
+              <span class="inline-note">Pulls completed orders. Uses Subscriber Name/Email custom fields; falls back to purchaser name/email.</span>
+            </div>
+            <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label><button class="btn btn-sm btn-primary" id="noviProductPullBtn" disabled>Pull Orders</button></div>
+          </div>
+        </div>
+
+        <!-- Bulk Product Orders panel (subscriber self-registration submissions) -->
+        <div id="subregPanel" class="hidden">
+          <div class="form-row">
+            <div class="form-group" style="flex:2;"><label>Search</label><input type="text" id="sbSearch" placeholder="Order #, purchaser, agency, subscriber name, or email..." oninput="applySubregFilters()"></div>
+            <div class="form-group"><label>Product</label><select id="sbProduct" onchange="applySubregFilters()"><option value="">All products</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Submitted From</label><input type="date" id="sbDateFrom" onchange="applySubregFilters()"></div>
+            <div class="form-group"><label>Submitted To</label><input type="date" id="sbDateTo" onchange="applySubregFilters()"></div>
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px;">
+              <input type="checkbox" id="sbShowProvisioned" onchange="applySubregFilters()" style="width:16px;height:16px;">
+              <label style="text-transform:none;font-size:13px;font-weight:400;">Show already-provisioned subscribers</label>
+            </div>
+            <div class="form-group" style="flex:0 0 auto;align-self:flex-end;">
+              <button class="btn btn-sm btn-secondary" onclick="refreshSubreg()">&#8635; Refresh</button>
+            </div>
+          </div>
+          <div class="summary-row" id="sbSummaryRow"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;">
+              <button class="btn btn-sm btn-secondary" onclick="selectAllSubregFiltered()">Select All Filtered</button>
+              <button class="btn btn-sm btn-secondary" onclick="clearSubregSelection()">Clear Selection</button>
+              <span id="sbSelCountLabel" style="color:var(--burgundy);font-weight:600;"></span>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-secondary btn-sm" id="sbMarkProvisionedBtn" onclick="markSubregSelectedProvisioned()">&#10003; Mark Selected as Provisioned</button>
+              <button class="btn btn-gold btn-sm" id="sbLoadPreviewBtn" onclick="loadSubregIntoPreview()">&#11015;&#65039; Prepare Selected for LMS Import</button>
+            </div>
+          </div>
+          <div class="table-wrap" style="max-height:420px;"><table>
+            <thead><tr>
+              <th style="width:30px;text-align:center;"><input type="checkbox" id="sbChkAll" onchange="toggleSubregAll(this.checked)"></th>
+              <th onclick="sortSubregBy('orderNumber')">Order #</th>
+              <th onclick="sortSubregBy('productName')">Product</th>
+              <th onclick="sortSubregBy('purchaserName')">Purchaser</th>
+              <th onclick="sortSubregBy('agencyName')">Agency (Order)</th>
+              <th onclick="sortSubregBy('submittedAt')">Submitted</th>
+              <th onclick="sortSubregBy('name')">Subscriber Name</th>
+              <th onclick="sortSubregBy('email')">Email</th>
+              <th>Job Title</th>
+              <th>Subscriber Agency</th>
+              <th onclick="sortSubregBy('status')">Order Status</th>
+              <th onclick="sortSubregBy('provisionStatus')">Provision Status</th>
+            </tr></thead>
+            <tbody id="sbResultsBody"></tbody>
+          </table></div>
+          <div id="sbStatusBar" class="status-bar"></div>
+        </div>
+
+        <div id="noviPullStatus" class="status-bar"></div>
+      </div>
+
+      <!-- Manual Upload Fallback -->
+      <div style="border:1px solid var(--gray-mid);border-radius:var(--radius);padding:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--burgundy);margin-bottom:12px;">&#128196; Manual Upload (fallback)</div>
+        <div class="drop-zone" id="dropZone">
+          <div class="icon">&#128196;</div>
+          <p>Drop the attendee CSV file here, or click to browse</p>
+          <p class="sub">Accepts .csv files exported from the ecommerce platform</p>
+          <input type="file" id="fileInput" accept=".csv" style="display:none">
+        </div>
+        <div id="fileStatus" class="status-bar"></div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <h3>3. Group &amp; Course Configuration</h3>
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="modeNewBtn" onclick="setMode('new')">&#10133; Create New Cohort</button>
+        <button class="mode-tab" id="modeExistingBtn" onclick="setMode('existing')">&#128101; Add to Existing Cohort</button>
+      </div>
+
+      <!-- NEW COHORT fields -->
+      <div id="newCohortFields">
+        <div class="form-row">
+          <div class="form-group"><label>Group Name</label><input type="text" id="groupName" placeholder="e.g., NCITB US Spring 2026"></div>
+          <div class="form-group"><label>Group Description</label><input type="text" id="groupDesc" placeholder="e.g., Spring 2026 NCIT Basic US Cohort"></div>
+        </div>
+      </div>
+
+      <!-- EXISTING COHORT fields -->
+      <div id="existingCohortFields" class="hidden">
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label>Search Existing Group</label>
+            <div class="search-select">
+              <input type="text" id="existingGroupInput" placeholder="Connect to API to load groups" disabled>
+              <div class="dropdown" id="existingGroupDropdown"></div>
+            </div>
+            <span class="inline-note">Search by name and select the cohort to add users to.</span>
+          </div>
+          <div class="form-group" style="flex:0 0 auto;"><label>&nbsp;</label>
+            <button class="btn btn-sm btn-secondary" id="refreshGroupsBtn" onclick="loadGroups()" disabled>&#8635; Refresh</button>
+          </div>
+        </div>
+        <div class="existing-group-info" id="existingGroupInfo"></div>
+      </div>
+
+      <!-- Course assignment: only shown in new cohort mode -->
+      <div id="courseSelectionSection" class="form-row" style="margin-top:12px;">
+        <div class="form-group"><label>Add Courses to Group</label>
+          <div class="search-select"><input type="text" id="courseSearchInput" placeholder="Connect to API to load courses" disabled><div class="dropdown" id="courseSearchDropdown"></div></div>
+          <span class="inline-note">Search and select courses. Each selected course will be assigned to the group.</span>
+        </div>
+      </div>
+      <div class="course-chips" id="selectedCourses"></div>
+    </div>
+  </div>
+  <div class="panel hidden" id="panelResults">
+    <h2>&#128203; Import Preview</h2>
+    <div class="summary-row" id="summaryRow"></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="position:relative;flex:1;min-width:220px;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;font-size:14px;">&#128269;</span>
+        <input type="text" id="previewFilter" placeholder="Filter by name or email..." style="width:100%;padding:9px 12px 9px 32px;border:1.5px solid var(--gray-mid);border-radius:var(--radius);font-size:13px;font-family:'Open Sans',sans-serif;" oninput="renderPreview()">
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="document.getElementById('previewFilter').value='';renderPreview();" title="Clear filter">&#10005; Clear</button>
+    </div>
+    <div class="table-wrap" id="previewTable"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+      <button class="btn btn-gold" id="exportXlsxBtn">&#128229; Export Import XLSX</button>
+      <button class="btn btn-secondary" id="participantListBtn" onclick="exportParticipantPDF()">&#128101; Participant List PDF</button>
+      <!-- New cohort buttons -->
+      <span id="newCohortBtns">
+        <button class="btn btn-burgundy" id="apiUploadBtn" style="margin-right:10px;">&#9889; Upload Users</button>
+        <button class="btn btn-primary" id="apiCohortBtn" disabled>&#128101; Add Users to Cohort</button>
+      </span>
+      <!-- Existing cohort button -->
+      <button class="btn btn-burgundy hidden" id="apiAddExistingBtn">&#9889; Create Users &amp; Add to Cohort</button>
+    </div>
+    <div class="progress-wrap hidden" id="apiProgressWrap"><div class="progress-fill" id="apiProgressFill" style="width:0%"></div></div>
+    <p class="progress-text hidden" id="apiProgressText"></p>
+    <div id="apiStatus" class="status-bar"></div>
+    <div id="noviOrdersLinkWrap" class="hidden" style="margin-top:10px;">
+      <a href="https://www.clearhq.org/admin/ecommerce/order-list" target="_blank" class="btn btn-secondary" style="text-decoration:none;display:inline-block;">&#128279; Navigate to Novi Orders</a>
+    </div>
+  </div>
+</div>
+<script>
+const STATE={workerUrl:'',authToken:'',connected:false,courses:[],selectedCourses:[],attendees:[],importUsers:[],selectedUsers:new Set(),groupKey:'',sortCol:'',sortDir:1};
+const US_STATES='AL,AK,AZ,AR,CA,CO,CT,DE,FL,GA,HI,ID,IL,IN,IA,KS,KY,LA,ME,MD,MA,MI,MN,MS,MO,MT,NE,NV,NH,NJ,NM,NY,NC,ND,OH,OK,OR,PA,RI,SC,SD,TN,TX,UT,VT,VA,WA,WV,WI,WY,DC,PR,VI,GU,AS,MP'.split(',');
+const CA_PROVS='AB,BC,MB,NB,NL,NS,NT,NU,ON,PE,QC,SK,YT'.split(',');
+function inferCountry(st,existing){if(existing&&existing.trim())return existing.trim();const s=(st||'').toUpperCase().trim();if(US_STATES.includes(s))return'United States';if(CA_PROVS.includes(s))return'Canada';return'';}
+function genPw(){const U='ABCDEFGHIJKLMNOPQRSTUVWXYZ',L='abcdefghijklmnopqrstuvwxyz',D='0123456789',S='!@#$%&',A=U+L+D+S;let p='';p+=U[Math.floor(Math.random()*U.length)];p+=L[Math.floor(Math.random()*L.length)];p+=D[Math.floor(Math.random()*D.length)];p+=S[Math.floor(Math.random()*S.length)];for(let i=4;i<9;i++)p+=A[Math.floor(Math.random()*A.length)];return p.split('').sort(()=>Math.random()-0.5).join('');}
+function genGroupKey(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';let k='';for(let i=0;i<9;i++)k+=chars[Math.floor(Math.random()*chars.length)];return k;}
+
+// API
+async function apiCall(path,opts){const o=opts||{};const h=Object.assign({'X-Auth-Token':STATE.authToken},o.headers||{});const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+path,{...o,headers:h});if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t);}if(r.status===204||r.headers.get('content-length')==='0')return{};return r.json();}
+async function apiPost(path,body){return apiCall(path,{method:'POST',headers:{'X-Auth-Token':STATE.authToken,'Content-Type':'application/x-www-form-urlencoded'},body});}
+function setCon(s,t){const el=document.getElementById('connectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
+async function doConnect(){const url=document.getElementById('workerUrl').value.trim();const tok=document.getElementById('authToken').value.trim();if(!url||!tok){setCon('disconnected','Enter Auth Token and click Test Connection');return;}STATE.workerUrl=url;STATE.authToken=tok;setCon('loading','Connecting...');try{const info=await apiCall('/v1/siteinfo');STATE.connected=true;setCon('connected','Connected to '+(info.site_name||info.domain||'TalentLMS'));localStorage.setItem('clear_worker_url',url);localStorage.setItem('clear_auth_token',tok);await loadCourses();loadGroups();}catch(e){STATE.connected=false;setCon('disconnected','Connection failed: '+e.message);}}
+document.getElementById('connectBtn').addEventListener('click',doConnect);
+(function(){const u=localStorage.getItem('clear_worker_url')||'https://clear-lms-proxy.avance.workers.dev';const t=localStorage.getItem('clear_auth_token');if(u)document.getElementById('workerUrl').value=u;if(t){document.getElementById('authToken').value=t;setTimeout(doConnect,200);}})();
+
+// Course search multi-select
+async function loadCourses(){try{STATE.courses=await apiCall('/v1/courses');setupCourseSearch();}catch(e){setCon('disconnected','Failed to load courses: '+e.message);}}
+function setupCourseSearch(){const inp=document.getElementById('courseSearchInput');const dd=document.getElementById('courseSearchDropdown');inp.disabled=false;inp.placeholder='Type to search courses...';
+function rend(f){const avail=STATE.courses.filter(c=>!STATE.selectedCourses.find(s=>s.id===c.id));const m=f?avail.filter(c=>c.name.toLowerCase().includes(f.toLowerCase())):avail;dd.innerHTML=m.length===0?'<div class="no-match">No matches</div>':m.map(c=>'<div class="opt" data-id="'+c.id+'" data-name="'+esc(c.name)+'">'+esc(c.name)+'</div>').join('');dd.querySelectorAll('.opt').forEach(o=>{o.addEventListener('mousedown',e=>{e.preventDefault();STATE.selectedCourses.push({id:parseInt(o.dataset.id),name:o.dataset.name});inp.value='';dd.classList.remove('open');renderChips();rend('');});});}
+inp.addEventListener('focus',()=>{rend(inp.value);dd.classList.add('open');});inp.addEventListener('input',()=>{rend(inp.value);dd.classList.add('open');});inp.addEventListener('blur',()=>{setTimeout(()=>dd.classList.remove('open'),150);});rend('');}
+function renderChips(){document.getElementById('selectedCourses').innerHTML=STATE.selectedCourses.map((c,i)=>'<div class="course-chip">'+esc(c.name)+' <span class="remove" onclick="rmCourse('+i+')">&times;</span></div>').join('');}
+function rmCourse(i){STATE.selectedCourses.splice(i,1);renderChips();}
+
+// ============================================================
+// Novi AMS Integration
+// ============================================================
+(function(){const t=localStorage.getItem('clear_novi_token');if(t)document.getElementById('noviToken').value=t;})();
+
+async function noviCall(path){
+  const workerUrl=STATE.workerUrl.replace(/\/+$/,'');
+  const r=await fetch(workerUrl+'/novi'+path,{headers:{'X-Auth-Token':STATE.authToken}});
+  if(!r.ok){const t=await r.text();throw new Error('Novi API '+r.status+': '+t);}
+  return r.json();
+}
+
+function setNoviCon(s,t){const el=document.getElementById('noviConnectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
+function setNoviPullStatus(msg,type){const el=document.getElementById('noviPullStatus');el.className='status-bar'+(type?' '+type:'');el.innerHTML=msg;}
+
+async function doNoviConnect(){
+  const token=document.getElementById('noviToken').value.trim();
+  if(!token){alert('Enter your Novi auth token first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first (Section 1) — the same worker handles Novi.');return;}
+  setNoviCon('loading','Connecting to Novi...');
+  try{
+    const events=await noviCall('/api/events?pageSize=200&offset=0');
+    const list=(events.Results||events||[]).filter(e=>e.Name||e.EventName);
+    if(!list.length){setNoviCon('disconnected','Connected but no events found.');return;}
+    STATE.noviEvents=list;
+    localStorage.setItem('clear_novi_token',token);
+    setNoviCon('connected','Connected — '+list.length+' events loaded');
+    const input=document.getElementById('noviEventInput');
+    const dd=document.getElementById('noviEventDropdown');
+    input.disabled=false;
+    input.placeholder='Type to search events...';
+    const now=new Date();
+    const sorted=[...list].sort((a,b)=>{
+      const da=new Date(a.StartDate),db=new Date(b.StartDate);
+      const aF=da>=now,bF=db>=now;
+      if(aF&&bF)return db-da;
+      if(!aF&&!bF)return db-da;
+      return aF?-1:1;
+    });
+    function formatDate(d){if(!d)return'';const dt=new Date(d);return(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0')+'/'+dt.getFullYear();}
+    function renderNoviDropdown(filter){
+      const filtered=sorted.filter(e=>(e.Name||'').toLowerCase().includes(filter.toLowerCase())||(e.EventCategory?.Name||'').toLowerCase().includes(filter.toLowerCase())||formatDate(e.StartDate).includes(filter));
+      dd.innerHTML=filtered.length
+        ?filtered.map(e=>'<div class="opt" data-id="'+esc(e.EventUniqueId)+'" data-name="'+esc(e.Name)+'">'+'<span style="color:#888;font-size:11px;margin-right:8px;">'+formatDate(e.StartDate)+'</span>'+esc(e.Name)+(e.EventCategory?.Name?'<span style="color:#aaa;font-size:11px;margin-left:6px;">('+esc(e.EventCategory.Name)+')</span>':'')+'</div>').join('')
+        :'<div class="no-match">No events match</div>';
+      dd.classList.add('open');
+    }
+    input.addEventListener('focus',()=>renderNoviDropdown(input.value));
+    input.addEventListener('input',()=>renderNoviDropdown(input.value));
+    dd.addEventListener('mousedown',e=>{
+      const opt=e.target.closest('.opt');
+      if(!opt)return;
+      document.getElementById('noviEventValue').value=opt.dataset.id;
+      input.value=opt.dataset.name;
+      dd.classList.remove('open');
+      document.getElementById('noviPullBtn').disabled=false;
+    });
+    document.addEventListener('click',e=>{if(!e.target.closest('.search-select'))dd.classList.remove('open');});
+  }catch(err){setNoviCon('disconnected','Connection failed: '+err.message);console.error(err);}
+}
+
+document.getElementById('noviConnectBtn').addEventListener('click',doNoviConnect);
+
+document.getElementById('noviPullBtn').addEventListener('click',async()=>{
+  const eventId=document.getElementById('noviEventValue').value;
+  if(!eventId){alert('Select a Novi event first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first.');return;}
+  const btn=document.getElementById('noviPullBtn');
+  btn.disabled=true;btn.textContent='Pulling...';
+  setNoviPullStatus('Fetching attendees from Novi...','info');
+  try{
+    let allAttendees=[];let offset=0;const pageSize=200;
+    while(true){
+      const res=await noviCall('/api/attendees?eventId='+eventId+'&pageSize='+pageSize+'&offset='+offset);
+      const page=Array.isArray(res)?res:(res.Results||[]);
+      allAttendees=allAttendees.concat(page);
+      if(page.length<pageSize)break;
+      offset+=pageSize;
+    }
+    const valid=allAttendees.filter(a=>{
+      const email=String(a.Email||'').toLowerCase().trim();
+      return email&&!email.endsWith('@clearhq.org')&&!a.Cancelled;
+    });
+    if(!valid.length){setNoviPullStatus('No eligible attendees found for this event.','error');btn.disabled=false;btn.textContent='Pull Attendees';return;}
+    STATE.attendees=valid.map(a=>{
+      const email=String(a.Email||'').toLowerCase().trim();
+      const fn=(a.FirstName||'').trim();
+      const ln=(a.LastName||'').trim();
+      const co=(a.CompanyName||'').trim();
+      const jt=(a.JobTitle||a.Title||'').trim();
+      const city=(a.City||'').trim();
+      const st=(a.State||a.StateProvince||'').trim();
+      const zip=(a.ZipCode||a.PostalCode||'').trim();
+      const cn=inferCountry(st,(a.Country||'').trim());
+      return{email,firstName:fn,lastName:ln,company:co,jobTitle:jt,city,state:st,zip,country:cn,
+        registrationDate:(a.RegistrationDate||a.RegisteredDate||a.CreatedDate||a.DateRegistered||a.DateAdded||'').toString().trim()};
+    });
+    STATE.importUsers=STATE.attendees.filter(u=>u.email).map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
+    STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
+    STATE.sortCol='';STATE.sortDir=1;
+    setNoviPullStatus('Loaded <strong>'+STATE.importUsers.length+'</strong> attendee(s) from Novi.','success');
+    setFS('','');
+    renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
+  }catch(err){setNoviPullStatus('Error: '+err.message,'error');console.error(err);}
+  btn.disabled=false;btn.textContent='Pull Attendees';
+});
+
+// ============================================================
+// Novi source tab switching (Event vs Product)
+// ============================================================
+STATE.noviSource='event'; // 'event' | 'product'
+const PRODUCT_ID='d0002122-f6eb-4e4b-88fe-c80e9c0dc609';
+
+function setNoviSource(src){
+  STATE.noviSource=src;
+  document.getElementById('srcTabEvent').classList.toggle('active',src==='event');
+  document.getElementById('srcTabProduct').classList.toggle('active',src==='product');
+  document.getElementById('srcTabSubreg').classList.toggle('active',src==='subreg');
+  document.getElementById('noviEventPanel').classList.toggle('hidden',src!=='event');
+  document.getElementById('noviProductPanel').classList.toggle('hidden',src!=='product');
+  document.getElementById('subregPanel').classList.toggle('hidden',src!=='subreg');
+  setNoviPullStatus('','');
+  // If already connected and switching to product, load products
+  if(src==='product'&&STATE.noviConnected&&!STATE.noviProducts){
+    loadNoviProducts();
+  }
+  if(src==='subreg'){
+    if(!STATE.connected){setSbStatus('Connect to the API in Section 1 first.','error');}
+    else if(!SUBREG.loaded){refreshSubreg();}
+  }
+}
+
+async function loadNoviProducts(){
+  const inp=document.getElementById('noviProductInput');
+  const dd=document.getElementById('noviProductDropdown');
+  inp.disabled=false;
+  inp.placeholder='Loading products...';
+  try{
+    let all=[];let offset=0;const ps=200;
+    while(true){
+      const res=await noviCall('/api/products?pageSize='+ps+'&offset='+offset);
+      const page=Array.isArray(res)?res:(res.Results||[]);
+      all=all.concat(page);
+      if(page.length<ps)break;
+      offset+=ps;
+    }
+    STATE.noviProducts=all;
+    inp.placeholder='Type to search products...';
+    // Pre-select the known product if found
+    const preset=all.find(p=>(p.ProductUniqueId||p.UniqueId||'').toLowerCase()===PRODUCT_ID.toLowerCase());
+    if(preset){
+      const pid=preset.ProductUniqueId||preset.UniqueId||PRODUCT_ID;
+      document.getElementById('noviProductValue').value=pid;
+      inp.value=preset.Name||preset.ProductName||'';
+      document.getElementById('noviProductPullBtn').disabled=false;
+    }
+    function renderProductDropdown(filter){
+      const f=filter.toLowerCase();
+      const matches=STATE.noviProducts.filter(p=>{
+        const n=(p.Name||p.ProductName||'').toLowerCase();
+        const id=(p.ProductUniqueId||p.UniqueId||'').toLowerCase();
+        return !f||n.includes(f)||id.includes(f);
+      });
+      dd.innerHTML=matches.length
+        ?matches.slice(0,50).map(p=>{
+            const pid=p.ProductUniqueId||p.UniqueId||'';
+            const pname=p.Name||p.ProductName||'(unnamed)';
+            return '<div class="opt" data-id="'+esc(pid)+'" data-name="'+esc(pname)+'">'+esc(pname)
+              +(p.ProductCode?'<span style="color:#aaa;font-size:11px;margin-left:6px;">('+esc(p.ProductCode)+')</span>':'')+'</div>';
+          }).join('')
+        :'<div class="no-match">No products match</div>';
+      dd.classList.add('open');
+    }
+    inp.addEventListener('focus',()=>renderProductDropdown(inp.value));
+    inp.addEventListener('input',()=>renderProductDropdown(inp.value));
+    dd.addEventListener('mousedown',e=>{
+      const opt=e.target.closest('.opt');
+      if(!opt)return;
+      e.preventDefault();
+      document.getElementById('noviProductValue').value=opt.dataset.id;
+      inp.value=opt.dataset.name;
+      dd.classList.remove('open');
+      document.getElementById('noviProductPullBtn').disabled=false;
+    });
+    document.addEventListener('click',e=>{if(!e.target.closest('.search-select'))dd.classList.remove('open');});
+  }catch(err){
+    inp.placeholder='Failed to load products';
+    console.error('Product load error:',err);
+  }
+}
+
+// When Novi connects, also enable product panel if it's active
+const _origNoviConnect=doNoviConnect;
+// Patch: after doNoviConnect succeeds, set a flag and maybe load products
+// We do this by extending the existing success path via STATE.noviConnected flag
+// (set it in doNoviConnect below via monkey-patch)
+// Actually: we'll hook into the existing connect flow by checking STATE.noviConnected after events load.
+// Simpler: watch for the connection status change. Instead, extend doNoviConnect directly:
+(function(){
+  const origBtn=document.getElementById('noviConnectBtn');
+  // After the original handler runs and succeeds, STATE.noviEvents will be populated.
+  // We wrap by replacing the button listener after page load.
+  // The cleanest approach: after products connect, if source=product, call loadNoviProducts.
+  // We hook this in by patching setNoviCon to detect the 'connected' state:
+  const _orig=setNoviCon;
+  window.setNoviCon=function(s,t){
+    _orig(s,t);
+    if(s==='connected'){
+      STATE.noviConnected=true;
+      if(STATE.noviSource==='product')loadNoviProducts();
+    }
+  };
+})();
+
+// ============================================================
+// Product Orders: Pull handler
+// ============================================================
+document.getElementById('noviProductPullBtn').addEventListener('click',async()=>{
+  const productId=document.getElementById('noviProductValue').value;
+  if(!productId){alert('Select a product first.');return;}
+  if(!STATE.connected){alert('Connect to TalentLMS first.');return;}
+  const btn=document.getElementById('noviProductPullBtn');
+  btn.disabled=true;btn.textContent='Pulling...';
+  setNoviPullStatus('Fetching orders from Novi...','info');
+  hideNoviOrdersLink();
+  try{
+    // Pull all orders and filter client-side by product + Open status
+    let allOrders=[];let offset=0;const pageSize=200;
+    while(true){
+      const res=await noviCall('/api/orders?pageSize='+pageSize+'&offset='+offset);
+      const page=Array.isArray(res)?res:(res.Results||[]);
+      allOrders=allOrders.concat(page);
+      if(page.length<pageSize)break;
+      offset+=pageSize;
+    }
+
+    // Custom fields on OrderItems are a keyed object: item.CustomFields["Field Name"].Value
+    function getCF(item, fieldName){
+      const cf=item.CustomFields||{};
+      const entry=cf[fieldName];
+      if(!entry)return'';
+      return(entry.Value!=null?String(entry.Value):'').trim();
+    }
+
+    // Detect item array field from first order
+    const sample=allOrders[0]||{};
+    const itemsField=('OrderItems' in sample)?'OrderItems':('Items' in sample)?'Items':('LineItems' in sample)?'LineItems':'OrderItems';
+
+    // Keep all Open orders containing this product
+    const productOrders=allOrders.filter(o=>{
+      if((o.OrderStatus||'')!=='Open')return false;
+      const items=o[itemsField]||[];
+      return items.some(item=>(item.ProductUniqueId||item.ProductUniqueID||'').toLowerCase()===productId.toLowerCase());
+    });
+
+    if(!productOrders.length){
+      setNoviPullStatus('No open orders found for this product. ('+allOrders.length+' total orders scanned)','error');
+      btn.disabled=false;btn.textContent='Pull Orders';
+      return;
+    }
+
+    // Map each order — iterate all paid matching line items, expand by quantity
+    const mapped=[];
+    for(const o of productOrders){
+      const items=o[itemsField]||[];
+      const matchingItems=items.filter(item=>{
+        const pid=(item.ProductUniqueId||item.ProductUniqueID||'').toLowerCase();
+        return pid===productId.toLowerCase();
+      });
+
+      const purch=o.Purchaser||{};
+      const purchEmail=(purch.Email||o.Email||'').toLowerCase().trim();
+      const purchFullName=(purch.Name||o.DeliverTo||'').trim();
+      const addr=o.ShippingAddress||{};
+      const st=(addr.StateProvince||'').trim();
+      const cn=inferCountry(st,(addr.Country||'').trim());
+      // Paid = a QuickBooks Sales Receipt exists for this order. An order can have a
+      // QBInvoiceID (billed) with no QBSalesReceiptID (not yet paid) — invoice alone
+      // does not mean paid. This mirrors the logic already used in Exam Report Generator.
+      const paid=o.QBSalesReceiptID?'Yes':'No';
+      const orderBase={company:'',jobTitle:'',state:st,country:cn,city:(addr.City||'').trim(),zip:(addr.ZipCode||addr['Zip Code']||'').trim(),registrationDate:(o.PurchasedOn||'').toString().trim(),paid:paid};
+
+      for(const item of matchingItems){
+        const qty=Math.max(1,parseInt(item.Quantity)||1);
+        const subFirst=getCF(item,'Subscriber First Name');
+        const subLast=getCF(item,'Subscriber Last Name');
+        const subEmail=getCF(item,'Subscriber Email Address').toLowerCase();
+        const useSubscriber=subFirst||subLast||subEmail;
+        let email,firstName,lastName;
+        if(useSubscriber){email=subEmail;firstName=subFirst;lastName=subLast;}
+        else{email=purchEmail;const parts=purchFullName.split(/\s+/).filter(Boolean);firstName=parts[0]||'';lastName=parts.length>1?parts.slice(1).join(' '):''; }
+        if(!email)continue;
+        for(let u=0;u<qty;u++){mapped.push({...orderBase,email,firstName,lastName});}
+      }
+    }
+
+
+    if(!mapped.length){
+      setNoviPullStatus('Orders matched but no usable subscriber/purchaser data found.','error');
+      btn.disabled=false;btn.textContent='Pull Orders';
+      return;
+    }
+
+    STATE.attendees=mapped;
+    STATE.importUsers=STATE.attendees.map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
+    // Default-select only confirmed-paid rows (QBSalesReceiptID present). Unpaid rows still
+    // load and stay visible so nothing is hidden, but they start unchecked so they can't be
+    // provisioned by accident — override the checkbox by hand if a specific case needs it.
+    STATE.selectedUsers=new Set(STATE.importUsers.map((u,i)=>u.paid==='Yes'?i:null).filter(i=>i!==null));
+    STATE.sortCol='';STATE.sortDir=1;
+
+    const totalUnits=mapped.length;
+    const skipped=productOrders.length-totalUnits;
+    const paidCount=STATE.importUsers.filter(u=>u.paid==='Yes').length;
+    const unpaidCount=totalUnits-paidCount;
+    let msg='Loaded <strong>'+totalUnits+'</strong> user(s) from <strong>'+productOrders.length+'</strong> open order(s). ('+allOrders.length+' total orders scanned)';
+    if(skipped>0)msg+=' <span style="color:#f57f17;">('+skipped+' skipped — no email)</span>';
+    msg+='<br><strong style="color:var(--green);">'+paidCount+' confirmed paid</strong> (QuickBooks sales receipt on file) — selected by default.';
+    if(unpaidCount>0)msg+=' <strong style="color:#b85c00;">'+unpaidCount+' invoiced but not yet confirmed paid</strong> — loaded but left unchecked; review before including.';
+    setNoviPullStatus(msg,'success');
+    setFS('','');
+    renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
+  }catch(err){setNoviPullStatus('Error: '+err.message,'error');console.error(err);}
+  btn.disabled=false;btn.textContent='Pull Orders';
+});
+
+// File upload
+const dz=document.getElementById('dropZone');const fi=document.getElementById('fileInput');
+dz.addEventListener('click',()=>fi.click());dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files.length)procFile(e.dataTransfer.files[0]);});fi.addEventListener('change',e=>{if(e.target.files.length)procFile(e.target.files[0]);});
+
+function setFS(m,t){const el=document.getElementById('fileStatus');el.className='status-bar'+(t?' '+t:'');el.innerHTML=m;}
+
+function procFile(file){if(!file.name.endsWith('.csv')){setFS('Please upload a CSV file.','error');return;}
+const reader=new FileReader();reader.onload=function(e){try{
+const rows=parseCSV(e.target.result);if(rows.length<2){setFS('File has no data rows.','error');return;}
+const hdr=rows[0];const data=rows.slice(1);
+const col=n=>hdr.findIndex(h=>h.trim()===n);
+const iE=col('Email'),iF=col('First Name'),iL=col('Last Name'),iSx=col('Suffix'),iCo=col('Company'),iSt=col('Billing State Abbreviation'),iCn=col('Billing Country'),iJt=col('Job Title');
+if(iE<0||iF<0||iL<0){setFS('Missing required columns (Email, First Name, Last Name).','error');return;}
+STATE.attendees=data.filter(r=>r.some(c=>c&&c.trim())).map(r=>{
+  const email=(r[iE]||'').trim(),fn=(r[iF]||'').trim(),ln=(r[iL]||'').trim(),sx=(iSx>=0?(r[iSx]||'').trim():''),fl=sx?ln+' '+sx:ln;
+  const co=iCo>=0?(r[iCo]||'').trim():'',st=iSt>=0?(r[iSt]||'').trim():'';
+  const cn=inferCountry(st,iCn>=0?(r[iCn]||'').trim():''),jt=iJt>=0?(r[iJt]||'').trim():'';
+  return{email,firstName:fn,lastName:fl,company:co,state:st,country:cn,jobTitle:jt};
+});
+STATE.importUsers=STATE.attendees.filter(a=>a.email).map(a=>{const pw=genPw();return{...a,password:pw,status:'active',language:'en'};});
+STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
+STATE.sortCol='';STATE.sortDir=1;
+const tot=STATE.importUsers.length;
+setFS('Loaded <strong>'+tot+'</strong> attendee(s) to import.','success');
+renderSummary();renderPreview();document.getElementById('panelResults').classList.remove('hidden');
+}catch(err){setFS('Error: '+err.message,'error');console.error(err);}};reader.readAsText(file,'utf-8');}
+
+function parseCSV(t){const rows=[];let row=[],f='',q=false;if(t.charCodeAt(0)===0xFEFF)t=t.substring(1);for(let i=0;i<t.length;i++){const c=t[i],n=t[i+1];if(q){if(c==='"'&&n==='"'){f+='"';i++;}else if(c==='"')q=false;else f+=c;}else{if(c==='"')q=true;else if(c===','){row.push(f);f='';}else if(c==='\n'||(c==='\r'&&n==='\n')){row.push(f);f='';rows.push(row);row=[];if(c==='\r')i++;}else if(c==='\r'){row.push(f);f='';rows.push(row);row=[];}else f+=c;}}if(f||row.length)rows.push([...row,f]);return rows;}
+
+function getSelectedUsers(){return STATE.importUsers.filter((_,i)=>STATE.selectedUsers.has(i));}
+
+function renderSummary(){
+  const el=document.getElementById('summaryRow');
+  const sel=STATE.selectedUsers.size;
+  const cs=[...new Set(STATE.importUsers.map(u=>u.country).filter(Boolean))];
+  el.innerHTML='<div class="summary-card"><div class="lbl">Total Loaded</div><div class="val">'+STATE.importUsers.length+'</div></div>'
+    +'<div class="summary-card"><div class="lbl">Selected to Process</div><div class="val" id="selCount" style="color:var(--burgundy);">'+sel+'</div></div>'
+    +(STATE.mode!=='existing'?'<div class="summary-card"><div class="lbl">Courses Selected</div><div class="val">'+STATE.selectedCourses.length+'</div></div>':'')
+    +'<div class="summary-card"><div class="lbl">Countries</div><div class="val">'+cs.length+'</div></div>'
+    +(STATE.mode!=='existing'?'<div class="summary-card"><div class="lbl">Group</div><div class="val" style="font-size:14px;">'+esc(document.getElementById('groupName').value||'(auto-generated)')+'</div></div>':'');
+}
+
+function sortBy(col){
+  if(STATE.sortCol===col)STATE.sortDir*=-1;
+  else{STATE.sortCol=col;STATE.sortDir=1;}
+  renderPreview();
+}
+
+function parseRegDate(s){if(!s)return 0;const d=new Date(s);return isNaN(d)?0:d.getTime();}
+
+function renderPreview(){
+  const el=document.getElementById('previewTable');
+  const filterVal=(document.getElementById('previewFilter')||{}).value||'';
+  const filt=filterVal.toLowerCase().trim();
+  const showDate=STATE.mode==='existing';
+  const showPaid=STATE.importUsers.some(u=>u.paid==='Yes'||u.paid==='No');
+
+  let indexed=STATE.importUsers.map((u,i)=>({u,i}));
+  if(filt)indexed=indexed.filter(({u})=>(u.firstName+' '+u.lastName+' '+u.email).toLowerCase().includes(filt));
+
+  if(STATE.sortCol){
+    indexed.sort((a,b)=>{
+      let av,bv;
+      if(STATE.sortCol==='regDate'){av=parseRegDate(a.u.registrationDate);bv=parseRegDate(b.u.registrationDate);}
+      else if(STATE.sortCol==='name'){av=(a.u.lastName+a.u.firstName).toLowerCase();bv=(b.u.lastName+b.u.firstName).toLowerCase();}
+      else if(STATE.sortCol==='email'){av=a.u.email.toLowerCase();bv=b.u.email.toLowerCase();}
+      if(av<bv)return -STATE.sortDir;if(av>bv)return STATE.sortDir;return 0;
+    });
+  }
+
+  const allFilteredChecked=indexed.length>0&&indexed.every(({i})=>STATE.selectedUsers.has(i));
+  const arrow=col=>STATE.sortCol===col?(STATE.sortDir===1?' ▲':' ▼'):'';
+  const thStyle='cursor:pointer;user-select:none;white-space:nowrap;';
+
+  let h='<table><thead><tr>'
+    +'<th style="width:36px;text-align:center;"><input type="checkbox" id="chkAll" title="Select / deselect all" '+(allFilteredChecked?'checked':'')+'></th>'
+    +'<th>#</th>'
+    +'<th style="'+thStyle+'" onclick="sortBy(\'name\')">Name'+arrow('name')+'</th>'
+    +'<th style="'+thStyle+'" onclick="sortBy(\'email\')">Email'+arrow('email')+'</th>'
+    +'<th>Organization</th><th>Title</th><th>State</th><th>Country</th>'
+    +(showDate?'<th style="'+thStyle+'" onclick="sortBy(\'regDate\')">Registered'+arrow('regDate')+'</th>':'')
+    +(showPaid?'<th>Paid</th>':'')
+    +'<th>Password</th>'
+    +'</tr></thead><tbody>';
+
+  indexed.forEach(({u,i},rowNum)=>{
+    const chk=STATE.selectedUsers.has(i);
+    let regDisplay='—';
+    if(u.registrationDate){const d=new Date(u.registrationDate);if(!isNaN(d))regDisplay=d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
+    h+='<tr style="'+(chk?'':'opacity:0.45;')+'"><td style="text-align:center;"><input type="checkbox" class="row-chk" data-i="'+i+'" '+(chk?'checked':'')+'></td>'
+      +'<td>'+(rowNum+1)+'</td>'
+      +'<td>'+esc(u.firstName)+' '+esc(u.lastName)+'</td>'
+      +'<td>'+esc(u.email)+'</td>'
+      +'<td>'+esc(u.company)+'</td><td>'+esc(u.jobTitle)+'</td><td>'+esc(u.state)+'</td><td>'+esc(u.country)+'</td>'
+      +(showDate?'<td style="white-space:nowrap;font-size:12px;">'+esc(regDisplay)+'</td>':'')
+      +(showPaid?'<td>'+(u.paid==='Yes'?'<span class="badge badge-paid">Paid</span>':u.paid==='No'?'<span class="badge" style="background:var(--amber-bg);color:var(--amber);">Unconfirmed</span>':'')+'</td>':'')
+      +'<td style="font-family:monospace;font-size:11px;">'+esc(u.password)+'</td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+
+  document.getElementById('chkAll').addEventListener('change',function(){
+    if(this.checked)indexed.forEach(({i})=>STATE.selectedUsers.add(i));
+    else indexed.forEach(({i})=>STATE.selectedUsers.delete(i));
+    renderPreview();renderSummary();
+  });
+  el.querySelectorAll('.row-chk').forEach(cb=>{
+    cb.addEventListener('change',function(){
+      const i=parseInt(this.dataset.i);
+      if(this.checked)STATE.selectedUsers.add(i);else STATE.selectedUsers.delete(i);
+      renderPreview();renderSummary();
+    });
+  });
+}
+
+// ============================================================
+// PARTICIPANT LIST PDF
+// ============================================================
+function exportParticipantPDF(){
+  const users=getSelectedUsers();
+  if(!users.length){alert('No users selected.');return;}
+
+  // Determine cohort name label
+  let cohortName='';
+  if(STATE.mode==='existing'){
+    cohortName=STATE.existingGroupName||'';
+  } else {
+    cohortName=document.getElementById('groupName').value.trim();
+  }
+  if(!cohortName){
+    cohortName=prompt('Enter the cohort/program name for the participant list:','');
+    if(!cohortName)return;
+  }
+
+  // Sort alphabetically by last name, first name
+  const sorted=[...users].sort((a,b)=>{
+    const la=(a.lastName+a.firstName).toLowerCase();
+    const lb=(b.lastName+b.firstName).toLowerCase();
+    return la<lb?-1:la>lb?1:0;
+  });
+
+  const generated=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const count=sorted.length;
+
+  // Build table rows
+  const trs=sorted.map((u,i)=>{
+    const rowBg=i%2===0?'#ffffff':'#faf8f6';
+    return '<tr style="background:'+rowBg+';">'
+      +'<td style="padding:7pt 10pt;border-bottom:0.5pt solid #e0d6d0;vertical-align:top;line-height:1.4;">'+esc(u.firstName)+' '+esc(u.lastName)+'</td>'
+      +'<td style="padding:7pt 10pt;border-bottom:0.5pt solid #e0d6d0;vertical-align:top;line-height:1.4;color:#484848;">'+esc(u.company||'—')+'</td>'
+      +'<td style="padding:7pt 10pt;border-bottom:0.5pt solid #e0d6d0;vertical-align:top;line-height:1.4;color:#484848;">'+esc(u.jobTitle||'—')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  const safe=('Participant_List_'+cohortName).replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+
+  const html=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${esc(cohortName)} — Participant List</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap');
+  @page { size: portrait; margin: 0.65in 0.7in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', 'Trebuchet MS', Arial, sans-serif; font-size: 10pt; color: #484848; background: #fff; }
+
+  /* ── Header bar ── */
+  .doc-header {
+    border-bottom: 4px solid #64092c;
+    padding-bottom: 10pt;
+    margin-bottom: 6pt;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .doc-title {
+    font-size: 17pt;
+    font-weight: 800;
+    color: #64092c;
+    line-height: 1.15;
+    letter-spacing: -0.3pt;
+  }
+  .doc-subtitle {
+    font-size: 10pt;
+    color: #484848;
+    margin-top: 3pt;
+    font-weight: 600;
+  }
+  .doc-meta {
+    text-align: right;
+    font-size: 8pt;
+    color: #7a6b62;
+    line-height: 1.6;
+  }
+
+  /* ── Gold accent rule ── */
+  .gold-rule {
+    height: 3pt;
+    background: #dda838;
+    margin-bottom: 14pt;
+    border-radius: 2pt;
+  }
+
+  /* ── Summary line ── */
+  .doc-summary {
+    font-size: 9pt;
+    color: #7a6b62;
+    margin-bottom: 12pt;
+    font-style: italic;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    page-break-inside: auto;
+  }
+  thead { display: table-header-group; }
+  th {
+    background: #64092c;
+    color: #ffffff;
+    padding: 7pt 10pt;
+    text-align: left;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.4pt;
+    text-transform: uppercase;
+    border: none;
+  }
+  th:first-child { border-radius: 0; }
+  tbody tr { page-break-inside: avoid; }
+
+  /* ── Footer note ── */
+  .doc-footer {
+    margin-top: 14pt;
+    font-size: 7.5pt;
+    color: #aaa;
+    border-top: 0.5pt solid #e0d6d0;
+    padding-top: 6pt;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <img src="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png" alt="CLEAR">
+<div class="doc-header">
   <div>
-    <h1>CLEAR Learning Program Subscriber Registration Form</h1>
-    <p>Register learners for the CLEAR Learning program subscription(s) you purchase</p>
+    <div class="doc-title">Participant List</div>
+    <div class="doc-subtitle">${esc(cohortName)}</div>
+  </div>
+  <div class="doc-meta">
+    CLEAR Learning<br>
+    For Instructor Use Only<br>
+    Generated ${esc(generated)}
   </div>
 </div>
 
-<div class="main">
+<div class="gold-rule"></div>
 
-  <div class="intro" id="introBlock">
-    Purchased a multi-user license from CLEAR Learning? Use this form to tell us who should get access.
-    Enter your order details below, then add each subscriber &mdash; either directly in the table or by uploading
-    our Excel template. We'll review your submission and set up accounts within 1&ndash;2 business days.
-  </div>
+<div class="doc-summary">${count} participant${count!==1?'s':''} enrolled</div>
 
-  <form id="regForm" onsubmit="return false;">
+<table>
+  <thead>
+    <tr>
+      <th style="width:32%;">Name</th>
+      <th style="width:38%;">Agency / Organization</th>
+      <th style="width:30%;">Job Title</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${trs}
+  </tbody>
+</table>
 
-  <!-- honeypot -->
-  <input type="text" name="website" id="hp" class="honeypot" tabindex="-1" autocomplete="off">
-
-  <div class="panel" id="orderPanel">
-    <h2><span class="step-num">1</span> Order Information</h2>
-    <div class="form-row">
-      <div class="form-group" id="fg_orderNumber">
-        <label>Order Number <span class="req">*</span></label>
-        <input type="text" id="orderNumber" placeholder="e.g. 100482">
-        <span class="hint">Found on your order confirmation email.</span>
-        <span class="field-error">Enter your order number.</span>
-      </div>
-      <div class="form-group" id="fg_product">
-        <label>Product Purchased <span class="req">*</span></label>
-        <select id="productSelect"><option value="">Select the product you purchased...</option></select>
-        <span class="field-error">Select the product you purchased.</span>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group" id="fg_purchaserName">
-        <label>Your Name (Purchaser) <span class="req">*</span></label>
-        <input type="text" id="purchaserName" placeholder="First and last name">
-        <span class="hint">Confirms you're the person who placed the order.</span>
-        <span class="field-error">Enter your name.</span>
-      </div>
-      <div class="form-group" id="fg_agencyName">
-        <label>Your Agency / Organization <span class="req">*</span></label>
-        <input type="text" id="agencyName" placeholder="Agency / Organization Name">
-        <span class="hint">When using the template this value will populate any blank fields in the <strong>Agency</strong> column.</span>
-        <span class="field-error">Enter your agency name.</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="subscriberPanel" style="display:none;">
-    <h2><span class="step-num">2</span> Subscribers</h2>
-    <p>You have two options for populating your subscriber list.</p>
-    <ol style="padding-left: 20px; margin: 0; padding-top: 10px; padding-bottom: 15px;">
-      <li style="padding-bottom: 6px;">Enter the information directly into the table below.</li>
-      <li>Download the Excel Template using the button below, fill out the template with your users' information, and upload the completed template.</li>
-      </ol>
-      <p style="padding-bottom: 10px;">You'll be able to review your entries before submitting the form either way.</p>
-
-    <div class="upload-row">
-      <button type="button" class="btn btn-secondary btn-sm" id="downloadTemplateBtn">&#128229; Download Excel Template</button>
-      <span class="divider">or</span>
-      <button type="button" class="btn btn-secondary btn-sm" id="uploadTemplateBtn">&#128228; Upload Completed Template</button>
-      <input type="file" id="uploadFileInput" accept=".xlsx,.xls" style="display:none">
-    </div>
-    <div id="uploadStatus" class="status-bar"></div>
-
-    <div class="license-counter" id="licenseCounter"></div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th class="row-num">#</th>
-            <th style="width:16%;">First Name <span class="req">*</span></th>
-            <th style="width:16%;">Last Name <span class="req">*</span></th>
-            <th style="width:22%;">Email Address <span class="req">*</span></th>
-            <th style="width:16%;">Job Title</th>
-            <th style="width:20%;">Agency</th>
-            <th class="row-num">&nbsp;</th>
-          </tr>
-        </thead>
-        <tbody id="subscriberBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="panel hidden" id="reviewPanel">
-    <h2><span class="step-num">3</span> Review &amp; Submit</h2>
-    <div id="reviewSummary" style="font-size:13px;line-height:1.7;"></div>
-    <div class="submit-bar">
-      <span class="submit-note" id="submitNote"></span>
-      <button type="button" class="btn btn-burgundy" id="submitBtn" disabled>Submit Registration</button>
-    </div>
-    <div id="submitStatus" class="status-bar"></div>
-  </div>
-
-  </form>
-
-  <div class="panel hidden" id="confirmationPanel">
-    <div class="confirmation">
-      <div class="icon">&#9989;</div>
-      <h2 style="justify-content: center;">Registration submitted</h2>
-      <p>Thanks &mdash; we've received your subscriber list for order <strong id="confOrder"></strong>.</p>
-      <p>Our team will verify your order and set up accounts within 1&ndash;2 business days. You'll receive a separate email once your subscribers can log in.</p>
-      <div class="ref" id="confRef"></div>
-    </div>
-  </div>
-
+<div class="doc-footer">
+  <span>CLEAR &mdash; Council on Licensure, Enforcement and Regulation</span>
+  <span>Confidential &mdash; For instructor use only. Do not distribute.</span>
 </div>
 
 <script>
-// ============================================================
-// CONFIG — edit here to add/remove products or change the
-// submission endpoint once the Worker route is live.
-// ============================================================
-const PRODUCTS = [
-  "So, You Think You Want to be a Board or Council Member? - 25 Licenses",
-  "So, You Think You Want to be a Board or Council Member? - Unlimited Licenses",
-  "Introduction to Regulatory Governance - 10 Licenses",
-  "Introduction to Regulatory Governance - Unlimited Licenses",
-  "Regulation 101 Microlearning Series - 10+ Licenses"
-  // Add more "Product Name - N Licenses" / "- Unlimited Licenses" entries here.
-];
-const SUBMIT_ENDPOINT = 'https://clear-lms-proxy.avance.workers.dev/subreg/submit';
-// ============================================================
+  window.onload = function() {
+    document.title = ${JSON.stringify(safe)};
+    window.print();
+  };
+<\/script>
+</body>
+</html>`;
 
-function parseLicenseInfo(name){
-  if(/unlimited/i.test(name)) return {mode:'unlimited', count:null};
-  const plusMatch = name.match(/(\d+)\s*\+\s*licenses?/i);
-  if(plusMatch) return {mode:'minimum', count:parseInt(plusMatch[1],10)};
-  const m = name.match(/(\d+)\s*licenses?/i);
-  if(m) return {mode:'capped', count:parseInt(m[1],10)};
-  return {mode:'capped', count:1};
+  const win=window.open('','_blank');
+  if(!win){alert('Pop-up blocked. Please allow pop-ups for this tool.');return;}
+  win.document.write(html);
+  win.document.close();
 }
 
-const STATE={product:'',licenseCap:null,rows:[],rowSeq:0};
-
-// Populate product dropdown
-(function(){
-  const sel=document.getElementById('productSelect');
-  PRODUCTS.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
-  sel.addEventListener('change',onProductChange);
-})();
-
-function newRow(agencyDefault){
-  STATE.rowSeq++;
-  return{id:STATE.rowSeq,firstName:'',lastName:'',email:'',jobTitle:'',agency:agencyDefault||document.getElementById('agencyName').value.trim(),errors:{}};
-}
-
-function onProductChange(){
-  const name=document.getElementById('productSelect').value;
-  STATE.product=name;
-  clearFieldError('fg_product');
-  if(!name){
-    document.getElementById('subscriberPanel').style.display='none';
-    document.getElementById('reviewPanel').classList.add('hidden');
-    return;
-  }
-  const info=parseLicenseInfo(name);
-STATE.licenseMode=info.mode; // 'capped' | 'unlimited' | 'minimum'
-STATE.licenseCap=info.count;
-  const startCount=STATE.licenseCap===null?5:Math.min(STATE.licenseCap,30);
-  const agencyDefault=document.getElementById('agencyName').value.trim();
-  STATE.rows=[];
-  for(let i=0;i<Math.max(startCount,1);i++)STATE.rows.push(newRow(agencyDefault));
-  document.getElementById('subscriberPanel').style.display='block';
-  renderRows();
-  updateReview();
-}
-
-document.getElementById('agencyName').addEventListener('input',()=>{
-  clearFieldError('fg_agencyName');
-});
-document.getElementById('orderNumber').addEventListener('input',()=>clearFieldError('fg_orderNumber'));
-document.getElementById('purchaserName').addEventListener('input',()=>clearFieldError('fg_purchaserName'));
-
-function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function isValidEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
-
-function rowIsBlank(r){return!r.firstName.trim()&&!r.lastName.trim()&&!r.email.trim();}
-function rowIsFilled(r){return!!(r.firstName.trim()&&r.lastName.trim()&&r.email.trim());}
-
-function validateRow(r){
-  r.errors={};
-  if(rowIsBlank(r))return; // untouched trailing row — not an error yet
-  if(!r.firstName.trim())r.errors.firstName=true;
-  if(!r.lastName.trim())r.errors.lastName=true;
-  if(!r.email.trim())r.errors.email=true;
-  else if(!isValidEmail(r.email.trim()))r.errors.email=true;
-}
-
-function checkDuplicateEmails(){
-  const seen={};
-  STATE.rows.forEach(r=>{
-    const e=r.email.trim().toLowerCase();
-    if(!e)return;
-    seen[e]=(seen[e]||0)+1;
-  });
-  STATE.rows.forEach(r=>{
-    const e=r.email.trim().toLowerCase();
-    if(e&&seen[e]>1)r.errors.email=true;
-  });
-}
-
-function maybeAutoAddRow(){
-  const last=STATE.rows[STATE.rows.length-1];
-  if(last&&rowIsFilled(last)){
-    STATE.rows.push(newRow());
-  }
-}
-
-function renderRows(){
-  const tbody=document.getElementById('subscriberBody');
-  STATE.rows.forEach(validateRow);
-  checkDuplicateEmails();
-  let h='';
-  STATE.rows.forEach((r,i)=>{
-    h+='<tr>'
-      +'<td class="row-num">'+(i+1)+'</td>'
-      +'<td><input type="text" data-id="'+r.id+'" data-f="firstName" class="'+(r.errors.firstName?'cell-error':'')+'" value="'+esc(r.firstName)+'"></td>'
-      +'<td><input type="text" data-id="'+r.id+'" data-f="lastName" class="'+(r.errors.lastName?'cell-error':'')+'" value="'+esc(r.lastName)+'"></td>'
-      +'<td><input type="text" data-id="'+r.id+'" data-f="email" class="'+(r.errors.email?'cell-error':'')+'" value="'+esc(r.email)+'"></td>'
-      +'<td><input type="text" data-id="'+r.id+'" data-f="jobTitle" value="'+esc(r.jobTitle)+'"></td>'
-      +'<td><input type="text" data-id="'+r.id+'" data-f="agency" value="'+esc(r.agency)+'"></td>'
-      +'<td class="row-remove" data-remove="'+r.id+'" title="Remove row">&times;</td>'
-      +'</tr>';
-  });
-  tbody.innerHTML=h;
-  tbody.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('input',onCellInput);
-  });
-  tbody.querySelectorAll('.row-remove').forEach(el=>{
-    el.addEventListener('click',()=>{
-      if(STATE.rows.length<=1)return;
-      STATE.rows=STATE.rows.filter(r=>r.id!==parseInt(el.dataset.remove));
-      renderRows();
-      updateReview();
-    });
-  });
-  renderLicenseCounter();
-}
-
-function onCellInput(e){
-  const id=parseInt(e.target.dataset.id);
-  const field=e.target.dataset.f;
-  const row=STATE.rows.find(r=>r.id===id);
-  if(!row)return;
-  row[field]=e.target.value;
-  const wasLast=STATE.rows[STATE.rows.length-1].id===id;
-  if(wasLast&&rowIsFilled(row)){
-    maybeAutoAddRow();
-    renderRows();
-    // restore focus roughly to same field of same row after re-render
-    const again=document.querySelector('input[data-id="'+id+'"][data-f="'+field+'"]');
-    if(again){again.focus();const v=again.value;again.setSelectionRange(v.length,v.length);}
-  }else{
-    validateRow(row);
-    checkDuplicateEmails();
-    e.target.classList.toggle('cell-error',!!row.errors[field]);
-  }
-  updateReview();
-}
-
-function renderLicenseCounter(){
-  const el=document.getElementById('licenseCounter');
-  const filledCount=STATE.rows.filter(rowIsFilled).length;
-  if(STATE.licenseMode==='unlimited'){
-    el.className='license-counter';
-    el.innerHTML='<strong>'+filledCount+'</strong> subscriber'+(filledCount===1?'':'s')+' entered — unlimited license.';
-  }else if(STATE.licenseMode==='minimum'){
-    const under=filledCount<STATE.licenseCap;
-    el.className='license-counter'+(under?' over':'');
-    el.innerHTML='<strong>'+filledCount+'</strong> subscriber'+(filledCount===1?'':'s')+' entered — minimum <strong>'+STATE.licenseCap+'</strong> required for this pricing tier'
-      +(under?'. Add more subscribers to meet the minimum.':'. Additional seats are billed per license.');
-  }else{
-    const over=filledCount>STATE.licenseCap;
-    el.className='license-counter'+(over?' over':'');
-    el.innerHTML='<strong>'+filledCount+'</strong> of <strong>'+STATE.licenseCap+'</strong> purchased license'+(STATE.licenseCap===1?'':'s')+' entered'
-      +(over?' — this is more than your order covers. We\'ll follow up if we can\'t confirm the extra seats.':'.');
-  }
-}
-
-// ============================================================
-// Template download
-// ============================================================
-document.getElementById('downloadTemplateBtn').addEventListener('click',()=>{
-  const headers=['First Name','Last Name','Email Address','Job Title','Agency'];
-  const example=['Jane','Smith','jane.smith@example.gov','Compliance Analyst','Example State Board'];
-  const ws=XLSX.utils.aoa_to_sheet([headers,example]);
-  ws['!cols']=headers.map(h=>({wch:Math.max(h.length+4,20)}));
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Subscribers');
-  XLSX.writeFile(wb,'CLEAR_Subscriber_Registration_Template.xlsx');
+// Export XLSX
+document.getElementById('exportXlsxBtn').addEventListener('click',()=>{
+const users=getSelectedUsers();
+if(users.length===0){alert('No users selected to export.');return;}
+const gn=document.getElementById('groupName').value.trim(),gd=document.getElementById('groupDesc').value.trim();
+if(!gn){alert('Please enter a Group Name.');return;}
+if(!STATE.groupKey)STATE.groupKey=genGroupKey();
+const wb=XLSX.utils.book_new();
+const uh=['Login','Firstname','Lastname','Email','Status','Language','custom_field: Organization','custom_field: Title','custom_field: State/Province','custom_field: Country','custom_field: Temporary Password','Password '];
+const ud=[uh];users.forEach(u=>{ud.push([u.email,u.firstName,u.lastName,u.email,u.status,u.language,u.company,u.jobTitle,u.state,u.country,u.password,u.password]);});
+const ws1=XLSX.utils.aoa_to_sheet(ud);ws1['!cols']=uh.map(h=>({wch:Math.max(h.length+2,16)}));XLSX.utils.book_append_sheet(wb,ws1,'Users');
+const ws2=XLSX.utils.aoa_to_sheet([['Group','Description','Key'],[gn,gd,STATE.groupKey]]);ws2['!cols']=[{wch:30},{wch:50},{wch:14}];XLSX.utils.book_append_sheet(wb,ws2,'Groups');
+const ctg=[['Coursetogroups','Group']];STATE.selectedCourses.forEach(c=>{ctg.push([c.name,gn]);});
+const ws3=XLSX.utils.aoa_to_sheet(ctg);ws3['!cols']=[{wch:50},{wch:30}];XLSX.utils.book_append_sheet(wb,ws3,'Course-to-groups');
+XLSX.writeFile(wb,'TalentLMS_Import_'+gn.replace(/\s+/g,'_')+'.xlsx');
 });
 
 // ============================================================
-// Template upload
+// Step 1: Upload Users
 // ============================================================
-document.getElementById('uploadTemplateBtn').addEventListener('click',()=>{
-  document.getElementById('uploadFileInput').click();
-});
-document.getElementById('uploadFileInput').addEventListener('change',function(e){
-  const file=e.target.files[0];
-  if(!file)return;
-  if(STATE.rows.some(r=>!rowIsBlank(r))){
-    if(!confirm('This will replace your current entries with the file\'s contents. Continue?')){this.value='';return;}
-  }
-  const statusEl=document.getElementById('uploadStatus');
-  statusEl.className='status-bar info';statusEl.innerHTML='Reading file...';
-  const reader=new FileReader();
-  reader.onload=function(evt){
+document.getElementById('apiUploadBtn').addEventListener('click',async()=>{
+const users=getSelectedUsers();
+if(users.length===0){alert('No users selected to upload.');return;}
+if(!STATE.connected){alert('Connect to the API first.');return;}
+const gn=document.getElementById('groupName').value.trim(),gd=document.getElementById('groupDesc').value.trim();
+if(!gn){alert('Please enter a Group Name.');return;}
+if(!STATE.groupKey)STATE.groupKey=genGroupKey();
+const btn=document.getElementById('apiUploadBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Uploading...';
+const pw=document.getElementById('apiProgressWrap'),pf=document.getElementById('apiProgressFill'),pt=document.getElementById('apiProgressText');
+pw.classList.remove('hidden');pt.classList.remove('hidden');
+const total=users.length+1+STATE.selectedCourses.length;let step=0;
+function prog(m){step++;pf.style.width=Math.round(step/total*100)+'%';pt.textContent=m;}
+const res={created:0,existing:0,failed:0,errors:[]};
+try{
+for(let i=0;i<users.length;i++){const u=users[i];prog('Creating user '+(i+1)+'/'+users.length+'...');
+try{const p=new URLSearchParams();p.set('first_name',u.firstName);p.set('last_name',u.lastName);p.set('email',u.email);p.set('login',u.email);p.set('password',u.password);p.set('custom_field_11',u.password);p.set('language',u.language);await apiPost('/v1/usersignup',p.toString());res.created++;}
+catch(e){if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;else{res.failed++;res.errors.push(u.email+': '+e.message);}}}
+prog('Creating group...');
+try{const p=new URLSearchParams();p.set('name',gn);if(gd)p.set('description',gd);p.set('key',STATE.groupKey);const g=await apiPost('/v1/creategroup',p.toString());STATE.groupId=g.id||'';}
+catch(e){try{const gs=await apiCall('/v1/groups');const ex=gs.find(g=>g.name.toLowerCase()===gn.toLowerCase());if(ex){STATE.groupId=ex.id||'';STATE.groupKey=ex.key||STATE.groupKey;}else throw e;}catch(e2){setApiSt('Failed to create group: '+e.message,'error');btn.disabled=false;btn.innerHTML='&#9889; Upload Users';return;}}
+for(let i=0;i<STATE.selectedCourses.length;i++){const c=STATE.selectedCourses[i];prog('Adding course to group...');
+try{const p=new URLSearchParams();p.set('course_id',c.id);p.set('group_id',STATE.groupId);await apiPost('/v1/addcoursetogroup',p.toString());}
+catch(e){if(!e.message.includes('already'))res.errors.push('Course '+c.name+': '+e.message);}}
+let msg='<strong>Upload complete.</strong> '+res.created+' user(s) created. ';
+if(res.existing>0)msg+=res.existing+' already existed. ';if(res.failed>0)msg+=res.failed+' failed. ';
+msg+='Group "'+esc(gn)+'" and course assignments processed.';
+msg+='<br><strong>Next step:</strong> Click "Add Users to Cohort" to assign users to the group.';
+if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}else setApiSt(msg,'success');
+document.getElementById('apiCohortBtn').disabled=false;
+}catch(e){setApiSt('Upload error: '+e.message,'error');console.error(e);}
+btn.disabled=false;btn.innerHTML='&#9889; Upload Users';});
+
+// ============================================================
+// Step 2: Add Users to Cohort
+// ============================================================
+document.getElementById('apiCohortBtn').addEventListener('click',async()=>{
+const users=getSelectedUsers();
+if(users.length===0){alert('No users selected to assign.');return;}
+if(!STATE.connected){alert('Connect to the API first.');return;}
+const gn=document.getElementById('groupName').value.trim();
+if(!gn){alert('Please enter a Group Name.');return;}
+if(!STATE.groupKey){alert('Please run "Upload Users" first to create the group.');return;}
+const btn=document.getElementById('apiCohortBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Adding to cohort...';
+const pw=document.getElementById('apiProgressWrap'),pf=document.getElementById('apiProgressFill'),pt=document.getElementById('apiProgressText');
+pw.classList.remove('hidden');pt.classList.remove('hidden');pf.style.width='0%';
+const total=users.length;let step=0;
+function prog(m){step++;pf.style.width=Math.round(step/total*100)+'%';pt.textContent=m;}
+const res={added:0,errors:[]};
+try{
+if(!STATE.groupId){
+  try{const gs=await apiCall('/v1/groups');const ex=gs.find(g=>g.name.toLowerCase()===gn.toLowerCase());if(ex){STATE.groupId=ex.id||'';STATE.groupKey=ex.key||STATE.groupKey;}}catch(e){}}
+for(let i=0;i<users.length;i++){const u=users[i];prog('Adding user '+(i+1)+'/'+users.length+' to cohort...');
+try{const p=new URLSearchParams();p.set('user_login',u.email);p.set('group_key',STATE.groupKey);await apiPost('/v1/addusertogroup',p.toString());res.added++;}
+catch(e){
+  if(e.message.includes('invalid_request')||e.message.includes('400')){
     try{
-      const wb=XLSX.read(evt.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      if(data.length<1){statusEl.className='status-bar error';statusEl.innerHTML='The file appears to be empty.';return;}
-      const hdr=data[0].map(h=>String(h).trim().toLowerCase());
-      const col=names=>hdr.findIndex(h=>names.includes(h));
-      const iF=col(['first name','firstname']);
-      const iL=col(['last name','lastname']);
-      const iE=col(['email address','email']);
-      const iJ=col(['job title','title']);
-      const iA=col(['agency','agency / organization','organization']);
-      if(iF<0||iL<0||iE<0){
-        statusEl.className='status-bar error';
-        statusEl.innerHTML='The file is missing required columns. It must include <strong>First Name</strong>, <strong>Last Name</strong>, and <strong>Email Address</strong> &mdash; download the template above if you\'re not sure of the format.';
-        return;
-      }
-      const agencyDefault=document.getElementById('agencyName').value.trim();
-      const rows=data.slice(1).filter(r=>r.some(c=>String(c).trim())).map(r=>{
-        return newRowFromValues(
-          String(r[iF]||'').trim(),
-          String(r[iL]||'').trim(),
-          String(r[iE]||'').trim(),
-          iJ>=0?String(r[iJ]||'').trim():'',
-          iA>=0&&String(r[iA]||'').trim()?String(r[iA]).trim():agencyDefault
-        );
-      });
-      if(!rows.length){
-        statusEl.className='status-bar error';statusEl.innerHTML='No subscriber rows were found in the file.';return;
-      }
-      rows.push(newRow(agencyDefault)); // trailing blank row for further manual entry
-      STATE.rows=rows;
-      renderRows();
-      updateReview();
-      const problemCount=STATE.rows.filter(r=>Object.keys(r.errors).length>0).length;
-      if(problemCount>0){
-        statusEl.className='status-bar error';
-        statusEl.innerHTML='Loaded '+(rows.length-1)+' row(s). <strong>'+problemCount+' row(s) need attention</strong> &mdash; fixed cells are outlined in red in the table below.';
-      }else{
-        statusEl.className='status-bar success';
-        statusEl.innerHTML='Loaded '+(rows.length-1)+' subscriber(s) successfully. Review the table below, then submit.';
-      }
-    }catch(err){
-      statusEl.className='status-bar error';statusEl.innerHTML='Could not read that file: '+esc(err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-  this.value='';
-});
+      let uid=null;
+      try{const ui=await apiCall('/v1/users/email:'+u.email);uid=ui.id;}catch(e2){}
+      if(!uid){try{const ui=await apiCall('/v1/users/username:'+u.email);uid=ui.id;}catch(e2){}}
+      if(uid){const p2=new URLSearchParams();p2.set('user_id',uid);p2.set('group_key',STATE.groupKey);await apiPost('/v1/addusertogroup',p2.toString());res.added++;}
+      else{res.errors.push(u.email+': Could not find user');}
+    }catch(e2){if(!e2.message.includes('already'))res.errors.push(u.email+': '+e2.message);}
+  }else if(!e.message.includes('already')){res.errors.push(u.email+': '+e.message);}
+  else{res.added++;}
+}}
+let msg='<strong>Cohort assignment complete.</strong> '+res.added+' user(s) added to group "'+esc(gn)+'".';
+if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}else setApiSt(msg,'success');
+if(STATE.noviSource==='product')showNoviOrdersLink();
+}catch(e){setApiSt('Cohort error: '+e.message,'error');console.error(e);}
+btn.disabled=false;btn.innerHTML='&#128101; Add Users to Cohort';});
 
-function newRowFromValues(firstName,lastName,email,jobTitle,agency){
-  STATE.rowSeq++;
-  return{id:STATE.rowSeq,firstName,lastName,email,jobTitle,agency,errors:{}};
-}
+function setApiSt(m,t){const el=document.getElementById('apiStatus');el.className='status-bar'+(t?' '+t:'');el.innerHTML=m;}
+function showNoviOrdersLink(){document.getElementById('noviOrdersLinkWrap').classList.remove('hidden');}
+function hideNoviOrdersLink(){document.getElementById('noviOrdersLinkWrap').classList.add('hidden');}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ============================================================
-// Review + submit
+// Mode switching
 // ============================================================
-function clearFieldError(id){document.getElementById(id).classList.remove('invalid');}
-function setFieldError(id){document.getElementById(id).classList.add('invalid');}
+STATE.mode='new';
+STATE.groups=[];
+STATE.existingGroupId='';
+STATE.existingGroupKey='';
+STATE.existingGroupName='';
 
-function updateReview(){
-  const hasProduct=!!STATE.product;
-  document.getElementById('reviewPanel').classList.toggle('hidden',!hasProduct);
-  if(!hasProduct)return;
-  const filled=STATE.rows.filter(rowIsFilled);
-  const hasErrors=STATE.rows.some(r=>Object.keys(r.errors).length>0);
-  const topFieldsOk=document.getElementById('orderNumber').value.trim()
-    &&document.getElementById('purchaserName').value.trim()
-    &&document.getElementById('agencyName').value.trim();
-  const ready=topFieldsOk&&filled.length>0&&!hasErrors;
-  document.getElementById('submitBtn').disabled=!ready;
-  const note=document.getElementById('submitNote');
-  if(!topFieldsOk)note.textContent='Complete order number, your name, and agency above to continue.';
-  else if(filled.length===0)note.textContent='Add at least one subscriber before submitting.';
-  else if(hasErrors)note.textContent='Fix the highlighted subscriber rows before submitting.';
-  else note.textContent='';
-  document.getElementById('reviewSummary').innerHTML=
-    '<strong>Order:</strong> '+esc(document.getElementById('orderNumber').value.trim()||'—')+'<br>'
-    +'<strong>Product:</strong> '+esc(STATE.product)+'<br>'
-    +'<strong>Purchaser:</strong> '+esc(document.getElementById('purchaserName').value.trim()||'—')+'<br>'
-    +'<strong>Agency:</strong> '+esc(document.getElementById('agencyName').value.trim()||'—')+'<br>'
-    +'<strong>Subscribers ready to submit:</strong> '+filled.length;
-}
-['orderNumber','purchaserName','agencyName'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',updateReview);
-});
-
-document.getElementById('submitBtn').addEventListener('click',async()=>{
-  if(document.getElementById('hp').value){return;} // honeypot tripped — silently drop
-  const orderNumber=document.getElementById('orderNumber').value.trim();
-  const purchaserName=document.getElementById('purchaserName').value.trim();
-  const agencyName=document.getElementById('agencyName').value.trim();
-  let missing=false;
-  if(!orderNumber){setFieldError('fg_orderNumber');missing=true;}
-  if(!STATE.product){setFieldError('fg_product');missing=true;}
-  if(!purchaserName){setFieldError('fg_purchaserName');missing=true;}
-  if(!agencyName){setFieldError('fg_agencyName');missing=true;}
-  if(missing)return;
-
-  const subscribers=STATE.rows.filter(rowIsFilled).map(r=>({
-    firstName:r.firstName.trim(),lastName:r.lastName.trim(),email:r.email.trim().toLowerCase(),
-    jobTitle:r.jobTitle.trim(),agency:r.agency.trim()||agencyName
-  }));
-
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Submitting...';
-  const statusEl=document.getElementById('submitStatus');
-  statusEl.className='status-bar info';statusEl.innerHTML='Sending your registration...';
-
-  const payload={
-    orderNumber,productName:STATE.product,purchaserName,agencyName,
-    subscribers,licenseCap:STATE.licenseCap,submittedAt:new Date().toISOString()
-  };
-
-  try{
-    const res=await fetch(SUBMIT_ENDPOINT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    if(!res.ok)throw new Error('Server responded with '+res.status);
-    let data={};
-    try{data=await res.json();}catch(e){}
-    showConfirmation(orderNumber,data.confirmationId);
-  }catch(err){
-    statusEl.className='status-bar error';
-    statusEl.innerHTML='We couldn\'t submit your registration right now (' +esc(err.message)+'). Please try again in a few minutes, or contact CLEAR Learning directly if this keeps happening.';
-    btn.disabled=false;btn.innerHTML='Submit Registration';
+function setMode(m){
+  STATE.mode=m;
+  document.getElementById('modeNewBtn').classList.toggle('active',m==='new');
+  document.getElementById('modeExistingBtn').classList.toggle('active',m==='existing');
+  document.getElementById('newCohortFields').classList.toggle('hidden',m!=='new');
+  document.getElementById('existingCohortFields').classList.toggle('hidden',m!=='existing');
+  document.getElementById('courseSelectionSection').classList.toggle('hidden',m!=='new');
+  document.getElementById('selectedCourses').classList.toggle('hidden',m!=='new');
+  document.getElementById('newCohortBtns').classList.toggle('hidden',m!=='new');
+  document.getElementById('apiAddExistingBtn').classList.toggle('hidden',m!=='existing');
+  document.getElementById('exportXlsxBtn').classList.toggle('hidden',m!=='new');
+  if(m==='existing'){
+    if(STATE.connected&&STATE.groups.length===0)loadGroups();
+    if(STATE.connected)document.getElementById('refreshGroupsBtn').disabled=false;
   }
+}
+
+async function loadGroups(){
+  if(!STATE.connected)return;
+  try{
+    STATE.groups=await apiCall('/v1/groups');
+    setupExistingGroupSearch();
+    document.getElementById('refreshGroupsBtn').disabled=false;
+  }catch(e){console.error('Failed to load groups:',e);}
+}
+
+function setupExistingGroupSearch(){
+  const inp=document.getElementById('existingGroupInput');
+  const dd=document.getElementById('existingGroupDropdown');
+  inp.disabled=false;inp.placeholder='Type to search groups...';
+  function rend(f){
+    const m=f?STATE.groups.filter(g=>g.name.toLowerCase().includes(f.toLowerCase())):STATE.groups;
+    dd.innerHTML=m.length===0?'<div class="no-match">No matches</div>':
+      m.slice(0,40).map(g=>'<div class="opt" data-id="'+g.id+'" data-key="'+esc(g.key||'')+'" data-name="'+esc(g.name)+'">'+esc(g.name)+'</div>').join('');
+    dd.querySelectorAll('.opt').forEach(o=>{
+      o.addEventListener('mousedown',e=>{
+        e.preventDefault();
+        STATE.existingGroupId=o.dataset.id;
+        STATE.existingGroupKey=o.dataset.key;
+        STATE.existingGroupName=o.dataset.name;
+        inp.value=o.dataset.name;
+        dd.classList.remove('open');
+        const info=document.getElementById('existingGroupInfo');
+        info.innerHTML='&#10003; Selected: <strong>'+esc(STATE.existingGroupName)+'</strong> &nbsp;&mdash;&nbsp; Group ID: '+esc(STATE.existingGroupId)+'<br><span style="font-size:12px;opacity:0.85;">Users added to this group will be automatically enrolled in its already-assigned courses.</span>';
+        info.classList.add('visible');
+      });
+    });
+  }
+  inp.addEventListener('focus',()=>{rend(inp.value);dd.classList.add('open');});
+  inp.addEventListener('input',()=>{rend(inp.value);dd.classList.add('open');});
+  inp.addEventListener('blur',()=>{setTimeout(()=>dd.classList.remove('open'),150);});
+  rend('');
+}
+
+// ============================================================
+// Existing cohort: create users then add to group
+// ============================================================
+document.getElementById('apiAddExistingBtn').addEventListener('click',async()=>{
+  const users=getSelectedUsers();
+  if(users.length===0){alert('No users selected to process.');return;}
+  if(!STATE.connected){alert('Connect to the API first.');return;}
+  if(!STATE.existingGroupId){alert('Please select an existing group first.');return;}
+  const btn=document.getElementById('apiAddExistingBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
+  const pw=document.getElementById('apiProgressWrap'),pf=document.getElementById('apiProgressFill'),pt=document.getElementById('apiProgressText');
+  pw.classList.remove('hidden');pt.classList.remove('hidden');pf.style.width='0%';
+  const total=users.length*2;let step=0;
+  function prog(m){step++;pf.style.width=Math.round(step/total*100)+'%';pt.textContent=m;}
+  const res={created:0,existing:0,failed:0,added:0,errors:[]};
+  try{
+    for(let i=0;i<users.length;i++){
+      const u=users[i];
+      prog('Creating user '+(i+1)+'/'+users.length+'...');
+      try{
+        const p=new URLSearchParams();
+        p.set('first_name',u.firstName);p.set('last_name',u.lastName);
+        p.set('email',u.email);p.set('login',u.email);
+        p.set('password',u.password);p.set('custom_field_11',u.password);
+        p.set('language',u.language);
+        await apiPost('/v1/usersignup',p.toString());res.created++;
+      }catch(e){
+        if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;
+        else{res.failed++;res.errors.push(u.email+': '+e.message);}
+      }
+    }
+    // Fetch the courses assigned to this group so we can enroll users manually
+    let groupCourses=[];
+    try{
+      const ginfo=await apiCall('/v1/groups/id:'+STATE.existingGroupId);
+      groupCourses=(ginfo.courses||[]).map(c=>c.id||c.course_id).filter(Boolean);
+    }catch(e){console.warn('Could not fetch group courses:',e.message);}
+
+    for(let i=0;i<users.length;i++){
+      const u=users[i];
+      prog('Adding user '+(i+1)+'/'+users.length+' to cohort...');
+      try{
+        // v2 requires user_id — look it up by email
+        let uid=null;
+        try{const ui=await apiCall('/v1/users/email:'+u.email);uid=ui.id;}catch(e2){}
+        if(!uid){try{const ui=await apiCall('/v1/users/username:'+u.email);uid=ui.id;}catch(e2){}}
+        if(!uid){res.errors.push(u.email+': Could not look up user ID');continue;}
+        await apiCall('/v2/group-memberships',{
+          method:'POST',
+          headers:{'X-Auth-Token':STATE.authToken,'Content-Type':'application/json'},
+          body:JSON.stringify({user_id:String(uid),group_id:String(STATE.existingGroupId)})
+        });
+        res.added++;
+        // Enroll user in each course assigned to the group
+        for(const cid of groupCourses){
+          try{
+            const p=new URLSearchParams();p.set('user_id',uid);p.set('course_id',cid);
+            await apiPost('/v1/addusertocourse',p.toString());
+          }catch(e2){
+            if(!e2.message.includes('already'))res.errors.push(u.email+' course '+cid+': '+e2.message);
+          }
+        }
+      }catch(e){
+        if(e.message.includes('already')||e.message.includes('409')){res.added++;}
+        else{res.errors.push(u.email+': '+e.message);}
+      }
+    }
+    let msg='<strong>Done.</strong> '+res.created+' user(s) created';
+    if(res.existing>0)msg+=', '+res.existing+' already existed';
+    if(res.failed>0)msg+=', '+res.failed+' failed to create';
+    msg+='. <strong>'+res.added+'</strong> user(s) added to <strong>'+esc(STATE.existingGroupName)+'</strong> — they are now enrolled in the cohort\'s assigned courses.';
+    if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}
+    else setApiSt(msg,'success');
+    if(STATE.noviSource==='product')showNoviOrdersLink();
+  }catch(e){setApiSt('Error: '+e.message,'error');console.error(e);}
+  btn.disabled=false;btn.innerHTML='&#9889; Create Users &amp; Add to Cohort';
 });
 
-function showConfirmation(orderNumber,confirmationId){
-  document.getElementById('regForm').classList.add('hidden');
-  document.getElementById('introBlock').classList.add('hidden');
-  document.getElementById('confOrder').textContent=orderNumber;
-  document.getElementById('confRef').textContent='Confirmation: '+(confirmationId||('ORD-'+orderNumber+'-'+Date.now().toString().slice(-6)));
-  document.getElementById('confirmationPanel').classList.remove('hidden');
-  window.scrollTo({top:0,behavior:'smooth'});
+// ============================================================
+// Bulk Product Orders — subscriber registration review
+// (pulls from /subreg/getall, lets you filter/select, mark
+// provisioned, and load selected rows straight into the
+// Import Preview below instead of exporting/re-uploading a CSV)
+// ============================================================
+const SUBREG={rows:[],filtered:[],selected:new Set(),sortCol:'submittedAt',sortDir:-1,loaded:false};
+
+async function apiPostJson(path,body){
+  const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+path,{method:'POST',headers:{'X-Auth-Token':STATE.authToken,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t);}
+  return r.json().catch(()=>({}));
+}
+
+function setSbStatus(m,t){const el=document.getElementById('sbStatusBar');el.className='status-bar'+(t?' '+t:'');el.innerHTML=m;}
+
+async function refreshSubreg(){
+  if(!STATE.connected){setSbStatus('Connect to the API in Section 1 first.','error');return;}
+  setSbStatus('Loading subscriber registrations...','info');
+  try{
+    const data=await apiPostJson('/subreg/getall',{});
+    const submissions=data.submissions||[];
+    const subscribers=data.subscribers||[];
+    const byId={};
+    submissions.forEach(s=>{byId[s.id]=s;});
+    SUBREG.rows=subscribers.map(sub=>{
+      const parent=byId[sub.submissionId]||{};
+      return{
+        subId:sub.id,
+        orderNumber:parent.orderNumber||'',
+        productName:parent.productName||'',
+        purchaserName:parent.purchaserName||'',
+        agencyName:parent.agencyName||'',
+        submittedAt:parent.submittedAt||'',
+        status:parent.status||'',
+        firstName:sub.firstName||'',
+        lastName:sub.lastName||'',
+        name:((sub.firstName||'')+' '+(sub.lastName||'')).trim(),
+        email:sub.email||'',
+        jobTitle:sub.jobTitle||'',
+        agency:sub.agency||'',
+        provisionStatus:sub.provisionStatus||'Pending'
+      };
+    });
+    SUBREG.loaded=true;
+    populateSubregProductFilter(submissions);
+    applySubregFilters();
+    setSbStatus('Loaded '+submissions.length+' submission(s), '+subscribers.length+' subscriber(s).','success');
+  }catch(e){
+    setSbStatus('Failed to load: '+e.message,'error');
+  }
+}
+
+function populateSubregProductFilter(submissions){
+  const sel=document.getElementById('sbProduct');
+  const products=[...new Set(submissions.map(s=>s.productName).filter(Boolean))].sort();
+  const current=sel.value;
+  sel.innerHTML='<option value="">All products</option>'+products.map(p=>'<option value="'+esc(p)+'">'+esc(p)+'</option>').join('');
+  if(products.includes(current))sel.value=current;
+}
+
+function applySubregFilters(){
+  const q=document.getElementById('sbSearch').value.toLowerCase().trim();
+  const product=document.getElementById('sbProduct').value;
+  const from=document.getElementById('sbDateFrom').value?new Date(document.getElementById('sbDateFrom').value):null;
+  const to=document.getElementById('sbDateTo').value?new Date(document.getElementById('sbDateTo').value):null;
+  const showProvisioned=document.getElementById('sbShowProvisioned').checked;
+
+  SUBREG.filtered=SUBREG.rows.filter(r=>{
+    if(q){
+      const hay=(r.orderNumber+' '+r.purchaserName+' '+r.agencyName+' '+r.name+' '+r.email).toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    if(product&&r.productName!==product)return false;
+    if(from||to){
+      const d=r.submittedAt?new Date(r.submittedAt):null;
+      if(!d)return false;
+      if(from&&d<from)return false;
+      if(to&&d>new Date(to.getTime()+86399999))return false;
+    }
+    if(!showProvisioned&&r.provisionStatus==='Provisioned')return false;
+    return true;
+  });
+  sortSubregFiltered();
+  renderSubregResults();
+}
+
+function sortSubregBy(col){
+  if(SUBREG.sortCol===col)SUBREG.sortDir*=-1;else{SUBREG.sortCol=col;SUBREG.sortDir=1;}
+  sortSubregFiltered();renderSubregResults();
+}
+function sortSubregFiltered(){
+  const col=SUBREG.sortCol,dir=SUBREG.sortDir;
+  SUBREG.filtered.sort((a,b)=>{
+    let av=a[col],bv=b[col];
+    if(col==='submittedAt'){av=av?new Date(av).getTime():0;bv=bv?new Date(bv).getTime():0;}
+    else{av=(av||'').toString().toLowerCase();bv=(bv||'').toString().toLowerCase();}
+    if(av<bv)return -dir;if(av>bv)return dir;return 0;
+  });
+}
+
+function subregStatusBadge(s){
+  const map={'New':'badge-new','In Review':'badge-review','Provisioned':'badge-provisioned','Rejected':'badge-rejected'};
+  return '<span class="badge '+(map[s]||'badge-new')+'">'+esc(s||'—')+'</span>';
+}
+function subregProvBadge(s){
+  const map={'Pending':'badge-pending','Provisioned':'badge-provisioned','Failed':'badge-failed','Skipped':'badge-pending'};
+  return '<span class="badge '+(map[s]||'badge-pending')+'">'+esc(s||'Pending')+'</span>';
+}
+function subregFmtDate(d){if(!d)return'—';const dt=new Date(d);return isNaN(dt)?'—':dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+
+function renderSubregResults(){
+  const body=document.getElementById('sbResultsBody');
+  body.innerHTML=SUBREG.filtered.map(r=>{
+    const chk=SUBREG.selected.has(r.subId);
+    return '<tr>'
+      +'<td style="text-align:center;"><input type="checkbox" data-id="'+r.subId+'" '+(chk?'checked':'')+' onchange="toggleSubregRow('+r.subId+',this.checked)"></td>'
+      +'<td>'+esc(r.orderNumber)+'</td>'
+      +'<td>'+esc(r.productName)+'</td>'
+      +'<td>'+esc(r.purchaserName)+'</td>'
+      +'<td>'+esc(r.agencyName)+'</td>'
+      +'<td>'+subregFmtDate(r.submittedAt)+'</td>'
+      +'<td>'+esc(r.name)+'</td>'
+      +'<td>'+esc(r.email)+'</td>'
+      +'<td>'+esc(r.jobTitle)+'</td>'
+      +'<td>'+esc(r.agency)+'</td>'
+      +'<td>'+subregStatusBadge(r.status)+'</td>'
+      +'<td>'+subregProvBadge(r.provisionStatus)+'</td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="12" style="text-align:center;padding:24px;color:#999;">No subscribers match the current filters.</td></tr>';
+  document.getElementById('sbChkAll').checked=SUBREG.filtered.length>0&&SUBREG.filtered.every(r=>SUBREG.selected.has(r.subId));
+  renderSubregSummary();
+}
+
+function renderSubregSummary(){
+  const el=document.getElementById('sbSummaryRow');
+  const uniqueOrders=new Set(SUBREG.filtered.map(r=>r.orderNumber)).size;
+  el.innerHTML='<div class="summary-card"><div class="lbl">Matching Subscribers</div><div class="val">'+SUBREG.filtered.length+'</div></div>'
+    +'<div class="summary-card"><div class="lbl">Matching Orders</div><div class="val">'+uniqueOrders+'</div></div>'
+    +'<div class="summary-card"><div class="lbl">Total Loaded</div><div class="val">'+SUBREG.rows.length+'</div></div>';
+  document.getElementById('sbSelCountLabel').textContent=SUBREG.selected.size+' selected';
+}
+
+function toggleSubregRow(id,checked){if(checked)SUBREG.selected.add(id);else SUBREG.selected.delete(id);renderSubregSummary();document.getElementById('sbChkAll').checked=SUBREG.filtered.length>0&&SUBREG.filtered.every(r=>SUBREG.selected.has(r.subId));}
+function toggleSubregAll(checked){SUBREG.filtered.forEach(r=>{if(checked)SUBREG.selected.add(r.subId);else SUBREG.selected.delete(r.subId);});renderSubregResults();}
+function selectAllSubregFiltered(){SUBREG.filtered.forEach(r=>SUBREG.selected.add(r.subId));renderSubregResults();}
+function clearSubregSelection(){SUBREG.selected.clear();renderSubregResults();}
+
+async function markSubregSelectedProvisioned(){
+  const ids=[...SUBREG.selected];
+  if(!ids.length){alert('No subscribers selected.');return;}
+  const btn=document.getElementById('sbMarkProvisionedBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Updating...';
+  setSbStatus('Marking '+ids.length+' subscriber(s) as provisioned...','info');
+  let ok=0,fail=0;
+  for(const id of ids){
+    try{
+      await apiPostJson('/subreg/update',{id,provisionStatus:'Provisioned'});
+      const row=SUBREG.rows.find(r=>r.subId===id);
+      if(row)row.provisionStatus='Provisioned';
+      ok++;
+    }catch(e){fail++;}
+  }
+  renderSubregResults();
+  if(fail===0)setSbStatus('Marked '+ok+' subscriber(s) as provisioned.','success');
+  else setSbStatus('Marked '+ok+' subscriber(s) as provisioned. '+fail+' failed — the /subreg/update flow may not be built yet, or "Provisioned" may not be a valid choice on the ProvisionStatus column yet.','error');
+  btn.disabled=false;btn.innerHTML='&#10003; Mark Selected as Provisioned';
+}
+
+function loadSubregIntoPreview(){
+  const rows=SUBREG.rows.filter(r=>SUBREG.selected.has(r.subId));
+  if(!rows.length){alert('No subscribers selected.');return;}
+  STATE.attendees=rows.map(r=>({
+    email:r.email,firstName:r.firstName,lastName:r.lastName,
+    company:r.agency||r.agencyName,jobTitle:r.jobTitle,
+    state:'',country:'',city:'',zip:'',registrationDate:r.submittedAt
+  }));
+  STATE.importUsers=STATE.attendees.map(u=>{const pw=genPw();return{...u,password:pw,status:'active',language:'en'};});
+  STATE.selectedUsers=new Set(STATE.importUsers.map((_,i)=>i));
+  STATE.sortCol='';STATE.sortDir=1;
+  const uniqueOrders=[...new Set(rows.map(r=>r.orderNumber))];
+  const gnField=document.getElementById('groupName');
+  if(!gnField.value.trim()&&uniqueOrders.length===1){
+    gnField.value='Order '+uniqueOrders[0];
+  }
+  renderSummary();renderPreview();
+  document.getElementById('panelResults').classList.remove('hidden');
+  document.getElementById('panelResults').scrollIntoView({behavior:'smooth'});
+  setSbStatus('Loaded '+rows.length+' subscriber(s) into the Import Preview below. Set the Group/Course info in section 3, then Upload Users.','success');
 }
 </script>
 </body>
