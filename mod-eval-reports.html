@@ -164,6 +164,55 @@ tbody tr:hover{background:#fdfcfa}
     <p class="cfg-note">💡 Find your Survey IDs in the SurveyMonkey URL when editing a survey: surveymonkey.com/create/?sm=<strong>SURVEY_ID</strong></p>
   </div>
 
+  <!-- CORRECTIONS -->
+  <div class="cfg-panel hidden" id="corrPanel" style="border-left-color:var(--blue)">
+    <h2>Data Corrections</h2>
+    <p>Override incorrect custom-variable values (e.g. the wrong instructor entered on a survey link) without touching the raw SurveyMonkey data. Rules are stored in your Worker's KV store, so they apply for every user on every device.</p>
+
+    <div style="background:var(--gold-faint);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:20px">
+      <label class="fgl" style="margin-bottom:6px">Paste a SurveyMonkey link to auto-fill the match fields</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="fgi" id="corrLink" placeholder="https://www.surveymonkey.com/r/...?course=...&Instructor=...">
+        <button class="btn btn-s btn-sm" onclick="parseCorrLink()" style="white-space:nowrap">Parse Link</button>
+      </div>
+    </div>
+
+    <h3 style="font-size:13px;color:var(--charcoal);margin-bottom:10px">Match these custom variables (leave a field blank to match any value)</h3>
+    <div class="cfg-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="cfg-group"><label>Program (course)</label><input type="text" class="fgi" id="cmCourse"></div>
+      <div class="cfg-group"><label>Version</label><input type="text" class="fgi" id="cmVersion"></div>
+      <div class="cfg-group"><label>Method</label><input type="text" class="fgi" id="cmMethod"></div>
+      <div class="cfg-group"><label>Module Name</label><input type="text" class="fgi" id="cmModule"></div>
+      <div class="cfg-group"><label>Instructor</label><input type="text" class="fgi" id="cmInstructor"></div>
+      <div class="cfg-group"><label>Cohort</label><input type="text" class="fgi" id="cmCohort"></div>
+    </div>
+
+    <h3 style="font-size:13px;color:var(--charcoal);margin:16px 0 10px">Then override</h3>
+    <div class="cfg-grid" style="grid-template-columns:200px 1fr">
+      <div class="cfg-group">
+        <label>Field to Override</label>
+        <select class="fgi" id="corrField">
+          <option value="instructor">Instructor</option>
+          <option value="cohort">Cohort</option>
+          <option value="course">Program (course)</option>
+          <option value="version">Version</option>
+          <option value="method">Method</option>
+          <option value="module_name">Module Name</option>
+        </select>
+      </div>
+      <div class="cfg-group"><label>Corrected Value</label><input type="text" class="fgi" id="corrValue" placeholder="e.g. Thompson, Eric"></div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-top:6px">
+      <button class="btn btn-p" onclick="addCorrection()">Add Correction Rule</button>
+      <button class="btn btn-s" onclick="toggleCorr(false)">Close</button>
+    </div>
+
+    <h3 style="font-size:13px;color:var(--charcoal);margin:24px 0 10px">Active Rules</h3>
+    <div id="corrList"></div>
+    <p class="cfg-note" id="corrStatus"></p>
+  </div>
+
   <!-- STATUS BAR -->
   <div class="status-bar hidden" id="statusBar">
     <div class="status-item">
@@ -178,6 +227,7 @@ tbody tr:hover{background:#fdfcfa}
     </div>
     <div class="spacer"></div>
     <button class="reload-btn" onclick="reloadData()">↺ Refresh Data</button>
+    <button class="reload-btn" onclick="toggleCorr(true)">🛠 Corrections</button>
     <button class="reload-btn" onclick="toggleCfg(true)">⚙ Settings</button>
   </div>
 
@@ -264,6 +314,8 @@ const Q1_MAP={
 // ─── State ────────────────────────────────────────────────────────────────────
 let PROXY='', TOKEN='', SURVEY_ILT='', SURVEY_ASYNC='';
 let iltD=[], asnD=[], allD=[];
+let rawILT=[], rawAsync=[], qMapILT={}, qMapAsync={};
+let CORR=[];
 const MS={};
 let IR={}, IAT=null, IEX={};
 
@@ -330,8 +382,9 @@ async function loadAllData(){
   setStatus('ILT','loading','Loading…');
   setStatus('Async','loading','Loading…');
 
-  // Fetch both surveys in parallel — details + responses
-  const [iltDetails, asyncDetails, iltResponses, asyncResponses] = await Promise.allSettled([
+  // Fetch corrections + both surveys' details + responses in parallel
+  const [corrRes, iltDetails, asyncDetails, iltResponses, asyncResponses] = await Promise.allSettled([
+    loadCorrections(),
     smFetch(`/surveys/${SURVEY_ILT}/details`),
     smFetch(`/surveys/${SURVEY_ASYNC}/details`),
     fetchAllResponses(SURVEY_ILT),
@@ -340,36 +393,34 @@ async function loadAllData(){
 
   // Process ILT
   if(iltDetails.status==='fulfilled' && iltResponses.status==='fulfilled'){
-    const qMap = buildQMap(iltDetails.value);
-    iltD = iltResponses.value
-      .filter(r=>r.response_status==='completed')
-      .map(r=>normalizeResponse(r, qMap, 'ILT'));
-    setStatus('ILT','ok',`${iltD.length} responses`);
+    qMapILT = buildQMap(iltDetails.value);
+    rawILT  = iltResponses.value;
   } else {
-    iltD=[];
+    rawILT=[]; qMapILT={};
     setStatus('ILT','err','Failed to load');
     console.error('ILT error:', iltDetails.reason || iltResponses.reason);
   }
 
   // Process Async
   if(asyncDetails.status==='fulfilled' && asyncResponses.status==='fulfilled'){
-    const qMap = buildQMap(asyncDetails.value);
-    asnD = asyncResponses.value
-      .filter(r=>r.response_status==='completed')
-      .map(r=>normalizeResponse(r, qMap, 'Async'));
-    setStatus('Async','ok',`${asnD.length} responses`);
+    qMapAsync = buildQMap(asyncDetails.value);
+    rawAsync  = asyncResponses.value;
   } else {
-    asnD=[];
+    rawAsync=[]; qMapAsync={};
     setStatus('Async','err','Failed to load');
     console.error('Async error:', asyncDetails.reason || asyncResponses.reason);
   }
 
-  allD = [...iltD, ...asnD];
+  normalizeAll();
+
+  if(rawILT.length || iltDetails.status==='fulfilled') setStatus('ILT','ok',`${iltD.length} responses`);
+  if(rawAsync.length || asyncDetails.status==='fulfilled') setStatus('Async','ok',`${asnD.length} responses`);
+
   if(allD.length){ bfui(); sm(); }
 }
 
 async function reloadData(){
-  iltD=[]; asnD=[]; allD=[];
+  iltD=[]; asnD=[]; allD=[]; rawILT=[]; rawAsync=[];
   $('dsum').classList.add('hidden');
   $('main').classList.add('hidden');
   $('ar').innerHTML='';
@@ -383,6 +434,150 @@ function setStatus(type, state, meta){
   const m   = $(type==='ILT'?'metaILT':'metaAsync');
   dot.className = 'status-dot ' + (state==='loading'?'loading':state==='ok'?'ok':'err');
   m.textContent = meta;
+}
+
+// ─── Corrections (KV-backed, shared across users/devices) ────────────────────
+// A correction rule looks like:
+// { match: {course,version,method,module_name,instructor,cohort}, override: {field, value} }
+// Any match field left blank matches any value. Rules are re-applied every time
+// raw SurveyMonkey data is normalized, so they never touch the source records.
+
+const CV_KEYS = {
+  course:      ['course','Course'],
+  version:     ['version','Version'],
+  method:      ['method','Method'],
+  module_name: ['module_name','Module_Name'],
+  instructor:  ['Instructor','instructor'],
+  cohort:      ['Cohort','cohort']
+};
+
+function getCV(cv, f){
+  for(const k of (CV_KEYS[f]||[f])){
+    if(cv[k]!=null && String(cv[k]).trim()!=='') return String(cv[k]).trim();
+  }
+  return '';
+}
+function setCV(cv, f, val){
+  (CV_KEYS[f]||[f]).forEach(k=>{ cv[k]=val; });
+}
+
+function matchRule(cv, rule){
+  for(const f of Object.keys(CV_KEYS)){
+    const want = rule.match[f];
+    if(want && getCV(cv,f).toLowerCase() !== want.toLowerCase()) return false;
+  }
+  return true;
+}
+
+function applyCorrections(rawCv){
+  const cv = {...(rawCv||{})};
+  CORR.forEach(rule=>{ if(matchRule(cv,rule)) setCV(cv, rule.override.field, rule.override.value); });
+  return cv;
+}
+
+async function loadCorrections(){
+  try{
+    const res = await fetch(`${PROXY}/kv?key=eval_corrections`, {headers:{'X-Auth-Token':TOKEN}});
+    if(res.ok){
+      const d = await res.json();
+      CORR = Array.isArray(d.value) ? d.value : [];
+    } else {
+      CORR = [];
+    }
+  }catch(e){
+    console.error('Could not load corrections from KV:', e);
+    CORR = [];
+  }
+  renderCorrList();
+}
+
+async function saveCorrectionsToKV(){
+  const s = $('corrStatus');
+  try{
+    const res = await fetch(`${PROXY}/kv`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Auth-Token':TOKEN},
+      body: JSON.stringify({key:'eval_corrections', value: CORR})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    if(s) s.textContent = 'Saved — visible to all users on next load.';
+  }catch(e){
+    console.error('Could not save corrections to KV:', e);
+    if(s) s.textContent = '⚠ Could not save to shared KV storage — check the /kv route on your Worker. Changes applied for this session only.';
+    else alert('Could not save corrections to KV storage — see console.');
+  }
+}
+
+function toggleCorr(show){
+  $('corrPanel').classList.toggle('hidden', !show);
+  if(show){ $('corrStatus').textContent=''; renderCorrList(); }
+}
+
+function parseCorrLink(){
+  const raw = $('corrLink').value.trim();
+  if(!raw) return;
+  try{
+    const url = new URL(raw);
+    const p = url.searchParams;
+    $('cmCourse').value     = p.get('course')||p.get('Course')||'';
+    $('cmVersion').value    = p.get('version')||p.get('Version')||'';
+    $('cmMethod').value     = p.get('method')||p.get('Method')||'';
+    $('cmModule').value     = p.get('module_name')||p.get('Module_Name')||'';
+    $('cmInstructor').value = p.get('Instructor')||p.get('instructor')||'';
+    $('cmCohort').value     = p.get('Cohort')||p.get('cohort')||'';
+  }catch(e){
+    alert('Could not parse that as a URL. Paste the full survey link including https://');
+  }
+}
+
+function addCorrection(){
+  const match = {
+    course:      $('cmCourse').value.trim(),
+    version:     $('cmVersion').value.trim(),
+    method:      $('cmMethod').value.trim(),
+    module_name: $('cmModule').value.trim(),
+    instructor:  $('cmInstructor').value.trim(),
+    cohort:      $('cmCohort').value.trim()
+  };
+  const hasMatch = Object.values(match).some(v=>v);
+  const field = $('corrField').value;
+  const value = $('corrValue').value.trim();
+  if(!hasMatch){ alert('Enter at least one match value (e.g. Instructor or Cohort) so this rule only applies to the intended responses.'); return; }
+  if(!value){ alert('Enter the corrected value.'); return; }
+
+  CORR.push({match, override:{field, value}, created:new Date().toISOString()});
+  saveCorrectionsToKV();
+  renderCorrList();
+  ['cmCourse','cmVersion','cmMethod','cmModule','cmInstructor','cmCohort','corrValue','corrLink'].forEach(id=>{ $(id).value=''; });
+
+  if(allD.length){ normalizeAll(); sm(); bfui(); rerenderActive(); }
+}
+
+function removeCorrection(i){
+  if(!confirm('Remove this correction rule? Reports will revert to the original SurveyMonkey values for matching responses.')) return;
+  CORR.splice(i,1);
+  saveCorrectionsToKV();
+  renderCorrList();
+  if(allD.length){ normalizeAll(); sm(); bfui(); rerenderActive(); }
+}
+
+function renderCorrList(){
+  const c = $('corrList');
+  if(!c) return;
+  if(!CORR.length){ c.innerHTML = '<p style="font-size:13px;color:var(--text-light)">No correction rules yet.</p>'; return; }
+  const FL = {course:'Program',version:'Version',method:'Method',module_name:'Module',instructor:'Instructor',cohort:'Cohort'};
+  let h = '<div class="card-flush"><table><thead><tr><th style="text-align:left">Match</th><th style="text-align:left">Override</th><th></th></tr></thead><tbody>';
+  CORR.forEach((r,i)=>{
+    const mparts = Object.entries(r.match).filter(([,v])=>v).map(([k,v])=>`${FL[k]}: ${esc(v)}`).join(', ') || '(any response)';
+    h += `<tr><td style="text-align:left;font-size:12px">${mparts}</td><td style="text-align:left;font-size:12px"><strong>${FL[r.override.field]}</strong> → ${esc(r.override.value)}</td><td class="cbc"><button class="btn btn-s btn-sm" onclick="removeCorrection(${i})">Remove</button></td></tr>`;
+  });
+  h += '</tbody></table></div>';
+  c.innerHTML = h;
+}
+
+function rerenderActive(){
+  if($('ar').innerHTML) runA();
+  if(Object.keys(IR).length) runI();
 }
 
 // ─── Survey → Question Map ────────────────────────────────────────────────────
@@ -400,10 +595,17 @@ function buildQMap(details){
   return map;
 }
 
+// ─── Normalize ────────────────────────────────────────────────────────────────
+function normalizeAll(){
+  iltD = (rawILT||[]).filter(r=>r.response_status==='completed').map(r=>normalizeResponse(r, qMapILT, 'ILT'));
+  asnD = (rawAsync||[]).filter(r=>r.response_status==='completed').map(r=>normalizeResponse(r, qMapAsync, 'Async'));
+  allD = [...iltD, ...asnD];
+}
+
 // ─── Normalize Response ───────────────────────────────────────────────────────
 // Converts a SurveyMonkey bulk response into the same flat object the old tool used
 function normalizeResponse(r, qMap, source){
-  const cv = r.custom_variables || {};
+  const cv = applyCorrections(r.custom_variables || {});
 
   const g = k => String(cv[k] || cv[k.toLowerCase()] || cv[k.charAt(0).toUpperCase()+k.slice(1)] || '').trim();
 
