@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
+<title>Novi Bulk Registration Import</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burgundy: #64092C;
+    --gold: #DDA838;
+    --charcoal: #484848;
+    --blue: #084D78;
+    --bg: #f7f5f3;
+    --card: #ffffff;
+    --border: #e0dcd8;
+    --success: #1a7a4c;
+    --error: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Open Sans', 'Trebuchet MS', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--charcoal);
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header {
+    border-bottom: 4px solid var(--gold);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  h1 {
+    color: var(--burgundy);
+    font-size: 1.6rem;
+    margin: 0 0 4px 0;
+  }
+  .subtitle { color: #000; opacity: 0.75; font-size: 0.95rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    color: var(--blue);
+    margin: 0 0 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-num {
+    background: var(--burgundy);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 4px; color: var(--charcoal); }
+  input[type=text], input[type=password], input[type=file], select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: white;
+  }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .row > div { flex: 1; min-width: 220px; }
+  .row.tight { margin-bottom: 8px; }
+  .ticket-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .ticket-row input { flex: 1; }
+  .ticket-row input.guid { flex: 2; font-family: monospace; font-size: 0.82rem; }
+  button {
+    background: var(--burgundy);
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+  button:hover { background: #4d0722; }
+  button.secondary {
+    background: white;
+    color: var(--burgundy);
+    border: 1px solid var(--burgundy);
+  }
+  button.secondary:hover { background: #fbf2f4; }
+  button.small { padding: 5px 10px; font-size: 0.78rem; }
+  button:disabled { background: #ccc; color: #888; cursor: not-allowed; border: none; }
+  button.danger { background: transparent; color: var(--error); padding: 4px 8px; font-weight: 400; font-size: 1.1rem; line-height: 1; }
+  .helptext { font-size: 0.8rem; color: #777; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  th { background: #faf8f6; color: var(--charcoal); font-weight: 700; position: sticky; top: 0; }
+  .table-scroll { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+  tr.row-error { background: #fdecec; }
+  tr.row-excluded { opacity: 0.4; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+  .badge.ok { background: #e2f3ea; color: var(--success); }
+  .badge.fail { background: #fbe4e2; color: var(--error); }
+  .badge.pending { background: #eee; color: #777; }
+  .summary-bar {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+  }
+  .summary-bar strong { color: var(--burgundy); }
+  .progress-outer {
+    background: #eee;
+    border-radius: 6px;
+    height: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+    display: none;
+  }
+  .progress-inner { background: var(--gold); height: 100%; width: 0%; transition: width 0.2s; }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert.error { background: #fbe4e2; color: var(--error); }
+  .alert.success { background: #e2f3ea; color: var(--success); }
+  .alert.warning { background: #fdf3de; color: #8a5a00; }
+  select.ticket-select { font-size: 0.78rem; padding: 4px 6px; }
+  input.small-input { width: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>NOVI Bulk Registration Import</h1>
+    <div class="subtitle">**INTERNAL USE ONLY** For use when CLEAR Staff must register mulitple users for an event.</div>
+  </header>
+
+  <!-- STEP 1: Connection -->
+  <div class="card">
+    <h2><span class="step-num">1</span> Connection</h2>
+    <div class="row">
+      <div>
+        <label>Worker Base URL</label>
+        <input type="text" id="workerUrl" placeholder="https://clear-lms-proxy.avance.workers.dev" value="https://clear-lms-proxy.avance.workers.dev">
+        <div class="helptext">Registrations will POST to {Worker Base URL}/novi/api/registrations</div>
+      </div>
+      <div>
+        <label>Auth Token (X-Auth-Token)</label>
+        <input type="password" id="authToken" placeholder="Your Worker auth token">
+        <div class="helptext">Log in to 1Password, search for <strong>Auth Token</strong>, copy the password</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Event + Ticket Types -->
+  <div class="card">
+    <h2><span class="step-num">2</span> Event &amp; Ticket Types</h2>
+    <div class="row tight">
+      <div>
+        <label>Event Unique ID (GUID)</label>
+        <input type="text" id="eventGuid" placeholder="e.g. 70d63906-1390-405b-851b-69e321f345ee">
+        <div class="helptext">In NOVI: Navigate to <strong>Event</strong> &rarr; <strong>Settings Tab</strong> &rarr; Scroll down to <strong>Event API Info</strong> &rarr; Copy the <strong>UniqueID</strong> value.</div>
+      </div>
+    </div>
+    <label style="margin-top:10px;">Ticket Types for This Event</label>
+    <div id="ticketTypeList">
+      <div class="helptext" style="margin-bottom: 15px;">Enter all ticket types needed for this event. Ensure the value in the <strong>Label</strong> field matches the value in the same column in the <strong>CSV Template</strong>. Once uploaded, the system will match the value in the template to the tickets listed here.</div>
+      <div class="helptext">In NOVI: Navigate to <strong>Event</strong> &rarr; <strong>Tickets Tab</strong> &rarr; Appropriate Ticket &rarr; Scroll down to <strong>Advanced</strong> Section &rarr; Copy the <strong>API UniqueID</strong> value &rarr; Paste in TicketUniqueID GUID field.</div>
+</div>
+    <button type="button" class="secondary small" onclick="addTicketTypeRow()">+ Add Ticket Type</button>
+    <div class="helptext">Give each ticket type a short label and its <strong>TicketUniqueId GUID</strong>. You'll assign these per-row below.</div>
+  </div>
+
+  <!-- STEP 3: Upload CSV -->
+  <div class="card">
+    <h2><span class="step-num">3</span> Upload Registrant List</h2>
+    <button type="button" class="secondary" onclick="downloadTemplate()">Download CSV Template</button>
+    <div class="helptext" style="margin-bottom: 15px;">Populate the <strong>CSV template</strong> and upload below. The only required column is the <strong>email address</strong>; however, if you do not provide the other information, it will not populate in NOVI.</div>
+    <div class="row tight">
+      <div>
+        <label>CSV File</label>
+        <input type="file" id="csvFile" accept=".csv">
+        <div class="helptext">Expected columns (header row required, case-insensitive): FirstName, LastName, Email, CompanyName (optional), Phone (optional), TicketType (optional &mdash; matches a label above)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Preview -->
+  <div class="card" id="previewCard" style="display:none;">
+    <h2><span class="step-num">4</span> Preview &amp; Assign Ticket Types</h2>
+    <div id="previewAlert" class="alert warning"></div>
+    <div class="summary-bar">
+      <div>Total loaded: <strong id="totalCount">0</strong></div>
+      <div>Selected: <strong id="selectedCount">0</strong></div>
+      <div>Missing email: <strong id="missingEmailCount">0</strong></div>
+    </div>
+    <div class="row tight" style="align-items:flex-end;">
+      <div style="max-width:280px;">
+        <label>Bulk-assign ticket type to selected rows</label>
+        <select id="bulkTicketSelect" class="ticket-select"></select>
+      </div>
+      <div style="flex:0;">
+        <button type="button" class="secondary" onclick="applyBulkTicket()">Apply to Selected</button>
+      </div>
+      <div style="flex:0;">
+        <button type="button" class="secondary" onclick="matchMembers()">Match to Existing Members</button>
+      </div>
+    </div>
+    <div class="row tight" style="align-items:flex-end;">
+      <div style="max-width:280px;">
+        <label>Bulk-assign purchaser to selected rows</label>
+        <input type="text" id="bulkPurchaserInput" placeholder="purchaser email or GUID">
+      </div>
+      <div style="flex:0;">
+        <button type="button" class="secondary" onclick="applyBulkPurchaser()">Apply to Selected</button>
+      </div>
+    </div>
+    <div class="helptext" style="margin-bottom:12px;">Use the checkboxes below (and "select all" in the header) to choose rows, pick a ticket type here, then apply. This only affects checked rows, so uncheck anyone who needs a different ticket type first.</div>
+    <div class="helptext" id="matchHelptext">Matching checks each row's email against Novi directly (server-side filter, no full database pull). Runs in batches of 15 with a short pause between batches to respect Novi's rate limit. Matched rows register under the existing member record instead of being created as a new guest.</div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" checked onclick="toggleSelectAll(this)"></th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Company</th>
+            <th>Phone</th>
+            <th>Purchaser</th>
+            <th>Ticket Type</th>
+            <th>Member Match</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- STEP 4.5: Create Non-Member Records -->
+  <div class="card" id="createCard" style="display:none;">
+    <h2><span class="step-num">4b</span> Create Non-Member Records for Unmatched Rows</h2>
+    <div id="createAlert" class="alert"></div>
+    <div class="helptext" style="margin-bottom:10px;">Rows without a membership match show as "New Guest." Check the ones you want turned into a real Non-Member record in Novi before registering them for the event — this is untested against your Novi instance, so try it on one row first.</div>
+    <div class="row tight" style="align-items:center;">
+      <div style="flex:0;"><button type="button" class="secondary small" onclick="toggleAllCreateCheckboxes(true)">Select All Unmatched</button></div>
+      <div style="flex:0;"><button type="button" class="secondary small" onclick="toggleAllCreateCheckboxes(false)">Clear Selection</button></div>
+      <div style="flex:0;"><button type="button" onclick="createSelectedNonMembers()">Create Selected Non-Member Records</button></div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Import -->
+  <div class="card" id="importCard" style="display:none;">
+    <h2><span class="step-num">5</span> Import</h2>
+    <div id="importAlert" class="alert"></div>
+    <div class="progress-outer" id="progressOuter"><div class="progress-inner" id="progressInner"></div></div>
+    <div class="actions">
+      <button type="button" id="importBtn" onclick="runImport()">Import Selected Registrants</button>
+      <button type="button" class="secondary" id="retryBtn" onclick="retryFailed()" style="display:none;">Retry Failed Rows</button>
+      <button type="button" class="secondary" id="exportFailBtn" onclick="exportFailed()" style="display:none;">Export Failed Rows to CSV</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let rows = [];
+let ticketTypeCounter = 0;
+
+async function lookupMemberByEmail(email) {
+  const base = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('authToken').value.trim();
+  const res = await fetch(`${base}/novi/api/members?email=${encodeURIComponent(email)}`, {
+    headers: { 'X-Auth-Token': token }
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const results = data.Results || data.results || [];
+  return results.length > 0 ? results[0] : null;
+}
+
+async function matchMembers() {
+  const token = document.getElementById('authToken').value.trim();
+  const alertEl = document.getElementById('previewAlert');
+  if (!token) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = 'Enter your Worker Auth Token before matching to membership records.';
+    return;
+  }
+
+  const toMatch = rows.filter(r => r.email);
+  if (toMatch.length === 0) {
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = 'No rows with an email address to match.';
+    return;
+  }
+
+  const BATCH_SIZE = 15;
+  const BATCH_DELAY_MS = 1000;
+  let matched = 0;
+  let failed = 0;
+  let done = 0;
+
+  for (let i = 0; i < toMatch.length; i += BATCH_SIZE) {
+    const batch = toMatch.slice(i, i + BATCH_SIZE);
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = `Matching against membership records: ${done} of ${toMatch.length}...`;
+
+    await Promise.all(batch.map(async row => {
+      try {
+        const member = await lookupMemberByEmail(row.email);
+        if (member) {
+          row.customerUniqueId = member.UniqueID || member.UniqueId;
+          row.customerName = member.Name || '';
+          matched++;
+        } else {
+          row.customerUniqueId = null;
+          row.customerName = '';
+        }
+      } catch (e) {
+        row.customerUniqueId = null;
+        row.customerName = '';
+        row.matchError = e.message;
+        failed++;
+      }
+
+      // Optional purchaser lookup — skip entirely if a GUID was entered directly
+      const pEmail = (row.purchaserEmail || '').trim();
+      row.purchaserMatchError = '';
+      if (isGuid(pEmail)) {
+        row.purchaserUniqueId = pEmail;
+        row.purchaserName = row.purchaserName || '(entered directly)';
+      } else if (!pEmail) {
+        row.purchaserUniqueId = null;
+        row.purchaserName = '';
+      } else if (row.customerUniqueId && pEmail.toLowerCase() === row.email.toLowerCase()) {
+        // purchaser is the same person as the attendee we already matched
+        row.purchaserUniqueId = row.customerUniqueId;
+        row.purchaserName = row.customerName;
+      } else {
+        try {
+          const pMember = await lookupMemberByEmail(pEmail);
+          if (pMember) {
+            row.purchaserUniqueId = pMember.UniqueID || pMember.UniqueId;
+            row.purchaserName = pMember.Name || '';
+          } else {
+            row.purchaserUniqueId = null;
+            row.purchaserName = '';
+            row.purchaserMatchError = 'No member found for this email';
+          }
+        } catch (e) {
+          row.purchaserUniqueId = null;
+          row.purchaserMatchError = e.message;
+        }
+      }
+
+      done++;
+      updateRowMatchUI(row);
+    }));
+
+    if (i + BATCH_SIZE < toMatch.length) {
+      await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
+    }
+  }
+
+  alertEl.className = failed > 0 ? 'alert warning show' : 'alert success show';
+  alertEl.textContent = failed > 0
+    ? `Matched ${matched} of ${toMatch.length}. ${failed} lookup(s) failed — those rows will register as guests unless retried.`
+    : `Matched ${matched} of ${toMatch.length} row(s) to existing membership records. Unmatched rows will register as guests.`;
+}
+
+function updateRowMatchUI(row) {
+  const tr = document.getElementById('row_' + row.idx);
+  if (!tr) return;
+
+  const purchaserCell = tr.children[6];
+  if (purchaserCell) {
+    const existingHelptext = purchaserCell.querySelector('.helptext');
+    if (existingHelptext) existingHelptext.remove();
+    let purchaserBadge = '';
+    if (row.purchaserUniqueId) {
+      purchaserBadge = `<div class="helptext" style="margin-top:2px;">→ <span class="badge ok" title="${escapeAttr(row.purchaserUniqueId)}">${escapeHtml(row.purchaserName || 'matched')}</span></div>`;
+    } else if (row.purchaserEmail && row.purchaserMatchError) {
+      purchaserBadge = `<div class="helptext" style="margin-top:2px;">→ <span class="badge fail" title="${escapeAttr(row.purchaserMatchError)}">not found, defaults to attendee</span></div>`;
+    } else if (!row.purchaserEmail) {
+      purchaserBadge = `<div class="helptext" style="margin-top:2px;">defaults to attendee</div>`;
+    }
+    purchaserCell.insertAdjacentHTML('beforeend', purchaserBadge);
+  }
+
+  const cell = tr.children[8];
+  if (!cell) return;
+  if (row.customerUniqueId && row.createdNonMember) {
+    cell.innerHTML = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">New Non-Member: ${escapeHtml(row.customerName || 'created')}</span>`;
+  } else if (row.customerUniqueId) {
+    cell.innerHTML = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">Member: ${escapeHtml(row.customerName || 'matched')}</span>`;
+  } else if (row.matchError) {
+    cell.innerHTML = `<span class="badge fail" title="${escapeAttr(row.matchError)}">Lookup failed</span>`;
+  } else {
+    cell.innerHTML = `New Guest <label style="font-weight:400;"><input type="checkbox" ${row.createNonMember ? 'checked' : ''} onchange="toggleCreateNonMember(${row.idx}, this.checked)"> create record</label>`;
+  }
+  updateCreateCardVisibility();
+}
+
+async function retryRowMatch(idx) {
+  const row = rows.find(r => r.idx === idx);
+  if (!row) return;
+  const token = document.getElementById('authToken').value.trim();
+  if (!token) {
+    alert('Enter your Worker Auth Token first.');
+    return;
+  }
+  row.matchError = '';
+  try {
+    const member = await lookupMemberByEmail(row.email);
+    if (member) {
+      row.customerUniqueId = member.UniqueID || member.UniqueId;
+      row.customerName = member.Name || '';
+    } else {
+      row.customerUniqueId = null;
+      row.customerName = '';
+    }
+  } catch (e) {
+    row.customerUniqueId = null;
+    row.matchError = e.message;
+  }
+  updateRowMatchUI(row);
+}
+
+function updateCreateCardVisibility() {
+  const anyUnmatched = rows.some(r => r.customerUniqueId === null && !r.createdNonMember);
+  document.getElementById('createCard').style.display = anyUnmatched ? 'block' : 'none';
+}
+
+function toggleCreateNonMember(idx, checked) {
+  const row = rows.find(r => r.idx === idx);
+  if (row) row.createNonMember = checked;
+}
+
+function toggleAllCreateCheckboxes(checked) {
+  rows.forEach(row => {
+    if (row.customerUniqueId === null && !row.createdNonMember && !row.matchError) {
+      row.createNonMember = checked;
+    }
+  });
+  renderPreview();
+}
+
+function buildMemberCreatePayload(row) {
+  const fullName = `${row.firstName} ${row.lastName}`.trim();
+  return {
+    ParentCustomerUniqueID: null,
+    Name: fullName,
+    FirstName: row.firstName,
+    LastName: row.lastName,
+    Suffix: null,
+    Active: true,
+    Email: row.email || null,
+    Phone: row.phone ? row.phone : null,
+    Mobile: null,
+    Fax: null,
+    Website: null,
+    County: null,
+    BillingAddress: { Address1: null, Address2: null, City: null, ZipCode: null, StateProvince: null, Country: null },
+    ShippingAddress: { Address1: null, Address2: null, City: null, ZipCode: null, StateProvince: null, Country: null },
+    PersonalEmail: null,
+    PersonalPhone: null,
+    PersonalMobile: null,
+    PersonalAddress: null,
+    Notes: null,
+    FacebookUrl: null,
+    LinkedInUrl: null,
+    InstagramHandle: null,
+    TwitterHandle: null,
+    MemberProfile: null,
+    JobTitle: row.companyName ? null : null,
+    Image: '',
+    OriginalJoinDate: null,
+    MemberSince: null,
+    MembershipExpires: null,
+    HideOnWebsite: false,
+    HideContactInformation: false,
+    UnsubscribeFromEmails: false,
+    Approved: true,
+    AutoRenew: false,
+    CustomerType: 'Person',
+    UseParentBilling: false,
+    UseParentShipping: false,
+    Credentials: null,
+    Title: null,
+    ProfessionalTitle: null,
+    DirectoryGallery: [],
+    Awards: [],
+    VolunteerWorks: [],
+    Education: [],
+    MemberType: null,
+    CustomFields: {},
+    CreatedDate: null,
+    PrimaryContactUniqueId: null,
+    BillingContactUniqueId: null,
+    FeaturedDirectoryListing: false
+  };
+}
+
+async function createNonMemberRecord(row) {
+  const base = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('authToken').value.trim();
+  const payload = buildMemberCreatePayload(row);
+
+  const res = await fetch(`${base}/novi/api/members`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+    body: JSON.stringify(payload)
+  });
+
+  const bodyText = await res.text();
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${bodyText.slice(0, 200)}`);
+  }
+
+  let newId = null;
+  try {
+    const data = JSON.parse(bodyText);
+    newId = data.UniqueID || data.UniqueId || null;
+  } catch (e) {}
+
+  if (!newId) {
+    const loc = res.headers.get('Location');
+    if (loc) {
+      const parts = loc.split('/').filter(Boolean);
+      newId = parts[parts.length - 1];
+    }
+  }
+
+  if (!newId) {
+    throw new Error(`Record may have been created but no UniqueID was returned. Response: ${bodyText.slice(0, 200)}`);
+  }
+
+  return newId;
+}
+
+async function createSelectedNonMembers() {
+  const token = document.getElementById('authToken').value.trim();
+  const alertEl = document.getElementById('createAlert');
+  if (!token) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = 'Enter your Worker Auth Token first.';
+    return;
+  }
+
+  const toCreate = rows.filter(r => r.createNonMember && r.customerUniqueId === null && !r.matchError);
+  if (toCreate.length === 0) {
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = 'No rows selected for record creation.';
+    return;
+  }
+
+  const missingName = toCreate.filter(r => !r.firstName || !r.lastName);
+  if (missingName.length > 0) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = `${missingName.length} selected row(s) are missing a First or Last Name. Novi requires a name to create a record — fill those in above (click into the First/Last Name fields) before creating.`;
+    return;
+  }
+
+  const BATCH_SIZE = 15;
+  const BATCH_DELAY_MS = 1000;
+  let created = 0, failed = 0, done = 0;
+
+  for (let i = 0; i < toCreate.length; i += BATCH_SIZE) {
+    const batch = toCreate.slice(i, i + BATCH_SIZE);
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = `Creating records: ${done} of ${toCreate.length}...`;
+
+    await Promise.all(batch.map(async row => {
+      try {
+        const newId = await createNonMemberRecord(row);
+        row.customerUniqueId = newId;
+        row.customerName = `${row.firstName} ${row.lastName}`.trim();
+        row.createdNonMember = true;
+        created++;
+      } catch (e) {
+        row.matchError = e.message;
+        failed++;
+      }
+      done++;
+      updateRowMatchUI(row);
+    }));
+
+    if (i + BATCH_SIZE < toCreate.length) {
+      await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
+    }
+  }
+
+  alertEl.className = failed > 0 ? 'alert warning show' : 'alert success show';
+  alertEl.textContent = failed > 0
+    ? `Created ${created} of ${toCreate.length}. ${failed} failed — check the "Lookup failed" tooltip on those rows for the error.`
+    : `Created ${created} non-member record(s). These rows will now register under the new record instead of as a guest.`;
+  updateCreateCardVisibility();
+}
+
+function addTicketTypeRow(label = '', guid = '') {
+  ticketTypeCounter++;
+  const id = 'tt_' + ticketTypeCounter;
+  const div = document.createElement('div');
+  div.className = 'ticket-row';
+  div.id = id;
+  div.innerHTML = `
+    <input type="text" class="label" placeholder="Label (e.g. Member Rate)" value="${escapeAttr(label)}" onchange="rebuildTicketDropdowns()">
+    <input type="text" class="guid" placeholder="TicketUniqueId GUID" value="${escapeAttr(guid)}" onchange="rebuildTicketDropdowns()">
+    <button type="button" class="danger" onclick="removeTicketTypeRow('${id}')">&times;</button>
+  `;
+  document.getElementById('ticketTypeList').appendChild(div);
+  rebuildTicketDropdowns();
+}
+
+function removeTicketTypeRow(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  rebuildTicketDropdowns();
+}
+
+function getTicketTypes() {
+  const list = [];
+  document.querySelectorAll('#ticketTypeList .ticket-row').forEach(r => {
+    const label = r.querySelector('.label').value.trim();
+    const guid = r.querySelector('.guid').value.trim();
+    if (label && guid) list.push({ label, guid });
+  });
+  return list;
+}
+
+function rebuildTicketDropdowns() {
+  const types = getTicketTypes();
+  document.querySelectorAll('.ticket-select').forEach(sel => {
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">-- select --</option>' +
+      types.map(t => `<option value="${escapeAttr(t.guid)}">${escapeHtml(t.label)}</option>`).join('');
+    if (types.some(t => t.guid === currentVal)) {
+      sel.value = currentVal;
+    } else if (types.length === 1 && sel.id !== 'bulkTicketSelect') {
+      sel.value = types[0].guid;
+    }
+  });
+  updateRowsFromDropdowns();
+}
+
+async function applyBulkPurchaser() {
+  const value = document.getElementById('bulkPurchaserInput').value.trim();
+  const alertEl = document.getElementById('previewAlert');
+  if (!value) {
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = 'Enter a purchaser email or GUID first.';
+    return;
+  }
+
+  const selectedRows = rows.filter(r => r.selected);
+  if (selectedRows.length === 0) {
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = 'No rows are selected.';
+    return;
+  }
+
+  let purchaserId, purchaserName;
+
+  if (isGuid(value)) {
+    purchaserId = value;
+    purchaserName = '(entered directly)';
+  } else {
+    const token = document.getElementById('authToken').value.trim();
+    if (!token) {
+      alertEl.className = 'alert error show';
+      alertEl.textContent = 'Enter your Worker Auth Token before looking up a purchaser by email.';
+      return;
+    }
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = 'Looking up purchaser...';
+    try {
+      const member = await lookupMemberByEmail(value);
+      if (!member) {
+        alertEl.className = 'alert error show';
+        alertEl.textContent = `No member found for "${value}". Double check the email, or use the GUID directly if you have it.`;
+        return;
+      }
+      purchaserId = member.UniqueID || member.UniqueId;
+      purchaserName = member.Name || '';
+    } catch (e) {
+      alertEl.className = 'alert error show';
+      alertEl.textContent = `Purchaser lookup failed: ${e.message}`;
+      return;
+    }
+  }
+
+  selectedRows.forEach(row => {
+    row.purchaserEmail = value;
+    row.purchaserUniqueId = purchaserId;
+    row.purchaserName = purchaserName;
+    row.purchaserMatchError = '';
+    const input = document.querySelector(`#row_${row.idx} input[placeholder="email or GUID"]`);
+    if (input) input.value = value;
+    updateRowMatchUI(row);
+  });
+
+  alertEl.className = 'alert success show';
+  alertEl.textContent = `Assigned "${purchaserName || value}" as purchaser on ${selectedRows.length} selected row(s).`;
+}
+
+function applyBulkTicket() {
+  const guid = document.getElementById('bulkTicketSelect').value;
+  if (!guid) return;
+  let count = 0;
+  rows.forEach(row => {
+    if (row.selected) {
+      row.ticketGuid = guid;
+      const sel = document.querySelector(`#row_${row.idx} .ticket-select`);
+      if (sel) sel.value = guid;
+      count++;
+    }
+  });
+  const alertEl = document.getElementById('previewAlert');
+  alertEl.className = 'alert success show';
+  alertEl.textContent = `Assigned ticket type to ${count} selected row(s).`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+// --- CSV parsing (simple, handles quoted fields with commas) ---
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim().length > 0);
+  if (lines.length === 0) return { headers: [], data: [] };
+  const parseLine = (line) => {
+    const result = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQuotes) {
+        if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
+        else if (c === '"') { inQuotes = false; }
+        else { cur += c; }
+      } else {
+        if (c === '"') { inQuotes = true; }
+        else if (c === ',') { result.push(cur); cur = ''; }
+        else { cur += c; }
+      }
+    }
+    result.push(cur);
+    return result.map(s => s.trim());
+  };
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase());
+  const data = lines.slice(1).map(line => {
+    const vals = parseLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] !== undefined ? vals[i] : '');
+    return obj;
+  });
+  return { headers, data };
+}
+
+function findCol(obj, candidates) {
+  for (const c of candidates) {
+    if (obj[c] !== undefined) return obj[c];
+  }
+  return '';
+}
+
+document.getElementById('csvFile').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const { data } = parseCSV(evt.target.result);
+    rows = data.map((r, idx) => ({
+      idx,
+      firstName: findCol(r, ['firstname', 'first name', 'first']),
+      lastName: findCol(r, ['lastname', 'last name', 'last']),
+      email: findCol(r, ['email', 'e-mail', 'email address']),
+      companyName: findCol(r, ['companyname', 'company name', 'company']),
+      phone: findCol(r, ['phone', 'phone number']),
+      ticketTypeLabel: findCol(r, ['tickettype', 'ticket type', 'ticket']),
+      purchaserEmail: findCol(r, ['purchaseremail', 'purchaser email', 'purchaser']),
+      selected: true,
+      status: 'pending',
+      errorMsg: '',
+      customerUniqueId: undefined,
+      customerName: '',
+      createNonMember: false,
+      createdNonMember: false,
+      purchaserUniqueId: null,
+      purchaserName: '',
+      purchaserMatchError: ''
+    }));
+    renderPreview();
+    const token = document.getElementById('authToken').value.trim();
+    if (token) {
+      matchMembers();
+    }
+  };
+  reader.readAsText(file);
+});
+
+function renderPreview() {
+  document.getElementById('previewCard').style.display = 'block';
+  document.getElementById('importCard').style.display = 'block';
+  const tbody = document.getElementById('previewBody');
+  const types = getTicketTypes();
+  tbody.innerHTML = '';
+  let missingEmail = 0;
+
+  rows.forEach((row) => {
+    if (!row.email) missingEmail++;
+    const tr = document.createElement('tr');
+    tr.id = 'row_' + row.idx;
+    if (!row.email) tr.classList.add('row-error');
+    if (!row.selected) tr.classList.add('row-excluded');
+
+    let statusBadge = '<span class="badge pending">Pending</span>';
+    if (row.status === 'success') statusBadge = '<span class="badge ok">Imported</span>';
+    if (row.status === 'failed') statusBadge = `<span class="badge fail" title="${escapeAttr(row.errorMsg)}">Failed</span>`;
+
+    let matchBadge = '<span class="badge pending">Not checked</span>';
+    if (row.customerUniqueId && row.createdNonMember) {
+      matchBadge = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">New Non-Member: ${escapeHtml(row.customerName || 'created')}</span>`;
+    } else if (row.customerUniqueId) {
+      matchBadge = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">Member: ${escapeHtml(row.customerName || 'matched')}</span>`;
+    } else if (row.customerUniqueId === null) {
+      matchBadge = row.matchError
+        ? `<span class="badge fail" title="${escapeAttr(row.matchError)}">Lookup failed</span> <a href="#" style="font-size:0.78rem;" onclick="retryRowMatch(${row.idx}); return false;">retry</a>`
+        : `New Guest <label style="font-weight:400;"><input type="checkbox" ${row.createNonMember ? 'checked' : ''} onchange="toggleCreateNonMember(${row.idx}, this.checked)"> create record</label>`;
+    }
+
+    let purchaserBadge = '';
+    if (row.purchaserUniqueId) {
+      purchaserBadge = `<div class="helptext" style="margin-top:2px;">→ <span class="badge ok" title="${escapeAttr(row.purchaserUniqueId)}">${escapeHtml(row.purchaserName || 'matched')}</span></div>`;
+    } else if (row.purchaserEmail && row.purchaserMatchError) {
+      purchaserBadge = `<div class="helptext" style="margin-top:2px;">→ <span class="badge fail" title="${escapeAttr(row.purchaserMatchError)}">not found, defaults to attendee</span></div>`;
+    } else if (!row.purchaserEmail) {
+      purchaserBadge = `<div class="helptext" style="margin-top:2px;">defaults to attendee</div>`;
+    }
+
+    tr.innerHTML = `
+      <td><input type="checkbox" ${row.selected ? 'checked' : ''} onchange="toggleRow(${row.idx}, this.checked)"></td>
+      <td><input type="text" class="small-input" style="width:100px;" value="${escapeAttr(row.firstName)}" onchange="updateRowField(${row.idx}, 'firstName', this.value)"></td>
+      <td><input type="text" class="small-input" style="width:100px;" value="${escapeAttr(row.lastName)}" onchange="updateRowField(${row.idx}, 'lastName', this.value)"></td>
+      <td>${escapeHtml(row.email) || '<em style="color:var(--error)">missing</em>'}</td>
+      <td><input type="text" class="small-input" style="width:110px;" value="${escapeAttr(row.companyName)}" onchange="updateRowField(${row.idx}, 'companyName', this.value)"></td>
+      <td><input type="text" class="small-input" style="width:100px;" value="${escapeAttr(row.phone)}" onchange="updateRowField(${row.idx}, 'phone', this.value)"></td>
+      <td>
+        <input type="text" class="small-input" style="width:140px;" placeholder="email or GUID" value="${escapeAttr(row.purchaserEmail)}" onchange="updateRowField(${row.idx}, 'purchaserEmail', this.value)">
+        ${purchaserBadge}
+      </td>
+      <td><select class="ticket-select" onchange="setRowTicket(${row.idx}, this.value)"></select></td>
+      <td>${matchBadge}</td>
+      <td>${statusBadge}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('totalCount').textContent = rows.length;
+  document.getElementById('missingEmailCount').textContent = missingEmail;
+
+  const alertEl = document.getElementById('previewAlert');
+  if (missingEmail > 0) {
+    alertEl.textContent = `${missingEmail} row(s) are missing an email address and will be skipped during import.`;
+    alertEl.classList.add('show');
+  } else {
+    alertEl.classList.remove('show');
+  }
+
+  rebuildTicketDropdowns();
+  applyRowTicketLabelsFromCSV();
+  updateSelectedCount();
+  updateCreateCardVisibility();
+}
+
+function applyRowTicketLabelsFromCSV() {
+  const types = getTicketTypes();
+  rows.forEach(row => {
+    const sel = document.querySelector(`#row_${row.idx} .ticket-select`);
+    if (!sel) return;
+    if (row.ticketTypeLabel) {
+      const match = types.find(t => t.label.toLowerCase() === row.ticketTypeLabel.toLowerCase());
+      if (match) {
+        sel.value = match.guid;
+        row.ticketGuid = match.guid;
+        return;
+      }
+    }
+    if (types.length === 1) {
+      sel.value = types[0].guid;
+      row.ticketGuid = types[0].guid;
+    }
+  });
+}
+
+function updateRowsFromDropdowns() {
+  rows.forEach(row => {
+    const sel = document.querySelector(`#row_${row.idx} .ticket-select`);
+    if (sel) row.ticketGuid = sel.value;
+  });
+}
+
+function setRowTicket(idx, guid) {
+  const row = rows.find(r => r.idx === idx);
+  if (row) row.ticketGuid = guid;
+}
+
+function isGuid(str) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test((str || '').trim());
+}
+
+function updateRowField(idx, field, value) {
+  const row = rows.find(r => r.idx === idx);
+  if (!row) return;
+  row[field] = value.trim();
+
+  if (field === 'purchaserEmail') {
+    if (isGuid(row.purchaserEmail)) {
+      row.purchaserUniqueId = row.purchaserEmail;
+      row.purchaserName = '(entered directly)';
+      row.purchaserMatchError = '';
+    } else {
+      row.purchaserUniqueId = null;
+      row.purchaserName = '';
+      row.purchaserMatchError = '';
+    }
+    updateRowMatchUI(row);
+  }
+}
+
+function toggleRow(idx, checked) {
+  const row = rows.find(r => r.idx === idx);
+  if (row) row.selected = checked;
+  const tr = document.getElementById('row_' + idx);
+  if (tr) tr.classList.toggle('row-excluded', !checked);
+  updateSelectedCount();
+}
+
+function toggleSelectAll(cb) {
+  rows.forEach(r => r.selected = cb.checked);
+  document.querySelectorAll('#previewBody tr').forEach(tr => {
+    tr.querySelector('input[type=checkbox]').checked = cb.checked;
+    tr.classList.toggle('row-excluded', !cb.checked);
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  document.getElementById('selectedCount').textContent = rows.filter(r => r.selected).length;
+}
+
+function downloadTemplate() {
+  const csv = 'FirstName,LastName,Email,CompanyName,Phone,TicketType\nJane,Doe,jane.doe@example.com,Example Agency,555-111-2222,Member Rate\n';
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'registration_import_template.csv';
+  a.click();
+}
+
+function buildPayload(row) {
+  const fullName = `${row.firstName} ${row.lastName}`.trim();
+  const customerUniqueId = row.customerUniqueId || null;
+  const finalPurchaserId = row.purchaserUniqueId || customerUniqueId || null;
+  const hasPurchaser = !!finalPurchaserId;
+  return {
+    EventUniqueID: document.getElementById('eventGuid').value.trim(),
+    PurchaserUniqueID: finalPurchaserId,
+    GuestName: hasPurchaser ? null : (fullName || null),
+    GuestEmail: hasPurchaser ? null : (row.email || null),
+    GuestPhone: hasPurchaser ? null : (row.phone ? row.phone : null),
+    ConfirmationEmail: row.email || null,
+    QBSalesReceiptID: null,
+    QBInvoiceID: null,
+    RegistrationDate: new Date().toISOString(),
+    RegistrationDetailURL: null,
+    Attendees: [
+      {
+        AttendeeCustomerUniqueId: customerUniqueId,
+        FullName: fullName,
+        FirstName: row.firstName,
+        LastName: row.lastName,
+        CompanyName: row.companyName || '',
+        Email: row.email,
+        Phone: row.phone ? row.phone : null,
+        Cancelled: false,
+        Attended: false,
+        // Novi derives PaymentStatus and the actual amount owed from the ticket
+        // record itself (TicketUniqueId below) — these two values are sent for
+        // completeness but Novi's own logic will override them based on the
+        // ticket's configured price.
+        PaymentStatus: 'Unpaid',
+        PricePaid: 0.00,
+        TaxPaid: 0.00,
+        CancellationDate: null,
+        TicketUniqueId: row.ticketGuid || '',
+        AttendeeCustomFields: []
+      }
+    ]
+  };
+}
+
+async function postRegistration(row) {
+  const base = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('authToken').value.trim();
+  const url = `${base}/novi/api/registrations`;
+  const payload = buildPayload(row);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Auth-Token': token
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const errBody = await res.text();
+      if (errBody) msg += `: ${errBody.slice(0, 200)}`;
+    } catch (e) {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function runImport() {
+  const eventGuid = document.getElementById('eventGuid').value.trim();
+  const token = document.getElementById('authToken').value.trim();
+  const alertEl = document.getElementById('importAlert');
+
+  if (!eventGuid) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = 'Enter the Event Unique ID (GUID) before importing.';
+    return;
+  }
+  if (!token) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = 'Enter your Worker Auth Token before importing.';
+    return;
+  }
+
+  const toProcess = rows.filter(r => r.selected && r.email && r.status !== 'success');
+  if (toProcess.length === 0) {
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = 'Nothing to import. Check that rows are selected and have emails.';
+    return;
+  }
+
+  const missingTicket = toProcess.filter(r => !r.ticketGuid);
+  if (missingTicket.length > 0) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = `${missingTicket.length} row(s) don't have a ticket type assigned. Assign one for each row (or add a single ticket type above to auto-fill all rows).`;
+    return;
+  }
+
+  document.getElementById('importBtn').disabled = true;
+  document.getElementById('progressOuter').style.display = 'block';
+  alertEl.className = 'alert show';
+  alertEl.style.background = '#faf8f6';
+  alertEl.style.color = 'var(--charcoal)';
+
+  let done = 0, success = 0, failed = 0;
+
+  for (const row of toProcess) {
+    alertEl.textContent = `Importing ${done + 1} of ${toProcess.length}...`;
+    try {
+      await postRegistration(row);
+      row.status = 'success';
+      success++;
+    } catch (e) {
+      row.status = 'failed';
+      row.errorMsg = e.message;
+      failed++;
+    }
+    done++;
+    document.getElementById('progressInner').style.width = `${Math.round((done / toProcess.length) * 100)}%`;
+    updateRowStatusUI(row);
+    // small delay to avoid hammering the API
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  document.getElementById('importBtn').disabled = false;
+  if (failed > 0) {
+    alertEl.className = 'alert warning show';
+    alertEl.textContent = `Done. ${success} imported, ${failed} failed. Review the failed rows below.`;
+    document.getElementById('retryBtn').style.display = 'inline-block';
+    document.getElementById('exportFailBtn').style.display = 'inline-block';
+  } else {
+    alertEl.className = 'alert success show';
+    alertEl.textContent = `Done. All ${success} registrants imported successfully.`;
+    document.getElementById('retryBtn').style.display = 'none';
+    document.getElementById('exportFailBtn').style.display = 'none';
+  }
+}
+
+function updateRowStatusUI(row) {
+  const tr = document.getElementById('row_' + row.idx);
+  if (!tr) return;
+  const statusCell = tr.children[9];
+  if (row.status === 'success') {
+    statusCell.innerHTML = '<span class="badge ok">Imported</span>';
+  } else if (row.status === 'failed') {
+    statusCell.innerHTML = `<span class="badge fail" title="${escapeAttr(row.errorMsg)}">Failed</span>`;
+  }
+}
+
+function retryFailed() {
+  runImport();
+}
+
+function exportFailed() {
+  const failedRows = rows.filter(r => r.status === 'failed');
+  if (failedRows.length === 0) return;
+  let csv = 'FirstName,LastName,Email,CompanyName,Phone,TicketType,Error\n';
+  failedRows.forEach(r => {
+    csv += `"${r.firstName}","${r.lastName}","${r.email}","${r.companyName}","${r.phone}","${r.ticketTypeLabel}","${(r.errorMsg || '').replace(/"/g, '""')}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'failed_registrations.csv';
+  a.click();
+}
+
+// Seed with one empty ticket type row to start
+addTicketTypeRow();
+</script>
+</body>
+</html>
