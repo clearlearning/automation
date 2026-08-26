@@ -31,9 +31,9 @@
     padding: 24px;
     line-height: 1.5;
   }
-  .wrap { max-width: 1100px; margin: 0 auto; }
+  .wrap { max-width: 1600px; margin: 0 auto; }
   header {
-    border-bottom: 4px solid var(--gold);
+    border-bottom: 4px solid var(--burgundy);
     padding-bottom: 16px;
     margin-bottom: 24px;
   }
@@ -42,7 +42,7 @@
     font-size: 1.6rem;
     margin: 0 0 4px 0;
   }
-  .subtitle { color: #000; opacity: 0.75; font-size: 0.95rem; }
+  .subtitle { color: var(--charcoal); opacity: 0.75; font-size: 0.95rem; }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -116,7 +116,10 @@
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
   th { background: #faf8f6; color: var(--charcoal); font-weight: 700; position: sticky; top: 0; }
-  .table-scroll { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+  .table-scroll { max-height: 480px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
+  .detail-row td { background: #faf8f6; padding: 14px 16px; border-bottom: 2px solid var(--border); }
+  .detail-row-fields { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .detail-row-fields > div { min-width: 200px; }
   tr.row-error { background: #fdecec; }
   tr.row-excluded { opacity: 0.4; }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
@@ -160,8 +163,8 @@
 <div class="wrap">
 
   <header>
-    <h1>NOVI Bulk Registration Import</h1>
-    <div class="subtitle">**INTERNAL USE ONLY** For use when CLEAR Staff must register mulitple users for an event.</div>
+    <h1>Novi Bulk Registration Import</h1>
+    <div class="subtitle"><strong>INTERNAL USE ONLY</strong> &mdash; For use when CLEAR Staff must register multiple users for an event.</div>
   </header>
 
   <!-- STEP 1: Connection -->
@@ -194,17 +197,18 @@
     <label style="margin-top:10px;">Ticket Types for This Event</label>
     <div id="ticketTypeList">
       <div class="helptext" style="margin-bottom: 15px;">Enter all ticket types needed for this event. Ensure the value in the <strong>Label</strong> field matches the value in the same column in the <strong>CSV Template</strong>. Once uploaded, the system will match the value in the template to the tickets listed here.</div>
-      <div class="helptext">In NOVI: Navigate to <strong>Event</strong> &rarr; <strong>Tickets Tab</strong> &rarr; Appropriate Ticket &rarr; Scroll down to <strong>Advanced</strong> Section &rarr; Copy the <strong>API UniqueID</strong> value &rarr; Paste in TicketUniqueID GUID field.</div>
-</div>
+      <div class="helptext" style="margin-bottom: 15px;">In NOVI: Navigate to <strong>Event</strong> &rarr; <strong>Tickets Tab</strong> &rarr; Appropriate Ticket &rarr; Scroll down to <strong>Advanced</strong> Section &rarr; Copy the <strong>API UniqueID</strong> value &rarr; Paste in TicketUniqueID GUID field.</div>
+    </div>
     <button type="button" class="secondary small" onclick="addTicketTypeRow()">+ Add Ticket Type</button>
-    <div class="helptext">Give each ticket type a short label and its <strong>TicketUniqueId GUID</strong>. You'll assign these per-row below.</div>
+    <div class="helptext">Give each ticket type a short label and its TicketUniqueId GUID. You'll assign these per-row below.</div>
+    <div class="helptext" style="margin-top:8px;">Note: Novi does <strong>not</strong> automatically price a registration from the ticket — confirmed by testing. This tool fetches each ticket's real price from Novi as soon as you enter its GUID (see the price shown below each ticket row) and sends that amount explicitly, marked Unpaid so it shows as an open balance.</div>
   </div>
 
   <!-- STEP 3: Upload CSV -->
   <div class="card">
     <h2><span class="step-num">3</span> Upload Registrant List</h2>
     <button type="button" class="secondary" onclick="downloadTemplate()">Download CSV Template</button>
-    <div class="helptext" style="margin-bottom: 15px;">Populate the <strong>CSV template</strong> and upload below. The only required column is the <strong>email address</strong>; however, if you do not provide the other information, it will not populate in NOVI.</div>
+    <div class="helptext" style="margin-bottom: 15px; margin-top: 8px;">Populate the <strong>CSV template</strong> and upload below. The only required column is the <strong>email address</strong>; however, if you do not provide the other information, it will not populate in NOVI.</div>
     <div class="row tight">
       <div>
         <label>CSV File</label>
@@ -269,13 +273,14 @@
 
   <!-- STEP 4.5: Create Non-Member Records -->
   <div class="card" id="createCard" style="display:none;">
-    <h2><span class="step-num">4b</span> Create Non-Member Records for Unmatched Rows</h2>
+    <h2><span class="step-num">4b</span> Assign Membership Status for Unmatched Rows</h2>
     <div id="createAlert" class="alert"></div>
-    <div class="helptext" style="margin-bottom:10px;">Rows without a membership match show as "New Guest." Check the ones you want turned into a real Non-Member record in Novi before registering them for the event — this is untested against your Novi instance, so try it on one row first.</div>
+    <div class="helptext" style="margin-bottom:10px;">Rows without a membership match show as "New Guest." Check the ones you want to create a real record for in Novi — choose Non-Member (default) or Member with a specific type. This is untested against your Novi instance, so try it on one row first.</div>
     <div class="row tight" style="align-items:center;">
       <div style="flex:0;"><button type="button" class="secondary small" onclick="toggleAllCreateCheckboxes(true)">Select All Unmatched</button></div>
       <div style="flex:0;"><button type="button" class="secondary small" onclick="toggleAllCreateCheckboxes(false)">Clear Selection</button></div>
-      <div style="flex:0;"><button type="button" onclick="createSelectedNonMembers()">Create Selected Non-Member Records</button></div>
+      <div style="flex:0;"><button type="button" class="secondary small" onclick="loadMemberTypesAndRefresh()">Load Member Types</button></div>
+      <div style="flex:0;"><button type="button" onclick="createSelectedNonMembers()">Create Selected Records</button></div>
     </div>
   </div>
 
@@ -296,6 +301,47 @@
 <script>
 let rows = [];
 let ticketTypeCounter = 0;
+let memberTypes = [];
+let ticketPriceCache = {};
+
+async function fetchTicketPrice(guid) {
+  if (!guid) return null;
+  const base = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('authToken').value.trim();
+  try {
+    const res = await fetch(`${base}/novi/api/tickets/${guid}`, { headers: { 'X-Auth-Token': token } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data.Price !== undefined ? data.Price : data.price;
+    const price = typeof raw === 'number' ? raw : parseFloat(raw);
+    ticketPriceCache[guid] = isNaN(price) ? null : price;
+  } catch (e) {
+    ticketPriceCache[guid] = null;
+    console.error('Ticket price fetch failed for', guid, e.message);
+  }
+  return ticketPriceCache[guid];
+}
+
+async function fetchAndDisplayTicketPrice(guidInputEl) {
+  const row = guidInputEl.closest('.ticket-row');
+  const statusEl = row ? row.querySelector('.ticket-price-status') : null;
+  const guid = guidInputEl.value.trim();
+  if (!guid) {
+    if (statusEl) statusEl.textContent = '';
+    return;
+  }
+  if (statusEl) { statusEl.textContent = 'checking price...'; statusEl.style.color = '#777'; }
+  const price = await fetchTicketPrice(guid);
+  if (statusEl) {
+    if (price === null) {
+      statusEl.textContent = 'price lookup failed \u2014 import will be blocked until this resolves';
+      statusEl.style.color = 'var(--error)';
+    } else {
+      statusEl.textContent = `ticket price: $${price.toFixed(2)}`;
+      statusEl.style.color = 'var(--success)';
+    }
+  }
+}
 
 async function lookupMemberByEmail(email) {
   const base = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
@@ -344,10 +390,12 @@ async function matchMembers() {
         if (member) {
           row.customerUniqueId = member.UniqueID || member.UniqueId;
           row.customerName = member.Name || '';
+          row.customerMemberStatus = (member.MemberStatus || '').toLowerCase();
           matched++;
         } else {
           row.customerUniqueId = null;
           row.customerName = '';
+          row.customerMemberStatus = '';
         }
       } catch (e) {
         row.customerUniqueId = null;
@@ -401,6 +449,140 @@ async function matchMembers() {
     : `Matched ${matched} of ${toMatch.length} row(s) to existing membership records. Unmatched rows will register as guests.`;
 }
 
+async function fetchMemberTypes() {
+  const base = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('authToken').value.trim();
+  try {
+    const res = await fetch(`${base}/novi/api/member-types`, {
+      headers: { 'X-Auth-Token': token }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data.Results || data.results || []);
+    memberTypes = list.map(t => ({
+      guid: t.UniqueID || t.UniqueId,
+      label: t.Name || t.DisplayName || '(unnamed type)',
+      forCompanies: !!t.ForCompanies
+    })).filter(t => t.guid);
+  } catch (e) {
+    console.error('Failed to load member types:', e.message);
+    memberTypes = [];
+  }
+}
+
+async function loadMemberTypesAndRefresh() {
+  const alertEl = document.getElementById('createAlert');
+  const token = document.getElementById('authToken').value.trim();
+  if (!token) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = 'Enter your Worker Auth Token first.';
+    return;
+  }
+  alertEl.className = 'alert warning show';
+  alertEl.textContent = 'Loading member types...';
+  await fetchMemberTypes();
+  if (memberTypes.length === 0) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = 'Could not load member types, or none were returned. Check the console for details.';
+  } else {
+    alertEl.className = 'alert success show';
+    alertEl.textContent = `Loaded ${memberTypes.length} member type(s).`;
+  }
+  rows.forEach(row => {
+    if (row.createNonMember) {
+      const tr = document.getElementById('row_' + row.idx);
+      if (tr) tr.children[8].innerHTML = buildMatchCellHtml(row);
+    }
+  });
+}
+
+function renderMembershipControls(row) {
+  const statusOptions = ['Non-Member', 'Member'].map(s =>
+    `<option value="${s}" ${row.membershipStatus === s ? 'selected' : ''}>${s}</option>`
+  ).join('');
+
+  let html = `<div>
+    <label style="margin-bottom:2px;">Membership Status</label>
+    <select class="small-input" style="width:180px;" onchange="setMembershipStatus(${row.idx}, this.value)">${statusOptions}</select>
+  </div>`;
+
+  if (row.membershipStatus === 'Member') {
+    const eligibleTypes = memberTypes.filter(t => !t.forCompanies);
+    const typeOptions = ['<option value="">-- select type --</option>'].concat(
+      eligibleTypes.map(t => `<option value="${escapeAttr(t.guid)}" ${row.memberTypeId === t.guid ? 'selected' : ''}>${escapeHtml(t.label)}</option>`)
+    ).join('');
+    const typeNote = memberTypes.length === 0
+      ? '<div class="helptext" style="margin-top:2px;">No member types loaded \u2014 use "Load Member Types" below.</div>'
+      : '<div class="helptext" style="margin-top:2px;">Company-only types hidden \u2014 this creates a Person record.</div>';
+    html += `
+      <div>
+        <label style="margin-bottom:2px;">Member Type <span style="font-weight:400;">(standalone members)</span></label>
+        <select class="small-input" style="width:230px;" onchange="setMemberType(${row.idx}, this.value)">${typeOptions}</select>
+        ${typeNote}
+      </div>
+      <div>
+        <label style="margin-bottom:2px;">Parent Company GUID <span style="font-weight:400;">(inheriting members)</span></label>
+        <input type="text" class="small-input" style="width:280px;" placeholder="Leave blank unless inheriting" value="${escapeAttr(row.parentCustomerGuid)}" onchange="updateRowField(${row.idx}, 'parentCustomerGuid', this.value)">
+        <div class="helptext" style="margin-top:2px;">Fill this in <em>instead of</em> Member Type when this person inherits membership from a company.</div>
+      </div>`;
+  }
+
+  return `<div class="detail-row-fields">${html}</div>`;
+}
+
+function buildMatchCellHtml(row) {
+  if (row.customerUniqueId && row.createdNonMember) {
+    const label = row.membershipStatus === 'Member' ? 'New Member' : 'New Non-Member';
+    return `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">${label}: ${escapeHtml(row.customerName || 'created')}</span>`;
+  }
+  if (row.customerUniqueId) {
+    return `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">Member: ${escapeHtml(row.customerName || 'matched')}</span>`;
+  }
+  if (row.customerUniqueId === null) {
+    if (row.matchError) {
+      return `<span class="badge fail" title="${escapeAttr(row.matchError)}">Lookup failed</span> <a href="#" style="font-size:0.78rem;" onclick="retryRowMatch(${row.idx}); return false;">retry</a>`;
+    }
+    return `New Guest <label style="font-weight:400;"><input type="checkbox" ${row.createNonMember ? 'checked' : ''} onchange="toggleCreateNonMember(${row.idx}, this.checked)"> create record</label>`;
+  }
+  return '<span class="badge pending">Not checked</span>';
+}
+
+function buildDetailRowHtml(row) {
+  return `<td colspan="10">${renderMembershipControls(row)}</td>`;
+}
+
+function refreshRowUI(row) {
+  const tr = document.getElementById('row_' + row.idx);
+  if (tr && tr.children[8]) {
+    tr.children[8].innerHTML = buildMatchCellHtml(row);
+  }
+  const detailTr = document.getElementById('detail_' + row.idx);
+  if (detailTr) {
+    const showDetail = row.createNonMember && row.customerUniqueId === null;
+    detailTr.style.display = showDetail ? 'table-row' : 'none';
+    if (showDetail) {
+      detailTr.innerHTML = buildDetailRowHtml(row);
+    }
+  }
+  updateCreateCardVisibility();
+}
+
+function setMembershipStatus(idx, value) {
+  const row = rows.find(r => r.idx === idx);
+  if (!row) return;
+  row.membershipStatus = value;
+  if (value !== 'Member') {
+    row.memberTypeId = '';
+    row.parentCustomerGuid = '';
+  }
+  refreshRowUI(row);
+}
+
+function setMemberType(idx, value) {
+  const row = rows.find(r => r.idx === idx);
+  if (row) row.memberTypeId = value;
+}
+
 function updateRowMatchUI(row) {
   const tr = document.getElementById('row_' + row.idx);
   if (!tr) return;
@@ -422,15 +604,15 @@ function updateRowMatchUI(row) {
 
   const cell = tr.children[8];
   if (!cell) return;
-  if (row.customerUniqueId && row.createdNonMember) {
-    cell.innerHTML = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">New Non-Member: ${escapeHtml(row.customerName || 'created')}</span>`;
-  } else if (row.customerUniqueId) {
-    cell.innerHTML = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">Member: ${escapeHtml(row.customerName || 'matched')}</span>`;
-  } else if (row.matchError) {
-    cell.innerHTML = `<span class="badge fail" title="${escapeAttr(row.matchError)}">Lookup failed</span>`;
-  } else {
-    cell.innerHTML = `New Guest <label style="font-weight:400;"><input type="checkbox" ${row.createNonMember ? 'checked' : ''} onchange="toggleCreateNonMember(${row.idx}, this.checked)"> create record</label>`;
+  cell.innerHTML = buildMatchCellHtml(row);
+
+  const detailTr = document.getElementById('detail_' + row.idx);
+  if (detailTr) {
+    const showDetail = row.createNonMember && row.customerUniqueId === null;
+    detailTr.style.display = showDetail ? 'table-row' : 'none';
+    if (showDetail) detailTr.innerHTML = buildDetailRowHtml(row);
   }
+
   updateCreateCardVisibility();
 }
 
@@ -464,9 +646,18 @@ function updateCreateCardVisibility() {
   document.getElementById('createCard').style.display = anyUnmatched ? 'block' : 'none';
 }
 
-function toggleCreateNonMember(idx, checked) {
+async function toggleCreateNonMember(idx, checked) {
   const row = rows.find(r => r.idx === idx);
-  if (row) row.createNonMember = checked;
+  if (!row) return;
+  row.createNonMember = checked;
+  if (checked) {
+    if (!row.membershipStatus) row.membershipStatus = 'Non-Member';
+    if (memberTypes.length === 0) {
+      refreshRowUI(row); // show the checkbox state immediately while types load
+      await fetchMemberTypes();
+    }
+  }
+  refreshRowUI(row);
 }
 
 function toggleAllCreateCheckboxes(checked) {
@@ -480,8 +671,10 @@ function toggleAllCreateCheckboxes(checked) {
 
 function buildMemberCreatePayload(row) {
   const fullName = `${row.firstName} ${row.lastName}`.trim();
+  const isMember = row.membershipStatus === 'Member';
+  const parentGuid = (row.parentCustomerGuid || '').trim() || null;
   return {
-    ParentCustomerUniqueID: null,
+    ParentCustomerUniqueID: parentGuid,
     Name: fullName,
     FirstName: row.firstName,
     LastName: row.lastName,
@@ -505,7 +698,7 @@ function buildMemberCreatePayload(row) {
     InstagramHandle: null,
     TwitterHandle: null,
     MemberProfile: null,
-    JobTitle: row.companyName ? null : null,
+    JobTitle: null,
     Image: '',
     OriginalJoinDate: null,
     MemberSince: null,
@@ -516,7 +709,7 @@ function buildMemberCreatePayload(row) {
     Approved: true,
     AutoRenew: false,
     CustomerType: 'Person',
-    UseParentBilling: false,
+    UseParentBilling: !!parentGuid,
     UseParentShipping: false,
     Credentials: null,
     Title: null,
@@ -525,7 +718,7 @@ function buildMemberCreatePayload(row) {
     Awards: [],
     VolunteerWorks: [],
     Education: [],
-    MemberType: null,
+    MemberType: (isMember && !parentGuid && row.memberTypeId) ? { UniqueID: row.memberTypeId } : null,
     CustomFields: {},
     CreatedDate: null,
     PrimaryContactUniqueId: null,
@@ -594,6 +787,13 @@ async function createSelectedNonMembers() {
     return;
   }
 
+  const missingType = toCreate.filter(r => r.membershipStatus === 'Member' && !(r.parentCustomerGuid || '').trim() && !r.memberTypeId);
+  if (missingType.length > 0) {
+    alertEl.className = 'alert error show';
+    alertEl.textContent = `${missingType.length} selected row(s) are set to "Member" with no Parent Company GUID and no Member Type chosen. Standalone members need a Member Type; if they're inheriting from a company instead, fill in the Parent Company GUID.`;
+    return;
+  }
+
   const BATCH_SIZE = 15;
   const BATCH_DELAY_MS = 1000;
   let created = 0, failed = 0, done = 0;
@@ -633,16 +833,20 @@ async function createSelectedNonMembers() {
 function addTicketTypeRow(label = '', guid = '') {
   ticketTypeCounter++;
   const id = 'tt_' + ticketTypeCounter;
-  const div = document.createElement('div');
-  div.className = 'ticket-row';
-  div.id = id;
-  div.innerHTML = `
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ticket-row';
+  wrapper.id = id;
+  wrapper.style.flexWrap = 'wrap';
+  wrapper.innerHTML = `
     <input type="text" class="label" placeholder="Label (e.g. Member Rate)" value="${escapeAttr(label)}" onchange="rebuildTicketDropdowns()">
-    <input type="text" class="guid" placeholder="TicketUniqueId GUID" value="${escapeAttr(guid)}" onchange="rebuildTicketDropdowns()">
+    <input type="text" class="guid" placeholder="TicketUniqueId GUID" value="${escapeAttr(guid)}" onchange="rebuildTicketDropdowns(); fetchAndDisplayTicketPrice(this)">
+    <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:0.78rem; white-space:nowrap;"><input type="checkbox" class="member-only"> Member Only</label>
     <button type="button" class="danger" onclick="removeTicketTypeRow('${id}')">&times;</button>
+    <div class="helptext ticket-price-status" style="width:100%; margin:-4px 0 4px 0;"></div>
   `;
-  document.getElementById('ticketTypeList').appendChild(div);
+  document.getElementById('ticketTypeList').appendChild(wrapper);
   rebuildTicketDropdowns();
+  if (guid) fetchAndDisplayTicketPrice(wrapper.querySelector('.guid'));
 }
 
 function removeTicketTypeRow(id) {
@@ -656,7 +860,9 @@ function getTicketTypes() {
   document.querySelectorAll('#ticketTypeList .ticket-row').forEach(r => {
     const label = r.querySelector('.label').value.trim();
     const guid = r.querySelector('.guid').value.trim();
-    if (label && guid) list.push({ label, guid });
+    const memberOnlyEl = r.querySelector('.member-only');
+    const memberOnly = memberOnlyEl ? memberOnlyEl.checked : false;
+    if (label && guid) list.push({ label, guid, memberOnly });
   });
   return list;
 }
@@ -818,11 +1024,15 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
       errorMsg: '',
       customerUniqueId: undefined,
       customerName: '',
+      customerMemberStatus: '',
       createNonMember: false,
       createdNonMember: false,
       purchaserUniqueId: null,
       purchaserName: '',
-      purchaserMatchError: ''
+      purchaserMatchError: '',
+      membershipStatus: 'Non-Member',
+      memberTypeId: '',
+      parentCustomerGuid: ''
     }));
     renderPreview();
     const token = document.getElementById('authToken').value.trim();
@@ -852,16 +1062,7 @@ function renderPreview() {
     if (row.status === 'success') statusBadge = '<span class="badge ok">Imported</span>';
     if (row.status === 'failed') statusBadge = `<span class="badge fail" title="${escapeAttr(row.errorMsg)}">Failed</span>`;
 
-    let matchBadge = '<span class="badge pending">Not checked</span>';
-    if (row.customerUniqueId && row.createdNonMember) {
-      matchBadge = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">New Non-Member: ${escapeHtml(row.customerName || 'created')}</span>`;
-    } else if (row.customerUniqueId) {
-      matchBadge = `<span class="badge ok" title="${escapeAttr(row.customerUniqueId)}">Member: ${escapeHtml(row.customerName || 'matched')}</span>`;
-    } else if (row.customerUniqueId === null) {
-      matchBadge = row.matchError
-        ? `<span class="badge fail" title="${escapeAttr(row.matchError)}">Lookup failed</span> <a href="#" style="font-size:0.78rem;" onclick="retryRowMatch(${row.idx}); return false;">retry</a>`
-        : `New Guest <label style="font-weight:400;"><input type="checkbox" ${row.createNonMember ? 'checked' : ''} onchange="toggleCreateNonMember(${row.idx}, this.checked)"> create record</label>`;
-    }
+    const matchBadge = buildMatchCellHtml(row);
 
     let purchaserBadge = '';
     if (row.purchaserUniqueId) {
@@ -874,13 +1075,13 @@ function renderPreview() {
 
     tr.innerHTML = `
       <td><input type="checkbox" ${row.selected ? 'checked' : ''} onchange="toggleRow(${row.idx}, this.checked)"></td>
-      <td><input type="text" class="small-input" style="width:100px;" value="${escapeAttr(row.firstName)}" onchange="updateRowField(${row.idx}, 'firstName', this.value)"></td>
-      <td><input type="text" class="small-input" style="width:100px;" value="${escapeAttr(row.lastName)}" onchange="updateRowField(${row.idx}, 'lastName', this.value)"></td>
+      <td><input type="text" class="small-input" style="width:115px;" value="${escapeAttr(row.firstName)}" onchange="updateRowField(${row.idx}, 'firstName', this.value)"></td>
+      <td><input type="text" class="small-input" style="width:115px;" value="${escapeAttr(row.lastName)}" onchange="updateRowField(${row.idx}, 'lastName', this.value)"></td>
       <td>${escapeHtml(row.email) || '<em style="color:var(--error)">missing</em>'}</td>
-      <td><input type="text" class="small-input" style="width:110px;" value="${escapeAttr(row.companyName)}" onchange="updateRowField(${row.idx}, 'companyName', this.value)"></td>
-      <td><input type="text" class="small-input" style="width:100px;" value="${escapeAttr(row.phone)}" onchange="updateRowField(${row.idx}, 'phone', this.value)"></td>
+      <td><input type="text" class="small-input" style="width:130px;" value="${escapeAttr(row.companyName)}" onchange="updateRowField(${row.idx}, 'companyName', this.value)"></td>
+      <td><input type="text" class="small-input" style="width:115px;" value="${escapeAttr(row.phone)}" onchange="updateRowField(${row.idx}, 'phone', this.value)"></td>
       <td>
-        <input type="text" class="small-input" style="width:140px;" placeholder="email or GUID" value="${escapeAttr(row.purchaserEmail)}" onchange="updateRowField(${row.idx}, 'purchaserEmail', this.value)">
+        <input type="text" class="small-input" style="width:160px;" placeholder="email or GUID" value="${escapeAttr(row.purchaserEmail)}" onchange="updateRowField(${row.idx}, 'purchaserEmail', this.value)">
         ${purchaserBadge}
       </td>
       <td><select class="ticket-select" onchange="setRowTicket(${row.idx}, this.value)"></select></td>
@@ -888,6 +1089,14 @@ function renderPreview() {
       <td>${statusBadge}</td>
     `;
     tbody.appendChild(tr);
+
+    const detailTr = document.createElement('tr');
+    detailTr.id = 'detail_' + row.idx;
+    detailTr.className = 'detail-row';
+    const showDetail = row.createNonMember && row.customerUniqueId === null;
+    detailTr.style.display = showDetail ? 'table-row' : 'none';
+    if (showDetail) detailTr.innerHTML = buildDetailRowHtml(row);
+    tbody.appendChild(detailTr);
   });
 
   document.getElementById('totalCount').textContent = rows.length;
@@ -937,6 +1146,17 @@ function updateRowsFromDropdowns() {
 function setRowTicket(idx, guid) {
   const row = rows.find(r => r.idx === idx);
   if (row) row.ticketGuid = guid;
+}
+
+function isEligibleForMemberRate(row) {
+  if (row.createdNonMember) {
+    return row.membershipStatus === 'Member';
+  }
+  if (row.customerUniqueId) {
+    const status = (row.customerMemberStatus || '').toLowerCase();
+    return status === 'member' || status === 'inheriting';
+  }
+  return false;
 }
 
 function isGuid(str) {
@@ -1019,12 +1239,12 @@ function buildPayload(row) {
         Phone: row.phone ? row.phone : null,
         Cancelled: false,
         Attended: false,
-        // Novi derives PaymentStatus and the actual amount owed from the ticket
-        // record itself (TicketUniqueId below) — these two values are sent for
-        // completeness but Novi's own logic will override them based on the
-        // ticket's configured price.
+        // Real ticket price, fetched from Novi in Step 2 and cached by GUID.
+        // Sending 0.00 (or omitting these fields) previously resulted in the
+        // registration showing as free regardless of the ticket's configured
+        // price, so the actual price must be sent explicitly.
         PaymentStatus: 'Unpaid',
-        PricePaid: 0.00,
+        PricePaid: (typeof ticketPriceCache[row.ticketGuid] === 'number') ? ticketPriceCache[row.ticketGuid] : 0.00,
         TaxPaid: 0.00,
         CancellationDate: null,
         TicketUniqueId: row.ticketGuid || '',
@@ -1087,6 +1307,17 @@ async function runImport() {
   if (missingTicket.length > 0) {
     alertEl.className = 'alert error show';
     alertEl.textContent = `${missingTicket.length} row(s) don't have a ticket type assigned. Assign one for each row (or add a single ticket type above to auto-fill all rows).`;
+    return;
+  }
+
+  const ticketTypesList = getTicketTypes();
+  const memberOnlyGuids = new Set(ticketTypesList.filter(t => t.memberOnly).map(t => t.guid));
+  const ineligible = toProcess.filter(r => memberOnlyGuids.has(r.ticketGuid) && !isEligibleForMemberRate(r));
+  if (ineligible.length > 0) {
+    const names = ineligible.slice(0, 5).map(r => `${r.firstName} ${r.lastName}`.trim() || r.email).join(', ');
+    const more = ineligible.length > 5 ? ` and ${ineligible.length - 5} more` : '';
+    alertEl.className = 'alert error show';
+    alertEl.textContent = `${ineligible.length} row(s) are assigned a Member Only ticket but aren't an active member or inheriting member: ${names}${more}. Fix their ticket assignment or membership status before importing.`;
     return;
   }
 
