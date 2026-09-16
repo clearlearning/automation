@@ -1847,9 +1847,9 @@ document.getElementById('exportReminderPABtn').addEventListener('click',async()=
     students.forEach(s=>{
       const fullHtml=buildReminderEmailHtml(s,true);
       const safeEmail=(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_');
-      folder.file('ExamFail_'+safeEmail+'.html',fullHtml);
+      folder.file('ExamReminder_'+safeEmail+'.html',fullHtml);
     });
-    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,file:'ExamFail_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
+    const manifest=students.map(s=>({email:s.email,firstName:s.firstName,lastName:s.lastName,file:'ExamReminder_'+(s.email||'unknown').replace(/[^a-zA-Z0-9@._-]/g,'_')+'.html',cohort:s.cohort}));
     folder.file('_manifest.json',JSON.stringify(manifest,null,2));
     const blob=await zip.generateAsync({type:'blob'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ExamReminderEmails_'+STATE.cohort.replace(/\s+/g,'_')+'.zip';
