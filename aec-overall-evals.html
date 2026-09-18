@@ -74,11 +74,12 @@
   }
   .spinner{width:18px;height:18px;border:3px solid #eee;border-top-color:var(--burgundy);border-radius:50%;animation:spin 0.8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:14px; margin-bottom:24px;}
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:14px; margin-bottom:8px;}
   .kpi{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px;}
   .kpi .label{font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:#777; font-weight:700;}
   .kpi .value{font-size:28px; font-weight:800; color:var(--burgundy); margin-top:4px;}
   .kpi .value small{font-size:14px; font-weight:600; color:#999;}
+  .kpi-note{font-size:12px; color:#888; margin:0 0 22px; line-height:1.5;}
   .grid-2{display:grid; grid-template-columns:1.1fr 1fr; gap:18px; margin-bottom:22px;}
   @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
   .card{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:18px;}
@@ -99,6 +100,7 @@
   .bar-track{flex:1; background:#eee; border-radius:5px; height:14px; overflow:hidden;}
   .bar-fill{height:100%; border-radius:5px;}
   .aspect-row .score{width:70px; text-align:right; font-weight:700;}
+  .scale-note{color:#999; font-weight:400; font-size:11px;}
   .comments-toggle{font-size:12px; color:var(--blue); cursor:pointer; margin-top:10px; display:inline-block;}
   .comments-list{margin-top:8px; display:none;}
   .comments-list.open{display:block;}
@@ -280,18 +282,88 @@ function sectionForPage(title){
   return 'General';
 }
 
-// score mapping: order choices by position; endpoints map 1..5, "N/A"/"Didn't Attend" excluded
+// The choices that actually represent points on a scale -- this excludes
+// opt-outs like "N/A" / "Didn't Attend" (in whatever phrasing SurveyMonkey
+// or the survey author used), which aren't part of the scale itself and
+// shouldn't count toward its length -- or its average, for whichever
+// specific row/event the respondent opted out of.
+function isNonAnswerChoice(text){
+  return /^(n\/?a|not applicable|did\s*n[o']?t\s*attend)/i.test((text||'').trim());
+}
+function getScoreableChoices(qMeta){
+  return Object.values(qMeta.choices)
+    .filter(x => !isNonAnswerChoice(x.text))
+    .sort((a,b)=>a.position-b.position);
+}
+
+// Score a single answer on ITS OWN scale, then linearly rescale that onto
+// a common 1-5 basis so that a 3-point or 4-point scale can be blended
+// into an overall average alongside native 5-point scales without either
+// one silently distorting the result. Returns null for anything that
+// isn't a genuine 3+-point ordinal scale -- most importantly, this means
+// a 2-point (e.g. Yes/No) question is NEVER scored here. Averaging "No"
+// and "Yes" as 1 and 2 and reporting that as "out of 5" is not a
+// meaningful statistic; a 2-point question is a pass/fail or yes/no
+// question, not a rating, and needs to be reported as a response tally
+// instead (see the non-scoring branch below). Also returns null for
+// "Didn't Attend" / "N/A" itself, so opting out of one specific event
+// or aspect never drags down that row's average for this respondent.
 function scoreForChoice(qMeta, choiceId){
   const c = qMeta.choices[choiceId];
   if(!c) return null;
-  const text = (c.text || '').trim().toLowerCase();
-  if(text === 'n/a' || text === "didn't attend" || text === 'didnt attend') return null;
-  // Build ordered list of scoreable choices (exclude n/a-like) to assign 1..n by position
-  const ordered = Object.values(qMeta.choices)
-    .filter(x => !['n/a',"didn't attend",'didnt attend'].includes((x.text||'').trim().toLowerCase()))
-    .sort((a,b)=>a.position-b.position);
+  if(isNonAnswerChoice(c.text)) return null;
+  const ordered = getScoreableChoices(qMeta);
+  const maxScore = ordered.length;
+  if(maxScore < 3) return null;
   const idx = ordered.findIndex(x => x.text === c.text);
-  return idx >= 0 ? idx + 1 : null;
+  if(idx < 0) return null;
+  const raw = idx + 1; // 1..maxScore on the question's own scale
+  const rescaled = 1 + (raw - 1) * (4 / (maxScore - 1)); // linearly onto 1..5
+  return { score: rescaled, maxScore, raw };
+}
+
+// A 2-point matrix question (Yes/No, Agree/Disagree, Satisfied/
+// Dissatisfied, etc.) isn't a rating, but it IS a positive/negative
+// signal, and reducing it to "we don't score this" throws that signal
+// away. So instead of scoring it on a 1-5 scale it doesn't have, it's
+// classified by which of its two choices reads as the positive one
+// and which reads as the negative one -- purely from the choice
+// TEXT, not a guess about the question's subject matter. If neither
+// choice matches a recognizable positive/negative word (e.g. a
+// Male/Female question), classification is deliberately refused
+// rather than guessing a direction, and the question stays a plain
+// tally with no sentiment score.
+const POSITIVE_CHOICE_RE = /^(yes|true|agree|satisfied|good)\b/i;
+const NEGATIVE_CHOICE_RE = /^(no|false|disagree|dissatisfied|bad)\b/i;
+
+function classifyBinarySentiment(choiceTexts){
+  if(choiceTexts.length !== 2) return null;
+  const [a, b] = choiceTexts;
+  const aPos = POSITIVE_CHOICE_RE.test(a.trim()), aNeg = NEGATIVE_CHOICE_RE.test(a.trim());
+  const bPos = POSITIVE_CHOICE_RE.test(b.trim()), bNeg = NEGATIVE_CHOICE_RE.test(b.trim());
+  if(aPos && bNeg) return { positive: a, negative: b };
+  if(bPos && aNeg) return { positive: b, negative: a };
+  return null;
+}
+
+// Some Yes/No-shaped questions aren't opinions at all -- they're gating
+// or logistics facts (did you do X, may we do Y, are you a member of
+// Z). A "Yes" there isn't a positive SENTIMENT the way "Yes, I'm
+// satisfied" is; it's just a fact about what happened. Text alone can't
+// reliably tell the two apart (both read as plain "Yes"/"No"), so these
+// are named explicitly rather than guessed at. Matched against both the
+// question heading and, for multi-row matrices, the specific row label,
+// so only the named fact-finding questions are pulled out of sentiment
+// scoring -- everything else with a genuine positive/negative pair
+// (see classifyBinarySentiment above) still counts.
+const FACTUAL_NOT_SENTIMENT_RE = [
+  /may we use.*comments?/i,
+  /member of clear/i,
+  /download(ed)? (and use )?(the )?(conference )?app/i,
+  /attend(ed)?.*(social|clear.hosted)/i,
+];
+function isFactualNotSentiment(...texts){
+  return texts.some(t => FACTUAL_NOT_SENTIMENT_RE.some(re => re.test(t||'')));
 }
 
 async function loadAllResponses(){
@@ -314,10 +386,11 @@ function parseResponse(raw){
     id: raw.id,
     first: '', last: '', org: '', email: '',
     attendeeTypes: [],
-    ratings: {},       // section -> { aspect: score(1-5) }
+    ratings: {},       // section -> { aspect: {score(1-5 equivalent), maxScore, raw} }
     texts: {},         // section -> [ {q, a} ]
     choices: {},       // section -> { heading: [selected labels] }   (checkbox/multi-select)
-    singleChoice: {},  // section -> { heading: label }               (radio, non-rating)
+    singleChoice: {},  // section -> { heading: label }               (radio, non-rating, and non-classifiable 2-point matrix rows)
+    sentimentAnswers: [], // [{section, question, positive}] -- classifiable Yes/No-style matrix rows, scored separately from ratings
     memberOfClear: null,
     futurePlans: {}
   };
@@ -375,22 +448,24 @@ function parseResponse(raw){
 
       // ---------------- MATRIX (rating scale, OR a simple Yes/No grid) ----------------
       if(meta.family === 'matrix' || meta.subtype === 'rating'){
-        // Only treat this as a satisfaction rating (folded into the overall score)
-        // if the choice set actually looks like a satisfaction scale. A matrix
-        // whose columns are just Yes/No (e.g. "Did you download the app? / Attend
-        // a social event?") is a gating question, not a rating, and shouldn't
-        // drag the overall score around.
-        const isRatingScale = Object.values(meta.choices).some(c => /dissatisfied|satisfied/i.test(c.text||''));
+        // Decide from the STRUCTURE of the answer choices -- not their
+        // wording -- whether this is a genuine ordinal scale that can be
+        // safely averaged. A question with fewer than 3 non-N/A choices
+        // (most commonly Yes/No) is a binary/gating question, not a
+        // rating, and is tallied as a quick-answer question instead of
+        // being folded into the 1-5 scored ratings.
+        const scoreableChoices = getScoreableChoices(meta);
+        const isScoreableRating = scoreableChoices.length >= 3;
 
-        if(isRatingScale){
+        if(isScoreableRating){
           if(numRows > 1){
             answers.forEach(ans => {
               if(ans.row_id !== undefined && ans.choice_id !== undefined){
                 const rowLabel = meta.rows[ans.row_id]?.text || meta.heading;
-                const score = scoreForChoice(meta, ans.choice_id);
-                if(score !== null){
+                const result = scoreForChoice(meta, ans.choice_id);
+                if(result !== null){
                   out.ratings[section] = out.ratings[section] || {};
-                  out.ratings[section][rowLabel] = score;
+                  out.ratings[section][rowLabel] = result;
                 }
               }
             });
@@ -400,25 +475,36 @@ function parseResponse(raw){
             // heading instead, which is the actual meaningful label.
             answers.forEach(ans => {
               if(ans.choice_id !== undefined){
-                const score = scoreForChoice(meta, ans.choice_id);
-                if(score !== null){
+                const result = scoreForChoice(meta, ans.choice_id);
+                if(result !== null){
                   out.ratings[section] = out.ratings[section] || {};
-                  out.ratings[section][meta.heading] = score;
+                  out.ratings[section][meta.heading] = result;
                 }
               }
             });
           }
         } else {
-          // Non-rating matrix (Yes/No grid, etc.) — tally each row as its own
-          // single-choice question instead of scoring it.
+          // Binary (e.g. Yes/No) or degenerate matrix. If the two choices
+          // read as a positive/negative pair, each answer becomes a
+          // sentiment data point (see classifyBinarySentiment) instead of
+          // a rating -- it's tracked and scored separately, then combined
+          // with the rating average further down (see overallScore).
+          // Anything that can't be classified this way is left as a plain
+          // response tally, same as before.
+          const sentimentPair = scoreableChoices.length === 2
+            ? classifyBinarySentiment(scoreableChoices.map(c => c.text))
+            : null;
           answers.forEach(ans => {
-            if(ans.row_id !== undefined && ans.choice_id !== undefined){
-              const rowLabel = meta.rows[ans.row_id]?.text || meta.heading;
-              const label = meta.choices[ans.choice_id]?.text;
-              if(label){
-                out.singleChoice[section] = out.singleChoice[section] || {};
-                out.singleChoice[section][rowLabel] = label;
-              }
+            if(ans.choice_id === undefined) return;
+            const rowLabel = (ans.row_id !== undefined && meta.rows[ans.row_id]) ? meta.rows[ans.row_id].text : meta.heading;
+            const label = meta.choices[ans.choice_id]?.text;
+            if(!label) return;
+            const isFactual = isFactualNotSentiment(meta.heading, rowLabel);
+            if(sentimentPair && !isFactual){
+              out.sentimentAnswers.push({ section, question: rowLabel, positive: label === sentimentPair.positive });
+            } else {
+              out.singleChoice[section] = out.singleChoice[section] || {};
+              out.singleChoice[section][rowLabel] = label;
             }
           });
         }
@@ -477,12 +563,56 @@ function parseResponse(raw){
 }
 
 // ---------- Aggregation helpers ----------
-function overallScore(resp){
+
+// Average of this respondent's 3+-point rating-scale answers (already
+// rescaled onto 1-5 each -- see scoreForChoice). Ignores sentiment
+// answers entirely.
+function responseRatingAvg(resp){
   let sum=0, n=0;
   Object.values(resp.ratings).forEach(sectionRatings=>{
-    Object.values(sectionRatings).forEach(v=>{ sum+=v; n++; });
+    Object.values(sectionRatings).forEach(v=>{ sum+=v.score; n++; });
   });
   return n ? sum/n : null;
+}
+
+// This respondent's Yes/No-style sentiment, as the share of
+// classifiable answers that were positive, expressed on the same 1-5
+// basis as the rating average (0% positive -> 1, 100% positive -> 5)
+// purely so the two can sit side by side and be combined below --
+// it's still fundamentally a different kind of measurement (a
+// proportion of binary answers, not a mean position on an ordinal
+// scale), so it's kept as its own number rather than mixed into the
+// rating average itself.
+function responseSentimentScore(resp){
+  const answers = resp.sentimentAnswers || [];
+  if(!answers.length) return null;
+  const positiveCount = answers.filter(a=>a.positive).length;
+  const fraction = positiveCount / answers.length;
+  return { score: 1 + fraction*4, fraction, positiveCount, n: answers.length };
+}
+
+// The overall per-response metric: the rating average and the Yes/No
+// sentiment score are each computed independently on their own data
+// (never averaged answer-by-answer together -- that was the original
+// bug), then the two resulting 1-5 numbers are combined with EQUAL
+// WEIGHT regardless of how many questions fed each one, so a section
+// with many rating questions can't automatically outvote a section
+// with only a couple of Yes/No questions. If a respondent only
+// answered one kind of question, the overall score is just that one
+// number. This weighting is a judgment call, not a statistical
+// necessity -- adjust SENTIMENT_WEIGHT below (0 to 1) if rating
+// questions should count for more or less than sentiment questions.
+const SENTIMENT_WEIGHT = 0.5;
+
+function overallScore(resp){
+  const rating = responseRatingAvg(resp);
+  const sentiment = responseSentimentScore(resp);
+  if(rating !== null && sentiment !== null){
+    return rating * (1 - SENTIMENT_WEIGHT) + sentiment.score * SENTIMENT_WEIGHT;
+  }
+  if(rating !== null) return rating;
+  if(sentiment !== null) return sentiment.score;
+  return null;
 }
 function avg(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
 function scoreColor(v){
@@ -525,9 +655,10 @@ function renderDashboard(){
       </div>
     </div>
     <div class="kpi-row" id="kpiRow"></div>
+    <p class="kpi-note">Overall Avg Score combines two separately-computed numbers per response: the average of rating-scale questions (3+ answer points, each rescaled onto a common 1&ndash;5 basis) and a sentiment score from Yes/No-style questions (share of positive answers, mapped onto the same 1&ndash;5 basis) — each answer only ever counts toward the metric that fits it, never averaged together as raw numbers. A response with only one kind of question uses just that number. Yes/No questions whose choices don't read as a clear positive/negative pair (e.g. not Yes/No or Agree/Disagree) aren't part of either score — they're reported as plain response tallies within each section below.</p>
     <div class="grid-2">
-      <div class="card"><h3>Score by Attendee Type</h3><div class="hint">Average of all ratings that respondent answered (blended across every section) &mdash; unaffected by the filter above, shown for comparison</div><div class="chart-wrap"><canvas id="chartByType"></canvas></div></div>
-      <div class="card"><h3>Score by Section</h3><div class="hint">Average rating per program area, 1&ndash;5 scale, for the current filter</div><div class="chart-wrap"><canvas id="chartBySection"></canvas></div></div>
+      <div class="card"><h3>Score by Attendee Type</h3><div class="hint">Average combined overall score (rating avg + Yes/No sentiment, see note below) &mdash; unaffected by the filter above, shown for comparison</div><div class="chart-wrap"><canvas id="chartByType"></canvas></div></div>
+      <div class="card"><h3>Score by Section</h3><div class="hint">Average rating per program area, rescaled to a 1&ndash;5 basis, for the current filter</div><div class="chart-wrap"><canvas id="chartBySection"></canvas></div></div>
     </div>
     <div class="card"><h3>Future Planning</h3><div class="hint">Return intent, and role-specific renewal intent for 2027 (Vancouver)</div><div id="futurePlanning"></div></div>
     <div id="sectionCards"></div>
@@ -583,6 +714,10 @@ function renderKpis(){
   const data = activeResponses();
   const overallScores = data.map(overallScore).filter(v=>v!==null);
   const overallAvg = avg(overallScores);
+  const ratingScores = data.map(responseRatingAvg).filter(v=>v!==null);
+  const ratingAvg = avg(ratingScores);
+  const allSentimentAnswers = data.flatMap(r=>r.sentimentAnswers||[]);
+  const sentimentPct = allSentimentAnswers.length ? Math.round(100*allSentimentAnswers.filter(a=>a.positive).length/allSentimentAnswers.length) : null;
   const likelihoodMap = {'very unlikely':1,'unlikely':2,'neither likely nor unlikely':3,'likely':4,'very likely':5};
   const likelihoods = data
     .map(r=>r.futurePlans['How likely are you to attend the next Annual Educational Conference in Vancouver, British Columbia, September 20 - 23, 2027?'])
@@ -594,6 +729,8 @@ function renderKpis(){
   document.getElementById('kpiRow').innerHTML = `
     <div class="kpi"><div class="label">${currentTypeFilter ? currentTypeFilter+' Responses' : 'Total Responses'}</div><div class="value">${data.length}</div></div>
     <div class="kpi"><div class="label">Overall Avg Score</div><div class="value" style="color:${scoreColorHex(overallAvg)}">${fmt(overallAvg)}<small>/5</small></div></div>
+    <div class="kpi"><div class="label">Rating-Scale Avg</div><div class="value" style="color:${scoreColorHex(ratingAvg)}">${fmt(ratingAvg)}<small>/5</small></div></div>
+    <div class="kpi"><div class="label">Yes/No Sentiment</div><div class="value" style="color:${scoreColorHex(sentimentPct===null?null:1+sentimentPct/25)}">${sentimentPct===null?'—':sentimentPct}<small>${sentimentPct===null?'':'% positive'}</small></div></div>
     <div class="kpi"><div class="label">Likely to Attend 2027</div><div class="value" style="color:${scoreColorHex(likelihoodAvg)}">${fmt(likelihoodAvg)}<small>/5</small></div></div>
     <div class="kpi"><div class="label">CLEAR Members</div><div class="value">${memberPct}<small>%</small></div></div>
   `;
@@ -619,7 +756,7 @@ function renderSectionChart(){
   const labels = SECTION_ORDER;
   const chartData = labels.map(sec=>{
     const vals = [];
-    data.forEach(r=>{ if(r.ratings[sec]) Object.values(r.ratings[sec]).forEach(v=>vals.push(v)); });
+    data.forEach(r=>{ if(r.ratings[sec]) Object.values(r.ratings[sec]).forEach(v=>vals.push(v.score)); });
     return avg(vals);
   });
   if(charts.bySection) charts.bySection.destroy();
@@ -706,14 +843,30 @@ function renderSectionCards(){
   container.innerHTML = COMMENT_SECTION_ORDER.map((sec, i)=>{
     const aspectMap = {};
     data.forEach(r=>{
-      if(r.ratings[sec]) Object.entries(r.ratings[sec]).forEach(([aspect,score])=>{
-        aspectMap[aspect] = aspectMap[aspect] || [];
-        aspectMap[aspect].push(score);
+      if(r.ratings[sec]) Object.entries(r.ratings[sec]).forEach(([aspect,v])=>{
+        aspectMap[aspect] = aspectMap[aspect] || { vals: [], maxScore: v.maxScore };
+        aspectMap[aspect].vals.push(v.score);
       });
     });
-    const aspects = Object.entries(aspectMap).map(([name,vals])=>({name, avg: avg(vals), n: vals.length}));
+    const aspects = Object.entries(aspectMap).map(([name,info])=>({name, avg: avg(info.vals), n: info.vals.length, maxScore: info.maxScore}));
 
-    // Single-choice (Yes/No, tenure buckets, travel method, etc.) tallied per question
+    // Yes/No-style sentiment answers (classifiable 2-point matrix rows)
+    // for this section, tallied per question as a % positive
+    const sentimentMap = {}; // question -> { positive, total }
+    data.forEach(r=>{
+      (r.sentimentAnswers||[]).forEach(a=>{
+        if(a.section !== sec) return;
+        sentimentMap[a.question] = sentimentMap[a.question] || { positive: 0, total: 0 };
+        sentimentMap[a.question].total++;
+        if(a.positive) sentimentMap[a.question].positive++;
+      });
+    });
+    const sentimentQuestions = Object.entries(sentimentMap).map(([question,c])=>({
+      question, n: c.total, pct: Math.round(100*c.positive/c.total), score: 1 + (c.positive/c.total)*4
+    }));
+
+    // Single-choice (tenure buckets, travel method, non-classifiable
+    // 2-point matrix rows, etc.) tallied per question
     const singleTally = {}; // heading -> { label: count }
     data.forEach(r=>{
       const sc = r.singleChoice[sec];
@@ -751,13 +904,14 @@ function renderSectionCards(){
 
     const hasSingleTally = Object.keys(singleTally).length > 0;
     const hasMultiTally = Object.keys(multiTally).length > 0;
-    if(!aspects.length && questionMap.size === 0 && !hasSingleTally && !hasMultiTally) return '';
+    if(!aspects.length && questionMap.size === 0 && !hasSingleTally && !hasMultiTally && !sentimentQuestions.length) return '';
 
     const totalComments = [...questionMap.values()].reduce((a,arr)=>a+arr.length,0);
     const bodyId = `secbody_${i}`;
     const commId = `seccomm_${i}`;
     const countParts = [];
     if(aspects.length) countParts.push(`${aspects.reduce((a,x)=>a+x.n,0)} ratings`);
+    if(sentimentQuestions.length) countParts.push('Yes/No sentiment');
     if(hasSingleTally || hasMultiTally) countParts.push('quick answers');
     if(totalComments) countParts.push(`${totalComments} comment${totalComments===1?'':'s'}`);
     const countLabel = countParts.join(' &middot; ') || 'no data yet';
@@ -769,10 +923,10 @@ function renderSectionCards(){
           <div class="aspect-row">
             <div class="name" style="width:190px;">${escapeHtml(label)}</div>
             <div class="bar-track"><div class="bar-fill" style="width:${Math.round(100*count/total)}%; background:var(--blue);"></div></div>
-            <div class="score" style="color:var(--blue);">${count}</div>
+            <div class="score" style="color:var(--blue);">${count} <span class="scale-note">(${Math.round(100*count/total)}%)</span></div>
           </div>
         `).join('');
-        return `<div class="question-block"><div class="question-label">${escapeHtml(heading)}${isMulti?' <span class="qcount">(select all that apply)</span>':''}</div>${rows}</div>`;
+        return `<div class="question-block"><div class="question-label">${escapeHtml(heading)}${isMulti?' <span class="qcount">(select all that apply)</span>':' <span class="qcount">(response tally, not a rating)</span>'}</div>${rows}</div>`;
       }).join('');
     }
 
@@ -785,11 +939,23 @@ function renderSectionCards(){
         <div class="section-body" id="${bodyId}">
           ${aspects.map(a=>`
             <div class="aspect-row">
-              <div class="name">${a.name}</div>
+              <div class="name">${a.name}${a.maxScore && a.maxScore!==5 ? ` <span class="scale-note">(${a.maxScore}-pt scale, rescaled)</span>` : ''}</div>
               <div class="bar-track"><div class="bar-fill" style="width:${(a.avg/5*100).toFixed(0)}%; background:${scoreColorHex(a.avg)}"></div></div>
               <div class="score" style="color:${scoreColorHex(a.avg)}">${fmt(a.avg)} <span style="color:#999;font-weight:400;">(n=${a.n})</span></div>
             </div>
           `).join('')}
+          ${sentimentQuestions.length ? `
+            <div style="margin-top:${aspects.length?'14px':'2px'};">
+              <div class="question-block" style="margin-top:0;"><div class="question-label">Yes/No Sentiment <span class="qcount">(share positive, not a 1&ndash;5 rating)</span></div>
+                ${sentimentQuestions.map(s=>`
+                  <div class="aspect-row">
+                    <div class="name">${escapeHtml(s.question)}</div>
+                    <div class="bar-track"><div class="bar-fill" style="width:${s.pct}%; background:${scoreColorHex(s.score)}"></div></div>
+                    <div class="score" style="color:${scoreColorHex(s.score)}">${s.pct}% <span style="color:#999;font-weight:400;">(n=${s.n})</span></div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>` : ''}
           ${(hasSingleTally || hasMultiTally) ? `
             <div style="margin-top:${aspects.length?'14px':'2px'};">
               ${renderTallyBlock(singleTally,false)}
@@ -853,13 +1019,32 @@ function renderTable(){
 function toggleDetail(id){ const el=document.getElementById(id); el.style.display = el.style.display==='none' ? 'table-row' : 'none'; }
 
 function renderDetail(r){
-  let html = '<div class="detail-grid">';
+  const rating = responseRatingAvg(r);
+  const sentiment = responseSentimentScore(r);
+  const overall = overallScore(r);
+  let html = '<div class="detail-grid" style="margin-bottom:10px;">';
+  html += `<div class="detail-item"><div class="q">Rating-scale avg</div><div class="a" style="color:${scoreColorHex(rating)}">${fmt(rating)}/5</div></div>`;
+  html += `<div class="detail-item"><div class="q">Yes/No sentiment</div><div class="a" style="color:${scoreColorHex(sentiment?sentiment.score:null)}">${sentiment?`${Math.round(sentiment.fraction*100)}% positive (n=${sentiment.n})`:'—'}</div></div>`;
+  html += `<div class="detail-item"><div class="q">Combined overall</div><div class="a" style="color:${scoreColorHex(overall)}">${fmt(overall)}/5</div></div>`;
+  html += '</div>';
+  html += '<div class="detail-grid">';
   Object.entries(r.ratings).forEach(([sec, aspects])=>{
-    Object.entries(aspects).forEach(([name,score])=>{
-      html += `<div class="detail-item"><div class="q">${escapeHtml(sec)} &mdash; ${escapeHtml(name)}</div><div class="a" style="color:${scoreColorHex(score)}">${score}/5</div></div>`;
+    Object.entries(aspects).forEach(([name,v])=>{
+      html += `<div class="detail-item"><div class="q">${escapeHtml(sec)} &mdash; ${escapeHtml(name)}</div><div class="a" style="color:${scoreColorHex(v.score)}">${v.score.toFixed(2)}/5${v.maxScore!==5?` <span style="color:#999;font-weight:400;">(orig. ${v.maxScore}-pt scale)</span>`:''}</div></div>`;
     });
   });
   html += '</div>';
+  const sentimentAnswerEntries = r.sentimentAnswers || [];
+  if(sentimentAnswerEntries.length){
+    html += '<div class="detail-grid" style="margin-top:8px;">' + sentimentAnswerEntries.map(a=>`<div class="detail-item"><div class="q">${escapeHtml(a.section)} &mdash; ${escapeHtml(a.question)}</div><div class="a" style="color:${a.positive?'#2e7d4f':'#b3261e'}">${a.positive?'Positive':'Negative'}</div></div>`).join('') + '</div>';
+  }
+  const singleChoiceEntries = [];
+  Object.entries(r.singleChoice).forEach(([sec, qs])=>{
+    Object.entries(qs).forEach(([q,a])=>singleChoiceEntries.push([sec, q, a]));
+  });
+  if(singleChoiceEntries.length){
+    html += '<div class="detail-grid" style="margin-top:8px;">' + singleChoiceEntries.map(([sec,q,a])=>`<div class="detail-item"><div class="q">${escapeHtml(sec)} &mdash; ${escapeHtml(q)}</div><div class="a">${escapeHtml(a)}</div></div>`).join('') + '</div>';
+  }
   const allText = [];
   Object.values(r.texts).forEach(arr=>arr.forEach(t=>allText.push(t)));
   if(allText.length){
