@@ -123,7 +123,7 @@ tbody tr:last-child td{border-bottom:none}
 .dl{display:flex;flex-wrap:wrap;gap:7px;margin:3px 0 8px 265px}
 .di{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text-light)}
 .dd{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.d0{background:#2e7d32}.d1{background:#66bb6a}.d2{background:#ffa726}.d3{background:#ef5350}.d4{background:#b71c1c}
+.d0{background:#6a0dad}.d1{background:#1565c0}.d2{background:#2e7d32}.d3{background:#f9a825}.d4{background:#c62828}
 /* MBAR */
 .mbar{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f5f2ee}
 .mbar:last-child{border-bottom:none}
@@ -184,10 +184,10 @@ table.ct tbody tr:hover td{background:#fdfcfa}
   <h2>Dashboard Settings</h2>
   <p class="desc">Upload a PheedLoop feedback export file, or configure live API access once Advanced SmartSight is active.</p>
   <div class="cfg-tabs">
-    <button class="cfg-tab active" onclick="swCfg('upload')">📁 File Upload</button>
-    <button class="cfg-tab" onclick="swCfg('api')">🔌 Live API</button>
+    <button class="cfg-tab" onclick="swCfg('upload')">📁 File Upload</button>
+    <button class="cfg-tab active" onclick="swCfg('api')">🔌 Live API</button>
   </div>
-  <div class="cfg-pane active" id="cpane-upload">
+  <div class="cfg-pane" id="cpane-upload">
     <div class="upload-zone" id="dropZone"
       onclick="document.getElementById('fileInput').click()"
       ondragover="event.preventDefault();this.classList.add('drag')"
@@ -198,6 +198,22 @@ table.ct tbody tr:hover td{background:#fdfcfa}
       <small>Standard PheedLoop XLSX export — one tab per session</small>
     </div>
     <p class="cfg-note">📥 PheedLoop → Reporting → Custom Reports → Session Feedback report → Download</p>
+  </div>
+  <div class="cfg-pane active" id="cpane-api">
+    <div class="cfg-grid">
+      <div><label class="cgl">Worker Proxy URL</label><input type="text" class="cgi" id="cfgWorker" placeholder="https://novi-pheedloop-worker.avance.workers.dev"></div>
+      <div><label class="cgl">Org Code</label><input type="text" class="cgi" id="cfgOrg" placeholder="ORG18GWFZJM2WHSC2C"></div>
+      <div><label class="cgl">Event Code</label><input type="text" class="cgi" id="cfgEvent" placeholder="EVENMCCYMPDXS"></div>
+      <div><label class="cgl">Report ID</label><input type="text" class="cgi" id="cfgReport" placeholder="REPHT1HXSHK01SD"></div>
+      <div><label class="cgl">File Prefix <span style="font-weight:400;color:var(--text-light)">(e.g. aec2026)</span></label><input type="text" class="cgi" id="cfgPrefix" placeholder="aec2026"></div>
+    </div>
+    <div class="cfg-grid" style="grid-template-columns:1fr;margin-top:8px">
+      <div><label class="cgl">Admin Secret (for saving shared settings)</label><input type="password" class="cgi" id="cfgAdminSecret" placeholder="Your Worker ADMIN_SECRET"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn btn-p" onclick="saveApiCfg();loadFromApi()">Save &amp; Load via API</button>
+      <button class="btn btn-s" onclick="toggleCfg()">Cancel</button>
+    </div>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
       <div style="font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:10px">Conference Details (used in email exports)</div>
       <div class="cfg-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
@@ -216,22 +232,6 @@ table.ct tbody tr:hover td{background:#fdfcfa}
       </div>
       <button class="btn btn-p btn-sm" style="margin-top:12px" onclick="saveEventSettings()">Save Conference Settings</button>
     </div>
-  </div>
-  <div class="cfg-pane" id="cpane-api">
-    <div class="cfg-grid">
-      <div><label class="cgl">Worker Proxy URL</label><input type="text" class="cgi" id="cfgWorker" placeholder="https://novi-pheedloop-worker.avance.workers.dev"></div>
-      <div><label class="cgl">Org Code</label><input type="text" class="cgi" id="cfgOrg" placeholder="ORG18GWFZJM2WHSC2C"></div>
-      <div><label class="cgl">Event Code</label><input type="text" class="cgi" id="cfgEvent" placeholder="EVENMCCYMPDXS"></div>
-      <div><label class="cgl">Report ID</label><input type="text" class="cgi" id="cfgReport" placeholder="REPHT1HXSHK01SD"></div>
-    </div>
-    <div class="cfg-grid" style="grid-template-columns:1fr;margin-top:8px">
-      <div><label class="cgl">Admin Secret (for saving shared settings)</label><input type="password" class="cgi" id="cfgAdminSecret" placeholder="Your Worker ADMIN_SECRET"></div>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:10px">
-      <button class="btn btn-p" onclick="saveApiCfg();loadFromApi()">Save &amp; Load via API</button>
-      <button class="btn btn-s" onclick="toggleCfg()">Cancel</button>
-    </div>
-    <p class="cfg-note">⚠ Requires PheedLoop Advanced SmartSight Power-Up for Session Feedback reports.</p>
   </div>
 </div>
 
@@ -261,6 +261,7 @@ table.ct tbody tr:hover td{background:#fdfcfa}
       <div class="br">
         <button class="btn btn-p" onclick="runAnalyze()">Apply Filters</button>
         <button class="btn btn-s" onclick="resetFilters('a')">Reset All</button>
+        <button class="btn btn-e" onclick="xAnalyzeXLSX()">📗 Export to Excel</button>
       </div>
     </div>
     <div id="ar"></div>
@@ -273,7 +274,6 @@ table.ct tbody tr:hover td{background:#fdfcfa}
         <h2 style="font-size:15px;font-weight:700;color:var(--burgundy)">Speaker Report Filters</h2>
         <span class="fsm" id="sfsm"></span>
       </div>
-      <div class="info-note">Select one or more speakers to generate individual feedback reports. Each speaker receives their own PDF with session scores and comments.</div>
       <div class="fg" id="sfg"></div>
       <div class="br">
         <button class="btn btn-p" onclick="runSpeaker()">Generate Reports</button>
@@ -346,6 +346,7 @@ const LS={get:k=>localStorage.getItem('aec_'+k)||'',set:(k,v)=>localStorage.setI
 window.addEventListener('DOMContentLoaded',()=>{
   ['Worker','Org','Event','Report'].forEach(k=>{ const el=$('cfg'+k); if(el) el.value=LS.get(k.toLowerCase()); });
   const asEl=$('cfgAdminSecret');if(asEl)asEl.value=LS.get('adminSecret');
+  const pfxEl=$('cfgPrefix');if(pfxEl)pfxEl.value=LS.get('prefix')||'';
   const cn=LS.get('confName'),cc=LS.get('confCity'),cd=LS.get('confDates');
   if(cn){eventConf.name=cn;const el=$('cfgConfName');if(el)el.value=cn;}
   if(cc){eventConf.city=cc;const el=$('cfgCity');if(el)el.value=cc;}
@@ -360,7 +361,7 @@ function escQ(s){return esc(s).replace(/'/g,'&#39;');}
 function uniq(a){return[...new Set(a.filter(v=>v!=null&&v!==''))].sort();}
 function bdg(v){if(v==null)return'<span class="sb sn-b">N/A</span>';const d=v.toFixed(2);if(v>=3.5)return`<span class="sb sh-b">${d}</span>`;if(v>=2.5)return`<span class="sb sm-b">${d}</span>`;return`<span class="sb sl-b">${d}</span>`;}
 function sco(v){if(!v||isNaN(v))return'#999';if(v>=4)return'#2e7d32';if(v>=3)return'#e65100';return'#c62828';}
-function isBlank(s){if(!s)return true;const lc=String(s).toLowerCase().trim();return lc.length<2||['na','n/a','none','no','-','—','--','no comment','none.','no comments','no additional comments','nothing','n','.'].includes(lc);}
+function isBlank(s){if(!s)return true;const lc=String(s).toLowerCase().trim();return lc.length<2||['na','n/a','none','no','-','—','--','no comment','none.','no comments','no additional comments','nothing','n','.','null'].includes(lc);}
 
 function toggleCfg(){$('cfgPanel').classList.toggle('hidden');}
 function swCfg(t){
@@ -373,7 +374,7 @@ function swTab(t){
   document.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));
   $('t'+t).classList.add('active');
 }
-function saveApiCfg(){['Worker','Org','Event','Report'].forEach(k=>{const el=$('cfg'+k);if(el)LS.set(k.toLowerCase(),el.value.trim());});const as=$('cfgAdminSecret');if(as&&as.value.trim())LS.set('adminSecret',as.value.trim());}
+function saveApiCfg(){['Worker','Org','Event','Report','Prefix'].forEach(k=>{const el=$('cfg'+k);if(el)LS.set(k.toLowerCase(),el.value.trim());});const as=$('cfgAdminSecret');if(as&&as.value.trim())LS.set('adminSecret',as.value.trim());}
 function setStatus(state,lbl,meta){
   const d=$('sDot');d.className='sdot '+state;
   $('sLbl').textContent=lbl||'';$('sMeta').textContent=meta||'';
@@ -582,6 +583,27 @@ function runAnalyze(){
   COMMENT_FIELDS.forEach(cf=>wireComments(cf.key,'a'));
 }
 
+function xAnalyzeXLSX(){
+  const f=getFiltered('a');
+  if(!f.length){alert('No data to export.');return;}
+  const wb=XLSX.utils.book_new();
+  const confLine=[eventConf.name,eventConf.city,eventConf.dates].filter(Boolean).join(' | ');
+  const genDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+  const scoreRows=[[confLine||'AEC Session Feedback'],['Generated: '+genDate,'','Responses: '+f.length],[],['Session','Track','Day','Speakers','N',...RKEYS.map(qk=>SCALES[qk].label),'Overall Avg']];
+  const bySess={};
+  f.forEach(r=>{if(!bySess[r.session])bySess[r.session]={session:r.session,track:r.track,day:r.day,speakers:new Set(),rows:[]};bySess[r.session].rows.push(r);(r.speakers||[]).forEach(sp=>bySess[r.session].speakers.add(sp));});
+  Object.values(bySess).forEach(s=>{
+    const avgs=RKEYS.map(qk=>{const vals=s.rows.map(r=>r[SCALES[qk].sk]).filter(v=>v!==null&&v!==undefined);return vals.length?+(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2):null;});
+    const oa=avgs.filter(v=>v!==null);
+    scoreRows.push([s.session,s.track,s.day,[...s.speakers].join('; '),s.rows.length,...avgs,oa.length?+(oa.reduce((a,b)=>a+b,0)/oa.length).toFixed(2):null]);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(scoreRows),'Scores by Session');
+  const respRows=[['Session','Track','Day','Start Time','Speakers','Attendee Type','Country',...RKEYS.map(qk=>SCALES[qk].label),'Presentation Adaptation',...COMMENT_FIELDS.map(cf=>cf.label)]];
+  f.forEach(r=>respRows.push([r.session,r.track,r.day,r.slot,(r.speakers||[]).join('; '),r.attType,r.country,...RKEYS.map(qk=>r[SCALES[qk].sk]!==null?r[SCALES[qk].sk]:null),(r.delivery||[]).join('; '),...COMMENT_FIELDS.map(cf=>r[cf.key]||'')]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(respRows),'Individual Responses');
+  XLSX.writeFile(wb,'AEC_SessionFeedback_Export.xlsx');
+}
+
 // ── SPEAKER REPORTS ───────────────────────────────────────────────────────────
 function runSpeaker(){
   const f=getFiltered('s');
@@ -590,11 +612,62 @@ function runSpeaker(){
   const bySpk={};
   f.forEach(row=>row.speakers.forEach(sp=>{if(!bySpk[sp])bySpk[sp]=[];bySpk[sp].push(row);}));
   spReports={};spExcl={};
-  Object.keys(bySpk).sort().forEach(sp=>{spReports[sp]=buildSpReport(sp,bySpk[sp]);spExcl[sp]={};});
+  Object.keys(bySpk).sort().forEach(sp=>{
+    spReports[sp]=buildSpReport(sp,bySpk[sp]);
+    // Pre-populate spExcl with NA comment indices so re-checking them persists across tab switches
+    spExcl[sp]={};
+    COMMENT_FIELDS.forEach(cf=>{
+      spExcl[sp][cf.key]=new Set();
+      spReports[sp].cmts.filter(cm=>cm.qkey===cf.key).forEach((cm,i)=>{
+        if(cm.na)spExcl[sp][cf.key].add(i);
+      });
+    });
+  });
   curSpTab=Object.keys(spReports).sort()[0];
   renderSpTabs();renderSpContent(spReports[curSpTab],curSpTab);
   $('sebar').classList.add('visible');
   COMMENT_FIELDS.forEach(cf=>wireComments(cf.key,'sp'));
+  // Fetch speaker emails from PheedLoop in background
+  fetchSpeakerEmails();
+}
+
+// Speaker email lookup — keyed by speaker display name, populated at Generate Reports time
+let spEmails={};
+
+async function fetchSpeakerEmails(){
+  spEmails={};
+  const worker=LS.get('worker');
+  const org=LS.get('org');
+  const event=LS.get('event');
+  if(!worker||!org||!event)return;
+
+  // Fetch all attendees in one paginated call, build name→email map
+  const nameMap={};
+  let page=1;
+  try{
+    while(true){
+      const url=worker+'/pheedloop-attendee?org='+encodeURIComponent(org)+'&event='+encodeURIComponent(event)+'&page='+page+'&page_size=100';
+      const resp=await fetch(url);
+      if(!resp.ok)break;
+      const data=await resp.json();
+      const results=data.results||[];
+      results.forEach(a=>{
+        if(a.email){
+          const fullName=(a.first_name+' '+a.last_name).trim().toLowerCase();
+          nameMap[fullName]=a.email;
+        }
+      });
+      if(!data.next)break;
+      page++;
+    }
+  }catch(e){console.log('Speaker email fetch failed:',e);return;}
+
+  // Match each speaker by exact full name (case-insensitive)
+  Object.keys(spReports).forEach(sp=>{
+    const key=sp.trim().toLowerCase();
+    if(nameMap[key])spEmails[sp]=nameMap[key];
+    else console.log('No email match found for speaker:',sp);
+  });
 }
 
 function buildSpReport(sp,rows){
@@ -609,7 +682,7 @@ function buildSpReport(sp,rows){
   });
   const ga=gt.map(t=>t.c?t.s/t.c:null),gv=ga.filter(x=>x!==null);
   const cmts=[];
-  rows.forEach(r=>COMMENT_FIELDS.forEach(cf=>{const txt=r[cf.key];if(txt)cmts.push({q:cf.label,qkey:cf.key,sess:r.session,day:r.day,txt,na:isBlank(txt)});}));
+  rows.forEach(r=>COMMENT_FIELDS.forEach(cf=>{const txt=r[cf.key];if(txt)cmts.push({q:cf.label,qkey:cf.key,sess:r.session,day:r.day,track:r.track||'',txt,na:isBlank(txt)});}));
   return{sp,tableRows,ga,go:gv.length?gv.reduce((a,b)=>a+b,0)/gv.length:null,cmts,tot:rows.length};
 }
 
@@ -628,34 +701,6 @@ function renderSpTabs(){
 }
 
 function sitSpk(sp){
-  if(curSpTab)spExcl[curSpTab]=gSpExcl();
-  // Sync comment selections from current speaker to new speaker if they share sessions
-  if(curSpTab && curSpTab!==sp){
-    const prevRd=spReports[curSpTab];
-    const newRd=spReports[sp];
-    if(prevRd&&newRd){
-      // Find shared sessions
-      const prevSessions=new Set(prevRd.tableRows.map(r=>r.sess));
-      const sharedSessions=newRd.tableRows.filter(r=>prevSessions.has(r.sess)).map(r=>r.sess);
-      if(sharedSessions.length>0&&!spExcl[sp]){
-        // Copy exclusions from prev speaker for matching comments
-        const syncedExcl={};
-        COMMENT_FIELDS.forEach(cf=>{
-          const prevEx=spExcl[curSpTab]?.[cf.key]||new Set();
-          const prevFieldCmts=prevRd.cmts.filter(cm=>cm.qkey===cf.key);
-          const newFieldCmts=newRd.cmts.filter(cm=>cm.qkey===cf.key);
-          const newEx=new Set();
-          newFieldCmts.forEach((cm,newIdx)=>{
-            // Find same comment in prev speaker (same session + same text)
-            const prevIdx=prevFieldCmts.findIndex(pc=>pc.sess===cm.sess&&pc.txt===cm.txt);
-            if(prevIdx>=0&&prevEx.has(prevIdx)){newEx.add(newIdx);}
-          });
-          syncedExcl[cf.key]=newEx;
-        });
-        spExcl[sp]=syncedExcl;
-      }
-    }
-  }
   curSpTab=sp;renderSpTabs();renderSpContent(spReports[sp],sp);
   restoreSpExcl(sp);
   COMMENT_FIELDS.forEach(cf=>wireComments(cf.key,'sp'));
@@ -678,26 +723,27 @@ function renderSpContent(rd,sp){
     const relevant=rd.cmts.filter(cm=>cm.qkey===cf.key);
     if(!relevant.length)return;
     const pfx=spPfx(cf.key);
-    const spuid='spacc_'+pfx;
-    h+='<div class="sh2 acc-hdr" data-target="'+spuid+'" style="cursor:pointer;display:flex;align-items:center;gap:6px">';
-    h+='<span class="acc-arrow" id="'+spuid+'_arrow" style="font-size:10px;display:inline-block">▶</span>💬 '+esc(cf.label)+'</div>';
-    h+='<div id="'+spuid+'" class="acc-body" style="display:none">';
-    h+='<div class="card"><div class="csr">';
-    h+='<input type="text" class="csi acc-search" data-pfx="'+pfx+'" placeholder="Search...">';
+    h+='<div class="card"><div class="card-hdr">💬 '+esc(cf.label)+'</div>';
+    h+='<div class="csr">';
+    h+='<input type="text" class="csi acc-search" data-pfx="'+pfx+'" placeholder="Search comments, sessions, days...">';
     h+='<span class="cc" id="'+pfx+'_c"></span>';
     h+='<button class="btn btn-s btn-sm acc-sel" data-pfx="'+pfx+'" data-state="true">Select All</button>';
     h+='<button class="btn btn-s btn-sm acc-sel" data-pfx="'+pfx+'" data-state="false">Deselect All</button>';
+    h+='<button class="btn btn-s btn-sm" data-hiding="0" onclick="toggleHideExcluded(this,\''+pfx+'\')">Hide Excluded</button>';
     h+='</div>';
-    h+='<table class="ct" id="'+pfx+'_t"><thead><tr><th class="cbc"><input type="checkbox" id="'+pfx+'_m" checked></th><th>Session</th><th>Day</th><th>Comment</th></tr></thead><tbody>';
+    h+='<table class="ct" id="'+pfx+'_t"><thead><tr><th class="cbc"><input type="checkbox" id="'+pfx+'_m" checked></th><th>Session</th><th>Track</th><th>Day</th><th>Comment</th></tr></thead><tbody>';
     relevant.forEach((cm,i)=>{
-      h+='<tr id="'+pfx+'_r'+i+'" class="'+(cm.na?'cna cex':'')+'" data-t="'+esc(cm.txt.toLowerCase())+'" style="cursor:pointer" onclick="toggleCmtRow(this)">';
-      h+='<td class="cbc"><input type="checkbox" class="'+pfx+'_cb" data-i="'+i+'" '+(cm.na?'':'checked')+' onclick="event.stopPropagation()"></td>';
+      const searchStr=[cm.txt,cm.sess,cm.track||'',cm.day].join(' ').toLowerCase();
+      const isExcl=(spExcl[sp]?.[cf.key]||new Set()).has(i);
+      h+='<tr id="'+pfx+'_r'+i+'" class="'+(cm.na?'cna':'')+' '+(isExcl?'cex':'')+'" data-t="'+esc(searchStr)+'" style="cursor:pointer" onclick="spRowClick(this,\''+esc(sp)+'\',\''+esc(cf.key)+'\','+i+')">';
+      h+='<td class="cbc"><input type="checkbox" class="'+pfx+'_cb" data-i="'+i+'" '+(isExcl?'':'checked')+' onclick="event.stopPropagation();spCbChange(this,\''+esc(sp)+'\',\''+esc(cf.key)+'\','+i+')"></td>';
       h+='<td><span class="stag" title="'+esc(cm.sess)+'">'+esc(cm.sess)+'</span></td>';
+      h+='<td style="font-size:11px;color:var(--text-light)">'+esc(cm.track||'')+'</td>';
       h+='<td style="font-size:11px;white-space:nowrap;color:var(--text-light)">'+esc(cm.day)+'</td>';
       h+='<td style="font-style:italic">'+esc(cm.txt)+'</td>';
       h+='</tr>';
     });
-    h+='</tbody></table></div></div>';
+    h+='</tbody></table></div>';
   });
   $('sr').innerHTML=h;
 }
@@ -706,7 +752,7 @@ function spPfx(k){return 'sp_'+k.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase().slic
 function syncSelectionsToAll(){
   if(!curSpTab)return;
   // Save current tab first
-  spExcl[curSpTab]=gSpExcl();
+
   const srcRd=spReports[curSpTab];
   if(!srcRd)return;
   let synced=0;
@@ -734,6 +780,49 @@ function syncSelectionsToAll(){
 function gSpExcl(){const ex={};COMMENT_FIELDS.forEach(cf=>{const pfx=spPfx(cf.key);ex[cf.key]=new Set();document.querySelectorAll('.'+pfx+'_cb').forEach(cb=>{if(!cb.checked)ex[cf.key].add(+cb.dataset.i);});});return ex;}
 function restoreSpExcl(sp){const ex=spExcl[sp];if(!ex)return;Object.entries(ex).forEach(([fk,set])=>{const pfx=spPfx(fk);set.forEach(i=>{const cb=document.querySelector('.'+pfx+'_cb[data-i="'+i+'"]');if(cb){cb.checked=false;const r=$(pfx+'_r'+i);if(r)r.classList.add('cex');}});});}
 
+// Called when clicking a speaker comment row (not the checkbox itself)
+function spRowClick(tr,sp,qkey,idx){
+  const cb=tr.querySelector('input[type=checkbox]');if(!cb)return;
+  cb.checked=!cb.checked;
+  spCbChange(cb,sp,qkey,idx);
+}
+
+// Called from each speaker checkbox onclick — propagates change to other speakers sharing same session+comment
+function spCbChange(cb,sp,qkey,idx){
+  // Find this comment's session and text from spReports
+  const rd=spReports[sp];if(!rd)return;
+  const fieldCmts=rd.cmts.filter(cm=>cm.qkey===qkey);
+  const cm=fieldCmts[idx];if(!cm)return;
+  const checked=cb.checked;
+  // Update this row's visual state
+  const tr=cb.closest('tr');if(tr)tr.classList.toggle('cex',!checked);
+  const pfx=spPfx(qkey);updCt(pfx);
+  // Update spExcl for the current speaker
+  if(!spExcl[sp])spExcl[sp]={};
+  if(!spExcl[sp][qkey])spExcl[sp][qkey]=new Set();
+  if(checked)spExcl[sp][qkey].delete(idx);
+  else spExcl[sp][qkey].add(idx);
+  // Propagate to all other speakers who have this same session+comment+question
+  Object.keys(spReports).forEach(otherSp=>{
+    if(otherSp===sp)return;
+    const otherRd=spReports[otherSp];if(!otherRd)return;
+    const otherFieldCmts=otherRd.cmts.filter(c=>c.qkey===qkey);
+    otherFieldCmts.forEach((oc,oi)=>{
+      if(oc.sess!==cm.sess||oc.txt!==cm.txt)return;
+      // If this other speaker is currently rendered, update DOM directly
+      if(otherSp===curSpTab){
+        const ocb=document.querySelector('.'+pfx+'_cb[data-i="'+oi+'"]');
+        if(ocb){ocb.checked=checked;const r=document.getElementById(pfx+'_r'+oi);if(r)r.classList.toggle('cex',!checked);updCt(pfx);}
+      }
+      // Always update spExcl in memory so it's correct when tab is restored
+      if(!spExcl[otherSp])spExcl[otherSp]={};
+      if(!spExcl[otherSp][qkey])spExcl[otherSp][qkey]=new Set();
+      if(checked)spExcl[otherSp][qkey].delete(oi);
+      else spExcl[otherSp][qkey].add(oi);
+    });
+  });
+}
+
 // ── SCORE TABLE ───────────────────────────────────────────────────────────────
 function buildScoreTable(data,gl,gk){
   const gs={};data.forEach(r=>{const g=r[gk]||'(Blank)';(gs[g]=gs[g]||[]).push(r);});
@@ -760,7 +849,7 @@ function buildRatingDetail(rows){
     const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
     const dist=[0,0,0,0,0];vals.forEach(v=>{dist[5-v]++;});
     const dp=dist.map(cnt=>vals.length?cnt/vals.length*100:0);
-    const colors=['#2e7d32','#66bb6a','#ffa726','#ef5350','#b71c1c'];
+    const colors=['#6a0dad','#1565c0','#2e7d32','#f9a825','#c62828'];
     const labels=Object.keys(SCALES[qk].map);
     const segs=dp.map((p,i)=>p>0?`<div style="display:inline-flex;align-items:center;justify-content:center;width:${p}%;height:20px;background:${colors[i]};font-size:10px;font-weight:700;color:#fff;overflow:hidden;min-width:0" title="${labels[i]}: ${dist[i]} (${p.toFixed(0)}%)">${p>=8?dist[i]:''}</div>`:'').join('');
     const legend=labels.map((k,i)=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text-light);margin-right:8px"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};display:inline-block"></span>${k}</span>`).join('');
@@ -777,9 +866,9 @@ function buildDelivery(rows){
     'CLEAR Publication (Journal of Professional Regulation, Professional Licensing Report)',
     'Webinar','Podcast','Future/Follow Up Presentation'
   ];
-  const DCOLORS={'CLEAR Resource (Resource Brief, Reference Library, Case Study)':'#64092c',
-    'CLEAR Publication (Journal of Professional Regulation, Professional Licensing Report)':'#084d78',
-    'Webinar':'#dda838','Podcast':'#2e7d4f','Future/Follow Up Presentation':'#e65100'};
+  const DCOLORS={'CLEAR Resource (Resource Brief, Reference Library, Case Study)':'#c62828',
+    'CLEAR Publication (Journal of Professional Regulation, Professional Licensing Report)':'#f9a825',
+    'Webinar':'#2e7d32','Podcast':'#1565c0','Future/Follow Up Presentation':'#6a0dad'};
   const DSHORT={'CLEAR Resource (Resource Brief, Reference Library, Case Study)':'CLEAR Resource',
     'CLEAR Publication (Journal of Professional Regulation, Professional Licensing Report)':'CLEAR Publication',
     'Webinar':'Webinar','Podcast':'Podcast','Future/Follow Up Presentation':'Future Presentation'};
@@ -796,45 +885,87 @@ function buildDelivery(rows){
   window._deliverySessionData=sessionData;
 
   const activeOpts=DOPTS.filter(o=>counts[o]>0);
-  const uid='acc_delivery';
+
+  const chartId='delChart_'+Math.random().toString(36).slice(2,7);
+
+  // Global max across ALL options (used as baseline even when filtering)
+  let globalMax=0;
+  sessions.forEach(sess=>{
+    const total=activeOpts.reduce((s,o)=>(s+(sessionData[sess].counts[o]||0)),0);
+    if(total>globalMax)globalMax=total;
+  });
+  if(!globalMax)globalMax=1;
 
   let h='<div class="card">';
-  h+='<div class="card-hdr acc-hdr" data-target="'+uid+'" style="cursor:pointer;user-select:none">';
-  h+='<span class="acc-arrow" id="'+uid+'_arrow" style="font-size:11px;margin-right:6px;display:inline-block">▶</span>';
-  h+='📣 Presentation Adaptation Preferences';
-  h+='<span class="card-hdr-note"> ('+resp+' of '+rows.length+' responded — multi-select) · Click to expand</span>';
+  h+='<div class="card-hdr">📣 Presentation Adaptation Preferences';
+  h+='<span class="card-hdr-note"> ('+resp+' of '+rows.length+' responded — multi-select)</span>';
   h+='</div>';
-  h+='<div id="'+uid+'" class="acc-body" style="display:none">';
   h+='<div class="card-body">';
 
-  // Legend
-  h+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">';
-  activeOpts.forEach(o=>{h+='<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light)"><div style="width:12px;height:12px;border-radius:2px;background:'+DCOLORS[o]+';flex-shrink:0"></div>'+esc(DSHORT[o])+'</div>';});
+  // Clickable legend — each item toggles its option on/off
+  h+='<div id="'+chartId+'_legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">';
+  activeOpts.forEach(o=>{
+    h+='<div data-opt="'+esc(o)+'" data-on="1" onclick="toggleDeliveryOpt(this,\''+chartId+'\')" style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light);cursor:pointer;user-select:none;border:2px solid '+DCOLORS[o]+';border-radius:4px;padding:2px 7px 2px 5px;transition:opacity .15s">';
+    h+='<div style="width:12px;height:12px;border-radius:2px;background:'+DCOLORS[o]+';flex-shrink:0"></div>'+esc(DSHORT[o])+'</div>';
+  });
   h+='</div>';
 
-  // Stacked bar per session
-  sessions.forEach(sess=>{
-    const sd=sessionData[sess];
-    const shortSess=sess.length>60?sess.slice(0,58)+'…':sess;
-    h+='<div style="margin-bottom:14px">';
-    h+='<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px" title="'+esc(sess)+'">'+esc(shortSess)+'</div>';
-    h+='<div style="display:flex;height:24px;border-radius:5px;overflow:hidden;background:#f0ede8">';
-    if(sd.resp>0){
-      activeOpts.forEach(o=>{
-        const cnt=sd.counts[o]||0;if(!cnt)return;
-        const pct=cnt/sd.resp*100;
-        h+='<div style="width:'+pct+'%;background:'+DCOLORS[o]+';height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden" title="'+esc(DSHORT[o])+': '+cnt+' ('+pct.toFixed(0)+'%)">';
-        h+='<span style="font-size:10px;font-weight:700;color:#fff;padding:0 3px">'+(pct>=10?cnt:'')+'</span></div>';
-      });
-    }
-    h+='</div>';
-    h+='<div style="font-size:11px;color:var(--text-light);margin-top:2px">'+sd.resp+' of '+sd.n+' responded</div>';
-    h+='</div>';
-  });
+  // Bar area
+  h+='<div id="'+chartId+'_bars">';
+  h+=renderDeliveryBars(sessions,sessionData,activeOpts,globalMax,DCOLORS,DSHORT);
+  h+='</div>';
 
-  h+='</div></div></div>';
+  h+='</div></div>';
+
+  // Store data on window for redraw
+  window['_del_'+chartId]={sessions,sessionData,activeOpts:[...activeOpts],globalMax,DCOLORS,DSHORT};
+
   return h;
 }
+function renderDeliveryBars(sessions,sessionData,visibleOpts,globalMax,DCOLORS,DSHORT){
+  let h='';
+  sessions.forEach(sess=>{
+    const sd=sessionData[sess];
+    const shortSess=sess.length>60?sess.slice(0,58)+'\u2026':sess;
+    const sessionTotal=visibleOpts.reduce((s,o)=>(s+(sd.counts[o]||0)),0);
+    const barWidthPct=sessionTotal/globalMax*100;
+    h+='<div style="margin-bottom:14px">';
+    h+='<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px" title="'+esc(sess)+'">'+esc(shortSess)+'</div>';
+    h+='<div style="position:relative;height:24px;border-radius:5px;background:#f0ede8">';
+    h+='<div style="display:flex;height:100%;border-radius:5px;overflow:hidden;width:'+barWidthPct+'%">';
+    if(sd.resp>0){
+      visibleOpts.forEach(o=>{
+        const cnt=sd.counts[o]||0;if(!cnt)return;
+        const segPct=cnt/sessionTotal*100;
+        h+='<div style="width:'+segPct+'%;background:'+DCOLORS[o]+';height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0" title="'+esc(DSHORT[o])+': '+cnt+'">';
+        h+='<span style="font-size:10px;font-weight:700;color:#fff;padding:0 2px;white-space:nowrap">'+cnt+'</span></div>';
+      });
+    }
+    h+='</div></div>';
+    h+='<div style="font-size:11px;color:var(--text-light);margin-top:2px">'+sessionTotal+' total votes · '+sd.resp+' of '+sd.n+' responded</div>';
+    h+='</div>';
+  });
+  return h;
+}
+
+function toggleDeliveryOpt(el,chartId){
+  const data=window['_del_'+chartId];if(!data)return;
+  const opt=el.dataset.opt;
+  const isOn=el.dataset.on==='1';
+  // Toggle legend item style
+  el.dataset.on=isOn?'0':'1';
+  el.style.opacity=isOn?'0.35':'1';
+  el.style.textDecoration=isOn?'line-through':'';
+  // Rebuild visible opts
+  const legend=document.getElementById(chartId+'_legend');
+  const visibleOpts=data.activeOpts.filter(o=>{
+    const item=legend.querySelector('[data-opt="'+o+'"]');
+    return item&&item.dataset.on==='1';
+  });
+  // Redraw bars
+  document.getElementById(chartId+'_bars').innerHTML=renderDeliveryBars(data.sessions,data.sessionData,visibleOpts,data.globalMax,data.DCOLORS,data.DSHORT);
+}
+
 function showDeliveryModal(sess){}
 function closeDeliveryModal(){const m=document.getElementById('deliveryModal');if(m)m.style.display='none';}
 
@@ -844,7 +975,7 @@ function cmtPfx(k,p){return p+'_'+k.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase().s
 function buildComments(rows,fieldKey,label,p){
   const pfx=cmtPfx(fieldKey,p);
   const cmts=[];
-  rows.forEach((r)=>{const txt=r[fieldKey];if(!txt)return;cmts.push({txt,session:r.session,day:r.day,na:isBlank(txt)});});
+  rows.forEach((r)=>{const txt=r[fieldKey];if(!txt)return;cmts.push({txt,session:r.session,track:r.track||'',day:r.day,na:isBlank(txt)});});
   if(!cmts.length)return'';
   const uid='acc_'+pfx;
   let h='<div class="card">';
@@ -855,19 +986,22 @@ function buildComments(rows,fieldKey,label,p){
   h+='</div>';
   h+='<div id="'+uid+'" class="acc-body" style="display:none">';
   h+='<div class="csr">';
-  h+='<input type="text" class="csi acc-search" data-pfx="'+pfx+'" placeholder="Search comments...">';
+  h+='<input type="text" class="csi acc-search" data-pfx="'+pfx+'" placeholder="Search comments, sessions, days...">';
   h+='<span class="cc" id="'+pfx+'_c"></span>';
   h+='<button class="btn btn-s btn-sm acc-sel" data-pfx="'+pfx+'" data-state="true">Select All</button>';
   h+='<button class="btn btn-s btn-sm acc-sel" data-pfx="'+pfx+'" data-state="false">Deselect All</button>';
+  h+='<button class="btn btn-s btn-sm" data-hiding="0" onclick="toggleHideExcluded(this,\''+pfx+'\')">Hide Excluded</button>';
   h+='</div>';
   h+='<table class="ct" id="'+pfx+'_t"><thead><tr>';
   h+='<th class="cbc"><input type="checkbox" id="'+pfx+'_m" checked></th>';
-  h+='<th>Session</th><th>Day</th><th>Comment</th>';
+  h+='<th>Session</th><th>Track</th><th>Day</th><th>Comment</th>';
   h+='</tr></thead><tbody>';
   cmts.forEach((cm,i)=>{
-    h+='<tr id="'+pfx+'_r'+i+'" class="'+(cm.na?'cna cex':'')+'" data-t="'+esc(cm.txt.toLowerCase())+'" style="cursor:pointer" onclick="toggleCmtRow(this)">';
+    const searchStr=[cm.txt,cm.session,cm.track,cm.day].join(' ').toLowerCase();
+    h+='<tr id="'+pfx+'_r'+i+'" class="'+(cm.na?'cna cex':'')+'" data-t="'+esc(searchStr)+'" style="cursor:pointer" onclick="toggleCmtRow(this)">';
     h+='<td class="cbc"><input type="checkbox" class="'+pfx+'_cb" data-i="'+i+'" '+(cm.na?'':'checked')+' onclick="event.stopPropagation()"></td>';
     h+='<td><span class="stag" title="'+esc(cm.session)+'">'+esc(cm.session)+'</span></td>';
+    h+='<td style="font-size:11px;color:var(--text-light)">'+esc(cm.track)+'</td>';
     h+='<td style="font-size:11px;white-space:nowrap;color:var(--text-light)">'+esc(cm.day)+'</td>';
     h+='<td style="font-style:italic">'+esc(cm.txt)+'</td>';
     h+='</tr>';
@@ -890,7 +1024,11 @@ function updCt(pfx){const el=$(pfx+'_c');if(!el)return;const total=document.quer
 
 // ── PDF ───────────────────────────────────────────────────────────────────────
 function xSpeakerEmail(){
-  if(curSpTab)spExcl[curSpTab]=gSpExcl();
+  // Only download speakers explicitly selected in the filter (or all if no filter set)
+  const spFilter=MSS['sSSp'];
+  const selectedSps=spFilter&&spFilter.sel.size>0&&spFilter.sel.size<spFilter.av.length
+    ?spFilter.sel:null;
+
   const logoSrc=getLogoForEmail();
   const confName=eventConf.name||'CLEAR Annual Educational Conference';
   const confCity=eventConf.city||'';
@@ -902,7 +1040,10 @@ function xSpeakerEmail(){
   function fmtScore(v){return(v!==null&&v!==undefined&&!isNaN(v))?v.toFixed(2):'—';}
   function getIdx(sk){return RKEYS.indexOf(RKEYS.find(qk=>SCALES[qk].sk===sk));}
 
-  Object.entries(spReports).forEach(([sp,rd],idx)=>{
+  const entriesToExport=Object.entries(spReports).filter(([sp])=>!selectedSps||selectedSps.has(sp));
+  let dlIdx=0;
+  entriesToExport.forEach(([sp,rd])=>{
+    const thisDlIdx=dlIdx++;
     setTimeout(()=>{
       const ex=spExcl[sp]||{};
       const sessionWord=rd.tableRows.length===1?'session':'sessions';
@@ -934,7 +1075,7 @@ function xSpeakerEmail(){
         }).join('');
         const topBorder=ri>0?'border-top:2px solid #e0dcd6;':'';
         sessionBlocks+=`
-          <tr><td colspan="100%" style="${topBorder}padding:12px 14px 6px;background:#fafaf8">
+          <tr><td colspan="${scoreCols.length+1}" style="${topBorder}padding:12px 14px 6px;background:#fafaf8">
             <div style="font-size:13px;font-weight:700;color:#333333;font-family:'Open Sans',Arial,sans-serif;line-height:1.4">${r.sess}</div>
             <div style="font-size:11px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-top:2px">${r.c} response${r.c!==1?'s':''}</div>
           </td></tr>
@@ -948,21 +1089,8 @@ function xSpeakerEmail(){
       let cmtSections='';
       COMMENT_FIELDS.forEach(cf=>{
         const exSet=(ex[cf.key]||new Set());
-        // fieldCmts matches exactly what renderSpContent built checkboxes from
-        // (full field subset including na) so data-i indices align with exSet
-        // Same pattern as eval tool gex(): read checked checkboxes directly from DOM
-        const pfxKey=spPfx(cf.key);
-        const checkedSet=new Set();
-        document.querySelectorAll('.'+pfxKey+'_cb:checked').forEach(cb=>checkedSet.add(+cb.dataset.i));
         const fieldCmts=rd.cmts.filter(cm=>cm.qkey===cf.key);
-        const relevant=fieldCmts.filter((cm,i)=>{
-          if(cm.na) return false;
-          // If checkboxes are in DOM use them; otherwise include all non-na
-          if(checkedSet.size>0||document.querySelectorAll('.'+pfxKey+'_cb').length>0){
-            return checkedSet.has(i);
-          }
-          return true;
-        });
+        const relevant=fieldCmts.filter((cm,i)=>!exSet.has(i));
         if(!relevant.length)return;
         // Group by session
         const bySess={};
@@ -1019,19 +1147,17 @@ body{margin:0;padding:0;width:100%!important;-webkit-font-smoothing:antialiased;
 <body style="margin:0;padding:0;background-color:#f7f5f2;">
 
 <!-- HEADER -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#64092c;">
-<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="#64092c" style="background-color:#64092c;">
+<tr><td align="center" bgcolor="#64092c" style="background-color:#64092c;">
 <!--[if mso]><table width="640" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
 <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:640px;">
-<tr><td style="padding:20px 28px;">
+<tr><td bgcolor="#64092c" style="padding:20px 28px;background-color:#64092c;">
   <table cellpadding="0" cellspacing="0" border="0" role="presentation">
     <tr>
-      <td valign="middle" style="padding-right:16px;">
-        <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#ffffff;border-radius:8px;">
-          <tr><td style="padding:6px 10px;line-height:0;">
-            <img src="${logoSrc}" alt="CLEAR" height="44" style="display:block;height:44px;width:auto;border:0;"/>
-          </td></tr>
-        </table>
+      <td width="116" valign="middle" style="padding-right:16px;">
+        <!--[if mso]><table cellpadding="0" cellspacing="0" border="0"><tr><td width="100" height="58" bgcolor="#ffffff" style="padding: 5px 10px;"><![endif]-->
+        <img src="${logoSrc}" alt="CLEAR" width="100" height="58" style="display:block;width:100px;height:58px;border:0;"/>
+        <!--[if mso]></td></tr></table><![endif]-->
       </td>
       <td valign="middle">
         <table cellpadding="0" cellspacing="0" border="0" role="presentation">
@@ -1186,18 +1312,23 @@ body{margin:0;padding:0;width:100%!important;-webkit-font-smoothing:antialiased;
 
       const blob=new Blob([html],{type:'text/html'});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-      a.download='AEC_SpeakerReport_'+sp.replace(/[^a-zA-Z0-9]/g,'_')+'.html';
+      const prefix=(LS.get('prefix')||'aec2026').replace(/[^a-zA-Z0-9]/g,'');
+      const emailAddr=spEmails[sp]||'';
+      const fileId=emailAddr?emailAddr:(sp.toLowerCase().replace(/[^a-z0-9]/g,'_'));
+      a.download=prefix+'-'+fileId+'.html';
       document.body.appendChild(a);a.click();document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
-    },idx*500);
+    },thisDlIdx*500);
   });
 }
 function xSpeakerXLSX(){
-  if(curSpTab)spExcl[curSpTab]=gSpExcl();
+
   const wb=XLSX.utils.book_new();
   const confLine=[eventConf.name,eventConf.city,eventConf.dates].filter(Boolean).join(' | ');
   const genDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
-  Object.entries(spReports).forEach(([sp,rd])=>{
+  const spFilterX=MSS['sSSp'];
+  const selectedSpsX=spFilterX&&spFilterX.sel.size>0&&spFilterX.sel.size<spFilterX.av.length?spFilterX.sel:null;
+  Object.entries(spReports).filter(([sp])=>!selectedSpsX||selectedSpsX.has(sp)).forEach(([sp,rd])=>{
     const rows=[
       [confLine],
       ['Speaker Evaluation Report — '+sp],
@@ -1353,6 +1484,16 @@ function toggleCmtRow(tr){
   // find pfx from checkbox class
   const cls=[...cb.classList].find(c=>c.endsWith('_cb'));
   if(cls){const pfx=cls.slice(0,-3);updCt(pfx);}
+}
+
+function toggleHideExcluded(btn,pfx){
+  const tbl=document.getElementById(pfx+'_t');if(!tbl)return;
+  const hiding=btn.dataset.hiding==='1';
+  const newState=hiding?'0':'1';
+  btn.dataset.hiding=newState;
+  btn.textContent=newState==='1'?'Show Excluded':'Hide Excluded';
+  tbl.querySelectorAll('tr.cex').forEach(tr=>{tr.style.display=newState==='1'?'none':'';});
+  updCt(pfx);
 }
 
 function showError(msg){
