@@ -249,7 +249,7 @@ async function loadQuestionMeta(){
     pageTitleById[page.id] = page.title || '(untitled section)';
     asArray(page.questions).forEach(q => {
       const choices = {};
-      asArray(q.answers?.choices).forEach((c,i) => { choices[c.id] = { text: c.text, position: c.position ?? i }; });
+      asArray(q.answers?.choices).forEach((c,i) => { choices[c.id] = { text: c.text, position: c.position ?? i, weight: typeof c.weight === 'number' ? c.weight : undefined }; });
       const rows = {};
       asArray(q.answers?.rows).forEach((r,i) => { rows[r.id] = { text: r.text, position: r.position ?? i }; });
       const others = {};
@@ -293,7 +293,46 @@ function isNonAnswerChoice(text){
 function getScoreableChoices(qMeta){
   return Object.values(qMeta.choices)
     .filter(x => !isNonAnswerChoice(x.text))
-    .sort((a,b)=>a.position-b.position);
+    .sort((a,b)=>a.position-b.position); // author's DISPLAY order -- not assumed to be worst-to-best; see scoreForChoice
+}
+
+// If a choice's own label starts with its number ("4", "4 - Satisfied",
+// "4: Good", "10 - Extremely likely", etc.), that number is the
+// authoritative value -- it doesn't matter what order the choices are
+// displayed in, or what words are used, because the number is the
+// scale value the respondent actually picked. This is checked BEFORE
+// anything wording- or position-based, because it's exact rather than
+// inferred.
+function parseLeadingNumber(text){
+  const m = (text||'').trim().match(/^(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+// Endpoint wording used to work out which end of a scale is negative and
+// which is positive, independent of the order the choices happen to be
+// displayed in. A survey author can list a scale worst-to-best OR
+// best-to-worst -- SurveyMonkey doesn't enforce either -- so display
+// position alone can't be trusted to mean scale value; that was the
+// bug (a "4 out of 5" pick scored as a 2 because it was 2nd-from-the-
+// top in a best-to-worst list, and the code assumed 1st-from-the-top
+// meant "worst"). Only used as a fallback when choices aren't
+// numbered and don't carry a weight (see scoreForChoice).
+const NEGATIVE_ANCHOR_RE = /\b(very dissatisfied|strongly disagree|very poor|very unlikely|terrible|awful|dissatisfied|disagree|unlikely|worst|poor|bad|low)\b/i;
+const POSITIVE_ANCHOR_RE = /\b(very satisfied|strongly agree|very likely|extremely likely|excellent|satisfied|agree|likely|best|good|great|high)\b/i;
+
+// Compares the wording of the two ends of the scale (as displayed) to
+// work out which way it runs. Returns 1 if display order already runs
+// negative -> positive (so display position can be used as-is), -1 if
+// it runs positive -> negative (so it needs to be reversed), or null
+// if the wording isn't recognizable enough to say either way.
+function detectScaleDirection(orderedChoices){
+  if(orderedChoices.length < 2) return null;
+  const first = orderedChoices[0].text || '', last = orderedChoices[orderedChoices.length-1].text || '';
+  const firstNeg = NEGATIVE_ANCHOR_RE.test(first), firstPos = POSITIVE_ANCHOR_RE.test(first);
+  const lastNeg = NEGATIVE_ANCHOR_RE.test(last), lastPos = POSITIVE_ANCHOR_RE.test(last);
+  if(firstNeg && lastPos) return 1;
+  if(firstPos && lastNeg) return -1;
+  return null;
 }
 
 // Score a single answer on ITS OWN scale, then linearly rescale that onto
@@ -308,6 +347,18 @@ function getScoreableChoices(qMeta){
 // instead (see the non-scoring branch below). Also returns null for
 // "Didn't Attend" / "N/A" itself, so opting out of one specific event
 // or aspect never drags down that row's average for this respondent.
+//
+// A choice's underlying value is worked out, in order of preference,
+// from the MOST authoritative source available: (1) a number embedded
+// in the choice's own label (see parseLeadingNumber) -- exact, and
+// completely independent of display order; (2) SurveyMonkey's own
+// per-choice weight, if the survey defines one; (3) the scale's
+// wording, if the two end choices are recognizable (see
+// detectScaleDirection) -- lets display order run either direction;
+// (4) as an absolute last resort, display order is assumed to run
+// worst-to-best and the result is flagged with directionAssumed:true
+// so the UI can surface it for a human to confirm rather than
+// silently trusting a guess.
 function scoreForChoice(qMeta, choiceId){
   const c = qMeta.choices[choiceId];
   if(!c) return null;
@@ -317,9 +368,40 @@ function scoreForChoice(qMeta, choiceId){
   if(maxScore < 3) return null;
   const idx = ordered.findIndex(x => x.text === c.text);
   if(idx < 0) return null;
-  const raw = idx + 1; // 1..maxScore on the question's own scale
-  const rescaled = 1 + (raw - 1) * (4 / (maxScore - 1)); // linearly onto 1..5
-  return { score: rescaled, maxScore, raw };
+
+  const numericValues = ordered.map(x => parseLeadingNumber(x.text));
+  const allNumeric = numericValues.every(v => v !== null) && new Set(numericValues).size === numericValues.length;
+  const allWeighted = !allNumeric && ordered.every(x => typeof x.weight === 'number');
+
+  let sourceValue, sourceMin, sourceMax, directionAssumed = false;
+  if(allNumeric){
+    sourceValue = numericValues[idx];
+    sourceMin = Math.min(...numericValues);
+    sourceMax = Math.max(...numericValues);
+  } else if(allWeighted){
+    const weights = ordered.map(x => x.weight);
+    sourceValue = c.weight;
+    sourceMin = Math.min(...weights);
+    sourceMax = Math.max(...weights);
+  } else {
+    const direction = detectScaleDirection(ordered);
+    let raw;
+    if(direction === -1){
+      raw = maxScore - idx; // wording shows display order runs best -> worst; reverse it
+    } else if(direction === 1){
+      raw = idx + 1; // wording confirms display order already runs worst -> best
+    } else {
+      raw = idx + 1; // wording inconclusive; assume worst -> best and flag for review
+      directionAssumed = true;
+    }
+    sourceValue = raw; sourceMin = 1; sourceMax = maxScore;
+  }
+
+  const raw = sourceValue;
+  const rescaled = sourceMax > sourceMin
+    ? 1 + (sourceValue - sourceMin) * (4 / (sourceMax - sourceMin)) // linearly onto 1..5
+    : 3; // degenerate: every remaining choice carries the same value -- no information to rank by, treat as neutral
+  return { score: rescaled, maxScore, raw, directionAssumed };
 }
 
 // A 2-point matrix question (Yes/No, Agree/Disagree, Satisfied/
@@ -508,6 +590,25 @@ function parseResponse(raw){
             }
           });
         }
+
+        // Some matrix/rating questions include an open-text "Comment
+        // Box" row alongside their rating rows (a SurveyMonkey option
+        // for these question types) -- e.g. a free-text row attached to
+        // the same question as a set of tour/aspect ratings. Those
+        // answers carry text but no choice_id, so neither branch above
+        // picks them up -- they were being silently dropped entirely.
+        // Captured here as a regular comment, labeled with that row's
+        // own prompt (e.g. "Please share any comments regarding the
+        // social activities") so it reads naturally alongside other
+        // comments for the section.
+        answers.forEach(ans => {
+          if(ans.choice_id !== undefined) return; // already handled above
+          if(!ans.text || !ans.text.trim()) return;
+          const rowLabel = (ans.row_id !== undefined && meta.rows[ans.row_id]) ? meta.rows[ans.row_id].text : meta.heading;
+          out.texts[section] = out.texts[section] || [];
+          out.texts[section].push({ q: rowLabel, a: ans.text.trim() });
+        });
+
         return;
       }
 
@@ -844,11 +945,12 @@ function renderSectionCards(){
     const aspectMap = {};
     data.forEach(r=>{
       if(r.ratings[sec]) Object.entries(r.ratings[sec]).forEach(([aspect,v])=>{
-        aspectMap[aspect] = aspectMap[aspect] || { vals: [], maxScore: v.maxScore };
+        aspectMap[aspect] = aspectMap[aspect] || { vals: [], maxScore: v.maxScore, directionAssumed: false };
         aspectMap[aspect].vals.push(v.score);
+        if(v.directionAssumed) aspectMap[aspect].directionAssumed = true;
       });
     });
-    const aspects = Object.entries(aspectMap).map(([name,info])=>({name, avg: avg(info.vals), n: info.vals.length, maxScore: info.maxScore}));
+    const aspects = Object.entries(aspectMap).map(([name,info])=>({name, avg: avg(info.vals), n: info.vals.length, maxScore: info.maxScore, directionAssumed: info.directionAssumed}));
 
     // Yes/No-style sentiment answers (classifiable 2-point matrix rows)
     // for this section, tallied per question as a % positive
@@ -939,7 +1041,7 @@ function renderSectionCards(){
         <div class="section-body" id="${bodyId}">
           ${aspects.map(a=>`
             <div class="aspect-row">
-              <div class="name">${a.name}${a.maxScore && a.maxScore!==5 ? ` <span class="scale-note">(${a.maxScore}-pt scale, rescaled)</span>` : ''}</div>
+              <div class="name">${a.name}${a.maxScore && a.maxScore!==5 ? ` <span class="scale-note">(${a.maxScore}-pt scale, rescaled)</span>` : ''}${a.directionAssumed ? ` <span class="scale-note" style="color:#b3261e;">(scale direction assumed — verify order)</span>` : ''}</div>
               <div class="bar-track"><div class="bar-fill" style="width:${(a.avg/5*100).toFixed(0)}%; background:${scoreColorHex(a.avg)}"></div></div>
               <div class="score" style="color:${scoreColorHex(a.avg)}">${fmt(a.avg)} <span style="color:#999;font-weight:400;">(n=${a.n})</span></div>
             </div>
@@ -1030,7 +1132,7 @@ function renderDetail(r){
   html += '<div class="detail-grid">';
   Object.entries(r.ratings).forEach(([sec, aspects])=>{
     Object.entries(aspects).forEach(([name,v])=>{
-      html += `<div class="detail-item"><div class="q">${escapeHtml(sec)} &mdash; ${escapeHtml(name)}</div><div class="a" style="color:${scoreColorHex(v.score)}">${v.score.toFixed(2)}/5${v.maxScore!==5?` <span style="color:#999;font-weight:400;">(orig. ${v.maxScore}-pt scale)</span>`:''}</div></div>`;
+      html += `<div class="detail-item"><div class="q">${escapeHtml(sec)} &mdash; ${escapeHtml(name)}</div><div class="a" style="color:${scoreColorHex(v.score)}">${v.score.toFixed(2)}/5${v.maxScore!==5?` <span style="color:#999;font-weight:400;">(orig. ${v.maxScore}-pt scale)</span>`:''}${v.directionAssumed?` <span style="color:#b3261e;font-weight:400;">(direction assumed)</span>`:''}</div></div>`;
     });
   });
   html += '</div>';
