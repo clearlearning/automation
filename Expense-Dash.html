@@ -411,7 +411,7 @@
   /* ── INSTRUCTOR TABLE ── */
   .instructor-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 120px 32px;
+    grid-template-columns: 150px 170px 110px 160px 110px 110px 110px 100px 32px;
     gap: 8px;
     align-items: center;
     padding: 8px 10px;
@@ -592,6 +592,8 @@
     .review-detail { grid-template-columns: 1fr; }
   }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -635,6 +637,7 @@
           <div class="page-subtitle">Review and approve submitted expense reports.</div>
         </div>
         <button class="btn btn-gold" onclick="exportToExcel()">⬇ Export to Excel</button>
+        <button class="btn btn-secondary" onclick="exportSelectedPDFs()" id="export-pdf-btn" style="display:none">⬇ Export PDF (<span id="selected-count">0</span> selected)</button>
       </div>
       <div class="stats-bar" id="admin-stats"></div>
       <div class="filter-bar">
@@ -719,14 +722,14 @@
       <div class="card">
         <div class="card-title"><span class="icon">🎓</span> Instructor Roster</div>
         <div class="flex-row between mb-12">
-          <p style="font-size:13px; color:var(--text-light)">Manage contract instructors and their pay tiers.</p>
+          <p style="font-size:13px; color:var(--text-light)">Manage contract instructors, their pay tiers, and contact details. Phone and address auto-populate in the instructor expense form when an instructor selects their name.</p>
           <div class="flex-row">
             <label class="import-zone" style="margin:0; padding:6px 12px; font-size:12px; cursor:pointer">📂 Import CSV<input type="file" accept=".csv" style="display:none" onchange="importInstructorCSV(event)"></label>
             <button class="btn btn-primary btn-sm" onclick="addInstructor()">+ Add Instructor</button>
           </div>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr 120px 32px; gap:8px; padding: 0 10px 6px; font-size:11px; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.4px;">
-          <span>Name</span><span>Email</span><span>Tier</span><span></span>
+        <div style="display:grid; grid-template-columns: 150px 170px 110px 160px 110px 110px 110px 100px 32px; gap:8px; padding: 0 10px 6px; font-size:11px; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.4px;">
+          <span>Name</span><span>Email</span><span>Phone</span><span>Street Address</span><span>City</span><span>State / Province</span><span>Country</span><span>Tier</span><span></span>
         </div>
         <div id="instructor-list"></div>
         <div id="instructors-save-msg" style="display:none" class="alert alert-success mt-8">✓ Instructor roster saved.</div>
@@ -919,12 +922,16 @@ async function renderDashboard() {
   wrap.innerHTML = `
     <table class="dash-table">
       <thead><tr>
+        <th style="width:32px"><input type="checkbox" id="select-all-cb" onchange="toggleSelectAll(this)" style="cursor:pointer" title="Select all approved reports"></th>
         <th>Submitted</th><th>Name</th><th>Type</th>
         <th>Event</th><th>Dates</th><th>Total</th><th>Status</th><th>Actions</th>
       </tr></thead>
       <tbody>
         ${filtered.map(r => `
           <tr>
+            <td style="text-align:center">${(r.status||'').toLowerCase() === 'approved'
+              ? `<input type="checkbox" class="report-cb" data-id="${r.id}" onchange="updatePdfBtn()" style="cursor:pointer">`
+              : ''}</td>
             <td style="white-space:nowrap">${formatDate(r.submittedAt)}</td>
             <td>${escHtml(r.name||'')}</td>
             <td><span class="tag">${escHtml(r.type||'')}</span></td>
@@ -1067,12 +1074,18 @@ async function openReview(id) {
       // Reconstruct adjusted cap from stored base allowance — the base already has group adjustments baked in from the form
       // (form calculates allowance including group meals before storing)
       const allowance = baseAllow;
+      const isInstrType = (r.type||'').toLowerCase() === 'instructor';
       const groupParts = [];
-      if (bfast  > 0) groupParts.push(`Breakfast +${bfast}`);
-      if (lunch  > 0) groupParts.push(`Lunch +${lunch}`);
-      if (dinner > 0) groupParts.push(`Dinner +${dinner}`);
+      if (isInstrType) {
+        // instructor: GroupLunch flag = meal was provided (reduces allowance)
+        if (lunch > 0 || dinner > 0) groupParts.push('Meal provided (reduced allowance)');
+      } else {
+        if (bfast  > 0) groupParts.push(`Breakfast +${bfast}`);
+        if (lunch  > 0) groupParts.push(`Lunch +${lunch}`);
+        if (dinner > 0) groupParts.push(`Dinner +${dinner}`);
+      }
       const groupNote = groupParts.length
-        ? `<span style="font-size:10px;color:var(--blue);margin-left:8px;white-space:nowrap">${groupParts.join(' · ')}</span>` : '';
+        ? `<span style="font-size:10px;color:var(--burgundy);margin-left:8px;white-space:nowrap">${groupParts.join(' · ')}</span>` : '';
       return `<div class="pd-review-row" data-cap="${allowance}" data-claimed="${actual}"
         style="display:grid;grid-template-columns:1fr 90px 90px 90px;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid #f0ece8">
         <span style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
@@ -1111,7 +1124,7 @@ async function openReview(id) {
         ? (isAmex ? 'Approved AmEx' : 'Reimbursement Amt')
         : 'Reimbursement Amt';
       return '<div style="display:grid;grid-template-columns:1fr 90px 90px;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid #f0ece8">'
-        + '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">' + cat + (desc?' · '+desc:'') + (miles?' · '+miles+' mi':'') + payTag + '</span>'
+        + '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">' + cat + (desc?' · <span style="color:var(--charcoal)">' + desc.replace(/\[Originally ([^\]]+)\]/g, '<span style="background:#fef9c3;border-radius:3px;padding:1px 4px;font-size:10px;color:#92400e">[Originally $1]</span>') + '</span>':'') + (miles?' · '+miles+' mi':'') + payTag + '</span>'
         + '<span style="text-align:right">$' + amount.toFixed(2) + '</span>'
         + '<input type="number" class="admin-line-approved" data-type="expense" data-sp-id="' + (e.ID||e.id||'') + '"'
         + ' data-reimbursable="' + reimbursable + '" data-submitted="' + amount + '" step="0.01" min="0"'
@@ -1432,8 +1445,13 @@ function renderInstructorList() {
     const div = document.createElement('div');
     div.className = 'instructor-row';
     div.innerHTML = `
-      <input type="text"  value="${escHtml(instr.name)}"  placeholder="Full name"          onchange="instructors[${idx}].name=this.value">
-      <input type="email" value="${escHtml(instr.email)}" placeholder="email@example.com"  onchange="instructors[${idx}].email=this.value">
+      <input type="text"  value="${escHtml(instr.name||'')}"      placeholder="Full name"          onchange="instructors[${idx}].name=this.value">
+      <input type="email" value="${escHtml(instr.email||'')}"     placeholder="email@example.com"  onchange="instructors[${idx}].email=this.value">
+      <input type="tel"   value="${escHtml(instr.phone||'')}"     placeholder="Phone number"        onchange="instructors[${idx}].phone=this.value">
+      <input type="text"  value="${escHtml(instr.street||'')}"    placeholder="Street address"        onchange="instructors[${idx}].street=this.value">
+      <input type="text"  value="${escHtml(instr.city||'')}"      placeholder="City"                  onchange="instructors[${idx}].city=this.value">
+      <input type="text"  value="${escHtml(instr.state||'')}"     placeholder="State / Province"      onchange="instructors[${idx}].state=this.value">
+      <input type="text"  value="${escHtml(instr.country||'')}"   placeholder="Country"               onchange="instructors[${idx}].country=this.value">
       <select onchange="instructors[${idx}].tier=this.value">
         <option value="1" ${instr.tier==='1'?'selected':''}>Tier 1</option>
         <option value="2" ${instr.tier==='2'?'selected':''}>Tier 2</option>
@@ -1442,10 +1460,22 @@ function renderInstructorList() {
     list.appendChild(div);
   });
 }
-function addInstructor() { instructors.push({ name:'', email:'', tier:'1' }); renderInstructorList(); }
+function addInstructor() { instructors.push({ name:'', email:'', phone:'', street:'', city:'', state:'', country:'', tier:'1' }); renderInstructorList(); }
 function removeInstructor(idx) { instructors.splice(idx, 1); renderInstructorList(); }
 async function saveInstructors() {
-  await kvSet('expense_instructors', JSON.stringify(instructors));
+  // Build combined address for form auto-population
+  const toSave = instructors.map(i => ({
+    name:    i.name    || '',
+    email:   i.email   || '',
+    tier:    i.tier    || '1',
+    phone:   i.phone   || '',
+    street:  i.street  || '',
+    city:    i.city    || '',
+    state:   i.state   || '',
+    country: i.country || '',
+    address: [i.street, i.city, i.state, i.country].filter(Boolean).join(', '),
+  }));
+  await kvSet('expense_instructors', JSON.stringify(toSave));
   const msg = document.getElementById('instructors-save-msg');
   msg.style.display = 'flex'; setTimeout(() => msg.style.display = 'none', 3000);
 }
@@ -1460,7 +1490,16 @@ function importInstructorCSV(e) {
       const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g,''));
       if (parts.length >= 2) {
         const tier = parts[2] ? (parts[2].includes('2') ? '2' : '1') : '1';
-        instructors.push({ name: parts[0], email: parts[1], tier }); added++;
+        instructors.push({
+          name:    parts[0] || '',
+          email:   parts[1] || '',
+          tier,
+          phone:   parts[3] || '',
+          street:  parts[4] || '',
+          city:    parts[5] || '',
+          state:   parts[6] || '',
+          country: parts[7] || '',
+        }); added++;
       }
     }
     renderInstructorList();
@@ -1506,6 +1545,375 @@ function buildSharePointViewerUrl(storedUrl) {
   const parentPath = filePath.substring(0, lastSlash);
   const encodedParent = encodeURIComponent(parentPath);
   return `https://clearorg.sharepoint.com/sites/CLEARStaff/Shared%20Documents/Forms/AllItems.aspx?id=${encodedPath}&parent=${encodedParent}`;
+}
+
+// ── SELECT & PDF EXPORT ──────────────────────────────
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.report-cb').forEach(el => { el.checked = cb.checked; });
+  updatePdfBtn();
+}
+
+function updatePdfBtn() {
+  const selected = document.querySelectorAll('.report-cb:checked').length;
+  const btn = document.getElementById('export-pdf-btn');
+  const cnt = document.getElementById('selected-count');
+  if (btn) btn.style.display = selected > 0 ? 'inline-flex' : 'none';
+  if (cnt) cnt.textContent = selected;
+  // Uncheck select-all if not all selected
+  const all = document.querySelectorAll('.report-cb').length;
+  const allCb = document.getElementById('select-all-cb');
+  if (allCb) allCb.checked = selected > 0 && selected === all;
+}
+
+async function exportSelectedPDFs() {
+  const ids = Array.from(document.querySelectorAll('.report-cb:checked')).map(el => el.dataset.id);
+  if (!ids.length) return;
+
+  const btn = document.getElementById('export-pdf-btn');
+  btn.textContent = 'Generating…'; btn.disabled = true;
+
+  let done = 0;
+  for (const id of ids) {
+    try {
+      const data = await callFlow('getDetail', { reportId: id });
+      const r = normalizeReport(data.report || data);
+      const expenseLines  = data.expenseLines  || [];
+      const perDiemDays   = data.perDiemDays   || [];
+      const teachingHours = data.teachingHours || [];
+      generateExpensePDF(r, expenseLines, perDiemDays, teachingHours);
+      done++;
+    } catch(e) {
+      console.error('PDF generation error for', id, e);
+    }
+  }
+
+  btn.textContent = `⬇ Export PDF (${ids.length} selected)`;
+  btn.disabled = false;
+  if (done < ids.length) alert(`${done} of ${ids.length} PDFs generated. Some reports could not be loaded.`);
+}
+
+function generateExpensePDF(r, expenseLines, perDiemDays, teachingHours) {
+  const { jsPDF } = window.jspdf;
+  const doc  = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const pw   = doc.internal.pageSize.getWidth();
+  const ph   = doc.internal.pageSize.getHeight();
+  const M    = 48;   // margin
+  const CW   = pw - M * 2; // content width
+
+  // ── CLEAR brand palette (all ADA AA compliant) ──
+  const BURG  = [100, 9, 44];
+  const GOLD  = [221, 168, 56];
+  const DARK  = [30, 20, 20];       // near-black body text on white: 18:1 ✓
+  const LABEL = [80, 68, 68];       // label text on light bg: 5.5:1 ✓
+  const LGRAY = [245, 242, 240];    // light row fill
+  const DGRAY = [225, 220, 216];    // darker row fill
+  const WHITE = [255, 255, 255];
+  const RULE  = [180, 165, 155];    // lines only
+
+  let y = 0;
+
+  // ── Helpers ──
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
+
+  function newPage() {
+    doc.addPage(); y = M;
+    footer();
+  }
+
+  function check(need = 40) {
+    if (y + need > ph - M - 20) newPage();
+  }
+
+  function footer() {
+    const pg = doc.internal.getCurrentPageInfo().pageNumber;
+    doc.setFontSize(7.5); doc.setTextColor(...LABEL);
+    doc.setFont('helvetica', 'normal');
+    doc.line(M, ph - 28, pw - M, ph - 28);
+    doc.text('CLEAR Expense Report  |  ' + (r.name||'') + '  |  ' + (r.id||''), M, ph - 16);
+    doc.text('Page ' + pg, pw - M, ph - 16, { align: 'right' });
+  }
+
+  // ── HEADER ──
+  doc.setFillColor(...BURG);
+  doc.rect(0, 0, pw, 68, 'F');
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 68, pw, 4, 'F');
+
+  doc.setFontSize(22); doc.setTextColor(...GOLD); doc.setFont('helvetica', 'bold');
+  doc.text('CLEAR', M, 30);
+  doc.setFontSize(11); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'normal');
+  doc.text('Expense Reimbursement Report', M, 50);
+
+  // Approved stamp
+  doc.setFillColor(...GOLD);
+  doc.roundedRect(pw - M - 100, 14, 100, 30, 4, 4, 'F');
+  doc.setFontSize(11); doc.setTextColor(...BURG); doc.setFont('helvetica', 'bold');
+  doc.text('APPROVED', pw - M - 50, 33, { align: 'center' });
+
+  y = 84;
+
+  // ── INFO BLOCK ──
+  const infoRows = [
+    ['Submitter',     r.name || '—',       'Submitter Type',  (r.type||'').charAt(0).toUpperCase() + (r.type||'').slice(1) || '—'],
+    ['Event / Program', r.event || '—',    'Destination',     r.destination || '—'],
+    ['Travel Dates',  (formatDateOnly(r.dateStart)||'—') + ' – ' + (formatDateOnly(r.dateEnd)||'—'),
+                                           'Submitted',       formatDate(r.submittedAt) || '—'],
+    ['Report ID',     r.id || '—',         'Decision Date',   formatDate(r.decidedAt) || '—'],
+  ];
+
+  const half = CW / 2;
+  infoRows.forEach((row, ri) => {
+    // Measure needed height (values may wrap)
+    doc.setFontSize(10);
+    const linesL = doc.splitTextToSize(row[1], half - 20);
+    const linesR = doc.splitTextToSize(row[3], half - 20);
+    const maxL   = Math.min(Math.max(linesL.length, linesR.length), 2);
+    const rh     = 14 + maxL * 13;
+
+    doc.setFillColor(...(ri % 2 === 0 ? LGRAY : DGRAY));
+    doc.rect(M, y, CW, rh, 'F');
+    doc.setDrawColor(...RULE); doc.setLineWidth(0.3);
+    doc.rect(M, y, CW, rh, 'S');
+    doc.line(M + half, y, M + half, y + rh);
+
+    [[row[0], row[1], M + 10], [row[2], row[3], M + half + 10]].forEach(([lbl, val, x]) => {
+      doc.setFontSize(7); doc.setTextColor(...LABEL); doc.setFont('helvetica', 'bold');
+      doc.text(lbl.toUpperCase(), x, y + 10);
+      doc.setFontSize(10); doc.setTextColor(...DARK); doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(String(val), half - 20).slice(0, 2);
+      lines.forEach((ln, li) => doc.text(ln, x, y + 22 + li * 13));
+    });
+    y += rh;
+  });
+
+  y += 20;
+
+  // ── SECTION TITLE ──
+  function section(title) {
+    check(36);
+    doc.setFillColor(...BURG);
+    doc.rect(M, y, CW, 22, 'F');
+    doc.setFillColor(...GOLD);
+    doc.rect(M, y, 4, 22, 'F');
+    doc.setFontSize(9); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bold');
+    doc.text(title.toUpperCase(), M + 12, y + 15);
+    y += 22;
+  }
+
+  // ── TWO-COL TABLE: label + submitted + approved ──
+  function tableHeader(cols, widths) {
+    check(22);
+    doc.setFillColor(60, 15, 30);
+    doc.rect(M, y, CW, 20, 'F');
+    doc.setFontSize(8); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bold');
+    let x = M;
+    cols.forEach((c, i) => {
+      const align = i > 0 ? 'right' : 'left';
+      doc.text(c, align === 'right' ? x + widths[i] - 6 : x + 6, y + 13, { align });
+      x += widths[i];
+    });
+    y += 20;
+  }
+
+  function tableRow(cols, widths, shade) {
+    check(20);
+    if (shade) { doc.setFillColor(...LGRAY); doc.rect(M, y, CW, 20, 'F'); }
+    else       { doc.setFillColor(...WHITE); doc.rect(M, y, CW, 20, 'F'); }
+    doc.setDrawColor(...RULE); doc.setLineWidth(0.25); doc.rect(M, y, CW, 20, 'S');
+    doc.setFontSize(9); doc.setTextColor(...DARK); doc.setFont('helvetica', 'normal');
+    let x = M;
+    cols.forEach((c, i) => {
+      const align = i > 0 ? 'right' : 'left';
+      const maxW  = widths[i] - 10;
+      const fit   = doc.splitTextToSize(String(c||''), maxW)[0];
+      doc.text(fit, align === 'right' ? x + widths[i] - 6 : x + 6, y + 13, { align });
+      x += widths[i];
+    });
+    y += 20;
+  }
+
+  function totalRow(label, val) {
+    check(24);
+    doc.setFillColor(40, 8, 20);
+    doc.rect(M, y, CW, 24, 'F');
+    doc.setFontSize(10); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bold');
+    doc.text(label, M + 8, y + 16);
+    doc.text(val, M + CW - 8, y + 16, { align: 'right' });
+    y += 24;
+  }
+
+  // ── PER DIEM SECTION ──
+  if (perDiemDays.length) {
+    section('Meal Per Diem');
+    const isInstr = (r.type||'').toLowerCase() === 'instructor';
+
+    if (isInstr) {
+      const W = [CW * 0.35, CW * 0.33, CW * 0.32];
+      tableHeader(['Date', 'Day Type', 'Allowance'], W);
+      let pdTotal = 0;
+      perDiemDays.forEach((d, i) => {
+        const allow = Number(d.field_3||d.Allowance||d.allowance||0);
+        const appr  = d.ApprovedAmount != null ? Number(d.ApprovedAmount) : allow;
+        pdTotal += appr;
+        tableRow([formatDateOnly(d.field_1||d.TripDate||d.date||''), getChoiceValue(d.field_2||d.DayType||d.type||''), money(appr)], W, i % 2 === 0);
+      });
+      totalRow('Per Diem Total', money(pdTotal));
+    } else {
+      const W = [CW * 0.22, CW * 0.18, CW * 0.18, CW * 0.18, CW * 0.24];
+      tableHeader(['Date', 'Cap', 'Submitted', 'Approved', 'Notes'], W);
+      let capTotal = 0, subTotal = 0, apprTotal = 0;
+      perDiemDays.forEach((d, i) => {
+        const cap   = Number(d.field_3||d.Allowance||d.allowance||0);
+        const sub   = Number(d.ActualSpent||d.actualSpent||d.field_4||0);
+        const appr  = d.ApprovedAmount != null ? Number(d.ApprovedAmount) : sub;
+        const bf    = Number(d.GroupBreakfast||d.groupBfast||0);
+        const lu    = Number(d.GroupLunch||d.groupLunch||0);
+        const di    = Number(d.GroupDinner||d.groupDinner||0);
+        const note  = [bf?`B+${bf}`:'', lu?`L+${lu}`:'', di?`D+${di}`:''].filter(Boolean).join(' ') || '—';
+        capTotal += cap; subTotal += sub; apprTotal += appr;
+        tableRow([formatDateOnly(d.field_1||d.TripDate||d.date||''), money(cap), money(sub), money(appr), note], W, i % 2 === 0);
+      });
+      totalRow('Per Diem Totals: Cap / Submitted / Approved', money(capTotal) + ' / ' + money(subTotal) + ' / ' + money(apprTotal));
+    }
+    y += 8;
+  }
+
+  // ── EXPENSE LINES SECTION ──
+  if (expenseLines.length) {
+    section('Expense Lines');
+    const isStaff = (r.type||'').toLowerCase() === 'staff';
+    const W = isStaff
+      ? [CW * 0.25, CW * 0.30, CW * 0.15, CW * 0.15, CW * 0.15]
+      : [CW * 0.28, CW * 0.37, CW * 0.175, CW * 0.175];
+    const hdrs = isStaff
+      ? ['Category', 'Description', 'Submitted', 'Payment', 'Approved']
+      : ['Category', 'Description', 'Submitted', 'Approved'];
+
+    tableHeader(hdrs, W);
+    let expSubTotal = 0, expApprTotal = 0;
+    expenseLines.forEach((e, i) => {
+      const cat   = getChoiceValue(e.field_1||e.Category||e.category||'');
+      const desc  = e.field_2||e.Description||e.description||'';
+      const miles = e.field_4||e.Miles||e.miles||0;
+      const sub   = Number(e.field_3||e.Amount||e.amount||0);
+      const appr  = e.ApprovedAmount != null ? Number(e.ApprovedAmount) : sub;
+      const reimb = e.Reimbursable;
+      const pay   = (isStaff && cat !== 'Mileage') ? (reimb === true ? 'Personal' : 'AmEx') : '';
+      const dsc   = desc || (miles ? miles + ' mi' : '');
+      expSubTotal  += sub;
+      expApprTotal += appr;
+      if (isStaff) tableRow([cat, dsc, money(sub), pay, money(appr)], W, i % 2 === 0);
+      else         tableRow([cat, dsc, money(sub), money(appr)], W, i % 2 === 0);
+    });
+    totalRow('Expense Totals: Submitted / Approved', money(expSubTotal) + ' / ' + money(expApprTotal));
+    y += 8;
+  }
+
+  // ── TEACHING HOURS SECTION ──
+  if (teachingHours.length) {
+    section('Teaching Hours');
+    const W = [CW * 0.25, CW * 0.38, CW * 0.14, CW * 0.12, CW * 0.11];
+    tableHeader(['Date', 'Program / Modules', 'Hours', 'Rate', 'Pay'], W);
+    let teachTotal = 0;
+    teachingHours.forEach((d, i) => {
+      const hrs  = Number(d.field_3||d.Hours||d.hours||0);
+      const pay  = Number(d.field_5||d.Pay||d.pay||0);
+      const appr = d.ApprovedAmount != null ? Number(d.ApprovedAmount) : pay;
+      teachTotal += appr;
+      tableRow([
+        formatDateOnly(d.field_1||d.TripDate||d.date||''),
+        d.field_2||d.ProgramName||d.program||'',
+        hrs + ' hrs',
+        '$' + Number(r.instructorRate||0).toFixed(2) + '/hr',
+        money(appr),
+      ], W, i % 2 === 0);
+    });
+    totalRow('Teaching Pay Total', money(teachTotal));
+    y += 8;
+  }
+
+  // ── FINANCIAL SUMMARY BOX ──
+  check(120);
+  y += 8;
+  const isStaff = (r.type||'').toLowerCase() === 'staff';
+  const sumX = M + CW * 0.4;
+  const sumW = CW * 0.6;
+
+  function sumLine(label, val, style = 'normal') {
+    check(24);
+    const rh = style === 'total' ? 28 : 22;
+    if      (style === 'total')    { doc.setFillColor(...BURG); }
+    else if (style === 'subtotal') { doc.setFillColor(60, 15, 30); }
+    else                           { doc.setFillColor(...(style === 'shade' ? LGRAY : WHITE)); }
+    doc.rect(sumX, y, sumW, rh, 'F');
+    doc.setDrawColor(...RULE); doc.setLineWidth(0.3); doc.rect(sumX, y, sumW, rh, 'S');
+    const textY  = y + (style === 'total' ? 19 : 15);
+    const isLight = (style === 'normal' || style === 'shade');
+    doc.setFontSize(style === 'total' ? 12 : 9);
+    doc.setFont('helvetica', (style === 'total' || style === 'subtotal') ? 'bold' : 'normal');
+    doc.setTextColor(...(isLight ? DARK : WHITE));
+    doc.text(label, sumX + 10, textY);
+    doc.text(val, sumX + sumW - 8, textY, { align: 'right' });
+    y += rh;
+  }
+
+  // Summary header
+  doc.setFillColor(40, 8, 20);
+  doc.rect(sumX, y, sumW, 22, 'F');
+  doc.setFontSize(9); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bold');
+  doc.text('FINANCIAL SUMMARY', sumX + 10, y + 15);
+  y += 22;
+
+  const grandSub   = Number(r.grandTotal || 0);
+  const grandAppr  = r.approvedTotal != null ? Number(r.approvedTotal) : grandSub;
+  const pdSub      = Number(r.perDiemTotal || 0);
+  const expSub     = Number(r.expenseTotal || 0);
+  const teachSub   = Number(r.teachingPay  || 0);
+
+  if (isStaff) {
+    const approvedMeals = r.approvedMeals != null ? Number(r.approvedMeals) : (r.personalMeals != null ? Number(r.personalMeals) : 0);
+    const pdAmex   = Math.max(0, pdSub - approvedMeals);
+    const expAmex  = expenseLines.filter(e => e.Reimbursable === false || e.Reimbursable === 'false').reduce((s,e) => s + Number(e.field_3||e.Amount||e.amount||0), 0);
+    const totalAmex = pdAmex + expAmex;
+
+    sumLine('Total Expenses',           money(grandSub),    'shade');
+    sumLine('Total Charged to AmEx',    money(totalAmex),   'normal');
+    sumLine('Total Reimbursement Request', money(grandAppr), 'total');
+  } else {
+    const teachApprAmt = (teachingHours||[]).reduce((s,d) => s+(d.ApprovedAmount!=null?Number(d.ApprovedAmount):Number(d.field_5||d.Pay||d.pay||0)),0);
+    const pdApprAmt    = perDiemDays.reduce((s,d) => s+(d.ApprovedAmount!=null?Number(d.ApprovedAmount):Number(d.ActualSpent||d.actualSpent||d.field_4||0)),0);
+    const expApprAmt   = expenseLines.reduce((s,e) => s+(e.ApprovedAmount!=null?Number(e.ApprovedAmount):Number(e.field_3||e.Amount||e.amount||0)),0);
+    if (teachSub)  sumLine('Teaching Pay',   money(teachApprAmt), 'shade');
+    if (pdSub)     sumLine('Meal Per Diem',  money(pdApprAmt),    'normal');
+    if (expSub)    sumLine('Other Expenses', money(expApprAmt),   'shade');
+    sumLine('Total Approved Reimbursement',  money(grandAppr),    'total');
+  }
+
+  y += 12;
+
+  // ── ADMIN NOTES ──
+  if (r.adminNotes) {
+    check(60);
+    section('Reviewer Notes');
+    doc.setFillColor(250, 246, 244);
+    const noteLines = doc.splitTextToSize(String(r.adminNotes), CW - 16);
+    const nh = noteLines.length * 13 + 16;
+    check(nh);
+    doc.rect(M, y, CW, nh, 'F');
+    doc.setDrawColor(...RULE); doc.rect(M, y, CW, nh, 'S');
+    doc.setFontSize(9.5); doc.setTextColor(...DARK); doc.setFont('helvetica', 'normal');
+    doc.text(noteLines, M + 8, y + 13);
+    y += nh + 8;
+  }
+
+  // ── FOOTER on all pages ──
+  const total = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= total; p++) { doc.setPage(p); footer(); }
+
+  // ── SAVE ──
+  const safeName  = (r.name||'Unknown').replace(/[^a-zA-Z0-9 -]/g,'').trim().replace(/ +/g,'_');
+  const safeEvent = (r.event||'Event').replace(/[^a-zA-Z0-9 -]/g,'').trim().replace(/ +/g,'_');
+  doc.save('CLEAR_Expense_' + safeName + '_' + safeEvent + '_' + r.id + '.pdf');
 }
 
 function escHtml(s) {
