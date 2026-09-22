@@ -833,12 +833,24 @@ async function processPdfFile(file){
     showUploadProgress(false);
     if(result.error){showImportStatus('error',result.error);return;}
     applyImportedData(result);
-    showImportStatus('success','\u2713 Agenda imported successfully \u2014 '+result.rows.length+' sessions loaded. Switch to the Schedule panel to add instructor names.');
+    const instCount=result.rows.filter(r=>r.instructor).length;
+    const instMsg=instCount?' ('+instCount+' instructor'+(instCount===1?'':'s')+' matched).':'. Add instructor names in the Schedule panel.';
+    showImportStatus('success','\u2713 Agenda imported successfully \u2014 '+result.rows.length+' sessions loaded'+instMsg);
     switchTab('new');
   }catch(err){
     showUploadProgress(false);
     showImportStatus('error','Could not read PDF: '+err.message);
   }
+}
+
+function findInstructorInLine(line){
+  for(const name of INSTRUCTORS){
+    const pattern=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/,\s*/g,',\\s*');
+    const re=new RegExp(pattern,'i');
+    const m=re.exec(line);
+    if(m)return{name,matched:m[0],index:m.index};
+  }
+  return null;
 }
 
 function parseAgendaPDF(text){
@@ -892,8 +904,11 @@ function parseAgendaPDF(text){
       let platform='Zoom';
       if(/learning portal/i.test(line))platform='Learning Portal';
       else if(/teams/i.test(line))platform='Teams';
-      let sName=line.replace(dateRe,'').replace(/\b\d{1,2}:\d{2}\s*(AM|PM)/gi,'').replace(/zoom|teams/gi,'').replace(/learning portal/gi,'').replace(/ET|CT|MT|PT|UTC/g,'').replace(/\u2013|\u2014|-/g,' ').replace(/\s{2,}/g,' ').trim();
-      if(sName.length>2)parsedRows.push({displayName:sName,isILT:platform!=='Learning Portal',platform,date:currentDate,startTime:startT,endTime:endT,instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:true,endTimeEdited:true,id:++_rowId,title:null,topicsHtml:null});
+      let workLine=line,instructorFound='';
+      const instMatch=findInstructorInLine(workLine);
+      if(instMatch){instructorFound=instMatch.name;workLine=workLine.slice(0,instMatch.index)+' '+workLine.slice(instMatch.index+instMatch.matched.length);}
+      let sName=workLine.replace(dateRe,'').replace(/\b\d{1,2}:\d{2}\s*(AM|PM)/gi,'').replace(/zoom|teams/gi,'').replace(/learning portal/gi,'').replace(/ET|CT|MT|PT|UTC/g,'').replace(/\u2013|\u2014|-/g,' ').replace(/\s{2,}/g,' ').trim();
+      if(sName.length>2)parsedRows.push({displayName:sName,isILT:platform!=='Learning Portal',platform,date:currentDate,startTime:startT,endTime:endT,instructor:instructorFound,zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:true,endTimeEdited:true,id:++_rowId,title:null,topicsHtml:null});
     } else if(!times.length&&(/self.study/i.test(line)||/learning portal/i.test(line))){
       let sName=line.replace(/learning portal/gi,'').replace(/\u2013|\u2014/g,' ').replace(/\s{2,}/g,' ').trim();
       if(sName.length>3)parsedRows.push({displayName:sName,isILT:false,platform:'Learning Portal',date:'',startTime:'',endTime:'',instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false,id:++_rowId,title:null,topicsHtml:null});
@@ -918,7 +933,8 @@ function parseAgendaPDF(text){
       const dt=extracted?extracted.date:'';
       if(!et&&isILT){const dur=getDuration(matchedCourse.id,r.displayName,iltIdx);et=calcEndTime(st,dur)||'';}
       if(isILT)iltIdx++;
-      return {id:++_rowId,displayName:r.displayName,isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:dt,startTime:st,endTime:et,instructor:'',zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false};
+      const inst=extracted?extracted.instructor:'';
+      return {id:++_rowId,displayName:r.displayName,isILT,platform:r.platform||'Zoom',title:r.title||null,topicsHtml:r.topicsHtml||null,date:dt,startTime:st,endTime:et,instructor:inst,zoomLink:'',selected:false,isDayHeader:false,startTimeEdited:false,endTimeEdited:false};
     });
   } else {
     finalRows=parsedRows;
