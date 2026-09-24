@@ -149,6 +149,8 @@
   .preview-doc .doc-intro p { margin-bottom:10px; }
   .preview-doc .doc-intro h3 { font-size:13px;color:var(--burgundy);margin:14px 0 6px; }
   .preview-doc .doc-intro strong { color:var(--burgundy); }
+  .preview-doc .doc-tw { margin-top:16px;padding:10px 14px;border-left:3px solid var(--gold);background:var(--gold-pale);font-size:12px;line-height:1.55;color:#333; }
+  .preview-doc .doc-tw strong { color:var(--burgundy); }
   .prev-table { width:100%;border-collapse:collapse;font-size:12px; }
   .prev-table th { background:var(--burgundy);color:var(--white);padding:8px 10px;text-align:left;font-weight:700; }
   .prev-table td { padding:6px 10px;border:1px solid #d4c8c0;vertical-align:top;background:var(--white); }
@@ -164,6 +166,13 @@
   /* ── DEFAULT TIME PANEL ── */
   .default-time-panel { background:var(--gold-pale);border:1px solid #e8c96a;border-radius:var(--radius);padding:16px 20px;margin-top:12px; }
   .default-time-panel h4 { font-size:12px;color:#7a5c00;margin-bottom:10px;font-weight:700; }
+
+  /* ── TESTING WINDOW PANEL ── */
+  .tw-panel { background:#eef4f9;border:1px solid #b6cfe2;border-radius:var(--radius);padding:16px 20px;margin-top:12px; }
+  .tw-panel h4 { font-size:12px;color:var(--blue);margin-bottom:10px;font-weight:700; }
+  .tw-toggle { display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer; }
+  .tw-toggle input { width:15px;height:15px;accent-color:var(--blue);cursor:pointer; }
+  .tw-panel .inline-note.warn { color:var(--fail-red); }
 
   /* ── ICS TIP ── */
   .ics-tip { font-size:12px;color:#888;margin-top:10px;padding:10px 14px;background:#e8f0fb;border-left:3px solid #0078d4;border-radius:0 var(--radius) var(--radius) 0;line-height:1.5; }
@@ -266,6 +275,19 @@
         </div>
       </div>
 
+      <!-- Testing window (NCIT Basic / Canadian Basic / Specialized virtual only) -->
+      <div class="tw-panel hidden" id="twPanel">
+        <h4>&#128221; Final Exam Testing Window</h4>
+        <label class="tw-toggle"><input type="checkbox" id="twEnabled" checked onchange="refreshTestingWindow()"> Include the testing window on the program agenda and in the calendar invites</label>
+        <div class="form-row" style="margin:12px 0 6px;">
+          <div class="form-group" style="flex:0 0 260px;"><label>Window Opens</label><input type="text" id="twOpens" disabled placeholder="Set the review session date"></div>
+          <div class="form-group" style="flex:0 0 260px;"><label>Window Closes (midnight ET)</label>
+            <div style="display:flex;gap:6px;align-items:center;"><input type="date" id="twClose" onchange="onTwCloseChange()" style="flex:1;min-width:0;"><button class="btn btn-ghost btn-sm" onclick="resetTwClose()" title="Recalculate from the review session date">&#8635;</button></div>
+          </div>
+        </div>
+        <span class="inline-note" id="twNote"></span>
+      </div>
+
       <!-- In-person settings -->
       <div id="ipFields" class="ip-fields hidden">
         <h4>&#128205; In-Person Program Settings</h4>
@@ -284,7 +306,7 @@
     <h2>&#128197; Schedule Sessions <span class="text-muted" id="iltCount" style="margin-left:8px;"></span></h2>
     <div class="panel-section hidden" id="programOrderPanel" style="margin-bottom:16px;">
       <h3>Program Order</h3>
-      <span class="inline-note" style="display:block;margin-bottom:10px;">Set the order these four programs run in \u2014 the sessions below will follow this order (Welcome always comes first).</span>
+      <span class="inline-note" style="display:block;margin-bottom:10px;">Set the order these four programs run in &mdash; the sessions below will follow this order (Welcome always comes first).</span>
       <div id="programOrderList"></div>
     </div>
     <div class="batch-bar" id="batchBar"><span id="batchCount">0 rows selected</span><button class="btn btn-sm btn-danger" onclick="removeSelected()">&#128465; Remove Selected</button><button class="btn btn-sm btn-ghost" onclick="clearSelection()">&#10005; Deselect All</button></div>
@@ -311,7 +333,7 @@
       <button class="btn btn-outlook" onclick="exportOutlookICS()">&#128197; Export Instructor Calendar Invites (.ics)</button>
     </div>
     <div class="ics-tip">
-      <strong>How to use the .ics file:</strong> Download, then attach it to your instructor materials email. Instructors double-click the attachment in Outlook — one click to add all their sessions to their calendar. Each invite is set to start 15 minutes before the agenda time for setup and tech check. For virtual sessions, paste the Zoom link in the table above and it will appear in the invite's Location field.
+      <strong>How to use the .ics file:</strong> Download, then attach it to your instructor materials email. Instructors double-click the attachment in Outlook — one click to add all their sessions to their calendar. Each invite is set to start 15 minutes before the agenda time for setup and tech check. For virtual sessions, paste the Zoom link in the table above and it will appear in the invite's Location field. For NCIT Basic and Specialized programs, the testing window is added as an all-day event marked Free.
     </div>
     <div id="previewSection" class="hidden" style="margin-top:24px;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--gray-mid);border-bottom:none;">
@@ -406,6 +428,8 @@ function getDuration(courseId,displayName,rowIndexAmongILT){
 
 // ═══════════════════════════════════════════════════════
 // COURSE DATABASE
+// testingWindow: {reviewLabel} — enables the final exam testing window
+// (agenda note + all-day .ics event). reviewLabel is the session name used in the note.
 // ═══════════════════════════════════════════════════════
 const COURSES=[
 {id:142,name:'Advanced Concepts in Regulatory Governance - Online Program',pdfTitle:'Advanced Concepts in Regulatory Governance \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
@@ -416,6 +440,7 @@ rows:[
 {platform:'Zoom',displayName:'Module 2: Instructor-Led Session',isILT:true,title:'Module 2: Evaluation',topicsHtml:'<ul><li>Define Evaluation</li><li>Evaluation Methods</li><li>Results vs Process Tools</li><li>Considering Impact</li></ul>'},
 {platform:'Zoom',displayName:'Module 3: Instructor-Led Session',isILT:true,title:'Module 3: Public Reporting',topicsHtml:'<ul><li>Overall Purpose</li><li>Important Attributes</li><li>Common Challenges</li><li>Ways of Reporting</li><li>Program Review</li></ul>'}]},
 {id:128,name:'Canadian NCIT - Basic Online Program',pdfTitle:'Canadian NCIT - Basic Online Program \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
+testingWindow:{reviewLabel:'Program Review & Test Prep',code:'NCIT B CAN'},
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and all self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to be eligible to take the final exam and be eligible for CLEAR certification.</p>',
 rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Learning Portal',displayName:'Professional Conduct - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Principles of Administrative Law - Self-Study',isILT:false},{platform:'Zoom',displayName:'Investigative Process - Instructor Led Session',isILT:true},{platform:'Learning Portal',displayName:'Principles of Evidence - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Evidence Collection, Tagging, and Storage - Self-Study',isILT:false},{platform:'Zoom',displayName:'Interviewing Techniques - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Week One Q & A Session with Instructor',isILT:true},{platform:'Learning Portal',displayName:'Investigator Safety - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Overview of Inspections and Inspection Procedures - Self-Study',isILT:false},{platform:'Zoom',displayName:'Report Writing - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Program Review & Final Exam Information - Live Session',isILT:true}]},
 {id:146,name:'Communications and the Art of Persuasion - Online Program',pdfTitle:'Communications and the Art of Persuasion \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
@@ -454,9 +479,11 @@ rows:[
   {platform:'Zoom',displayName:'Developing a Professional Attitude: Ethics for the Regulatory Investigator',isILT:true,title:'Developing a Professional Attitude: Ethics for the Regulatory Investigator',topicsHtml:null,blockKey:'ethics'}
 ]},
 {id:126,name:'NCIT - Basic Online Program',pdfTitle:'NCIT - Basic Online Program \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
+testingWindow:{reviewLabel:'Program Review & Test Prep',code:'NCIT B US'},
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and all self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to be eligible to take the final exam and be eligible for <strong>CLEAR certification</strong>.</p>',
 rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Learning Portal',displayName:'Professional Conduct - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Principles of Administrative Law - Self-Study',isILT:false},{platform:'Zoom',displayName:'Investigative Process - Instructor-Led Session',isILT:true},{platform:'Learning Portal',displayName:'Principles of Evidence - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Evidence Collection, Tagging, and Storage - Self-Study',isILT:false},{platform:'Zoom',displayName:'Interviewing Techniques - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Week One Q & A - Instructor-Led Session',isILT:true},{platform:'Learning Portal',displayName:'Investigator Safety - Self-Study',isILT:false},{platform:'Learning Portal',displayName:'Overview of Inspections and Inspection Procedures - Self-Study',isILT:false},{platform:'Zoom',displayName:'Report Writing - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Testifying in Administrative and Criminal Proceedings - Instructor-Led Session',isILT:true},{platform:'Zoom',displayName:'Program Review & Exam Information - Instructor-Led Session',isILT:true}]},
 {id:129,name:'NCIT - Specialized Online Program',pdfTitle:'NCIT - Specialized Online Program \u2014 Schedule',isInPerson:false,hasTopics:false,lastColHeader:'Session Name',
+testingWindow:{reviewLabel:'Program Review & Test Prep',code:'NCIT S'},
 introHtml:'<p>This schedule contains live video conference sessions with required attendance at the date and time specified below, self-paced content must be completed prior to the completion of the program. It is suggested that self-study content be completed prior to the associated live session.</p><p>With the exception of the Welcome &amp; Introduction, the links to all live instructor-led sessions, and all self-paced content will be found on the <strong>CLEAR Learning Education Platform</strong>.</p><p>Attendees will need an individual account to access this platform. Sharing login information is strictly prohibited. All live and self-paced modules, and knowledge assessments must be completed to be eligible to take the final exam.</p>',
 rows:[{platform:'Zoom',displayName:'Welcome & Introduction Session',isILT:true},{platform:'Learning Portal',displayName:'Advanced Interviewing Skills - Self-Study',isILT:false},{platform:'Zoom',displayName:'Live Session - Cognitive Memory Recall Technique (CMRT)',isILT:true},{platform:'Zoom',displayName:'Live Session - Behavioral Analysis & Questioning',isILT:true},{platform:'Learning Portal',displayName:'Advanced Investigative Analysis - Self-Study',isILT:false},{platform:'Zoom',displayName:'Live Session - Module Review',isILT:true},{platform:'Learning Portal',displayName:'Investigative Report Development - Self-Study',isILT:false},{platform:'Zoom',displayName:'Live Session - Observation Skills',isILT:true},{platform:'Zoom',displayName:'Live Session - Module Review',isILT:true},{platform:'Zoom',displayName:'Live Session - Program Review & Test Prep',isILT:true}]},
 {id:147,name:'Skills for the Regulatory Administrator: Staffing a Board',pdfTitle:'Skills for the Regulatory Administrator: Staffing a Board \u2014 Schedule',isInPerson:false,hasTopics:true,lastColHeader:'Session Details',
@@ -496,7 +523,7 @@ days:[
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-let selectedCourse=null, rows=[], _rowId=0, programBlockOrder=[];
+let selectedCourse=null, rows=[], _rowId=0, programBlockOrder=[], twCloseEdited=false;
 
 // ═══════════════════════════════════════════════════════
 // INIT
@@ -561,6 +588,63 @@ function applyDefaultTime(){
   renderTable();
 }
 
+// ═══════════════════════════════════════════════════════
+// TESTING WINDOW (NCIT Basic / Canadian Basic / Specialized virtual)
+// Opens after the program review session; closes midnight ET on the
+// first Thursday that is at least 14 days after the review session date.
+// ═══════════════════════════════════════════════════════
+function isoAddDays(iso,n){
+  const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtDateLong(iso){
+  if(!iso)return'';
+  return new Date(iso+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+function calcTwClose(reviewIso){
+  const d=new Date(reviewIso+'T12:00:00');
+  d.setDate(d.getDate()+14);
+  while(d.getDay()!==4)d.setDate(d.getDate()+1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getReviewRow(){
+  if(!selectedCourse||!selectedCourse.testingWindow)return null;
+  let found=null;
+  rows.forEach(r=>{if(!r.isDayHeader&&r.isILT&&/program review/i.test(r.displayName||''))found=r;});
+  return found;
+}
+function getTestingWindow(){
+  if(!selectedCourse||!selectedCourse.testingWindow)return null;
+  if(!document.getElementById('twEnabled').checked)return null;
+  const rr=getReviewRow();
+  const close=document.getElementById('twClose').value;
+  if(!rr||!rr.date||!close)return null;
+  return {openDate:rr.date,openTime:rr.endTime||'',closeDate:close,reviewLabel:selectedCourse.testingWindow.reviewLabel};
+}
+function refreshTestingWindow(){
+  const panel=document.getElementById('twPanel');
+  if(!selectedCourse||!selectedCourse.testingWindow){panel.classList.add('hidden');return;}
+  panel.classList.remove('hidden');
+  const tz=document.getElementById('timezone').value;
+  const opensEl=document.getElementById('twOpens'),closeEl=document.getElementById('twClose'),note=document.getElementById('twNote');
+  note.classList.remove('warn');
+  const rr=getReviewRow();
+  const label=selectedCourse.testingWindow.reviewLabel;
+  if(!rr){opensEl.value='';note.textContent='No program review session found in the schedule \u2014 the testing window needs it to calculate.';note.classList.add('warn');return;}
+  if(!rr.date){opensEl.value='';if(!twCloseEdited)closeEl.value='';note.textContent='Set a date for the '+label+' session to calculate the window.';return;}
+  opensEl.value=fmtDate(rr.date)+(rr.endTime?' at '+fmtTime(rr.endTime)+' '+tz:'');
+  const auto=calcTwClose(rr.date);
+  if(!twCloseEdited)closeEl.value=auto;
+  if(closeEl.value&&closeEl.value<rr.date){note.textContent='Close date is before the review session.';note.classList.add('warn');return;}
+  if(twCloseEdited&&closeEl.value!==auto)note.textContent='Close date set manually. Click \u21bb to recalculate ('+fmtDateLong(auto)+').';
+  else note.textContent='Closes at midnight ET at the end of '+fmtDateLong(closeEl.value)+' \u2014 the Thursday two weeks after the review session.';
+}
+function onTwCloseChange(){twCloseEdited=!!document.getElementById('twClose').value;refreshTestingWindow();}
+function resetTwClose(){twCloseEdited=false;refreshTestingWindow();}
+function testingWindowNoteHtml(tw){
+
+  return '<strong>Final Exam Testing Window</strong><br>Access to the final exam will be granted <strong>after</strong> the '+esc(tw.reviewLabel)+' session to all attendees who have completed <strong>ALL</strong> required program components. Your cohort can take the exam <strong>anytime</strong> between then and 11:59 PM Eastern Time on '+esc(fmtDateLong(tw.closeDate))+'.';
+}
 // ═══════════════════════════════════════════════════════
 // OPTIONAL API
 // ═══════════════════════════════════════════════════════
@@ -645,6 +729,9 @@ function onCourseSelect(cId){
   const ipF=document.getElementById('ipFields');
   const vtF=document.getElementById('defaultTimePanelVirtual');
   programBlockOrder=[];
+  twCloseEdited=false;
+  document.getElementById('twEnabled').checked=true;
+  document.getElementById('twClose').value='';
   document.getElementById('programOrderPanel').classList.add('hidden');
   if(selectedCourse.isInPerson){
     ipF.classList.remove('hidden');
@@ -780,12 +867,13 @@ function renderTable(){
     }
     tb.appendChild(tr);
   });
+  refreshTestingWindow();
 }
 
 // ═══════════════════════════════════════════════════════
 // ROW OPS
 // ═══════════════════════════════════════════════════════
-function upd(i,f,v){rows[i][f]=v;}
+function upd(i,f,v){rows[i][f]=v;if(f==='date'||f==='displayName')refreshTestingWindow();}
 function updStart(i,v){
   const parsed=parseTimeInput(v);
   if(!parsed){renderTable();return;}
@@ -939,6 +1027,15 @@ function parseAgendaPDF(text){
   const tzMatch=text.match(/All times are in (ET|CT|MT|PT|UTC)/i);
   if(tzMatch)tz=tzMatch[1].toUpperCase();
 
+  // Testing window close date (from the agenda note, if present)
+  let twClose='';
+  const twM=text.match(/Eastern\s+Time\s+on\s+\w+,\s+([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})/);
+  if(twM){
+    const months=['january','february','march','april','may','june','july','august','september','october','november','december'];
+    const mo=months.indexOf(twM[1].toLowerCase())+1;
+    if(mo>0)twClose=twM[3]+'-'+String(mo).padStart(2,'0')+'-'+String(parseInt(twM[2],10)).padStart(2,'0');
+  }
+
   let matchedCourse=null;
   for(const c of COURSES){
     if(c.isInPerson)continue;
@@ -1008,13 +1105,16 @@ function parseAgendaPDF(text){
     finalRows=parsedRows;
   }
 
-  return{title:title.replace(/\u2014\s*Schedule$/i,'').trim(),cohort,tz,course:matchedCourse,rows:finalRows};
+  return{title:title.replace(/\u2014\s*Schedule$/i,'').trim(),cohort,tz,course:matchedCourse,rows:finalRows,twClose};
 }
 
 function applyImportedData(result){
   if(result.title)document.getElementById('programTitle').value=result.title;
   if(result.cohort)document.getElementById('cohortName').value=result.cohort;
   if(result.tz){const tzSel=document.getElementById('timezone');for(let i=0;i<tzSel.options.length;i++){if(tzSel.options[i].value===result.tz){tzSel.selectedIndex=i;break;}}}
+  twCloseEdited=false;
+  document.getElementById('twEnabled').checked=true;
+  document.getElementById('twClose').value='';
   if(result.course){
     selectedCourse=result.course;
     document.getElementById('introText').value=result.course.introHtml;
@@ -1038,6 +1138,16 @@ function applyImportedData(result){
   rows=result.rows;
   _rowId=Math.max(...rows.map(r=>r.id||0),_rowId);
   renderTable();
+  // Restore a manually set testing window close date from the imported agenda
+  if(result.twClose&&selectedCourse&&selectedCourse.testingWindow){
+    const rr=getReviewRow();
+    const auto=rr&&rr.date?calcTwClose(rr.date):'';
+    if(result.twClose!==auto){
+      document.getElementById('twClose').value=result.twClose;
+      twCloseEdited=true;
+      refreshTestingWindow();
+    }
+  }
   document.getElementById('scheduleEmpty').style.display='none';
   document.getElementById('scheduleTableWrap').classList.remove('hidden');
   updateIltCount();
@@ -1105,6 +1215,8 @@ function generatePreview(){
     body+='<table class="prev-table"><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>';
     rows.forEach(row=>{if(row.isDayHeader)return;const z=row.platform==='Zoom'||row.platform==='Teams';body+='<tr><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td><strong>'+esc(row.platform)+'</strong></td><td>'+sessionCell(row,false)+'</td></tr>';});
     body+='</tbody></table>';
+    const tw=getTestingWindow();
+    if(tw)body+='<div class="doc-tw">'+testingWindowNoteHtml(tw)+'</div>';
   }
   let h='<div class="doc-title">'+esc(title)+'</div>';
   if(cohort)h+='<div class="doc-cohort">'+esc(cohort)+'</div>';
@@ -1143,10 +1255,16 @@ function exportPDF(){
   } else {
     const trs=rows.map(row=>{if(row.isDayHeader)return'';const z=row.platform==='Zoom'||row.platform==='Teams';const pd=z?'<strong>'+esc(row.platform)+'</strong>':'<span style="color:#64092c;">'+esc(row.platform)+'</span>';return '<tr><td>'+esc(z&&row.date?fmtDate(row.date):'')+'</td><td>'+esc(z&&row.startTime?fmtTime(row.startTime)+' '+tz:'')+'</td><td>'+esc(z&&row.endTime?fmtTime(row.endTime)+' '+tz:'')+'</td><td>'+pd+'</td><td class="col-name-cell">'+sessionCell(row,true)+'</td></tr>';}).join('');
     const safe=fullTitle.replace(/[^a-z0-9\s\-]/gi,'').replace(/\s+/g,'_').slice(0,60);
+    const tw=getTestingWindow();
+    // Programs with a testing window get tighter margins/padding so the added note keeps the agenda to one page
+    const compact=!!(selectedCourse&&selectedCourse.testingWindow);
+    const pageMargin=compact?'0.4in 0.5in':'0.6in 0.65in';
+    const compactCss=compact?'.doc-header{padding-bottom:8px;margin-bottom:12px;}.doc-intro{font-size:9pt;line-height:1.45;margin-bottom:10px;}.doc-intro p{margin-bottom:6px;}.doc-tz{margin-bottom:8px;}th{padding:5pt 7pt;}td{padding:4pt 7pt;line-height:1.35;}':'';
     let bodyHtml='<div class="doc-header"><div><div class="doc-title">'+esc(title)+'</div>'+(cohort?'<div class="doc-cohort">'+esc(cohort)+'</div>':'')+'</div><div class="doc-meta">CLEAR Learning<br>Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>';
     if(intro)bodyHtml+='<div class="doc-intro">'+intro+'</div>';
     bodyHtml+='<div class="doc-tz">All times are in '+esc(tz)+'</div><table><colgroup><col class="col-date"><col class="col-start"><col class="col-end"><col class="col-plat"><col class="col-name"></colgroup><thead><tr><th>Date</th><th>Start</th><th>End</th><th>Platform</th><th>'+esc(lastCol)+'</th></tr></thead><tbody>'+trs+'</tbody></table>';
-    const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:portrait;margin:0.6in 0.65in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:11pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:16pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:11pt;color:#484848;margin-top:3px;}.doc-meta{font-size:9pt;color:#7a6b62;text-align:right;line-height:1.6;}.doc-intro{font-size:9.5pt;color:#484848;line-height:1.55;margin-bottom:16px;}.doc-intro p{margin-bottom:8px;break-inside:avoid;}.doc-intro h3{font-size:10pt;color:#64092c;margin:12px 0 4px;}.doc-intro strong{color:#64092c;}.doc-tz{font-size:9pt;font-weight:700;color:#484848;margin-bottom:10px;}table{width:100%;border-collapse:collapse;font-size:9.5pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:7pt 8pt;text-align:left;font-weight:700;font-size:8.5pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:6pt 8pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}col.col-date{width:90px;}col.col-start{width:78px;}col.col-end{width:78px;}col.col-plat{width:90px;}col.col-name{width:auto;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+bodyHtml+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
+    if(tw)bodyHtml+='<div class="doc-tw">'+testingWindowNoteHtml(tw)+'</div>';
+    const html='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>'+esc(fullTitle)+'</title><style>@page{size:portrait;margin:'+pageMargin+';}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Open Sans","Trebuchet MS",Arial,sans-serif;font-size:11pt;color:#484848;background:#fff;}.doc-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #64092c;padding-bottom:10px;margin-bottom:16px;}.doc-title{font-size:16pt;font-weight:800;color:#64092c;line-height:1.2;}.doc-cohort{font-size:11pt;color:#484848;margin-top:3px;}.doc-meta{font-size:9pt;color:#7a6b62;text-align:right;line-height:1.6;}.doc-intro{font-size:9.5pt;color:#484848;line-height:1.55;margin-bottom:16px;}.doc-intro p{margin-bottom:8px;break-inside:avoid;}.doc-intro h3{font-size:10pt;color:#64092c;margin:12px 0 4px;}.doc-intro strong{color:#64092c;}.doc-tz{font-size:9pt;font-weight:700;color:#484848;margin-bottom:10px;}table{width:100%;border-collapse:collapse;font-size:9.5pt;page-break-inside:auto;}thead{display:table-header-group;}th{background:#64092c;color:#fff;padding:7pt 8pt;text-align:left;font-weight:700;font-size:8.5pt;letter-spacing:0.3pt;text-transform:uppercase;border:1px solid #4a0620;}td{padding:6pt 8pt;border:1px solid #d4c8c0;vertical-align:top;line-height:1.4;background:#fff;}col.col-date{width:90px;}col.col-start{width:78px;}col.col-end{width:78px;}col.col-plat{width:90px;}col.col-name{width:auto;}td,th{word-break:normal;white-space:nowrap;}td.col-name-cell{white-space:normal;word-break:break-word;}.doc-tw{margin-top:12pt;padding:8pt 10pt;border-left:3pt solid #dda838;background:#fdf4e0;font-size:9.5pt;line-height:1.5;color:#484848;break-inside:avoid;page-break-inside:avoid;}.doc-tw strong{color:#64092c;}'+compactCss+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+bodyHtml+'<script>window.onload=function(){document.title='+JSON.stringify(safe)+';window.print();};<\/script></body></html>';
     const win=window.open('','_blank');if(!win){alert('Pop-up blocked.');return;}win.document.write(html);win.document.close();
   }
 }
@@ -1278,6 +1396,28 @@ function exportOutlookICS(){
     ics+='STATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\n';
     ics+='END:VEVENT\r\n';
   });
+
+  // ── Testing window: all-day event spanning review session date → close Thursday, shown as Free ──
+  const tw=getTestingWindow();
+  if(tw){
+    const firstLive=rows.filter(r=>!r.isDayHeader&&r.isILT&&r.date).map(r=>r.date).sort()[0]||tw.openDate;
+    const twSummary=firstLive.replace(/-/g,'.')+' '+selectedCourse.testingWindow.code+' Testing Window';
+    const twDesc='The final exam testing window opens after the '+tw.reviewLabel+' session on '+fmtDateLong(tw.openDate)+
+      (tw.openTime?' at '+fmtTime12(tw.openTime)+' '+tzLabel:'')+
+      ' and closes at 11:59 PM Eastern Time on '+fmtDateLong(tw.closeDate)+'.\n\n'+
+      'Attendees who have completed all required program components may take the exam anytime during this window.';
+    ics+='BEGIN:VEVENT\r\n';
+    ics+=fold('UID:CLEAR-TW-'+tw.openDate.replace(/-/g,'')+'-'+tw.closeDate.replace(/-/g,'')+'@clearhq.org')+'\r\n';
+    ics+='DTSTAMP:'+now+'\r\n';
+    ics+='DTSTART;VALUE=DATE:'+tw.openDate.replace(/-/g,'')+'\r\n';
+    ics+='DTEND;VALUE=DATE:'+isoAddDays(tw.closeDate,1).replace(/-/g,'')+'\r\n';
+    ics+=fold('SUMMARY:'+icsEscape(twSummary))+'\r\n';
+    ics+=fold('DESCRIPTION:'+icsEscape(twDesc))+'\r\n';
+    ics+='ORGANIZER;CN=CLEAR Learning:mailto:clearlearning@clearhq.org\r\n';
+    ics+='STATUS:CONFIRMED\r\nTRANSP:TRANSPARENT\r\n';
+    ics+='X-MICROSOFT-CDO-BUSYSTATUS:FREE\r\nX-MICROSOFT-CDO-ALLDAYEVENT:TRUE\r\n';
+    ics+='END:VEVENT\r\n';
+  }
 
   ics+='END:VCALENDAR';
 
