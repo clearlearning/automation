@@ -25,6 +25,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--light-bg);color:var(--t
 .hbtn:hover{background:rgba(255,255,255,.28)}
 .container{max-width:1440px;margin:0 auto;padding:22px 36px 60px}
 .btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;font-family:'Open Sans',sans-serif;cursor:pointer;border:0;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.4;cursor:default}
 .btn-p{background:var(--burgundy);color:#fff}.btn-p:hover{background:var(--burgundy-light)}
 .btn-s{background:#fff;color:var(--charcoal);border:1px solid var(--border)}.btn-s:hover{border-color:var(--charcoal)}
 .btn-e{background:var(--blue);color:#fff}.btn-e:hover{background:var(--blue-light)}
@@ -151,6 +152,11 @@ table.ct tbody tr:hover td{background:#fdfcfa}
 .itab:hover{background:#e8e4de}
 .itab.active{background:#fff;color:var(--burgundy);position:relative}
 .itab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:#fff}
+/* SESSION NAV */
+.ssnav{display:flex;gap:10px;align-items:center;background:#fff;border-radius:12px;padding:10px 16px;margin-bottom:14px;box-shadow:var(--shadow);flex-wrap:wrap}
+.ssnav .ssel{flex:1;min-width:240px;width:auto;cursor:pointer}
+.spchip{display:inline-block;background:rgba(100,9,44,.08);color:var(--burgundy);padding:3px 9px;border-radius:4px;font-size:12px;font-weight:600;margin:0 5px 5px 0}
+.spchip.off{opacity:.4;text-decoration:line-through}
 /* EXPORT BAR */
 .ebar{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 20px;margin-bottom:18px;display:none}
 .ebar.visible{display:block}
@@ -248,6 +254,7 @@ table.ct tbody tr:hover td{background:#fdfcfa}
   <div class="vtabs">
     <button class="vtab active" onclick="swTab('a')">📊 Analyze</button>
     <button class="vtab" onclick="swTab('s')">🎤 Speaker Reports</button>
+    <button class="vtab" onclick="swTab('r')">📋 Session Reports</button>
   </div>
 
   <!-- ANALYZE -->
@@ -291,6 +298,31 @@ table.ct tbody tr:hover td{background:#fdfcfa}
     </div>
     <div id="stabs"></div>
     <div id="sr"></div>
+  </div>
+
+  <!-- SESSION REPORTS -->
+  <div class="tc" id="tr">
+    <div class="fp">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+        <h2 style="font-size:15px;font-weight:700;color:var(--burgundy)">Session Report Filters</h2>
+        <span class="fsm" id="rfsm"></span>
+      </div>
+      <div class="fg" id="rfg"></div>
+      <div class="br">
+        <button class="btn btn-p" onclick="runSession()">Generate Session Reports</button>
+        <button class="btn btn-s" onclick="resetFilters('r')">Reset All</button>
+      </div>
+    </div>
+    <div class="ebar" id="rebar">
+      <h3 style="font-size:14px;font-weight:700;color:var(--burgundy);margin-bottom:8px">Export Speaker Emails from Sessions</h3>
+      <div class="info-note">Curate comments once per session. Each speaker gets one email combining all of their sessions in the current filter, using the comment selections made here. Selections in this tab are separate from the Speaker Reports tab, and clicking <em>Generate Session Reports</em> again resets them. <span id="rsum" style="font-weight:600"></span></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-e" onclick="xSessionEmail()">📧 Download Speaker Email File(s)</button>
+        <button class="btn btn-e" onclick="xSessionXLSX()">📗 Download XLSX</button>
+      </div>
+    </div>
+    <div id="rnav"></div>
+    <div id="rr"></div>
   </div>
 </div>
 
@@ -337,10 +369,20 @@ const FILTER_DEFS = {
     {k:'session',l:'Session Title', id:'SSe'},
     {k:'day',    l:'Session Date',  id:'SDy'},
     {k:'track',  l:'Track',         id:'STr'}
+  ],
+  r:[
+    {k:'session',l:'Session Title', id:'RSe'},
+    {k:'day',    l:'Session Date',  id:'RDy'},
+    {k:'slot',   l:'Start Time',    id:'RSl'},
+    {k:'track',  l:'Track',         id:'RTr'},
+    {k:'_spk',   l:'Speaker',       id:'RSp', arr:true}
   ]
 };
+const FG_ID={a:'afg',s:'sfg',r:'rfg'};
+const FSM_ID={a:'afsm',s:'sfsm',r:'rfsm'};
 
 let allRows=[], MSS={}, curSpTab=null, spReports={}, spExcl={};
+let ssReports={}, ssExcl={}, ssOrder=[], curSs=null;
 const LS={get:k=>localStorage.getItem('aec_'+k)||'',set:(k,v)=>localStorage.setItem('aec_'+k,v)};
 
 window.addEventListener('DOMContentLoaded',()=>{
@@ -362,6 +404,7 @@ function uniq(a){return[...new Set(a.filter(v=>v!=null&&v!==''))].sort();}
 function bdg(v){if(v==null)return'<span class="sb sn-b">N/A</span>';const d=v.toFixed(2);if(v>=3.5)return`<span class="sb sh-b">${d}</span>`;if(v>=2.5)return`<span class="sb sm-b">${d}</span>`;return`<span class="sb sl-b">${d}</span>`;}
 function sco(v){if(!v||isNaN(v))return'#999';if(v>=4)return'#2e7d32';if(v>=3)return'#e65100';return'#c62828';}
 function isBlank(s){if(!s)return true;const lc=String(s).toLowerCase().trim();return lc.length<2||['na','n/a','none','no','-','—','--','no comment','none.','no comments','no additional comments','nothing','n','.','null'].includes(lc);}
+function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;}
 
 function toggleCfg(){$('cfgPanel').classList.toggle('hidden');}
 function swCfg(t){
@@ -370,11 +413,11 @@ function swCfg(t){
   $('cpane-'+t).classList.add('active');
 }
 function swTab(t){
-  document.querySelectorAll('.vtab').forEach((b,i)=>b.classList.toggle('active',['a','s'][i]===t));
+  document.querySelectorAll('.vtab').forEach((b,i)=>b.classList.toggle('active',['a','s','r'][i]===t));
   document.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));
   $('t'+t).classList.add('active');
 }
-function saveApiCfg(){['Worker','Org','Event','Report','Prefix'].forEach(k=>{const el=$('cfg'+k);if(el)LS.set(k.toLowerCase(),el.value.trim());});const as=$('cfgAdminSecret');if(as&&as.value.trim())LS.set('adminSecret',as.value.trim());}
+function saveApiCfg(){['Worker','Org','Event','Report','Prefix'].forEach(k=>{const el=$('cfg'+k);if(el)LS.set(k.toLowerCase(),el.value.trim());});const as=$('cfgAdminSecret');if(as&&as.value.trim())LS.set('adminSecret',as.value.trim());attendeeMap=null;attendeeMapPromise=null;}
 function setStatus(state,lbl,meta){
   const d=$('sDot');d.className='sdot '+state;
   $('sLbl').textContent=lbl||'';$('sMeta').textContent=meta||'';
@@ -488,7 +531,7 @@ function init(src){
   const n=allRows.length,sess=uniq(allRows.map(r=>r.session)).length;
   $('hdrSub').textContent=`${n} response${n!==1?'s':''} · ${sess} session${sess!==1?'s':''} · ${src}`;
   setStatus('ok',src,`${n} responses`);
-  renderSummary();buildFilters('a');buildFilters('s');
+  renderSummary();buildFilters('a');buildFilters('s');buildFilters('r');
   $('main').classList.remove('hidden');
   runAnalyze();
 }
@@ -504,7 +547,7 @@ function renderSummary(){
 
 // ── FILTERS ───────────────────────────────────────────────────────────────────
 function buildFilters(p){
-  const g=$(p==='a'?'afg':'sfg');g.innerHTML='';
+  const g=$(FG_ID[p]);g.innerHTML='';
   FILTER_DEFS[p].forEach(d=>{
     const fid=p+d.id;
     const div=document.createElement('div');
@@ -548,6 +591,9 @@ function uml(k){const t=$(k+'_t');if(!t)return;const{sel,av}=MSS[k];if(!sel.size
 function msSr(k,q){const ql=q.toLowerCase();document.querySelectorAll('#'+k+'_o .mso').forEach(o=>o.classList.toggle('hid',ql&&!o.getAttribute('data-s').includes(ql)));}
 function msA(k,sa){const{sel,av}=MSS[k];if(sa)av.forEach(v=>sel.add(v));else sel.clear();document.querySelectorAll('#'+k+'_o input[type=checkbox]').forEach(c=>c.checked=!!sa);uml(k);}
 
+// Returns the selected Set for a filter, or null when the filter is "All"
+function selSet(fid){const m=MSS[fid];return m&&m.sel.size>0&&m.sel.size<m.av.length?m.sel:null;}
+
 function getFiltered(p){
   return allRows.filter(row=>{
     for(const d of FILTER_DEFS[p]){
@@ -562,9 +608,10 @@ function getFiltered(p){
 
 function resetFilters(p){
   FILTER_DEFS[p].forEach(d=>{const fid=p+d.id;const m=MSS[fid];if(m){m.sel.clear();bmo(fid);uml(fid);}});
-  $(p==='a'?'afsm':'sfsm').textContent='';
+  $(FSM_ID[p]).textContent='';
   if(p==='a'){$('ar').innerHTML='';}
-  else{$('sr').innerHTML='';$('stabs').innerHTML='';$('sebar').classList.remove('visible');spReports={};spExcl={};curSpTab=null;}
+  else if(p==='s'){$('sr').innerHTML='';$('stabs').innerHTML='';$('sebar').classList.remove('visible');spReports={};spExcl={};curSpTab=null;}
+  else{$('rr').innerHTML='';$('rnav').innerHTML='';$('rebar').classList.remove('visible');ssReports={};ssExcl={};ssOrder=[];curSs=null;}
 }
 
 // ── ANALYZE ───────────────────────────────────────────────────────────────────
@@ -628,46 +675,44 @@ function runSpeaker(){
   $('sebar').classList.add('visible');
   COMMENT_FIELDS.forEach(cf=>wireComments(cf.key,'sp'));
   // Fetch speaker emails from PheedLoop in background
-  fetchSpeakerEmails();
+  ensureAttendeeMap();
 }
 
-// Speaker email lookup — keyed by speaker display name, populated at Generate Reports time
-let spEmails={};
+// ── SPEAKER EMAIL LOOKUP ──────────────────────────────────────────────────────
+// Attendee name→email map, fetched once from PheedLoop and cached
+let attendeeMap=null, attendeeMapPromise=null;
 
-async function fetchSpeakerEmails(){
-  spEmails={};
-  const worker=LS.get('worker');
-  const org=LS.get('org');
-  const event=LS.get('event');
-  if(!worker||!org||!event)return;
-
-  // Fetch all attendees in one paginated call, build name→email map
-  const nameMap={};
-  let page=1;
-  try{
-    while(true){
-      const url=worker+'/pheedloop-attendee?org='+encodeURIComponent(org)+'&event='+encodeURIComponent(event)+'&page='+page+'&page_size=100';
-      const resp=await fetch(url);
-      if(!resp.ok)break;
-      const data=await resp.json();
-      const results=data.results||[];
-      results.forEach(a=>{
-        if(a.email){
-          const fullName=(a.first_name+' '+a.last_name).trim().toLowerCase();
-          nameMap[fullName]=a.email;
-        }
-      });
-      if(!data.next)break;
-      page++;
-    }
-  }catch(e){console.log('Speaker email fetch failed:',e);return;}
-
-  // Match each speaker by exact full name (case-insensitive)
-  Object.keys(spReports).forEach(sp=>{
-    const key=sp.trim().toLowerCase();
-    if(nameMap[key])spEmails[sp]=nameMap[key];
-    else console.log('No email match found for speaker:',sp);
-  });
+function ensureAttendeeMap(){
+  if(attendeeMap)return Promise.resolve(attendeeMap);
+  if(attendeeMapPromise)return attendeeMapPromise;
+  const worker=LS.get('worker'),org=LS.get('org'),event=LS.get('event');
+  if(!worker||!org||!event)return Promise.resolve({});
+  attendeeMapPromise=(async()=>{
+    const m={};let page=1,ok=false;
+    try{
+      while(true){
+        const url=worker+'/pheedloop-attendee?org='+encodeURIComponent(org)+'&event='+encodeURIComponent(event)+'&page='+page+'&page_size=100';
+        const resp=await fetch(url);
+        if(!resp.ok)break;
+        ok=true;
+        const data=await resp.json();
+        (data.results||[]).forEach(a=>{
+          if(a.email){const fullName=((a.first_name||'')+' '+(a.last_name||'')).trim().toLowerCase();m[fullName]=a.email;}
+        });
+        if(!data.next)break;
+        page++;
+      }
+    }catch(e){console.log('Speaker email fetch failed:',e);}
+    if(ok)attendeeMap=m;
+    attendeeMapPromise=null;
+    return m;
+  })();
+  return attendeeMapPromise;
+}
+function lookupEmail(sp){
+  const e=attendeeMap&&attendeeMap[sp.trim().toLowerCase()];
+  if(!e)console.log('No email match found for speaker:',sp);
+  return e||'';
 }
 
 function buildSpReport(sp,rows){
@@ -751,8 +796,7 @@ function renderSpContent(rd,sp){
 function spPfx(k){return 'sp_'+k.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase().slice(0,16);}
 function syncSelectionsToAll(){
   if(!curSpTab)return;
-  // Save current tab first
-
+  spSyncFromDom();
   const srcRd=spReports[curSpTab];
   if(!srcRd)return;
   let synced=0;
@@ -777,8 +821,20 @@ function syncSelectionsToAll(){
   alert('Selections synced to '+synced+' other speaker'+(synced!==1?'s':'')+'. Switch tabs to verify before downloading.');
 }
 
-function gSpExcl(){const ex={};COMMENT_FIELDS.forEach(cf=>{const pfx=spPfx(cf.key);ex[cf.key]=new Set();document.querySelectorAll('.'+pfx+'_cb').forEach(cb=>{if(!cb.checked)ex[cf.key].add(+cb.dataset.i);});});return ex;}
 function restoreSpExcl(sp){const ex=spExcl[sp];if(!ex)return;Object.entries(ex).forEach(([fk,set])=>{const pfx=spPfx(fk);set.forEach(i=>{const cb=document.querySelector('.'+pfx+'_cb[data-i="'+i+'"]');if(cb){cb.checked=false;const r=$(pfx+'_r'+i);if(r)r.classList.add('cex');}});});}
+
+// Reads the current speaker's checkbox states from the DOM into spExcl
+// (catches Select All / Deselect All / master checkbox, which bypass spCbChange)
+function spSyncFromDom(){
+  if(!curSpTab||!spExcl[curSpTab])return;
+  COMMENT_FIELDS.forEach(cf=>{
+    const pfx=spPfx(cf.key);
+    const cbs=document.querySelectorAll('#sr .'+pfx+'_cb');
+    if(!cbs.length)return;
+    const s=new Set();cbs.forEach(cb=>{if(!cb.checked)s.add(+cb.dataset.i);});
+    spExcl[curSpTab][cf.key]=s;
+  });
+}
 
 // Called when clicking a speaker comment row (not the checkbox itself)
 function spRowClick(tr,sp,qkey,idx){
@@ -789,32 +845,26 @@ function spRowClick(tr,sp,qkey,idx){
 
 // Called from each speaker checkbox onclick — propagates change to other speakers sharing same session+comment
 function spCbChange(cb,sp,qkey,idx){
-  // Find this comment's session and text from spReports
   const rd=spReports[sp];if(!rd)return;
   const fieldCmts=rd.cmts.filter(cm=>cm.qkey===qkey);
   const cm=fieldCmts[idx];if(!cm)return;
   const checked=cb.checked;
-  // Update this row's visual state
   const tr=cb.closest('tr');if(tr)tr.classList.toggle('cex',!checked);
   const pfx=spPfx(qkey);updCt(pfx);
-  // Update spExcl for the current speaker
   if(!spExcl[sp])spExcl[sp]={};
   if(!spExcl[sp][qkey])spExcl[sp][qkey]=new Set();
   if(checked)spExcl[sp][qkey].delete(idx);
   else spExcl[sp][qkey].add(idx);
-  // Propagate to all other speakers who have this same session+comment+question
   Object.keys(spReports).forEach(otherSp=>{
     if(otherSp===sp)return;
     const otherRd=spReports[otherSp];if(!otherRd)return;
     const otherFieldCmts=otherRd.cmts.filter(c=>c.qkey===qkey);
     otherFieldCmts.forEach((oc,oi)=>{
       if(oc.sess!==cm.sess||oc.txt!==cm.txt)return;
-      // If this other speaker is currently rendered, update DOM directly
       if(otherSp===curSpTab){
         const ocb=document.querySelector('.'+pfx+'_cb[data-i="'+oi+'"]');
         if(ocb){ocb.checked=checked;const r=document.getElementById(pfx+'_r'+oi);if(r)r.classList.toggle('cex',!checked);updCt(pfx);}
       }
-      // Always update spExcl in memory so it's correct when tab is restored
       if(!spExcl[otherSp])spExcl[otherSp]={};
       if(!spExcl[otherSp][qkey])spExcl[otherSp][qkey]=new Set();
       if(checked)spExcl[otherSp][qkey].delete(oi);
@@ -822,6 +872,166 @@ function spCbChange(cb,sp,qkey,idx){
     });
   });
 }
+
+// Included (non-excluded) comments per field for a speaker-tab report
+function spIncluded(sp,rd){
+  const ex=spExcl[sp]||{};const out={};
+  COMMENT_FIELDS.forEach(cf=>{
+    const s=ex[cf.key]||new Set();
+    out[cf.key]=rd.cmts.filter(c=>c.qkey===cf.key).filter((c,i)=>!s.has(i));
+  });
+  return out;
+}
+
+// ── SESSION REPORTS ───────────────────────────────────────────────────────────
+function runSession(){
+  const f=getFiltered('r');
+  $('rfsm').textContent=f.length+' response'+(f.length!==1?'s':'')+' match';
+  ssReports={};ssExcl={};ssOrder=[];curSs=null;
+  if(!f.length){
+    $('rnav').innerHTML='';
+    $('rr').innerHTML='<div class="card"><div class="card-body"><div class="empty"><div class="icon">🔍</div><h3>No responses match.</h3></div></div></div>';
+    $('rebar').classList.remove('visible');return;
+  }
+  const bySess={};f.forEach(r=>{(bySess[r.session]=bySess[r.session]||[]).push(r);});
+  ssOrder=Object.keys(bySess).sort();
+  ssOrder.forEach(sess=>{
+    const rows=bySess[sess];
+    const avgs=RKEYS.map(qk=>avg(rows.map(r=>r[SCALES[qk].sk]).filter(x=>x!==null)));
+    const byField={};ssExcl[sess]={};
+    COMMENT_FIELDS.forEach(cf=>{
+      byField[cf.key]=[];ssExcl[sess][cf.key]=new Set();
+      rows.forEach(r=>{
+        const txt=r[cf.key];if(!txt)return;
+        const na=isBlank(txt);
+        if(na)ssExcl[sess][cf.key].add(byField[cf.key].length);
+        byField[cf.key].push({qkey:cf.key,sess,txt,day:r.day,track:r.track||'',na});
+      });
+    });
+    ssReports[sess]={
+      sess,rows,n:rows.length,
+      speakers:uniq(rows.flatMap(r=>r.speakers||[])),
+      day:rows[0].day,slot:rows[0].slot,track:rows[0].track,
+      avgs,o:avg(avgs.filter(x=>x!==null)),byField
+    };
+  });
+  curSs=ssOrder[0];
+  renderSsNav();renderSsContent();updSsSummary();
+  $('rebar').classList.add('visible');
+  ensureAttendeeMap();
+}
+
+function renderSsNav(){
+  if(!ssOrder.length){$('rnav').innerHTML='';return;}
+  const idx=ssOrder.indexOf(curSs);
+  let h='<div class="ssnav">';
+  h+='<button class="btn btn-s btn-sm" onclick="ssStep(-1)"'+(idx<=0?' disabled':'')+'>‹ Prev</button>';
+  h+='<select class="cgi ssel" onchange="ssGo(this.value)">';
+  ssOrder.forEach((s,i)=>{h+='<option value="'+i+'"'+(i===idx?' selected':'')+'>'+esc(s)+'</option>';});
+  h+='</select>';
+  h+='<button class="btn btn-s btn-sm" onclick="ssStep(1)"'+(idx>=ssOrder.length-1?' disabled':'')+'>Next ›</button>';
+  h+='<span class="cc">Session '+(idx+1)+' of '+ssOrder.length+'</span>';
+  h+='</div>';
+  $('rnav').innerHTML=h;
+}
+function ssGo(i){ssSyncFromDom();curSs=ssOrder[+i];renderSsNav();renderSsContent();}
+function ssStep(d){const i=ssOrder.indexOf(curSs)+d;if(i<0||i>=ssOrder.length)return;ssGo(i);}
+
+function renderSsContent(){
+  const rd=ssReports[curSs];if(!rd){$('rr').innerHTML='';return;}
+  const ex=ssExcl[curSs]||{};
+  const spSel=selSet('rRSp');
+  const chips=rd.speakers.map(sp=>{
+    const off=spSel&&!spSel.has(sp);
+    return '<span class="spchip'+(off?' off':'')+'"'+(off?' title="Not in Speaker filter — no email will be generated"':'')+'>'+esc(sp)+'</span>';
+  }).join('')||'<span style="font-size:12px;color:var(--text-light)">No speakers listed</span>';
+
+  let h='<div class="card"><div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">';
+  h+='<div style="flex:2;min-width:260px"><span class="fgl">Session</span><div style="font-size:16px;font-weight:700;color:var(--burgundy);line-height:1.35">'+esc(rd.sess)+'</div>';
+  h+='<div style="font-size:12px;color:var(--text-light);margin-top:4px">'+[rd.day,rd.slot,rd.track].filter(Boolean).map(esc).join(' · ')+'</div></div>';
+  h+='<div><span class="fgl">Responses</span><div style="font-size:16px;font-weight:700;color:var(--blue)">'+rd.n+'</div></div>';
+  h+='<div style="flex:2;min-width:240px"><span class="fgl">Speakers receiving this session ('+rd.speakers.length+')</span><div>'+chips+'</div></div>';
+  h+='</div></div>';
+
+  h+='<div class="card"><div class="card-hdr">📊 Session Scores</div><table><thead><tr><th>Session</th><th>N</th>';
+  RKEYS.forEach(qk=>{h+=`<th>${SCALES[qk].label.split(' ').slice(0,2).join(' ')}</th>`;});
+  h+='<th>Overall</th></tr></thead><tbody>';
+  h+=`<tr><td title="${esc(rd.sess)}" style="max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rd.sess)}</td><td>${rd.n}</td>`;
+  rd.avgs.forEach(a=>{h+=`<td>${bdg(a)}</td>`;});
+  h+=`<td>${bdg(rd.o)}</td></tr></tbody></table></div>`;
+
+  COMMENT_FIELDS.forEach(cf=>{
+    const list=rd.byField[cf.key]||[];
+    if(!list.length)return;
+    const pfx=cmtPfx(cf.key,'ss');
+    const exSet=ex[cf.key]||new Set();
+    h+='<div class="card"><div class="card-hdr">💬 '+esc(cf.label)+' <span style="font-size:12px;opacity:.75">('+list.length+')</span><span class="card-hdr-note"> Click any row or checkbox to select/deselect · Blank/N/A auto-deselected.</span></div>';
+    h+='<div class="csr">';
+    h+='<input type="text" class="csi acc-search" data-pfx="'+pfx+'" placeholder="Search comments...">';
+    h+='<span class="cc" id="'+pfx+'_c"></span>';
+    h+='<button class="btn btn-s btn-sm acc-sel" data-pfx="'+pfx+'" data-state="true">Select All</button>';
+    h+='<button class="btn btn-s btn-sm acc-sel" data-pfx="'+pfx+'" data-state="false">Deselect All</button>';
+    h+='<button class="btn btn-s btn-sm" data-hiding="0" onclick="toggleHideExcluded(this,\''+pfx+'\')">Hide Excluded</button>';
+    h+='</div>';
+    h+='<table class="ct" id="'+pfx+'_t"><thead><tr><th class="cbc"><input type="checkbox" id="'+pfx+'_m" checked></th><th>Comment</th></tr></thead><tbody>';
+    list.forEach((cm,i)=>{
+      const isExcl=exSet.has(i);
+      h+='<tr id="'+pfx+'_r'+i+'" class="'+(cm.na?'cna':'')+' '+(isExcl?'cex':'')+'" data-t="'+esc(cm.txt.toLowerCase())+'" style="cursor:pointer" onclick="toggleCmtRow(this)">';
+      h+='<td class="cbc"><input type="checkbox" class="'+pfx+'_cb" data-i="'+i+'" '+(isExcl?'':'checked')+' onclick="event.stopPropagation()"></td>';
+      h+='<td style="font-style:italic">'+esc(cm.txt)+'</td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+  });
+  $('rr').innerHTML=h;
+  COMMENT_FIELDS.forEach(cf=>wireComments(cf.key,'ss'));
+}
+
+// Reads the current session's checkbox states from the DOM into ssExcl
+function ssSyncFromDom(){
+  if(!curSs||!ssExcl[curSs])return;
+  COMMENT_FIELDS.forEach(cf=>{
+    const pfx=cmtPfx(cf.key,'ss');
+    const cbs=document.querySelectorAll('#rr .'+pfx+'_cb');
+    if(!cbs.length)return;
+    const s=new Set();cbs.forEach(cb=>{if(!cb.checked)s.add(+cb.dataset.i);});
+    ssExcl[curSs][cf.key]=s;
+  });
+}
+
+// One combined report per speaker across all sessions in the current Session Reports filter
+function ssSpeakerList(){
+  ssSyncFromDom();
+  const spSel=selSet('rRSp');
+  const bySpk={};
+  ssOrder.forEach(sess=>ssReports[sess].rows.forEach(r=>(r.speakers||[]).forEach(sp=>{
+    if(spSel&&!spSel.has(sp))return;
+    (bySpk[sp]=bySpk[sp]||[]).push(r);
+  })));
+  return Object.keys(bySpk).sort().map(sp=>{
+    const rd=buildSpReport(sp,bySpk[sp]);
+    const cmts={};
+    COMMENT_FIELDS.forEach(cf=>{
+      cmts[cf.key]=[];
+      rd.tableRows.forEach(tr=>{
+        const ss=ssReports[tr.sess];if(!ss)return;
+        const exs=ssExcl[tr.sess]?.[cf.key]||new Set();
+        (ss.byField[cf.key]||[]).forEach((c,i)=>{if(!exs.has(i))cmts[cf.key].push(c);});
+      });
+    });
+    return{sp,rd,cmts};
+  });
+}
+
+function updSsSummary(){
+  const spSel=selSet('rRSp');
+  const spk=new Set();
+  ssOrder.forEach(s=>ssReports[s].speakers.forEach(sp=>{if(!spSel||spSel.has(sp))spk.add(sp);}));
+  $('rsum').textContent=spk.size+' speaker email'+(spk.size!==1?'s':'')+' from '+ssOrder.length+' session'+(ssOrder.length!==1?'s':'')+'.';
+}
+
+function xSessionEmail(){downloadSpeakerEmails(ssSpeakerList());}
+function xSessionXLSX(){writeSpeakerWorkbook(ssSpeakerList(),'AEC_SpeakerReports_FromSessions.xlsx');}
 
 // ── SCORE TABLE ───────────────────────────────────────────────────────────────
 function buildScoreTable(data,gl,gk){
@@ -888,7 +1098,6 @@ function buildDelivery(rows){
 
   const chartId='delChart_'+Math.random().toString(36).slice(2,7);
 
-  // Global max across ALL options (used as baseline even when filtering)
   let globalMax=0;
   sessions.forEach(sess=>{
     const total=activeOpts.reduce((s,o)=>(s+(sessionData[sess].counts[o]||0)),0);
@@ -902,7 +1111,6 @@ function buildDelivery(rows){
   h+='</div>';
   h+='<div class="card-body">';
 
-  // Clickable legend — each item toggles its option on/off
   h+='<div id="'+chartId+'_legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">';
   activeOpts.forEach(o=>{
     h+='<div data-opt="'+esc(o)+'" data-on="1" onclick="toggleDeliveryOpt(this,\''+chartId+'\')" style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light);cursor:pointer;user-select:none;border:2px solid '+DCOLORS[o]+';border-radius:4px;padding:2px 7px 2px 5px;transition:opacity .15s">';
@@ -910,14 +1118,12 @@ function buildDelivery(rows){
   });
   h+='</div>';
 
-  // Bar area
   h+='<div id="'+chartId+'_bars">';
   h+=renderDeliveryBars(sessions,sessionData,activeOpts,globalMax,DCOLORS,DSHORT);
   h+='</div>';
 
   h+='</div></div>';
 
-  // Store data on window for redraw
   window['_del_'+chartId]={sessions,sessionData,activeOpts:[...activeOpts],globalMax,DCOLORS,DSHORT};
 
   return h;
@@ -950,19 +1156,15 @@ function renderDeliveryBars(sessions,sessionData,visibleOpts,globalMax,DCOLORS,D
 
 function toggleDeliveryOpt(el,chartId){
   const data=window['_del_'+chartId];if(!data)return;
-  const opt=el.dataset.opt;
   const isOn=el.dataset.on==='1';
-  // Toggle legend item style
   el.dataset.on=isOn?'0':'1';
   el.style.opacity=isOn?'0.35':'1';
   el.style.textDecoration=isOn?'line-through':'';
-  // Rebuild visible opts
   const legend=document.getElementById(chartId+'_legend');
   const visibleOpts=data.activeOpts.filter(o=>{
     const item=legend.querySelector('[data-opt="'+o+'"]');
     return item&&item.dataset.on==='1';
   });
-  // Redraw bars
   document.getElementById(chartId+'_bars').innerHTML=renderDeliveryBars(data.sessions,data.sessionData,visibleOpts,data.globalMax,data.DCOLORS,data.DSHORT);
 }
 
@@ -1022,118 +1224,99 @@ function filterCmts(pfx,val){const q=(val!==undefined?val:(document.querySelecto
 function selAll(pfx,state){document.querySelectorAll('.'+pfx+'_cb').forEach(cb=>{const row=$(pfx+'_r'+cb.dataset.i);if(!row||row.style.display==='none')return;cb.checked=state;row.classList.toggle('cex',!state);});updCt(pfx);}
 function updCt(pfx){const el=$(pfx+'_c');if(!el)return;const total=document.querySelectorAll('.'+pfx+'_cb').length,checked=[...document.querySelectorAll('.'+pfx+'_cb')].filter(c=>c.checked).length;el.textContent=`${checked} of ${total} selected`;}
 
-// ── PDF ───────────────────────────────────────────────────────────────────────
-function xSpeakerEmail(){
-  // Only download speakers explicitly selected in the filter (or all if no filter set)
-  const spFilter=MSS['sSSp'];
-  const selectedSps=spFilter&&spFilter.sel.size>0&&spFilter.sel.size<spFilter.av.length
-    ?spFilter.sel:null;
-
+// ── SPEAKER EMAIL HTML ────────────────────────────────────────────────────────
+// rd = buildSpReport output; cmtsByField = {fieldKey: [{sess, txt}, ...]} already curated
+function buildSpeakerEmailHtml(sp,rd,cmtsByField){
   const logoSrc=getLogoForEmail();
-  const confName=eventConf.name||'CLEAR Annual Educational Conference';
-  const confCity=eventConf.city||'';
-  const confDates=eventConf.dates||'';
-  const confLine=[confCity,confDates].filter(Boolean).join('  ·  ');
+  const confName=esc(eventConf.name||'CLEAR Annual Educational Conference');
+  const confLine=esc([eventConf.city||'',eventConf.dates||''].filter(Boolean).join('  ·  '));
   const genDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const spE=esc(sp);
 
   const scoreCols=RKEYS.map(qk=>({key:SCALES[qk].sk,short:SCALES[qk].label.split(' ').slice(0,2).join(' ').replace(/\s*\/$/, '')}));
   function fmtScore(v){return(v!==null&&v!==undefined&&!isNaN(v))?v.toFixed(2):'—';}
   function getIdx(sk){return RKEYS.indexOf(RKEYS.find(qk=>SCALES[qk].sk===sk));}
+  const sessionWord=rd.tableRows.length===1?'session':'sessions';
 
-  const entriesToExport=Object.entries(spReports).filter(([sp])=>!selectedSps||selectedSps.has(sp));
-  let dlIdx=0;
-  entriesToExport.forEach(([sp,rd])=>{
-    const thisDlIdx=dlIdx++;
-    setTimeout(()=>{
-      const ex=spExcl[sp]||{};
-      const sessionWord=rd.tableRows.length===1?'session':'sessions';
+  const overallCells=scoreCols.map(col=>{
+    const ga=rd.ga[getIdx(col.key)];
+    return `<td align="center" style="padding:14px 8px;border-right:1px solid rgba(255,255,255,.2)">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.75);margin-bottom:6px;font-family:'Open Sans',Arial,sans-serif;white-space:nowrap">${col.short}</div>
+      <div style="font-size:16px;font-weight:700;font-family:'Open Sans',Arial,sans-serif;color:#ffffff">${fmtScore(ga)}</div>
+    </td>`;
+  }).join('');
+  const overallAvgCell=`<td align="center" style="padding:14px 12px;border-left:2px solid #dda838;background:rgba(255,255,255,.12)">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#ffffff;margin-bottom:6px;font-family:'Open Sans',Arial,sans-serif;white-space:nowrap;font-weight:700">Overall</div>
+    <div style="font-size:22px;font-weight:700;font-family:'Open Sans',Arial,sans-serif;color:#ffffff;line-height:1">${fmtScore(rd.go)}</div>
+    <div style="font-size:10px;color:#ffffff;font-family:'Open Sans',Arial,sans-serif;margin-top:4px;opacity:.85">out of 5.00</div>
+  </td>`;
 
-      // ── OVERALL SCORE STRIP — burgundy bg, white text ─────────────────────
-      const overallCells=scoreCols.map(col=>{
-        const ga=rd.ga[getIdx(col.key)];
-        return `<td align="center" style="padding:14px 8px;border-right:1px solid rgba(255,255,255,.2)">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.75);margin-bottom:6px;font-family:'Open Sans',Arial,sans-serif;white-space:nowrap">${col.short}</div>
-          <div style="font-size:16px;font-weight:700;font-family:'Open Sans',Arial,sans-serif;color:#ffffff">${fmtScore(ga)}</div>
-        </td>`;
-      }).join('');
-      const overallAvgCell=`<td align="center" style="padding:14px 12px;border-left:2px solid #dda838;background:rgba(255,255,255,.12)">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#ffffff;margin-bottom:6px;font-family:'Open Sans',Arial,sans-serif;white-space:nowrap;font-weight:700">Overall</div>
-        <div style="font-size:22px;font-weight:700;font-family:'Open Sans',Arial,sans-serif;color:#ffffff;line-height:1">${fmtScore(rd.go)}</div>
-        <div style="font-size:10px;color:#ffffff;font-family:'Open Sans',Arial,sans-serif;margin-top:4px;opacity:.85">out of 5.00</div>
+  const scoreHeaderCells=scoreCols.map(col=>`<th style="padding:8px 6px;background:#f9f7f4;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#484848;border-bottom:2px solid #e0dcd6;font-family:'Open Sans',Arial,sans-serif;text-align:center;white-space:nowrap">${col.short}</th>`).join('');
+
+  let sessionBlocks='';
+  rd.tableRows.forEach((r,ri)=>{
+    const cells=scoreCols.map(col=>{
+      const a=r.avgs[getIdx(col.key)];
+      return `<td align="center" style="padding:10px 8px;border-bottom:1px solid #f0ede8;font-size:13px;font-family:'Open Sans',Arial,sans-serif;color:#333333">
+        ${a!==null?a.toFixed(2):'—'}
       </td>`;
+    }).join('');
+    const topBorder=ri>0?'border-top:2px solid #e0dcd6;':'';
+    sessionBlocks+=`
+      <tr><td colspan="${scoreCols.length+1}" style="${topBorder}padding:12px 14px 6px;background:#fafaf8">
+        <div style="font-size:13px;font-weight:700;color:#333333;font-family:'Open Sans',Arial,sans-serif;line-height:1.4">${esc(r.sess)}</div>
+        <div style="font-size:11px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-top:2px">${r.c} response${r.c!==1?'s':''}</div>
+      </td></tr>
+      <tr>
+        ${cells}
+        <td align="center" style="padding:10px 8px;border-bottom:1px solid #f0ede8;font-size:13px;font-weight:700;font-family:'Open Sans',Arial,sans-serif;color:#333333">${fmtScore(r.o)}</td>
+      </tr>`;
+  });
 
-      // ── SESSION SCORE BLOCKS ──────────────────────────────────────────────
-      const scoreHeaderCells=scoreCols.map(col=>`<th style="padding:8px 6px;background:#f9f7f4;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#484848;border-bottom:2px solid #e0dcd6;font-family:'Open Sans',Arial,sans-serif;text-align:center;white-space:nowrap">${col.short}</th>`).join('');
-
-      let sessionBlocks='';
-      rd.tableRows.forEach((r,ri)=>{
-        const cells=scoreCols.map(col=>{
-          const a=r.avgs[getIdx(col.key)];
-          return `<td align="center" style="padding:10px 8px;border-bottom:1px solid #f0ede8;font-size:13px;font-family:'Open Sans',Arial,sans-serif;color:#333333">
-            ${a!==null?a.toFixed(2):'—'}
-          </td>`;
-        }).join('');
-        const topBorder=ri>0?'border-top:2px solid #e0dcd6;':'';
-        sessionBlocks+=`
-          <tr><td colspan="${scoreCols.length+1}" style="${topBorder}padding:12px 14px 6px;background:#fafaf8">
-            <div style="font-size:13px;font-weight:700;color:#333333;font-family:'Open Sans',Arial,sans-serif;line-height:1.4">${r.sess}</div>
-            <div style="font-size:11px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-top:2px">${r.c} response${r.c!==1?'s':''}</div>
-          </td></tr>
-          <tr>
-            ${cells}
-            <td align="center" style="padding:10px 8px;border-bottom:1px solid #f0ede8;font-size:13px;font-weight:700;font-family:'Open Sans',Arial,sans-serif;color:#333333">${fmtScore(r.o)}</td>
-          </tr>`;
-      });
-
-      // ── COMMENT SECTIONS — only selected responses ────────────────────────
-      let cmtSections='';
-      COMMENT_FIELDS.forEach(cf=>{
-        const exSet=(ex[cf.key]||new Set());
-        const fieldCmts=rd.cmts.filter(cm=>cm.qkey===cf.key);
-        const relevant=fieldCmts.filter((cm,i)=>!exSet.has(i));
-        if(!relevant.length)return;
-        // Group by session
-        const bySess={};
-        relevant.forEach(cm=>{(bySess[cm.sess]=bySess[cm.sess]||[]).push(cm);});
-        const sessKeys=Object.keys(bySess).sort();
-        let sessBlocks='';
-        sessKeys.forEach(sess=>{
-          const sessRows=bySess[sess].map((cm,i)=>{
-            const bg=i%2===0?'#fafaf8':'#ffffff';
-            return `<tr><td style="padding:11px 14px;background:${bg};border-bottom:1px solid #f0ede8;font-size:13px;color:#333333;font-family:'Open Sans',Arial,sans-serif;line-height:1.6">${cm.txt}</td></tr>`;
-          }).join('');
-          sessBlocks+=`
-            <div style="margin-bottom:14px">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-bottom:6px;padding-left:2px">${sess}</div>
-              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-radius:6px;overflow:hidden;border:1px solid #e0dcd6;border-collapse:collapse">
-                ${sessRows}
-              </table>
-            </div>`;
-        });
-        cmtSections+=`
-        <tr><td style="padding:0">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tr><td style="padding:20px 28px 8px 28px">
-              <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr><td style="padding:10px 14px;background:#fdf6e3;border-left:4px solid #dda838;border-radius:0 6px 6px 0">
-                  <span style="font-size:13px;font-weight:700;color:#333333;font-family:'Open Sans',Arial,sans-serif">${cf.label}</span>
-                  <span style="font-size:11px;color:#666666;margin-left:8px;font-family:'Open Sans',Arial,sans-serif">${relevant.length} response${relevant.length!==1?'s':''}</span>
-                </td></tr>
-              </table>
-            </td></tr>
-            <tr><td style="padding:0 28px 16px 28px">${sessBlocks}</td></tr>
+  let cmtSections='';
+  COMMENT_FIELDS.forEach(cf=>{
+    const relevant=cmtsByField[cf.key]||[];
+    if(!relevant.length)return;
+    const bySess={};
+    relevant.forEach(cm=>{(bySess[cm.sess]=bySess[cm.sess]||[]).push(cm);});
+    const sessKeys=Object.keys(bySess).sort();
+    let sessBlocks='';
+    sessKeys.forEach(sess=>{
+      const sessRows=bySess[sess].map((cm,i)=>{
+        const bg=i%2===0?'#fafaf8':'#ffffff';
+        return `<tr><td style="padding:11px 14px;background:${bg};border-bottom:1px solid #f0ede8;font-size:13px;color:#333333;font-family:'Open Sans',Arial,sans-serif;line-height:1.6">${esc(cm.txt)}</td></tr>`;
+      }).join('');
+      sessBlocks+=`
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-bottom:6px;padding-left:2px">${esc(sess)}</div>
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-radius:6px;overflow:hidden;border:1px solid #e0dcd6;border-collapse:collapse">
+            ${sessRows}
           </table>
-        </td></tr>`;
-      });
+        </div>`;
+    });
+    cmtSections+=`
+    <tr><td style="padding:0">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="padding:20px 28px 8px 28px">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr><td style="padding:10px 14px;background:#fdf6e3;border-left:4px solid #dda838;border-radius:0 6px 6px 0">
+              <span style="font-size:13px;font-weight:700;color:#333333;font-family:'Open Sans',Arial,sans-serif">${esc(cf.label)}</span>
+              <span style="font-size:11px;color:#666666;margin-left:8px;font-family:'Open Sans',Arial,sans-serif">${relevant.length} response${relevant.length!==1?'s':''}</span>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 28px 16px 28px">${sessBlocks}</td></tr>
+      </table>
+    </td></tr>`;
+  });
 
-      // ── HTML ASSEMBLY ─────────────────────────────────────────────────────
-      const html=`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <!--[if gte mso 9]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
-<title>Speaker Evaluation Report — ${sp}</title>
+<title>Speaker Evaluation Report — ${spE}</title>
 <style type="text/css">
 body,table,td,p,a{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;}
 table,td{mso-table-lspace:0pt;mso-table-rspace:0pt;}
@@ -1187,7 +1370,7 @@ body{margin:0;padding:0;width:100%!important;-webkit-font-smoothing:antialiased;
   <!-- SPEAKER NAME -->
   <tr><td style="padding:26px 28px 16px;">
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-bottom:4px;">SPEAKER</div>
-    <div style="font-size:24px;font-weight:700;color:#64092c;font-family:'Open Sans',Arial,sans-serif;line-height:1.2;mso-line-height-rule:exactly;">${sp}</div>
+    <div style="font-size:24px;font-weight:700;color:#64092c;font-family:'Open Sans',Arial,sans-serif;line-height:1.2;mso-line-height-rule:exactly;">${spE}</div>
     <div style="font-size:12px;color:#666666;font-family:'Open Sans',Arial,sans-serif;margin-top:6px;">${rd.tot} response${rd.tot!==1?'s':''}  ·  Generated ${genDate}</div>
   </td></tr>
 
@@ -1309,26 +1492,36 @@ body{margin:0;padding:0;width:100%!important;-webkit-font-smoothing:antialiased;
 
 </body>
 </html>`;
+}
 
+// list = [{sp, rd, cmts}] — downloads one email HTML per speaker
+async function downloadSpeakerEmails(list){
+  if(!list.length){alert('No speaker reports to export.');return;}
+  await ensureAttendeeMap();
+  const prefix=(LS.get('prefix')||'aec2026').replace(/[^a-zA-Z0-9]/g,'');
+  list.forEach((item,idx)=>{
+    setTimeout(()=>{
+      const html=buildSpeakerEmailHtml(item.sp,item.rd,item.cmts);
       const blob=new Blob([html],{type:'text/html'});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-      const prefix=(LS.get('prefix')||'aec2026').replace(/[^a-zA-Z0-9]/g,'');
-      const emailAddr=spEmails[sp]||'';
-      const fileId=emailAddr?emailAddr:(sp.toLowerCase().replace(/[^a-z0-9]/g,'_'));
+      const emailAddr=lookupEmail(item.sp);
+      const fileId=emailAddr?emailAddr:(item.sp.toLowerCase().replace(/[^a-z0-9]/g,'_'));
       a.download=prefix+'-'+fileId+'.html';
       document.body.appendChild(a);a.click();document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
-    },thisDlIdx*500);
+    },idx*500);
   });
 }
-function xSpeakerXLSX(){
 
+// list = [{sp, rd, cmts}] — one sheet per speaker
+function writeSpeakerWorkbook(list,filename){
+  if(!list.length){alert('No speaker reports to export.');return;}
   const wb=XLSX.utils.book_new();
   const confLine=[eventConf.name,eventConf.city,eventConf.dates].filter(Boolean).join(' | ');
   const genDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
-  const spFilterX=MSS['sSSp'];
-  const selectedSpsX=spFilterX&&spFilterX.sel.size>0&&spFilterX.sel.size<spFilterX.av.length?spFilterX.sel:null;
-  Object.entries(spReports).filter(([sp])=>!selectedSpsX||selectedSpsX.has(sp)).forEach(([sp,rd])=>{
+  const r2=v=>v!==null&&v!==undefined?Math.round(v*100)/100:null;
+  const used=new Set();
+  list.forEach(({sp,rd,cmts})=>{
     const rows=[
       [confLine],
       ['Speaker Evaluation Report — '+sp],
@@ -1336,14 +1529,11 @@ function xSpeakerXLSX(){
       [],
       ['Session','N',...RKEYS.map(qk=>SCALES[qk].label),'Overall Avg']
     ];
-    rd.tableRows.forEach(r=>{
-      rows.push([r.sess,r.c,...r.avgs.map(a=>a!==null?Math.round(a*100)/100:null),r.o!==null?Math.round(r.o*100)/100:null]);
-    });
-    rows.push(['All Sessions',rd.tot,...rd.ga.map(a=>a!==null?Math.round(a*100)/100:null),rd.go!==null?Math.round(rd.go*100)/100:null]);
+    rd.tableRows.forEach(r=>rows.push([r.sess,r.c,...r.avgs.map(r2),r2(r.o)]));
+    rows.push(['All Sessions',rd.tot,...rd.ga.map(r2),r2(rd.go)]);
     rows.push([]);
     COMMENT_FIELDS.forEach(cf=>{
-      const ex=spExcl[sp]||{};const exSet=ex[cf.key]||new Set();
-      const relevant=rd.cmts.filter((c,i)=>c.qkey===cf.key&&!c.na&&!exSet.has(i));
+      const relevant=cmts[cf.key]||[];
       if(!relevant.length)return;
       rows.push([cf.label]);
       rows.push(['Session','Comment']);
@@ -1352,10 +1542,26 @@ function xSpeakerXLSX(){
     });
     const ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:40},{wch:6},...RKEYS.map(()=>({wch:14})),{wch:12}];
-    const sheetName=sp.replace(/[^a-zA-Z0-9 ]/g,'').slice(0,28).trim()||'Speaker';
-    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    const base=sp.replace(/[^a-zA-Z0-9 ]/g,'').slice(0,28).trim()||'Speaker';
+    let name=base,k=2;
+    while(used.has(name.toLowerCase())){name=base.slice(0,25).trim()+' '+k++;}
+    used.add(name.toLowerCase());
+    XLSX.utils.book_append_sheet(wb,ws,name);
   });
-  XLSX.writeFile(wb,'AEC_SpeakerReports.xlsx');
+  XLSX.writeFile(wb,filename);
+}
+
+function xSpeakerEmail(){
+  spSyncFromDom();
+  const sel=selSet('sSSp');
+  const list=Object.entries(spReports).filter(([sp])=>!sel||sel.has(sp)).map(([sp,rd])=>({sp,rd,cmts:spIncluded(sp,rd)}));
+  downloadSpeakerEmails(list);
+}
+function xSpeakerXLSX(){
+  spSyncFromDom();
+  const sel=selSet('sSSp');
+  const list=Object.entries(spReports).filter(([sp])=>!sel||sel.has(sp)).map(([sp,rd])=>({sp,rd,cmts:spIncluded(sp,rd)}));
+  writeSpeakerWorkbook(list,'AEC_SpeakerReports.xlsx');
 }
 
 // ── EVENT SETTINGS STATE ─────────────────────────────────────────────────────
@@ -1366,7 +1572,7 @@ function handleLogoUpload(input){
   const file=input.files?.[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    eventLogo=e.target.result.split(',')[1]; // strip data:...;base64,
+    eventLogo=e.target.result.split(',')[1];
     document.getElementById('logoStatus').textContent=file.name;
     const prev=document.getElementById('logoPreview');
     prev.src=e.target.result;prev.style.display='';
@@ -1381,9 +1587,7 @@ async function saveEventSettings(){
   if(name)eventConf.name=name;
   if(city)eventConf.city=city;
   if(dates)eventConf.dates=dates;
-  // Save locally always
   LS.set('confName',eventConf.name);LS.set('confCity',eventConf.city);LS.set('confDates',eventConf.dates);
-  // Save to Worker KV if worker URL is set (shared across users)
   const worker=LS.get('worker');
   if(worker){
     try{
@@ -1411,7 +1615,6 @@ async function loadSharedEventSettings(){
     if(data.name){eventConf.name=data.name;const el=$('cfgConfName');if(el)el.value=data.name;}
     if(data.city){eventConf.city=data.city;const el=$('cfgCity');if(el)el.value=data.city;}
     if(data.dates){eventConf.dates=data.dates;const el=$('cfgDates');if(el)el.value=data.dates;}
-    // Logo
     if(data.logoB64){eventLogo=data.logoB64;const prev=$('logoPreview');if(prev){prev.src='data:image/png;base64,'+data.logoB64;prev.style.display='';}$('logoStatus').textContent='Loaded from shared settings';}
   }catch(e){console.log('Could not load shared conf settings:',e);}
 }
@@ -1435,13 +1638,16 @@ document.addEventListener('input',function(e){
     const pfx=e.target.getAttribute('data-pfx');if(pfx)filterCmts(pfx,e.target.value);
   }
 });
+// Keep selection state in sync with every kind of comment toggle (row click, checkbox, master, select/deselect all)
+['click','change'].forEach(ev=>{
+  $('rr').addEventListener(ev,()=>setTimeout(ssSyncFromDom,0));
+  $('sr').addEventListener(ev,()=>setTimeout(spSyncFromDom,0));
+});
 
 function getLogoForEmail(){
-  // Returns a URL or data URI for use in email HTML
   if(eventLogo) return 'data:image/png;base64,'+eventLogo;
   return 'https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png';
 }
-
 
 // ── COMMENT SORT ──────────────────────────────────────────────────────────────
 const sortState={};
@@ -1458,7 +1664,6 @@ function sortCmtTable(pfx,col){
     return ai<bi?-st.dir:ai>bi?st.dir:0;
   });
   rows.forEach(r=>tbody.appendChild(r));
-  // Update header indicators
   tbl.querySelectorAll('thead th').forEach((th,i)=>{
     th.style.cursor='pointer';
     const ind=th.querySelector('.sort-ind');
@@ -1469,7 +1674,7 @@ function addSortHeaders(pfx){
   const tbl=document.getElementById(pfx+'_t');if(!tbl)return;
   const ths=tbl.querySelectorAll('thead th');
   ths.forEach((th,i)=>{
-    if(i===0)return; // skip checkbox col
+    if(i===0)return;
     th.style.cursor='pointer';th.style.userSelect='none';
     const ind=document.createElement('span');ind.className='sort-ind';ind.style.fontSize='10px';
     th.appendChild(ind);
@@ -1481,7 +1686,6 @@ function toggleCmtRow(tr){
   const cb=tr.querySelector('input[type=checkbox]');if(!cb)return;
   cb.checked=!cb.checked;
   tr.classList.toggle('cex',!cb.checked);
-  // find pfx from checkbox class
   const cls=[...cb.classList].find(c=>c.endsWith('_cb'));
   if(cls){const pfx=cls.slice(0,-3);updCt(pfx);}
 }
