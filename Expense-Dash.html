@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CLEAR Expense Reporting Tool</title>
+<link rel="icon" type="image/png" href="https://assets-002.noviams.com/novi-file-uploads/clear/structure/clearlogo.png">
 <style>
   :root {
     --burgundy: #64092C;
@@ -652,6 +653,7 @@
           <option value="">All Types</option>
           <option value="staff">Staff</option>
           <option value="instructor">Instructor</option>
+          <option value="facilitator">Facilitator</option>
           <option value="volunteer">Volunteer</option>
         </select>
         <input type="text" id="filter-search" placeholder="Search by name or event…" oninput="renderDashboard()" style="min-width:200px">
@@ -696,6 +698,18 @@
             <span class="hint">Hourly rate — Tier 2</span>
           </div>
         </div>
+        <div class="settings-row">
+          <div class="field">
+            <label>Facilitator Tier 1 Rate</label>
+            <div class="rate-input-group"><span class="prefix">$</span><input type="number" id="cfg-ftier1" step="0.01" min="0" placeholder="20.00"></div>
+            <span class="hint">Hourly rate — Facilitator Tier 1</span>
+          </div>
+          <div class="field">
+            <label>Facilitator Tier 2 Rate</label>
+            <div class="rate-input-group"><span class="prefix">$</span><input type="number" id="cfg-ftier2" step="0.01" min="0" placeholder="25.00"></div>
+            <span class="hint">Hourly rate — Facilitator Tier 2</span>
+          </div>
+        </div>
         <div class="flex-row end mt-8">
           <button class="btn btn-primary" onclick="saveRates()">Save Rates</button>
         </div>
@@ -735,6 +749,23 @@
         <div id="instructors-save-msg" style="display:none" class="alert alert-success mt-8">✓ Instructor roster saved.</div>
         <div class="flex-row end mt-8"><button class="btn btn-primary" onclick="saveInstructors()">Save Roster</button></div>
       </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🧭</span> Facilitator Roster</div>
+        <div class="flex-row between mb-12">
+          <p style="font-size:13px; color:var(--text-light)">Manage contract facilitators, their pay tiers, and contact details. Their pay rate and contact details fill in their hours report in the Facilitator Portal, matched by email, so use the email they sign in with.</p>
+          <div class="flex-row">
+            <label class="import-zone" style="margin:0; padding:6px 12px; font-size:12px; cursor:pointer">📂 Import CSV<input type="file" accept=".csv" style="display:none" onchange="importFacilitatorCSV(event)"></label>
+            <button class="btn btn-primary btn-sm" onclick="addFacilitator()">+ Add Facilitator</button>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 150px 170px 110px 160px 110px 110px 110px 100px 32px; gap:8px; padding: 0 10px 6px; font-size:11px; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.4px;">
+          <span>Name</span><span>Email</span><span>Phone</span><span>Street Address</span><span>City</span><span>State / Province</span><span>Country</span><span>Tier</span><span></span>
+        </div>
+        <div id="facilitator-list"></div>
+        <div id="facilitators-save-msg" style="display:none" class="alert alert-success mt-8">✓ Facilitator roster saved.</div>
+        <div class="flex-row end mt-8"><button class="btn btn-primary" onclick="saveFacilitators()">Save Roster</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -770,8 +801,9 @@ const FLOWS = {
   getDetail: () => `${workerUrl}/expense/getdetail`,
 };
 
-let cfg = { perdiem: 75.00, travelPct: 75, mileage: 0.670, tier1: 0, tier2: 0 };
+let cfg = { perdiem: 75.00, travelPct: 75, mileage: 0.670, tier1: 0, tier2: 0, ftier1: 20, ftier2: 25 };
 let instructors = [];
+let facilitators = [];
 let staff = [];
 
 // ═══════════════════════════════════════════════════════
@@ -848,6 +880,8 @@ async function initApp() {
   if (cfgKV) Object.assign(cfg, typeof cfgKV === 'string' ? JSON.parse(cfgKV) : cfgKV);
   const instrKV = await kvGet('expense_instructors');
   if (instrKV) instructors = typeof instrKV === 'string' ? JSON.parse(instrKV) : instrKV;
+  const facKV = await kvGet('expense_facilitators');
+  if (facKV) facilitators = typeof facKV === 'string' ? JSON.parse(facKV) : facKV;
   const staffKV = await kvGet('expense_staff');
   if (staffKV) staff = typeof staffKV === 'string' ? JSON.parse(staffKV) : staffKV;
   document.getElementById('admin-view').style.display = 'block';
@@ -1206,7 +1240,7 @@ async function openReview(id) {
         </div>` : ''}
       ${isStaffReport ? staffMealsHtml : ''}
       ${expenseLines.length ? `<div class="review-section-title">Expenses</div>${lineHeader}${expRows}` : ''}
-      ${r.type === 'instructor' && teachingHours.length ? `<div class="review-section-title">Teaching Hours — ${r.totalHours} hrs @ $${Number(r.instructorRate).toFixed(2)}/hr</div>${lineHeader}${teachRows}` : ''}
+      ${['instructor','facilitator'].includes((r.type||'').toLowerCase()) && teachingHours.length ? `<div class="review-section-title">${(r.type||'').toLowerCase() === 'facilitator' ? 'Facilitation' : 'Teaching'} Hours — ${r.totalHours} hrs @ $${Number(r.instructorRate).toFixed(2)}/hr</div>${lineHeader}${teachRows}` : ''}
 
       <div style="margin-top:14px;padding:12px;background:#f5f5f5;border-radius:var(--radius)">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${isStaffReport ? '10px' : '0'}">
@@ -1380,14 +1414,15 @@ document.getElementById('review-modal').addEventListener('click', e => {
 //  SETTINGS
 // ═══════════════════════════════════════════════════════
 function renderSettings() {
-  const fields = ['cfg-perdiem','cfg-travel-pct','cfg-mileage','cfg-tier1','cfg-tier2'];
-  const cfgKeys = ['perdiem','travelPct','mileage','tier1','tier2'];
+  const fields = ['cfg-perdiem','cfg-travel-pct','cfg-mileage','cfg-tier1','cfg-tier2','cfg-ftier1','cfg-ftier2'];
+  const cfgKeys = ['perdiem','travelPct','mileage','tier1','tier2','ftier1','ftier2'];
   fields.forEach((f,i) => {
     const el = document.getElementById(f);
     if (el) el.value = cfg[cfgKeys[i]] || '';
   });
   renderStaffList();
   renderInstructorList();
+  renderFacilitatorList();
 }
 
 async function saveRates() {
@@ -1396,6 +1431,8 @@ async function saveRates() {
   cfg.mileage   = parseFloat(document.getElementById('cfg-mileage').value)    || 0.670;
   cfg.tier1     = parseFloat(document.getElementById('cfg-tier1').value)      || 0;
   cfg.tier2     = parseFloat(document.getElementById('cfg-tier2').value)      || 0;
+  cfg.ftier1    = parseFloat(document.getElementById('cfg-ftier1').value)     || 20;
+  cfg.ftier2    = parseFloat(document.getElementById('cfg-ftier2').value)     || 25;
   await kvSet('expense_cfg', JSON.stringify(cfg));
   const msg = document.getElementById('rates-save-msg');
   msg.style.display = 'flex'; setTimeout(() => msg.style.display = 'none', 3000);
@@ -1504,6 +1541,68 @@ function importInstructorCSV(e) {
     }
     renderInstructorList();
     alert(`Imported ${added} instructor(s). Click "Save Roster" to persist.`);
+  };
+  reader.readAsText(file); e.target.value = '';
+}
+
+// ── FACILITATOR ROSTER (mirrors the instructor roster; saved to expense_facilitators) ──
+function renderFacilitatorList() {
+  const list = document.getElementById('facilitator-list'); if (!list) return;
+  list.innerHTML = '';
+  facilitators.forEach((f, idx) => {
+    const div = document.createElement('div');
+    div.className = 'instructor-row';
+    div.innerHTML = `
+      <input type="text"  value="${escHtml(f.name||'')}"      placeholder="Full name"          onchange="facilitators[${idx}].name=this.value">
+      <input type="email" value="${escHtml(f.email||'')}"     placeholder="email@example.com"  onchange="facilitators[${idx}].email=this.value">
+      <input type="tel"   value="${escHtml(f.phone||'')}"     placeholder="Phone number"        onchange="facilitators[${idx}].phone=this.value">
+      <input type="text"  value="${escHtml(f.street||'')}"    placeholder="Street address"        onchange="facilitators[${idx}].street=this.value">
+      <input type="text"  value="${escHtml(f.city||'')}"      placeholder="City"                  onchange="facilitators[${idx}].city=this.value">
+      <input type="text"  value="${escHtml(f.state||'')}"     placeholder="State / Province"      onchange="facilitators[${idx}].state=this.value">
+      <input type="text"  value="${escHtml(f.country||'')}"   placeholder="Country"               onchange="facilitators[${idx}].country=this.value">
+      <select onchange="facilitators[${idx}].tier=this.value">
+        <option value="1" ${f.tier==='1'?'selected':''}>Tier 1</option>
+        <option value="2" ${f.tier==='2'?'selected':''}>Tier 2</option>
+      </select>
+      <button class="remove-btn" onclick="removeFacilitator(${idx})">×</button>`;
+    list.appendChild(div);
+  });
+}
+function addFacilitator() { facilitators.push({ name:'', email:'', phone:'', street:'', city:'', state:'', country:'', tier:'1' }); renderFacilitatorList(); }
+function removeFacilitator(idx) { facilitators.splice(idx, 1); renderFacilitatorList(); }
+async function saveFacilitators() {
+  const toSave = facilitators.map(i => ({
+    name:    i.name    || '',
+    email:   i.email   || '',
+    tier:    i.tier    || '1',
+    phone:   i.phone   || '',
+    street:  i.street  || '',
+    city:    i.city    || '',
+    state:   i.state   || '',
+    country: i.country || '',
+    address: [i.street, i.city, i.state, i.country].filter(Boolean).join(', '),
+  }));
+  await kvSet('expense_facilitators', JSON.stringify(toSave));
+  const msg = document.getElementById('facilitators-save-msg');
+  msg.style.display = 'flex'; setTimeout(() => msg.style.display = 'none', 3000);
+}
+function importFacilitatorCSV(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+    const startIdx = lines[0].toLowerCase().includes('name') ? 1 : 0;
+    let added = 0;
+    for (let i = startIdx; i < lines.length; i++) {
+      const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g,''));
+      if (parts.length >= 2) {
+        const tier = parts[2] ? (parts[2].includes('2') ? '2' : '1') : '1';
+        facilitators.push({ name: parts[0] || '', email: parts[1] || '', tier, phone: parts[3] || '', street: parts[4] || '', city: parts[5] || '', state: parts[6] || '', country: parts[7] || '' });
+        added++;
+      }
+    }
+    renderFacilitatorList();
+    alert(`Imported ${added} facilitator(s). Click "Save Roster" to persist.`);
   };
   reader.readAsText(file); e.target.value = '';
 }
@@ -1811,7 +1910,8 @@ function generateExpensePDF(r, expenseLines, perDiemDays, teachingHours) {
 
   // ── TEACHING HOURS SECTION ──
   if (teachingHours.length) {
-    section('Teaching Hours');
+    const isFacReport = (r.type||'').toLowerCase() === 'facilitator';
+    section(isFacReport ? 'Facilitation Hours' : 'Teaching Hours');
     const W = [CW * 0.25, CW * 0.38, CW * 0.14, CW * 0.12, CW * 0.11];
     tableHeader(['Date', 'Program / Modules', 'Hours', 'Rate', 'Pay'], W);
     let teachTotal = 0;
@@ -1828,7 +1928,7 @@ function generateExpensePDF(r, expenseLines, perDiemDays, teachingHours) {
         money(appr),
       ], W, i % 2 === 0);
     });
-    totalRow('Teaching Pay Total', money(teachTotal));
+    totalRow(isFacReport ? 'Facilitation Pay Total' : 'Teaching Pay Total', money(teachTotal));
     y += 8;
   }
 
@@ -1883,7 +1983,7 @@ function generateExpensePDF(r, expenseLines, perDiemDays, teachingHours) {
     const teachApprAmt = (teachingHours||[]).reduce((s,d) => s+(d.ApprovedAmount!=null?Number(d.ApprovedAmount):Number(d.field_5||d.Pay||d.pay||0)),0);
     const pdApprAmt    = perDiemDays.reduce((s,d) => s+(d.ApprovedAmount!=null?Number(d.ApprovedAmount):Number(d.ActualSpent||d.actualSpent||d.field_4||0)),0);
     const expApprAmt   = expenseLines.reduce((s,e) => s+(e.ApprovedAmount!=null?Number(e.ApprovedAmount):Number(e.field_3||e.Amount||e.amount||0)),0);
-    if (teachSub)  sumLine('Teaching Pay',   money(teachApprAmt), 'shade');
+    if (teachSub)  sumLine((r.type||'').toLowerCase() === 'facilitator' ? 'Facilitation Pay' : 'Teaching Pay', money(teachApprAmt), 'shade');
     if (pdSub)     sumLine('Meal Per Diem',  money(pdApprAmt),    'normal');
     if (expSub)    sumLine('Other Expenses', money(expApprAmt),   'shade');
     sumLine('Total Approved Reimbursement',  money(grandAppr),    'total');
@@ -1928,9 +2028,9 @@ function exportToExcel() {
   const headers = [
     'Report ID', 'Status', 'Submitted', 'Decided',
     'Name', 'Email', 'Type',
-    'Instructor Name', 'Instructor Tier', 'Hourly Rate',
+    'Instructor or Facilitator Name', 'Tier', 'Hourly Rate',
     'Event', 'Destination', 'Date Start', 'Date End', 'Purpose',
-    'Per Diem Total', 'Expense Total', 'Teaching Hours', 'Teaching Pay',
+    'Per Diem Total', 'Expense Total', 'Teaching or Facilitation Hours', 'Teaching or Facilitation Pay',
     'Submitted Total', 'Approved Total',
     'Receipt Attached', 'Admin Notes'
   ];
