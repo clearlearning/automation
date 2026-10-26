@@ -281,6 +281,17 @@ function genGroupKey(){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr
 // API
 async function apiCall(path,opts){const o=opts||{};const h=Object.assign({'X-Auth-Token':STATE.authToken},o.headers||{});const r=await fetch(STATE.workerUrl.replace(/\/+$/,'')+path,{...o,headers:h});if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t);}if(r.status===204||r.headers.get('content-length')==='0')return{};return r.json();}
 async function apiPost(path,body){return apiCall(path,{method:'POST',headers:{'X-Auth-Token':STATE.authToken,'Content-Type':'application/x-www-form-urlencoded'},body});}
+async function resetExistingUserPw(u){
+  let uid=null;
+  try{const ui=await apiCall('/v1/users/email:'+u.email);uid=ui.id;}catch(e){}
+  if(!uid){try{const ui=await apiCall('/v1/users/username:'+u.email);uid=ui.id;}catch(e){}}
+  if(!uid)throw new Error('Could not look up existing user ID');
+  const p=new URLSearchParams();
+  p.set('user_id',uid);
+  p.set('password',u.password);
+  p.set('custom_field_11',u.password);
+  await apiPost('/v1/edituser',p.toString());
+}
 function setCon(s,t){const el=document.getElementById('connectionStatus');el.className='connection-status '+s;const d=s==='connected'?'green':s==='loading'?'amber':'red';el.innerHTML='<span class="dot '+d+'"></span> '+esc(t);}
 async function doConnect(){const url=document.getElementById('workerUrl').value.trim();const tok=document.getElementById('authToken').value.trim();if(!url||!tok){setCon('disconnected','Enter Auth Token and click Test Connection');return;}STATE.workerUrl=url;STATE.authToken=tok;setCon('loading','Connecting...');try{const info=await apiCall('/v1/siteinfo');STATE.connected=true;setCon('connected','Connected to '+(info.site_name||info.domain||'TalentLMS'));localStorage.setItem('clear_worker_url',url);localStorage.setItem('clear_auth_token',tok);await loadCourses();loadGroups();}catch(e){STATE.connected=false;setCon('disconnected','Connection failed: '+e.message);}}
 document.getElementById('connectBtn').addEventListener('click',doConnect);
@@ -930,7 +941,7 @@ const gn=document.getElementById('groupName').value.trim(),gd=document.getElemen
 if(!gn){alert('Please enter a Group Name.');return;}
 if(!STATE.groupKey)STATE.groupKey=genGroupKey();
 const wb=XLSX.utils.book_new();
-const uh=['Login','Firstname','Lastname','Email','Status','Language','custom_field: Organization','custom_field: Title','custom_field: State/Province','custom_field: Country','custom_field: Temporary Password','Password '];
+const uh=['Login','Firstname','Lastname','Email','Status','Language','custom_field: Organization','custom_field: Title','custom_field: State/Province','custom_field: Country','custom_field: Temporary Password','Password'];
 const ud=[uh];users.forEach(u=>{ud.push([u.email,u.firstName,u.lastName,u.email,u.status,u.language,u.company,u.jobTitle,u.state,u.country,u.password,u.password]);});
 const ws1=XLSX.utils.aoa_to_sheet(ud);ws1['!cols']=uh.map(h=>({wch:Math.max(h.length+2,16)}));XLSX.utils.book_append_sheet(wb,ws1,'Users');
 const ws2=XLSX.utils.aoa_to_sheet([['Group','Description','Key'],[gn,gd,STATE.groupKey]]);ws2['!cols']=[{wch:30},{wch:50},{wch:14}];XLSX.utils.book_append_sheet(wb,ws2,'Groups');
@@ -958,7 +969,7 @@ const res={created:0,existing:0,failed:0,errors:[]};
 try{
 for(let i=0;i<users.length;i++){const u=users[i];prog('Creating user '+(i+1)+'/'+users.length+'...');
 try{const p=new URLSearchParams();p.set('first_name',u.firstName);p.set('last_name',u.lastName);p.set('email',u.email);p.set('login',u.email);p.set('password',u.password);p.set('custom_field_11',u.password);p.set('language',u.language);await apiPost('/v1/usersignup',p.toString());res.created++;}
-catch(e){if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;else{res.failed++;res.errors.push(u.email+': '+e.message);}}}
+catch(e){if(e.message.includes('already exists')||e.message.includes('409')){try{await resetExistingUserPw(u);res.existing++;}catch(e2){res.failed++;res.errors.push(u.email+': account exists, but the password reset failed. '+e2.message);}}else{res.failed++;res.errors.push(u.email+': '+e.message);}}}
 prog('Creating group...');
 try{const p=new URLSearchParams();p.set('name',gn);if(gd)p.set('description',gd);p.set('key',STATE.groupKey);const g=await apiPost('/v1/creategroup',p.toString());STATE.groupId=g.id||'';}
 catch(e){try{const gs=await apiCall('/v1/groups');const ex=gs.find(g=>g.name.toLowerCase()===gn.toLowerCase());if(ex){STATE.groupId=ex.id||'';STATE.groupKey=ex.key||STATE.groupKey;}else throw e;}catch(e2){setApiSt('Failed to create group: '+e.message,'error');btn.disabled=false;btn.innerHTML='&#9889; Upload Users';return;}}
@@ -966,7 +977,7 @@ for(let i=0;i<STATE.selectedCourses.length;i++){const c=STATE.selectedCourses[i]
 try{const p=new URLSearchParams();p.set('course_id',c.id);p.set('group_id',STATE.groupId);await apiPost('/v1/addcoursetogroup',p.toString());}
 catch(e){if(!e.message.includes('already'))res.errors.push('Course '+c.name+': '+e.message);}}
 let msg='<strong>Upload complete.</strong> '+res.created+' user(s) created. ';
-if(res.existing>0)msg+=res.existing+' already existed. ';if(res.failed>0)msg+=res.failed+' failed. ';
+if(res.existing>0)msg+=res.existing+' already existed (password reset). ';if(res.failed>0)msg+=res.failed+' failed. ';
 msg+='Group "'+esc(gn)+'" and course assignments processed.';
 msg+='<br><strong>Next step:</strong> Click "Add Users to Cohort" to assign users to the group.';
 if(res.errors.length>0){msg+='<br><br><strong>Errors:</strong><br>'+res.errors.map(e=>'&bull; '+esc(e)).join('<br>');setApiSt(msg,'error');}else setApiSt(msg,'success');
@@ -1108,7 +1119,10 @@ document.getElementById('apiAddExistingBtn').addEventListener('click',async()=>{
         p.set('language',u.language);
         await apiPost('/v1/usersignup',p.toString());res.created++;
       }catch(e){
-        if(e.message.includes('already exists')||e.message.includes('409'))res.existing++;
+        if(e.message.includes('already exists')||e.message.includes('409')){
+          try{await resetExistingUserPw(u);res.existing++;}
+          catch(e2){res.failed++;res.errors.push(u.email+': account exists, but the password reset failed. '+e2.message);}
+        }
         else{res.failed++;res.errors.push(u.email+': '+e.message);}
       }
     }
